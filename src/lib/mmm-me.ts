@@ -141,7 +141,20 @@ export function resolveAvailableRoles(profileTypes: readonly string[]): MmmMeRol
   return roles;
 }
 
-export async function loadMmmMe(userId: string, requestedRole: string | undefined, locale: Locale, isAdmin = false, now = new Date()): Promise<MmmMeData> {
+export type LoadMmmMeOptions = {
+  /**
+   * Whether to read the member's tickets and render a QR for each. TRUE only
+   * for the wallet (`/app/tickets`), the one surface that draws them. Until
+   * 2026-09-23 (DESIGN_SYNC row 509) the ME pane paid for this too — the
+   * ticket query plus one SVG encode per ticket, on every visit — and `MmmMe`
+   * renders no ticket: the count line is `ticketCount`, read separately.
+   */
+  includeTickets?: boolean;
+  now?: Date;
+};
+
+export async function loadMmmMe(userId: string, requestedRole: string | undefined, locale: Locale, isAdmin = false, options: LoadMmmMeOptions = {}): Promise<MmmMeData> {
+  const { includeTickets = false, now = new Date() } = options;
   const profiles = await db.profile.findMany({
     where: { ownerId: userId },
     orderBy: { createdAt: 'asc' },
@@ -175,8 +188,9 @@ export async function loadMmmMe(userId: string, requestedRole: string | undefine
       .catch(() => null),
     // SCANNED as well as VALID: a ticket you used is still yours, and the
     // design shows it as an "attended" row with its check-in time. VOID is
-    // excluded — a refunded ticket is not a ticket.
-    db.ticket
+    // excluded — a refunded ticket is not a ticket. Read only for the wallet;
+    // see `LoadMmmMeOptions.includeTickets`.
+    !includeTickets ? Promise.resolve([]) : db.ticket
       .findMany({
         where: { status: { in: ['VALID', 'SCANNED'] }, ticketOrder: { buyerUserId: userId } },
         // Newest shows first at the database, then re-ordered below. Ascending

@@ -32,31 +32,6 @@ export type MmmPlayerTrack = {
 /** The full player's HYPE target — see `hypeTarget` inside the shell. */
 type HypeTarget = { profileId: string; hyped: boolean; nextHypeAt: string | null };
 
-function hypeTargetFromNowPlaying(nowPlaying: MmmNowPlaying): HypeTarget | null {
-  return nowPlaying?.artistProfileId ? { profileId: nowPlaying.artistProfileId, hyped: nowPlaying.hyped, nextHypeAt: null } : null;
-}
-
-export type MmmNowPlaying = {
-  title: string;
-  artist: string;
-  initial: string;
-  /**
-   * The artist's profile id, or null when the artist cannot be hyped from here
-   * — no linked profile, a non-discoverable one, or the viewer's own. The
-   * layout resolves this server-side so the heart is never a control that is
-   * guaranteed to fail.
-   */
-  artistProfileId: string | null;
-  /**
-   * The artist's public page, for the meta line's artist target. Null when the
-   * track has no linked profile — the name then renders as plain text rather
-   * than a link to nowhere.
-   */
-  artistSlug: string | null;
-  /** Whether the viewer has hyped that profile inside the current 24h window. */
-  hyped: boolean;
-} | null;
-
 /**
  * The Music · Map · Me frame.
  *
@@ -99,11 +74,9 @@ export type MmmNowPlaying = {
  */
 export function MmmShell({
   children,
-  nowPlaying,
   isAdmin = false,
 }: {
   children: ReactNode;
-  nowPlaying: MmmNowPlaying;
   isAdmin?: boolean;
 }) {
   const pathname = usePathname() ?? '/app/map';
@@ -131,14 +104,15 @@ export function MmmShell({
    * opened from the pill, which exists only WITH a track loaded. So HYPE could
    * never render there (owner: "I don't see hype button"). The queue rows
    * carry `artistProfileSlug` and no id, so the state is read from
-   * `GET /api/hype` for the current track's artist (the same resolution the
-   * /app layout does server-side for the last listen — non-discoverable and
+   * `GET /api/hype` for the current track's artist — non-discoverable and
    * own profiles come back `hypeable: false` and the control stays hidden
-   * rather than being drawn to fail), and seeded from the layout's answer
-   * while nothing is loaded. `nextHypeAt` is the 429's own field: a spent hype
-   * used to look identical to an available one.
+   * rather than being drawn to fail. With nothing loaded there is no target:
+   * the /app layout used to seed one from the viewer's last listen, and that
+   * resolution went with row 509, because no surface could show it. `nextHypeAt`
+   * is the 429's own field: a spent hype used to look identical to an
+   * available one.
    */
-  const [hypeTarget, setHypeTarget] = useState<HypeTarget | null>(() => hypeTargetFromNowPlaying(nowPlaying));
+  const [hypeTarget, setHypeTarget] = useState<HypeTarget | null>(null);
   const [hypePending, setHypePending] = useState(false);
 
   // Real playback, not local state. The pill used to own a `playing` boolean
@@ -317,10 +291,14 @@ export function MmmShell({
     }
   }, [currentTrack, faved, favPending]);
 
-  // Two different things can be shown here, and they are not interchangeable.
-  // `currentTrack` is what the audio element actually holds. `nowPlaying` is a
-  // server-resolved "your most recent listen" with no URL attached, so it can
-  // be displayed but cannot be started. Prefer the real one whenever it exists.
+  /* What the full player shows: `currentTrack`, the track the audio element
+     actually holds, and nothing else. Until 2026-09-23 (DESIGN_SYNC row 509)
+     this fell back to a `nowPlaying` the /app layout resolved from the viewer's
+     LAST LISTEN — three dependent database reads on every cold load of the
+     shell — and the fallback could never be on screen: the player opens only
+     from the pill, and the pill exists only with a track loaded. A last listen
+     has no url, so it could be displayed but never started; the layout no
+     longer resolves it, and the shell no longer takes it. */
   const displayTrack = currentTrack
     ? {
         title: currentTrack.title,
@@ -328,24 +306,17 @@ export function MmmShell({
         initial: (currentTrack.artistName || currentTrack.title).charAt(0).toUpperCase(),
         artworkUrl: currentTrack.artworkUrl ?? null,
       }
-    : nowPlaying;
+    : null;
 
-  /* The artist behind whatever the pill is showing. `currentTrack` wins when
-     the audio element holds one, for the same reason `displayTrack` does — the
-     highlight must describe the artist on screen, not the one from the last
-     server render. Null when there is no linked profile: the name then stays
-     plain text and the panel has no target to open. */
-  const artistSlug = currentTrack ? currentTrack.artistProfileSlug ?? null : nowPlaying?.artistSlug ?? null;
+  /* The artist behind whatever the pill is showing. Null when there is no
+     linked profile: the name then stays plain text and the panel has no target
+     to open. */
+  const artistSlug = currentTrack ? currentTrack.artistProfileSlug ?? null : null;
 
-  /* The PILL shows `currentTrack` and nothing else — never `nowPlaying`. The
-     two are not interchangeable here even though they are in the full player:
-     `nowPlaying` is a server-resolved last listen with NO url, so a pill
-     showing it would sit under a play key that cannot start it. Tapping would
-     fall through to the radio and begin a different song than the one named an
-     inch above the thumb. With nothing loaded there is no pill at all.
-
-     (What would close that gap is `nowPlaying` carrying a playable url so the
-     key could read "Resume". That is an endpoint change, not a chrome one.) */
+  /* The PILL shows `currentTrack` and nothing else. With nothing loaded there is
+     no pill at all. (What would give the shell a "Resume" affordance is an
+     endpoint that returns the last listen WITH a playable url — an endpoint
+     change, not a chrome one.) */
   const dockTrack = currentTrack
     ? {
         title: currentTrack.title,
@@ -360,19 +331,17 @@ export function MmmShell({
     setFullOpen(false);
   }, [pathname]);
 
-  /* The hype target follows the audio element. With a track loaded it is that
-     track's artist, read from the route by slug; with nothing loaded it is the
-     layout's server-resolved last listen. A read that fails hides the control
-     — the same rule the layout applies — because a HYPE that is guaranteed to
-     answer 404 is worse than none. The cancelled flag keeps a slow answer for
-     the previous track from landing on the next one. */
+  /* The hype target follows the audio element: with a track loaded it is that
+     track's artist, read from the route by slug; with nothing loaded there is
+     no target (and no player to show one in). A read that fails hides the
+     control, because a HYPE that is guaranteed to answer 404 is worse than
+     none. The cancelled flag keeps a slow answer for the previous track from
+     landing on the next one. */
   const loadedArtistSlug = currentTrack ? currentTrack.artistProfileSlug ?? null : null;
   const trackLoaded = Boolean(currentTrack);
-  const serverProfileId = nowPlaying?.artistProfileId ?? null;
-  const serverHyped = nowPlaying?.hyped ?? false;
   useEffect(() => {
     if (!trackLoaded) {
-      setHypeTarget(serverProfileId ? { profileId: serverProfileId, hyped: serverHyped, nextHypeAt: null } : null);
+      setHypeTarget(null);
       return;
     }
     if (!loadedArtistSlug) {
@@ -393,7 +362,7 @@ export function MmmShell({
       })
       .catch(() => { if (!cancelled) setHypeTarget(null); });
     return () => { cancelled = true; };
-  }, [trackLoaded, loadedArtistSlug, serverProfileId, serverHyped]);
+  }, [trackLoaded, loadedArtistSlug]);
 
   const canHype = Boolean(hypeTarget?.profileId);
   const hyped = hypeTarget?.hyped ?? false;

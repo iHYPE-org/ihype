@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { forgetSessionUser } from '@/lib/session-user-cache';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { recordAuditEvent } from '@/lib/audit';
@@ -30,6 +31,8 @@ export async function suspendUserAction(formData: FormData) {
     where: { id: userId },
     data: { userSecurityVersion: { increment: 1 } }
   });
+  // This isolate's auth() memo must not go on admitting the token it just ended.
+  forgetSessionUser(userId);
 
   await recordAuditEvent({
     actorUserId: session.user!.id!,

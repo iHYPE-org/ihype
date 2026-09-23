@@ -17,6 +17,7 @@ import { readImpersonatorId } from '@/lib/impersonation';
 import { isAllowedAdminEmail } from '@/lib/admin-allowlist';
 import { readRuntimeEnv } from '@/lib/runtime-env';
 import { isSessionRevoked } from '@/lib/session-revocation';
+import { readSessionUser } from '@/lib/session-user-cache';
 
 /**
  * ADMIN is granted by the User row, but ALLOWED by the address on it.
@@ -73,13 +74,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
            where the version check below fails closed. */
         if (await isSessionRevoked((token as { jti?: unknown }).jti)) return null;
 
-        // Check security version on every full auth() call so suspensions and
-        // password changes take effect. Not checked in middleware (no DB there).
+        // Check security version on every full auth() call so suspensions take
+        // effect. Not checked in middleware (no DB there). Memoised per isolate
+        // for thirty seconds (session-user-cache.ts): a shell screen calls
+        // auth() five or six times across its layout, page and tab fetches,
+        // and each was a cross-region round-trip the member waited on.
         try {
-          const dbUser = await db.user.findUnique({
-            where: { id: token.sub },
-            select: { userSecurityVersion: true, email: true }
-          });
+          const dbUser = await readSessionUser(token.sub, (id) =>
+            db.user.findUnique({
+              where: { id },
+              select: { userSecurityVersion: true, email: true }
+            }),
+          );
           if (!dbUser || dbUser.userSecurityVersion !== (token.securityVersion ?? 0)) return null;
           // Re-checked on EVERY auth() call, not only at sign-in, for the same
           // reason securityVersion is: a token minted before the rule existed,

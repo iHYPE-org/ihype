@@ -3,6 +3,7 @@ import { recordAuditEvent } from '@/lib/audit';
 import { deleteMediaFile } from '@/lib/object-storage';
 import { deauthorizeStripeConnectAccount, isStripeConfigured } from '@/lib/stripe';
 import { log } from '@/lib/logger';
+import { forgetSessionUser } from '@/lib/session-user-cache';
 
 // Implements the privacy promises published on /legal and in the Support →
 // Privacy panel. Three levels, in increasing severity:
@@ -388,6 +389,8 @@ export async function executeAccountErasure(
       userSecurityVersion: { increment: 1 },
     },
   });
+  // This isolate's auth() memo must not go on admitting a session the erasure just ended.
+  forgetSessionUser(userId);
 
   await recordAuditEvent({
     actorUserId,

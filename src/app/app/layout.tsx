@@ -3,9 +3,7 @@ import { redirect } from 'next/navigation';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import '@/app/mmm.css';
 import { auth } from '@/lib/auth';
-import { db } from '@/lib/db';
-import { canHype } from '@/lib/hype-window';
-import { MmmShell, type MmmNowPlaying } from '@/components/mmm/MmmShell';
+import { MmmShell } from '@/components/mmm/MmmShell';
 import { isAdminSession } from '@/lib/permissions';
 
 export const dynamic = 'force-dynamic';
@@ -35,66 +33,26 @@ export const metadata: Metadata = {
  * screen. (The console dock, the middle road's tab bar and the handoff's own
  * `ConsoleDock.tsx` each stood here in turn; every one is gone, and
  * `guard:design` asserts the files stay gone.)
+ *
+ * THIS LAYOUT AWAITS THE SESSION AND NOTHING ELSE (2026-09-23, DESIGN_SYNC
+ * row 509; owner: "There's a bit of a lag in between selection of new menus
+ * and displaying them"). Until then it also resolved a "now playing" for the
+ * shell — the viewer's most recent listen, then that artist's profile, then
+ * the viewer's hype on it: three DEPENDENT database round-trips, paid before
+ * any pane could stream, on every cold load of the shell. And the surface
+ * they fed was unreachable: the pill draws `currentTrack` only (a last listen
+ * has no url, so a play key under it would start a different song), and the
+ * full player opens only from the pill — so the "last listen" fallback in the
+ * player and the hype seeded from it could never be on screen. Row 503 keyed
+ * the player's HYPE on the PLAYING track through `GET /api/hype?slug=` for
+ * exactly that reason, which left this resolution feeding nothing. Deleted
+ * rather than moved to the client: a client fetch for a surface nobody can
+ * reach is the same defect one hop later. A resume-last-listen affordance
+ * needs an endpoint that carries a playable url, not this.
  */
 export default async function MmmLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
   if (!session?.user?.id) redirect('/login?callbackUrl=/app/map');
-
-  // The player's "now playing" is seeded from the viewer's most recent listen so
-  // the chrome opens with something real in it rather than a placeholder track.
-  // No listen history yet → no player, rather than an invented one.
-  const listen = await db.mediaListen
-    .findFirst({
-      where: { userId: session.user.id },
-      orderBy: { createdAt: 'desc' },
-      // MediaListen denormalizes the title and artist onto the row itself, so
-      // the track copy needs no join. The artist's PROFILE does need one: the
-      // row carries a slug, and /api/hype takes a profile id.
-      select: { title: true, artistName: true, artistProfileSlug: true },
-    })
-    .catch(() => null);
-
-  // Resolve the artist's profile so the player's heart can write through to the
-  // same endpoint an artist page uses. Everything the hype route itself refuses
-  // is resolved HERE instead of on click: a non-discoverable profile (404) and
-  // the viewer's own profile (409) both yield a null id, which renders the
-  // heart as absent rather than as a control that always fails. Independently
-  // .catch()'d — a failed lookup costs the heart, never the player.
-  const artistProfile = listen?.artistProfileSlug
-    ? await db.profile
-        .findFirst({
-          where: { slug: listen.artistProfileSlug, discoverable: true },
-          select: { id: true, ownerId: true },
-        })
-        .catch(() => null)
-    : null;
-  const hypeableProfileId =
-    artistProfile && artistProfile.ownerId !== session.user.id ? artistProfile.id : null;
-
-  // Whether the viewer has hyped this artist inside the current 24h window, so
-  // the heart opens filled instead of resetting to empty on every navigation —
-  // and empties again once the window has passed and the hype is spendable.
-  const existingHype = hypeableProfileId
-    ? await db.profileHypeEvent
-        .findUnique({
-          where: { userId_profileId: { userId: session.user.id, profileId: hypeableProfileId } },
-          select: { createdAt: true },
-        })
-        .catch(() => null)
-    : null;
-
-  const nowPlaying: MmmNowPlaying = listen
-    ? {
-        title: listen.title,
-        artist: listen.artistName,
-        initial: (listen.artistName || listen.title).charAt(0).toUpperCase(),
-        artistProfileId: hypeableProfileId,
-        // Already selected above and simply never passed through, which is why
-        // the player's artist name had no destination to point at.
-        artistSlug: listen.artistProfileSlug ?? null,
-        hyped: !canHype(existingHype?.createdAt),
-      }
-    : null;
 
   /**
    * The ADMIN MODE affordance is resolved HERE, from the session, and never
@@ -102,9 +60,5 @@ export default async function MmmLayout({ children }: { children: React.ReactNod
    * its own gate (session, role, and the device-cookie check), exactly like
    * every other role-gated destination in this codebase.
    */
-  return (
-    <MmmShell isAdmin={isAdminSession(session)} nowPlaying={nowPlaying}>
-      {children}
-    </MmmShell>
-  );
+  return <MmmShell isAdmin={isAdminSession(session)}>{children}</MmmShell>;
 }

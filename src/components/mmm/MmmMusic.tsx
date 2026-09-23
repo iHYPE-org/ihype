@@ -170,6 +170,7 @@ export function MmmMusic({
   q,
   focusSearch = false,
 }: { tab: MusicTabId; genre?: string; city?: string; q?: string; focusSearch?: boolean }) {
+  useWarmSiblingTabs(tab);
   return (
     <>
       {/* The tab strip that used to head this pane is gone: the module's
@@ -211,15 +212,105 @@ function DemoHeader({ description }: { description: string }) {
   );
 }
 
+/**
+ * The tabs' payload cache — one per URL, module-level, so it outlives the tab.
+ *
+ * Every MUSIC tab fetches its rows AFTER mount, which put a second round-trip
+ * behind every navigation: the RSC payload landed, the pane drew its loading
+ * plate, and only then did `/api/stations` (or charts, recommend, the four
+ * Playlists reads) go out. Switching Radio → Charts → Radio paid all of it
+ * again. Now a tab renders the payload it last saw INSTANTLY and revalidates
+ * behind it (stale-while-revalidate, `TAB_CACHE_TTL_MS`), and the sibling
+ * tabs' primary endpoints are warmed once the active tab has landed
+ * (`prefetchTabPayloads`), so the next tap finds its rows already here.
+ * Raw payloads are stored, never mapped ones: each caller maps with its own
+ * closure. A failed revalidation keeps what was on screen rather than
+ * replacing rows with an error over a list the member was reading; a first
+ * read that fails is still an error, never an empty claim (row 408).
+ * (2026-09-23, DESIGN_SYNC row 509.)
+ */
+const TAB_CACHE_TTL_MS = 60_000;
+const tabPayloadCache = new Map<string, { payload: unknown; at: number }>();
+const tabPayloadInFlight = new Map<string, Promise<unknown>>();
+
+function fetchTabPayload(url: string): Promise<unknown> {
+  const pending = tabPayloadInFlight.get(url);
+  if (pending) return pending;
+  const request = fetch(url, { cache: 'no-store' })
+    .then((response) => (response.ok ? response.json() : Promise.reject(new Error(String(response.status)))))
+    .then((payload) => {
+      tabPayloadCache.set(url, { payload, at: Date.now() });
+      return payload;
+    })
+    .finally(() => { tabPayloadInFlight.delete(url); });
+  tabPayloadInFlight.set(url, request);
+  return request;
+}
+
+/** Warm a URL the member has not asked for yet; a failure here is nobody's error. */
+function prefetchTabPayloads(urls: readonly string[]) {
+  for (const url of urls) {
+    const cached = tabPayloadCache.get(url);
+    if (cached && Date.now() - cached.at < TAB_CACHE_TTL_MS) continue;
+    fetchTabPayload(url).catch(() => {});
+  }
+}
+
+/**
+ * The first read each sibling tab makes, so a tap on it finds rows waiting.
+ * Charts is warmed at its default view (area · local); a member who changes
+ * the dataset fetches that view on demand, as before. Discover's seeds are
+ * NOT warmed: the deck's `?genres=`/`?city=` narrowing makes its URL a
+ * per-visit thing, and a warmed unfiltered deck would be dropped unread.
+ */
+const TAB_WARM_URLS: Record<MusicTabId, readonly string[]> = {
+  discover: ['/api/media-listens'],
+  radio: ['/api/stations'],
+  charts: ['/api/charts?dataset=area&scope=local'],
+  recommended: ['/api/recommend'],
+  playlists: ['/api/fan-favorites', '/api/likes', '/api/stations', '/api/fan-playlists'],
+};
+
+function useWarmSiblingTabs(tab: MusicTabId) {
+  useEffect(() => {
+    // After the active tab's own reads have had the connection: ~1.5s, or the
+    // browser's idle callback if it has one.
+    const urls = (Object.keys(TAB_WARM_URLS) as MusicTabId[])
+      .filter((id) => id !== tab)
+      .flatMap((id) => TAB_WARM_URLS[id]);
+    const run = () => prefetchTabPayloads(urls);
+    const w = window as Window & { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number; cancelIdleCallback?: (id: number) => void };
+    if (typeof w.requestIdleCallback === 'function') {
+      const id = w.requestIdleCallback(run, { timeout: 2500 });
+      return () => w.cancelIdleCallback?.(id);
+    }
+    const timer = window.setTimeout(run, 1500);
+    return () => window.clearTimeout(timer);
+  }, [tab]);
+}
+
 function useJson<T>(url: string, map: (payload: unknown) => T) {
-  const [state, setState] = useState<{ status: 'loading' | 'ready' | 'error'; data: T | null }>({ status: 'loading', data: null });
+  const cached = tabPayloadCache.get(url);
+  const [state, setState] = useState<{ status: 'loading' | 'ready' | 'error'; data: T | null }>(() =>
+    cached ? { status: 'ready', data: map(cached.payload) } : { status: 'loading', data: null },
+  );
   useEffect(() => {
     let cancelled = false;
-    setState({ status: 'loading', data: null });
-    fetch(url, { cache: 'no-store' })
-      .then((response) => (response.ok ? response.json() : Promise.reject(new Error(String(response.status)))))
+    const hit = tabPayloadCache.get(url);
+    // A cached payload shows at once (even a stale one — it is the member's
+    // own last reading, and the revalidation is already on the wire); an
+    // uncached URL shows the plate.
+    setState(hit ? { status: 'ready', data: map(hit.payload) } : { status: 'loading', data: null });
+    if (hit && Date.now() - hit.at < TAB_CACHE_TTL_MS && !tabPayloadInFlight.has(url)) {
+      // Fresh enough: no request at all. Tab-to-tab inside the TTL is free.
+      return () => { cancelled = true; };
+    }
+    fetchTabPayload(url)
       .then((payload) => { if (!cancelled) setState({ status: 'ready', data: map(payload) }); })
-      .catch(() => { if (!cancelled) setState({ status: 'error', data: null }); });
+      .catch(() => {
+        // Keep the rows that were on screen; a first read that failed is an error.
+        if (!cancelled && !hit) setState({ status: 'error', data: null });
+      });
     return () => { cancelled = true; };
     // `map` is defined inline by each caller; the URL is the real dependency.
     // eslint-disable-next-line react-hooks/exhaustive-deps

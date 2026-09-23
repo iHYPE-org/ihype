@@ -82,7 +82,19 @@ const nextConfig = {
     '/*': ['./node_modules/.prisma/client/*.wasm']
   },
   experimental: {
-    workerThreads: true
+    workerThreads: true,
+    /**
+     * How long the client router reuses a DYNAMIC route's payload it already
+     * holds (seconds). Next's default is 0, so every tap on Listen → Map →
+     * Listen re-fetched the whole tree and the old screen stayed up until it
+     * landed — the "lag between selection of new menus" the owner reported
+     * (2026-09-23, DESIGN_SYNC row 509). Thirty seconds makes a hop BACK to a
+     * screen you just left instant; the tabs that draw live rows (`useJson`
+     * in MmmMusic) revalidate on their own, so what can read thirty seconds
+     * stale is a server-rendered list (ME, the wallet), and both are the
+     * member's own data. `static` is left at Next's default.
+     */
+    staleTimes: { dynamic: 30 }
   },
   async redirects() {
     return [
