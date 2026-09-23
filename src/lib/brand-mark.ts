@@ -77,36 +77,38 @@ export type IconSpec = MarkPaint & {
   size: number;
   /** Ground colour, or null for a transparent canvas (the Android adaptive foreground). */
   ground: string | null;
-  /** The glyph's height as a fraction of the side. */
-  glyphHeight: number;
+  /** The wordmark's width as a fraction of the side. */
+  markWidth: number;
   /** Corner radius as a fraction of the side, applied to the ground only. 0.5 is a circle. */
   cornerRadius?: number;
 };
 
 /**
- * THE APP ICON IS THE `i` ALONE — red square dot, ink stem, on the ground.
- * The wordmark was rendered into a square at 48px and compared: the word
- * reads at 60px and is a smudge at 29px, while the glyph reads at every size,
- * and the home screen prints the app's name under the icon anyway. Two blocks
- * at 56% of the side is deliberately plain; a plain mark on a plain ground is
- * the opposite of the generated-icon look (gradient blob, glossy tile, letter
- * in a rounded square with a glow) the testers named.
+ * THE APP ICON IS THE WHOLE WORDMARK — the red `i` and ink HYPE, centred on the
+ * ground (owner, 2026-09-23, choosing it from six options rendered on the iOS
+ * mask: "this is the logo i want to use going forward, simple and non ai
+ * looking"). This reverses row 495's `i`-alone icon, whose reason was that the
+ * word turns to a smudge at the smallest sizes; the owner saw it at 60px and
+ * chose it anyway, so the icon and the header are now one mark.
+ *
+ * `markWidth` is set per platform by the mask it must survive, in
+ * scripts/build-brand-assets.mts: the wordmark is 2545x660, so a width of w
+ * needs a circle of diameter w·1.033 to clear its corners.
  */
-export function iconSvg({ size, ground, accent, ink, glyphHeight, cornerRadius = 0 }: IconSpec): string {
-  const scale = (size * glyphHeight) / MARK.height;
-  const w = MARK_I.width * scale;
+export function iconSvg({ size, ground, accent, ink, markWidth, cornerRadius = 0 }: IconSpec): string {
+  const w = size * markWidth;
+  const scale = w / MARK.width;
   const h = MARK.height * scale;
   const x = (size - w) / 2;
   const y = (size - h) / 2;
   const r = size * cornerRadius;
   const bg = ground ? `<rect width="${size}" height="${size}" rx="${r}" fill="${ground}"/>` : '';
-  const { width, dot, stemY, stemHeight, radius } = MARK_I;
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">` +
     bg +
     `<g transform="translate(${x} ${y}) scale(${scale})">` +
-    `<rect x="0" y="0" width="${width}" height="${dot}" rx="${radius}" fill="${accent}"/>` +
-    `<rect x="0" y="${stemY}" width="${width}" height="${stemHeight}" rx="${radius}" fill="${ink}"/>` +
+    markGlyphMarkup(accent) +
+    `<path fill="${ink}" d="${MARK_LETTERS_PATH}"/>` +
     `</g></svg>`
   );
 }

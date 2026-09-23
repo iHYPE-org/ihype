@@ -57,13 +57,13 @@ describe('the mark geometry', () => {
   });
 
   it('builds icons, splashes and the wordmark from the same numbers', () => {
-    const icon = iconSvg({ size: 512, ground: '#ffffff', accent: '#e0263e', ink: '#0a0a0a', glyphHeight: 0.56 });
+    const icon = iconSvg({ size: 512, ground: '#ffffff', accent: '#e0263e', ink: '#0a0a0a', markWidth: 0.74 });
     expect(icon).toContain('width="512"');
-    expect(icon).not.toContain(MARK_LETTERS_PATH); // the icon is the glyph alone
+    expect(icon).toContain(MARK_LETTERS_PATH); // the icon is the whole wordmark (owner, 2026-09-23)
     expect(splashSvg({ width: 320, height: 480, ground: '#fff', accent: '#e0263e', ink: '#0a0a0a', markWidth: 0.34 })).toContain(MARK_LETTERS_PATH);
     expect(markSvg({ accent: '#e0263e', ink: '#0a0a0a' })).toContain(`viewBox="0 0 ${MARK.width} ${MARK.height}"`);
     /* A transparent canvas draws no ground rect at all. */
-    expect(iconSvg({ size: 108, ground: null, accent: '#e0263e', ink: '#0a0a0a', glyphHeight: 44 / 108 })).not.toContain('<rect width="108"');
+    expect(iconSvg({ size: 108, ground: null, accent: '#e0263e', ink: '#0a0a0a', markWidth: 0.56 })).not.toContain('<rect width="108"');
   });
 });
 
