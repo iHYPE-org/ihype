@@ -15,6 +15,7 @@ import type { StationSummary } from '@/app/api/stations/route';
 import { MmmFreeUseCrate } from '@/components/mmm/MmmFreeUseCrate';
 import { useI18n } from '@/components/I18nProvider';
 import type { Translate } from '@/lib/mmm-shell-labels';
+import { TAB_WARM_URLS, discoverSeedsUrl } from '@/lib/mmm-music-reads';
 
 export type MusicTabId = 'discover' | 'radio' | 'charts' | 'recommended' | 'playlists';
 
@@ -170,6 +171,7 @@ export function MmmMusic({
   q,
   focusSearch = false,
 }: { tab: MusicTabId; genre?: string; city?: string; q?: string; focusSearch?: boolean }) {
+  useWarmSiblingTabs(tab);
   return (
     <>
       {/* The tab strip that used to head this pane is gone: the module's
@@ -211,15 +213,111 @@ function DemoHeader({ description }: { description: string }) {
   );
 }
 
+/**
+ * The tabs' payload cache — one per URL, module-level, so it outlives the tab.
+ *
+ * Every MUSIC tab fetches its rows AFTER mount, which put a second round-trip
+ * behind every navigation: the RSC payload landed, the pane drew its loading
+ * plate, and only then did `/api/stations` (or charts, recommend, the four
+ * Playlists reads) go out. Switching Radio → Charts → Radio paid all of it
+ * again. Now a tab renders the payload it last saw INSTANTLY and revalidates
+ * behind it (stale-while-revalidate, `TAB_CACHE_TTL_MS`), and the sibling
+ * tabs' primary endpoints are warmed once the active tab has landed
+ * (`prefetchTabPayloads`), so the next tap finds its rows already here.
+ * Raw payloads are stored, never mapped ones: each caller maps with its own
+ * closure. A failed revalidation keeps what was on screen rather than
+ * replacing rows with an error over a list the member was reading; a first
+ * read that fails is still an error, never an empty claim (row 408).
+ * (2026-09-23, DESIGN_SYNC row 509.)
+ */
+const TAB_CACHE_TTL_MS = 60_000;
+const tabPayloadCache = new Map<string, { payload: unknown; at: number }>();
+const tabPayloadInFlight = new Map<string, Promise<unknown>>();
+
+function fetchTabPayload(url: string): Promise<unknown> {
+  const pending = tabPayloadInFlight.get(url);
+  if (pending) return pending;
+  const request = fetch(url, { cache: 'no-store' })
+    .then((response) => (response.ok ? response.json() : Promise.reject(new Error(String(response.status)))))
+    .then((payload) => {
+      tabPayloadCache.set(url, { payload, at: Date.now() });
+      return payload;
+    })
+    .finally(() => { tabPayloadInFlight.delete(url); });
+  tabPayloadInFlight.set(url, request);
+  return request;
+}
+
+/**
+ * Warm URLs the member has not asked for yet — ONE AT A TIME, so the warming
+ * never competes with the tab on screen for the connection: seven reads fired
+ * at once beside the active tab's own fetch measurably delayed the deck on a
+ * single-instance worker. A failure here is nobody's error.
+ */
+async function prefetchTabPayloads(urls: readonly string[], cancelled: () => boolean) {
+  for (const url of urls) {
+    if (cancelled()) return;
+    const cached = tabPayloadCache.get(url);
+    if (cached && Date.now() - cached.at < TAB_CACHE_TTL_MS) continue;
+    await fetchTabPayload(url).catch(() => {});
+  }
+}
+
+/**
+ * The first read each sibling tab makes, so a tap on it finds rows waiting.
+ * Charts is warmed at its default view (area · local); a member who changes
+ * the dataset fetches that view on demand, as before. Discover's seeds are
+ * NOT warmed: the deck's `?genres=`/`?city=` narrowing makes its URL a
+ * per-visit thing, and a warmed unfiltered deck would be dropped unread.
+ */
+/* `TAB_WARM_URLS` lives in `@/lib/mmm-music-reads` so the server page can
+   PRELOAD the active tab's first reads from the same table (row 511). */
+
+function useWarmSiblingTabs(tab: MusicTabId) {
+  useEffect(() => {
+    // After the active tab's own reads have landed: wait at least 1.5s, then
+    // until nothing of this surface's is in flight (up to ~10s), then warm
+    // sequentially. The active tab always gets the connection first.
+    let cancelled = false;
+    const urls = (Object.keys(TAB_WARM_URLS) as MusicTabId[])
+      .filter((id) => id !== tab)
+      .flatMap((id) => TAB_WARM_URLS[id]);
+    let attempts = 0;
+    const start = () => {
+      if (cancelled) return;
+      if (tabPayloadInFlight.size > 0 && attempts++ < 30) {
+        timer = window.setTimeout(start, 300);
+        return;
+      }
+      void prefetchTabPayloads(urls, () => cancelled);
+    };
+    let timer = window.setTimeout(start, 1500);
+    return () => { cancelled = true; window.clearTimeout(timer); };
+  }, [tab]);
+}
+
 function useJson<T>(url: string, map: (payload: unknown) => T) {
-  const [state, setState] = useState<{ status: 'loading' | 'ready' | 'error'; data: T | null }>({ status: 'loading', data: null });
+  const cached = tabPayloadCache.get(url);
+  const [state, setState] = useState<{ status: 'loading' | 'ready' | 'error'; data: T | null }>(() =>
+    cached ? { status: 'ready', data: map(cached.payload) } : { status: 'loading', data: null },
+  );
   useEffect(() => {
     let cancelled = false;
-    setState({ status: 'loading', data: null });
-    fetch(url, { cache: 'no-store' })
-      .then((response) => (response.ok ? response.json() : Promise.reject(new Error(String(response.status)))))
+    const hit = tabPayloadCache.get(url);
+    // A cached payload shows at once (even a stale one — it is the member's
+    // own last reading, and the revalidation is already on the wire); an
+    // uncached URL shows the plate.
+    setState(hit ? { status: 'ready', data: map(hit.payload) } : { status: 'loading', data: null });
+    if (hit && Date.now() - hit.at < TAB_CACHE_TTL_MS && !tabPayloadInFlight.has(url)) {
+      // Fresh enough: no request at all. Tab-to-tab inside the TTL is free.
+      return () => { cancelled = true; };
+    }
+    fetchTabPayload(url)
       .then((payload) => { if (!cancelled) setState({ status: 'ready', data: map(payload) }); })
-      .catch(() => { if (!cancelled) setState({ status: 'error', data: null }); });
+      .catch(() => {
+        // Keep the rows that were on screen; a first read that failed is an error.
+        if (!cancelled && !hit) setState({ status: 'error', data: null });
+      });
     return () => { cancelled = true; };
     // `map` is defined inline by each caller; the URL is the real dependency.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -295,14 +393,8 @@ function DiscoverTab({ genre, city }: { genre?: string; city?: string }) {
   const { currentTrack, currentTime, isPlaying, playTrack, togglePlayback } = useMediaPlayer();
   const trimmedGenre = genre?.trim() ?? '';
   const trimmedCity = city?.trim() ?? '';
-  const seedsQuery = new URLSearchParams();
-  // The endpoint's genre parameter is plural and comma-separated; one value is
-  // a valid list of one.
-  if (trimmedGenre) seedsQuery.set('genres', trimmedGenre);
-  if (trimmedCity) seedsQuery.set('city', trimmedCity);
-  const seedsUrl = seedsQuery.size
-    ? `/api/discover/seeds?${seedsQuery.toString()}`
-    : '/api/discover/seeds';
+  // One builder for this URL: the page preloads exactly what this fetches.
+  const seedsUrl = discoverSeedsUrl(genre, city);
   const { status, data } = useJson<SeedCard[]>(seedsUrl, (payload) => {
     const seeds = (payload as { seeds?: Array<Record<string, unknown>> }).seeds ?? [];
     return seeds.map((seed) => {

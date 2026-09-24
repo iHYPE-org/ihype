@@ -14,6 +14,25 @@ workers_dev = false
 [limits]
 cpu_ms = 1500
 
+# PLACEMENT: run the Worker beside the database, not at the visitor's edge.
+# Every shell request reads Postgres through Hyperdrive (Supabase, us-east-1)
+# and most read it more than once, so a request served from Europe or the US
+# west coast paid a transatlantic or transcontinental round-trip PER QUERY;
+# placed beside the database it pays one for the response. Measured cold TTFB
+# on database-touching routes ran 0.5-2.7s from IAD against 0.2s warm
+# (2026-09-23, DESIGN_SYNC row 509). An EXPLICIT region hint rather than
+# `mode = "smart"`: the backend is one single-homed database whose region is
+# known, and the hint places the Worker at once, where Smart Placement needs
+# traffic from several locations to measure before it moves anything and can
+# move back. Placement affects the fetch handler only; static assets still
+# serve from the edge nearest the member. The `cf-placement` response header
+# says where a request ran. Hyperdrive QUERY caching is deliberately NOT
+# enabled beside this: it would answer a read up to 60 seconds stale after the
+# member's own write, and every optimistic control here reads the server's
+# answer back (row 455).
+[placement]
+region = "aws:us-east-1"
+
 [observability]
 enabled = true
 

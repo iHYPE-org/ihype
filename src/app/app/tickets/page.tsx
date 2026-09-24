@@ -30,7 +30,7 @@ export default async function MmmTicketsPage() {
   // server-side check — the same rule every other MMM route follows.
   if (!session?.user?.id) redirect('/login?callbackUrl=/app/tickets');
   const { locale, t } = await getServerI18n();
-  const data = await loadMmmMe(session.user.id, undefined, locale, isAdminSession(session));
+  const data = await loadMmmMe(session.user.id, undefined, locale, isAdminSession(session), { includeTickets: true });
   return (
     <>
       <h1 className="sr-only">{t('mmmNav.tab.tickets', 'Tickets')}</h1>

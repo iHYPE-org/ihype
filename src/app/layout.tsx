@@ -75,6 +75,14 @@ const workSans = localFont({
   style: 'normal',
   variable: '--font-work',
   display: 'swap',
+  /* NOT PRELOADED (2026-09-24, DESIGN_SYNC row 511). Work Sans stopped being
+     the default body face on 2026-09-05 (row 346 moved body to the system
+     stack) and is read only inside the street, flowery and classical theme
+     blocks — so preloading it put 50 KB on the critical path of every request
+     to serve a face the default theme never paints. Same rule as the four
+     theme display faces below: the browser fetches it when a rule references
+     it, which is only when one of those themes is active. */
+  preload: false,
 });
 const jetbrainsMono = localFont({
   src: './fonts/JetBrainsMono-Variable.woff2',
@@ -99,7 +107,8 @@ const instrumentSerif = localFont({
  *
  * `preload: false` IS THE WHOLE REASON THIS IS AFFORDABLE, and removing it
  * silently undoes the trade. The four faces above are preloaded because every
- * page uses them; these four are used by ONE theme each, so preloading them
+ * page uses them (Work Sans excepted since row 511 — see its declaration);
+ * these four are used by ONE theme each, so preloading them
  * would put 89KB of fonts on the critical path of every request to serve a
  * theme the reader has probably not chosen. With preload off the browser
  * fetches a face only when a rule actually references it — which, because the

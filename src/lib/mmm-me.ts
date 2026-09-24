@@ -22,7 +22,14 @@ import type { Locale } from '@/lib/i18n/locales';
 import { db } from '@/lib/db';
 import { buildTicketQrCodeDataUrl } from '@/lib/tickets';
 
-export const MMM_ME_ROLES = ['fan', 'artist', 'venue'] as const;
+/**
+ * `advertiser` joined on 2026-09-24 (DESIGN_SYNC row 510; owner: "advertiser
+ * role isn't a selection to view as (should be)"). It has no Profile row and
+ * no public page, so its view is the campaign figures and one card that opens
+ * the dashboard — the earlier note here that it "must not" be a role was a
+ * decision the owner has reversed.
+ */
+export const MMM_ME_ROLES = ['fan', 'artist', 'venue', 'advertiser'] as const;
 export type MmmMeRole = (typeof MMM_ME_ROLES)[number];
 
 export type MmmStat = { value: string; label: string };
@@ -36,7 +43,7 @@ export type MmmStat = { value: string; label: string };
  */
 export type MmmActivityRow = {
   title: string | null;
-  fallbackTitle: 'Ticket order' | 'Show payout' | 'Show settlement';
+  fallbackTitle: 'Ticket order' | 'Show payout' | 'Show settlement' | 'Sponsorship';
   when: string | null;
   count: { unit: 'tickets' | 'sold'; n: number } | null;
   amount: string;
@@ -50,7 +57,7 @@ export type MmmMeData = {
   stats: MmmStat[];
   activity: MmmActivityRow[];
   /** Artist and Venue only. Fans have no page creator — removed deliberately. */
-  page: { name: string; status: string; slug: string; kind: 'artists' | 'venues' } | null;
+  page: { name: string; status: string; slug: string; kind: 'artists' | 'venues' | 'advertising' } | null;
   hypeLink: { url: string; clicks: number | null; tickets: number | null; earnedCents: number | null } | null;
   /**
    * Whether this account already has an advertiser profile.
@@ -134,24 +141,48 @@ function thirtyDaysAgo(now: Date) {
  * implicit and permanent"); the others come from the member's own Profile rows,
  * which is the same source the legacy shell's role gates use.
  */
-export function resolveAvailableRoles(profileTypes: readonly string[]): MmmMeRole[] {
+export function resolveAvailableRoles(profileTypes: readonly string[], hasAdvertiser = false): MmmMeRole[] {
   const roles: MmmMeRole[] = ['fan'];
   if (profileTypes.includes('ARTIST')) roles.push('artist');
   if (profileTypes.includes('VENUE')) roles.push('venue');
+  // From the AdvertiserAccount row, not a Profile type: the fifth account
+  // type has no Profile (row 229) and is viewed here through its campaigns.
+  if (hasAdvertiser) roles.push('advertiser');
   return roles;
 }
 
-export async function loadMmmMe(userId: string, requestedRole: string | undefined, locale: Locale, isAdmin = false, now = new Date()): Promise<MmmMeData> {
-  const profiles = await db.profile.findMany({
-    where: { ownerId: userId },
-    orderBy: { createdAt: 'asc' },
-    select: {
-      id: true, type: true, name: true, slug: true, hexId: true, hypeCount: true,
-      isVerified: true, verified: true, city: true, stateRegion: true, capacity: true,
-    },
-  });
+export type LoadMmmMeOptions = {
+  /**
+   * Whether to read the member's tickets and render a QR for each. TRUE only
+   * for the wallet (`/app/tickets`), the one surface that draws them. Until
+   * 2026-09-23 (DESIGN_SYNC row 509) the ME pane paid for this too — the
+   * ticket query plus one SVG encode per ticket, on every visit — and `MmmMe`
+   * renders no ticket: the count line is `ticketCount`, read separately.
+   */
+  includeTickets?: boolean;
+  now?: Date;
+};
 
-  const availableRoles = resolveAvailableRoles(profiles.map((profile) => profile.type));
+export async function loadMmmMe(userId: string, requestedRole: string | undefined, locale: Locale, isAdmin = false, options: LoadMmmMeOptions = {}): Promise<MmmMeData> {
+  const { includeTickets = false, now = new Date() } = options;
+  // The advertiser account is read beside the profiles because it decides a
+  // ROLE now (row 510); a failed read hides the advertiser view and its card
+  // rather than taking the surface down.
+  const [profiles, advertiser] = await Promise.all([
+    db.profile.findMany({
+      where: { ownerId: userId },
+      orderBy: { createdAt: 'asc' },
+      select: {
+        id: true, type: true, name: true, slug: true, hexId: true, hypeCount: true,
+        isVerified: true, verified: true, city: true, stateRegion: true, capacity: true,
+      },
+    }),
+    db.advertiserAccount
+      .findUnique({ where: { userId }, select: { id: true, companyName: true } })
+      .catch(() => null),
+  ]);
+
+  const availableRoles = resolveAvailableRoles(profiles.map((profile) => profile.type), advertiser !== null);
   const role: MmmMeRole = availableRoles.includes(requestedRole as MmmMeRole)
     ? (requestedRole as MmmMeRole)
     : availableRoles[0];
@@ -163,20 +194,18 @@ export async function loadMmmMe(userId: string, requestedRole: string | undefine
   const linkProfile = profiles[0] ?? null;
 
   // Account-level facts, read once and independent of which role is being
-  // viewed. Both are `.catch()`'d separately: a failure hides the advertiser
-  // card and the ticket line rather than taking the whole surface down, which
-  // is the rule the admin workbench and the analytics engine already follow.
-  const [advertiser, ticketCount, ticketRows] = await Promise.all([
-    db.advertiserAccount
-      .findUnique({ where: { userId }, select: { id: true } })
-      .catch(() => null),
+  // viewed. Both are `.catch()`'d separately: a failure hides the ticket line
+  // rather than taking the whole surface down, which is the rule the admin
+  // workbench and the analytics engine already follow.
+  const [ticketCount, ticketRows] = await Promise.all([
     db.ticket
       .count({ where: { status: 'VALID', ticketOrder: { buyerUserId: userId } } })
       .catch(() => null),
     // SCANNED as well as VALID: a ticket you used is still yours, and the
     // design shows it as an "attended" row with its check-in time. VOID is
-    // excluded — a refunded ticket is not a ticket.
-    db.ticket
+    // excluded — a refunded ticket is not a ticket. Read only for the wallet;
+    // see `LoadMmmMeOptions.includeTickets`.
+    !includeTickets ? Promise.resolve([]) : db.ticket
       .findMany({
         where: { status: { in: ['VALID', 'SCANNED'] }, ticketOrder: { buyerUserId: userId } },
         // Newest shows first at the database, then re-ordered below. Ascending
@@ -259,6 +288,11 @@ export async function loadMmmMe(userId: string, requestedRole: string | undefine
   });
 
   if (role === 'fan') return withRoles(await loadFan(userId, linkProfile, now, locale));
+  if (role === 'advertiser') {
+    return withRoles(advertiser
+      ? await loadAdvertiser(userId, advertiser, linkProfile, now, locale)
+      : await loadFan(userId, linkProfile, now, locale));
+  }
   const profile = profiles.find((entry) => entry.type === (role === 'artist' ? 'ARTIST' : 'VENUE'));
   if (!profile) return withRoles(await loadFan(userId, linkProfile, now, locale));
   return withRoles(role === 'artist'
@@ -339,6 +373,73 @@ async function loadFan(userId: string, linkProfile: { id: string; hexId: string 
     // Deliberately null: the fan page creator was removed in this handoff.
     // Fans share a HYPE link instead of maintaining a page.
     page: null,
+    hypeLink,
+  };
+}
+
+/**
+ * The advertiser view: the account's campaigns, said the way the dashboard
+ * says them. Every figure is a read the schema stores and each is caught on
+ * its own — a failed count is a missing tile, never a zero (the analytics
+ * engine's rule). "Paid" is the budget of every campaign whose card was
+ * charged (`authorizedAt`); "Refunded" is the settlement record, never
+ * budget − spent (row 340). No metered vocabulary: `spentCents` never moves
+ * for a sponsorship (row 384), so nothing here is derived from it.
+ */
+async function loadAdvertiser(
+  userId: string,
+  account: { id: string; companyName: string | null },
+  linkProfile: { id: string; hexId: string } | null,
+  now: Date,
+  locale: Locale,
+): Promise<MmmMeRoleData> {
+  const [live, impressions, paid, refunded, recent, hypeLink] = await Promise.all([
+    db.ad.count({ where: { advertiserId: userId, status: 'APPROVED' } }).catch(() => null),
+    db.adImpression
+      .count({ where: { ad: { advertiserId: userId }, createdAt: { gte: thirtyDaysAgo(now) } } })
+      .catch(() => null),
+    db.ad
+      .aggregate({ _sum: { budgetCents: true }, where: { advertiserId: userId, authorizedAt: { not: null } } })
+      .then((result) => result._sum?.budgetCents ?? 0)
+      .catch(() => null),
+    db.ad
+      .aggregate({ _sum: { refundedCents: true }, where: { advertiserId: userId } })
+      .then((result) => result._sum?.refundedCents ?? 0)
+      .catch(() => null),
+    db.ad
+      .findMany({
+        where: { advertiserId: userId },
+        orderBy: { createdAt: 'desc' },
+        take: 4,
+        select: { id: true, title: true, status: true, budgetCents: true, authorizedAt: true, createdAt: true },
+      })
+      .catch(() => []),
+    hypeLinkFor(linkProfile, now),
+  ]);
+
+  const stats: MmmStat[] = [];
+  if (live !== null) stats.push({ value: count(locale, live), label: 'Live campaigns' });
+  if (impressions !== null) stats.push({ value: count(locale, impressions), label: 'Impressions 30d' });
+  if (paid !== null) stats.push({ value: money(locale, paid), label: 'Paid' });
+  if (refunded !== null) stats.push({ value: money(locale, refunded), label: 'Refunded' });
+
+  return {
+    role: 'advertiser',  // Overwritten by loadMmmMe — see withRoles().
+    stats,
+    activity: recent.map((campaign) => ({
+      title: campaign.title,
+      fallbackTitle: 'Sponsorship' as const,
+      when: formatDate(locale, campaign.createdAt, { month: 'short', day: 'numeric', timeZone: 'UTC' }),
+      count: null,
+      amount: campaign.authorizedAt ? money(locale, campaign.budgetCents) : '—',
+      tone: campaign.status === 'APPROVED' ? ('positive' as const) : campaign.status === 'PENDING' || campaign.status === 'AWAITING_PAYMENT' ? ('hot' as const) : ('neutral' as const),
+    })),
+    page: {
+      name: account.companyName?.trim() || 'Advertiser',
+      slug: 'advertising',
+      kind: 'advertising',
+      status: 'Advertiser account',
+    },
     hypeLink,
   };
 }

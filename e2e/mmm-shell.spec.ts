@@ -650,11 +650,16 @@ test.describe('Music · Map · Me shell', () => {
      route answers 200. The RESPONSE is awaited before the DOM is read, because
      an optimistic control lights first and reverts afterwards. */
   test('a save the seed route refuses is put back, named, and keeps the card', async ({ page, context }, testInfo) => {
-    /* Its OWN listener, per attempt: the landed save at the end of this test
-       judges the fixture's one card, and a deck shows a member only cards
-       they have not judged — so a retry under the shared listener finds no
-       card and measures the last attempt, not the deck (seen locally). */
-    const session = await applySessionCookie(context, `e2e-mmm-deck-listener-${testInfo.retry}@ihype.org`, { profiles: [] });
+    /* Its OWN listener, per attempt AND per run: the landed save at the end
+       of this test judges the fixture's one card, and a deck shows a member
+       only cards they have not judged — so a retry under the shared listener
+       finds no card and measures the last attempt, not the deck (seen
+       locally). The run stamp is the same rule one level up: against a
+       persistent scratch database every PASS spent one fixed address for
+       ever, and the test then failed on its first attempt on every later run
+       — three addresses, three passes, then red (row 509). A fixture owns
+       its state (row 434); this one owns it by never reusing a judge. */
+    const session = await applySessionCookie(context, `e2e-mmm-deck-listener-${testInfo.retry}-${Date.now().toString(36)}@ihype.org`, { profiles: [] });
     await seedPlayableStation({ fanUserId: session.user.id });
     await page.setViewportSize({ width: 393, height: 852 });
     await page.route(/\/api\/discover\/seeds\/[^/]+\/save$/, (route) =>
@@ -1211,8 +1216,16 @@ test.describe('Music · Map · Me shell', () => {
            so it is the anchor; the visibility assertion then runs against a
            finished document, and a GENUINE double render still fails here. */
         const notice = page.getByText('Paid tickets · Coming soon');
+        /* AND THE ORDER MATTERS (2026-09-24): with count first, the count can
+           read 1 while only the staging copy exists, and the visibility check
+           then lands in the window where both copies are present and fails
+           strict mode — which it did once more, retry passing, on the row-510
+           run. Anchor on the FIRST copy becoming visible (that is the copy Next
+           moved into place; the staging node is hidden), then assert the count,
+           which polls until the staging copy is gone and still fails a genuine
+           double render. */
+        await expect(notice.first()).toBeVisible();
         await expect(notice).toHaveCount(1);
-        await expect(notice).toBeVisible();
         await expect(page.locator('h1.mmm-show-title:visible')).toHaveCount(1);
         await expect(page.locator('h1.mmm-show-title:visible')).toHaveText(seeded.title);
         await expect(page.getByText('Split locked at publish')).toBeVisible();

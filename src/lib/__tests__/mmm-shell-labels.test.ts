@@ -97,7 +97,7 @@ describe('translateMeRow', () => {
 describe('translateRoleLabel and translateMeStatLabel', () => {
   it('cover every role', () => {
     // The three ME roles, restated: `@/lib/mmm-me` imports the database client.
-    for (const role of ['fan', 'artist', 'venue']) {
+    for (const role of ['fan', 'artist', 'venue', 'advertiser']) {
       const { t, keys } = recordingT();
       translateRoleLabel(t, role);
       expect(keys).toHaveLength(1);

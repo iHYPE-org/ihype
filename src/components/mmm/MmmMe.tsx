@@ -2,7 +2,7 @@
 
 import { meActivityFallbackTitle } from '@/lib/i18n-enum-labels';
 import { formatNumber } from '@/lib/format-locale';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { MMM_ME_PANELS } from '@/lib/mmm-nav';
@@ -346,14 +346,24 @@ export function MmmMe({ data }: { data: MmmMeData }) {
 
           A control appears where it changes something. */}
       {activeId === 'profiles' && data.availableRoles.length > 1 && (
-        <div style={{ display: 'flex', gap: 6, paddingBottom: 16, overflowX: 'auto' }}>
+        /* A SEGMENTED CONTROL, not a second row of pills (row 510): the strip
+           above chooses a destination, this chooses which of the account's
+           roles to view as — and the two used to be indistinguishable. The
+           thumb slides to the pressed segment from the two custom properties
+           set here; see `.mmm-seg` in mmm.css. */
+        <div
+          aria-label={t('mmmMe.viewAs', 'View as')}
+          className="mmm-seg"
+          role="group"
+          style={{ '--seg-count': data.availableRoles.length, '--seg-index': Math.max(0, data.availableRoles.indexOf(data.role)) } as CSSProperties}
+        >
+          <span aria-hidden="true" className="mmm-seg-thumb" />
           {data.availableRoles.map((role) => (
             <button
               aria-pressed={role === data.role}
-              className="mmm-chip"
+              className="mmm-seg-item"
               key={role}
               onClick={() => pickRole(role)}
-              style={{ backdropFilter: 'none' }}
               type="button"
             >
               {translateRoleLabel(t, role)}
@@ -454,11 +464,19 @@ export function MmmMe({ data }: { data: MmmMeData }) {
           <div style={{ fontWeight: 600, fontSize: '0.95rem', color: 'var(--ink)', marginBottom: 3 }}>{data.page.name}</div>
           <div style={{ fontSize: '0.9375rem', color: 'var(--ink-3)', lineHeight: 1.5, marginBottom: 12 }}>{data.page.status.split(' · ').map((part) => translateMeStatLabel(t, part)).join(' · ')}</div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <Link className="mmm-btn-primary" href="/app/me/profiles" style={{ flex: 1, display: 'block', textDecoration: 'none' }}>{t('mmmMe.page.edit', 'Edit page')}</Link>
-            {/* `kind` is 'artists' | 'venues', and both now have a pane inside the
-                shell — so previewing your own page no longer means leaving the
-                design to look at it. */}
-            <Link className="mmm-btn-ghost" href={`/app/${data.page.kind}/${data.page.slug}`}>{t('mmmMe.page.preview', 'Preview')}</Link>
+            {data.page.kind === 'advertising' ? (
+              /* The advertiser has no public page to preview and no profile
+                 editor: its one surface is the campaign dashboard (row 510). */
+              <Link className="mmm-btn-primary" href="/app/me/advertising" style={{ flex: 1, display: 'block', textDecoration: 'none' }}>{t('mmmMe.page.openDashboard', 'Open dashboard')}</Link>
+            ) : (
+              <>
+                <Link className="mmm-btn-primary" href="/app/me/profiles" style={{ flex: 1, display: 'block', textDecoration: 'none' }}>{t('mmmMe.page.edit', 'Edit page')}</Link>
+                {/* `kind` is 'artists' | 'venues', and both now have a pane inside the
+                    shell — so previewing your own page no longer means leaving the
+                    design to look at it. */}
+                <Link className="mmm-btn-ghost" href={`/app/${data.page.kind}/${data.page.slug}`}>{t('mmmMe.page.preview', 'Preview')}</Link>
+              </>
+            )}
           </div>
         </div>
       )}

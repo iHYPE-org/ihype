@@ -129,6 +129,7 @@ export function translateRoleLabel(t: Translate, role: string): string {
     case 'fan': return t('mmmMe.role.fan', 'Fan');
     case 'artist': return t('mmmMe.role.artist', 'Artist');
     case 'venue': return t('mmmMe.role.venue', 'Venue');
+    case 'advertiser': return t('mmmMe.role.advertiser', 'Advertiser');
     default: return role;
   }
 }
@@ -152,6 +153,11 @@ export function translateMeStatLabel(t: Translate, label: string): string {
     case 'Gate 30d': return t('mmmMe.stat.gate30d', 'Gate 30d');
     case 'Shows booked': return t('mmmMe.stat.showsBooked', 'Shows booked');
     case 'Capacity': return t('mmmMe.stat.capacity', 'Capacity');
+    case 'Live campaigns': return t('mmmMe.stat.liveCampaigns', 'Live campaigns');
+    case 'Impressions 30d': return t('mmmMe.stat.impressions30d', 'Impressions 30d');
+    case 'Paid': return t('mmmMe.stat.paid', 'Paid');
+    case 'Refunded': return t('mmmMe.stat.refunded', 'Refunded');
+    case 'Advertiser account': return t('mmmMe.status.advertiserAccount', 'Advertiser account');
     case 'Verified': return t('mmmMe.status.verified', 'Verified');
     case 'Unverified': return t('mmmMe.status.unverified', 'Unverified');
     default: return label;
