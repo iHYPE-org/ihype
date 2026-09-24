@@ -381,6 +381,7 @@ export function meActivityFallbackTitle(t: Translate, english: string): string {
     case 'Ticket order': return t('mmmMe.activity.ticketOrder', 'Ticket order');
     case 'Show payout': return t('mmmMe.activity.showPayout', 'Show payout');
     case 'Show settlement': return t('mmmMe.activity.showSettlement', 'Show settlement');
+    case 'Sponsorship': return t('mmmMe.activity.sponsorship', 'Sponsorship');
     default: return english;
   }
 }

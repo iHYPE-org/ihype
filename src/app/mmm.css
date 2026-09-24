@@ -553,6 +553,74 @@ html:has(.mmm-frame) {
   color: var(--chip-on-ink);
   font-weight: 700;
 }
+/* ══ THE SEGMENTED CONTROL ═══════════════════════════════════════════════
+   A choice of VIEW, not of destination (2026-09-24, DESIGN_SYNC row 510;
+   owner: "on the Me section, choosing different user types looks like the
+   same nav as the main choices — give those a different look"). The section
+   strip's pills are separate objects because each is a place to go; this is
+   ONE track with a raised thumb that slides to the chosen segment — iOS's
+   UISegmentedControl on the default theme, the console's plate with its lit
+   segment on the character themes, both from the --seg-* tokens. The thumb
+   is positioned from two custom properties the markup sets, --seg-count and
+   --seg-index, so the slide is one CSS transition and no measurement.
+   Percentages in `left`/`width` resolve against the padding box, which is
+   why the arithmetic subtracts the pad on both sides. */
+.mmm-seg {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  width: 100%;
+  max-width: 420px;
+  min-height: 44px;
+  padding: var(--seg-pad);
+  margin: 0 0 16px;
+  border: 1px solid var(--seg-track-edge);
+  border-radius: var(--seg-radius);
+  background: var(--seg-track);
+}
+.mmm-seg-thumb {
+  position: absolute;
+  z-index: 0;
+  top: var(--seg-pad);
+  bottom: var(--seg-pad);
+  left: calc(var(--seg-pad) + (100% - 2 * var(--seg-pad)) * var(--seg-index, 0) / var(--seg-count, 1));
+  width: calc((100% - 2 * var(--seg-pad)) / var(--seg-count, 1));
+  border-radius: var(--seg-thumb-radius);
+  background: var(--seg-thumb);
+  box-shadow: var(--seg-thumb-shadow);
+  pointer-events: none;
+  transition: left var(--duration-default) var(--ease-out);
+}
+.mmm-seg-item {
+  position: relative;
+  z-index: 1;
+  /* 44 outside whatever the theme's pad is: the console sets --seg-pad to 0. */
+  min-height: calc(44px - 2 * var(--seg-pad));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--seg-thumb-radius);
+  background: transparent;
+  color: var(--seg-ink);
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    color var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
+}
+.mmm-seg-item[aria-pressed='true'] { color: var(--seg-on-ink); font-weight: 700; }
+.mmm-seg-item:active { transform: scale(.97); }
+.mmm-seg-item:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
 /* Charts' and Radio's chip rows — dataset, then the area scope or the genre
    list under it. `.mmm-chip-genre` was a MONO variant of the chip with .04em
    tracking; it is the plain chip now (one vocabulary, above) and the class
@@ -761,7 +829,28 @@ html:has(.mmm-frame) {
   padding: 0;
   transition: none;
   overscroll-behavior: auto;
+  /* A pane arrives rather than appears (row 510): a 10px rise over
+     --duration-medium, replayed per route because MmmShell keys this element
+     on the pathname. The durations are the reduced-motion tokens, so a member
+     who asked for less motion gets none. */
+  animation: mmmPaneIn var(--duration-medium) var(--ease-out) both;
 }
+@keyframes mmmPaneIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+/* Stat tiles settle in one after another — the delays are fractions of the
+   motion tokens, so reduced motion zeroes them too rather than leaving a
+   tile invisible for the length of its delay. */
+@keyframes mmmRise {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.mmm-stat-grid > * { animation: mmmRise var(--duration-medium) var(--ease-out) both; }
+.mmm-stat-grid > :nth-child(2) { animation-delay: calc(var(--duration-fast) * .4); }
+.mmm-stat-grid > :nth-child(3) { animation-delay: calc(var(--duration-fast) * .8); }
+.mmm-stat-grid > :nth-child(4) { animation-delay: calc(var(--duration-fast) * 1.2); }
+.mmm-stat-grid > :nth-child(n + 5) { animation-delay: calc(var(--duration-fast) * 1.6); }
 
 /* ── MUSIC control row: tabs + universal search ───────────────────────────
    Deliberately NOT called `.mmm-control-row`. That name belonged to the MAP
@@ -1402,7 +1491,17 @@ html:has(.mmm-frame) {
   line-height: 1.5;
   color: var(--ink-2);
 }
-.mmm-loading { border-style: dotted; color: var(--ink-3); }
+.mmm-loading {
+  border-style: dotted;
+  color: var(--ink-3);
+  /* A slow breath while the plate waits, so "filling" and "nothing here" are
+     one shape with one difference a member can see without reading. */
+  animation: mmmPulse 1.6s var(--ease-in-out) infinite;
+}
+@keyframes mmmPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .55; }
+}
 
 /* ── MAP layer search ─────────────────────────────────────────────────────
    Sits under the layer chips on the venues and artists layers. It reuses the
@@ -1867,6 +1966,8 @@ input.mmm-row-title { min-height: 44px; }
     transform var(--duration-fast) var(--ease-out),
     box-shadow var(--duration-fast) var(--ease-out),
     border-color var(--duration-fast) var(--ease-out),
+    background-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out),
     filter var(--duration-fast) var(--ease-out);
 }
 @media (hover: hover) {
@@ -1875,9 +1976,12 @@ input.mmm-row-title { min-height: 44px; }
     border-color: var(--key-edge-hover);
     filter: brightness(var(--key-hover-dim));
   }
+  /* The lit key LIFTS under the pointer and its accent cast deepens (row 510);
+     brightness alone read as a hyperlink changing colour. */
   .mmm-btn-primary:hover {
     filter: brightness(1.06);
-    box-shadow: var(--cta-shadow);
+    transform: translateY(-1px);
+    box-shadow: var(--cta-shadow-hover);
   }
   .mmm-row:hover { background: var(--ink-a10); }
 }
@@ -2345,7 +2449,10 @@ input.mmm-row-title { min-height: 44px; }
    duration zeroing in globals.css, which cannot disable a keyframe. The arc's
    own reduced-motion rules went with the arc. */
 @media (prefers-reduced-motion: reduce) {
-  .mmm-sheet { animation: none; }
+  .mmm-sheet,
+  .mmm-loading,
+  .mmm-pane > .mmm-migrated-surface,
+  .mmm-stat-grid > * { animation: none; }
 }
 
 /* The design system's ONE breakpoint (`MOBILE.md`) has nothing left to move.
@@ -2430,7 +2537,12 @@ input.mmm-row-title { min-height: 44px; }
   white-space: nowrap;
   scroll-snap-align: start;
   cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
 }
+
 
 /* ── pane ── */
 .mmm-strip[data-variant='pane'] {

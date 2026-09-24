@@ -445,7 +445,9 @@ export function MmmShell({
                 scoped beneath .mmm-migrated-surface. This nested surface
                 activates those paint-only aliases without reviving any retired
                 layout or chrome. */}
-            <div className="mmm-migrated-surface">{children}</div>
+            {/* Keyed on the pathname so `.mmm-migrated-surface`'s enter
+                animation replays on every route (row 510). */}
+            <div className="mmm-migrated-surface" key={pathname}>{children}</div>
           </div>
         )}
 

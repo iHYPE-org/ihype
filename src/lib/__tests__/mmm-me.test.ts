@@ -15,6 +15,13 @@ describe('resolveAvailableRoles', () => {
     expect(resolveAvailableRoles(['ARTIST', 'VENUE'])).toEqual(['fan', 'artist', 'venue']);
   });
 
+  it('offers advertiser as a view when the account has an AdvertiserAccount, from the account and never from a profile type (row 510)', () => {
+    expect(resolveAvailableRoles([], true)).toEqual(['fan', 'advertiser']);
+    expect(resolveAvailableRoles(['ARTIST'], true)).toEqual(['fan', 'artist', 'advertiser']);
+    expect(resolveAvailableRoles(['ADVERTISER'])).toEqual(['fan']);
+    expect(MMM_ME_ROLES).toContain('advertiser');
+  });
+
   it('never invents a promoter role — promoting needs no account type (§3)', () => {
     for (const types of [[], ['ARTIST'], ['VENUE'], ['ARTIST', 'VENUE'], ['DJ']]) {
       expect(resolveAvailableRoles(types)).not.toContain('promoter');
