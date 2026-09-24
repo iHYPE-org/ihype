@@ -2220,6 +2220,20 @@ async function main() {
     assert(body.recipients >= 1,
       `fan mail resolved ${body.recipients} recipients with one confirmed subscriber on the list`);
 
+    /* Two rules, asserted separately so neither depends on whether this
+       runner has a mail provider (DESIGN_SYNC row 513). (1) A broadcast that
+       reached nobody gives the week back — a mail outage must not cost the
+       owner their one send. (2) A week that IS spent refuses a second send.
+       This item used to assert (2) off the send above, which only held while
+       the week was recorded whatever the provider did. */
+    const afterSend = await prisma.profile.findUnique({ where: { id: artistProfile.id }, select: { fanMailLastSentAt: true } });
+    if (body.sent === 0) {
+      assert(afterSend?.fanMailLastSentAt == null,
+        `a broadcast that delivered nothing still spent the week (fanMailLastSentAt ${afterSend?.fanMailLastSentAt?.toISOString()})`);
+    } else {
+      assert(afterSend?.fanMailLastSentAt != null, 'a delivered broadcast did not record the week');
+    }
+    await prisma.profile.update({ where: { id: artistProfile.id }, data: { fanMailLastSentAt: new Date() } });
     const again = await api(`/api/profile/${artistProfile.id}/fan-mail`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -2228,7 +2242,7 @@ async function main() {
     });
     assert(again.status === 429, `a second broadcast inside 7 days answered ${again.status}, expected 429`);
 
-    return `${body.recipients} recipient(s) resolved including the confirmed subscriber (${body.sent} delivered — no mail provider here); a second send inside 7 days is refused 429`;
+    return `${body.recipients} recipient(s) resolved including the confirmed subscriber (${body.sent} delivered${body.sent === 0 ? ' — no mail provider here, and the week was given back' : ''}); a second send inside a spent week is refused 429`;
   });
 
   // ── 37-41. The journeys the health board called UNCOVERED ─────────────────
