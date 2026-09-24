@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import type { LoginLinkError } from '@/lib/login-link-error';
 import type { FormEvent } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -67,13 +68,20 @@ import { useI18n } from '@/components/I18nProvider';
 export function LoginScreen({
   initialIdentifier = '',
   justRegistered = false,
+  linkError,
 }: {
   initialIdentifier?: string;
   justRegistered?: boolean;
+  linkError?: LoginLinkError;
 }) {
   const { t } = useI18n();
   const [email, setEmail] = useState(initialIdentifier);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(() => {
+    if (linkError === 'expired') return t('authLogin.linkExpired', 'That sign-in link has expired. Enter your email for a new one.');
+    if (linkError === 'invalid') return t('authLogin.linkInvalid', 'That sign-in link is not valid any more — it may already have been used. Enter your email for a new one.');
+    if (linkError === 'failed') return t('authLogin.linkFailed', 'Sign-in could not be finished just now. Try the link again in a minute, or ask for a new one.');
+    return '';
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sent, setSent] = useState(false);
   const [webauthnAvailable, setWebauthnAvailable] = useState(false);

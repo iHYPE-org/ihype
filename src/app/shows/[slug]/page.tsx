@@ -41,20 +41,29 @@ import { canViewShow, isTicketingOpen, resolveShowSplits, splitFaceValueCents } 
 import { buildShowJsonLd } from '@/lib/show-jsonld';
 import { showReminderLinkKeys } from '@/lib/show-reminder';
 
-const getShowMeta = cache((slug: string) =>
+/* ONE READ OF THE SHOW PER REQUEST, AND NEVER A WHOLE PROFILE ROW
+   (2026-09-24, DESIGN_SYNC row 513).
+
+   The page used to read the show a second time through a `cache()` it built
+   INSIDE the component (a new cache on every render, so it shared nothing
+   with `generateMetadata`), and it included the venue, headliner and promoter
+   as whole Profile rows: ~40 text columns each, among them the inline base64
+   verification document that `/api/verify` stores up to 8 MB large. This page
+   renders a handful of fields from each; the selects below are those fields,
+   and tsc names any the page reaches for that is not here. */
+const getShowPage = cache((slug: string) =>
   db.show.findUnique({
     where: { slug },
-    select: {
-      title: true,
-      description: true,
-      status: true,
-      startsAt: true,
-      timeZone: true,
-      posterImage: true,
-      hypeCount: true,
-      venueProfile:     { select: { name: true, city: true, stateRegion: true } },
-      headlinerProfile: { select: { name: true } },
-    }
+    include: {
+      venueProfile: {
+        select: {
+          id: true, slug: true, name: true, ownerId: true,
+          addressLine1: true, city: true, stateRegion: true, postalCode: true, country: true,
+        },
+      },
+      headlinerProfile: { select: { id: true, slug: true, name: true, ownerId: true } },
+      promoterProfile: { select: { id: true, slug: true, name: true } },
+    },
   })
 );
 
@@ -62,7 +71,7 @@ export async function generateMetadata(
   { params }: { params: Promise<{ slug: string }> }
 ): Promise<Metadata> {
   const { slug } = await params;
-  const show = await getShowMeta(slug);
+  const show = await getShowPage(slug);
 
   if (!show) return { title: 'Show · iHYPE' };
 
@@ -120,7 +129,7 @@ export default async function ShowDetailPage({
   searchParams
 }: {
   params: Promise<{ slug: string }>;
-  searchParams?: Promise<{ affiliate?: string | string[]; ref?: string | string[] }>;
+  searchParams?: Promise<{ affiliate?: string | string[]; ref?: string | string[]; checkout?: string | string[] }>;
 }) {
   const session = await auth();
   const { locale, t } = await getServerI18n();
@@ -128,18 +137,15 @@ export default async function ShowDetailPage({
   const resolvedSearchParams = searchParams ? await searchParams : {};
   const affiliateId =
     typeof resolvedSearchParams.affiliate === 'string' ? resolvedSearchParams.affiliate : undefined;
+  // Stripe Checkout returns the buyer here with `?checkout=success|cancelled`
+  // (`src/lib/stripe.ts`), and until 2026-09-24 nothing read it: a buyer who
+  // had just paid was shown the same purchase form again (row 513).
+  const checkoutReturn =
+    resolvedSearchParams.checkout === 'success' ? 'success'
+      : resolvedSearchParams.checkout === 'cancelled' ? 'cancelled'
+        : null;
   const refHexId =
     typeof resolvedSearchParams.ref === 'string' ? resolvedSearchParams.ref : undefined;
-  const getShowPage = cache((s: string) =>
-    db.show.findUnique({
-      where: { slug: s },
-      include: {
-        venueProfile: true,
-        headlinerProfile: true,
-        promoterProfile: true,
-      }
-    })
-  );
   const show = await getShowPage(slug);
 
   if (!show) return notFound();
@@ -176,7 +182,20 @@ export default async function ShowDetailPage({
   ]);
 
   const visibility = getShowVisibilitySignals(show);
-  const canWatch = await canViewerAccessShowMedia({
+
+  /* Every read below depends only on `show`, the session and the viewer row
+     above, so they start together and each site awaits its own (2026-09-24,
+     DESIGN_SYNC row 513). They ran one after another before, six round trips
+     in series on the page that sells tickets. */
+  /* The organiser set, not the creator alone: the cancel route, the door and
+     the edit route admit the venue's owner and the headliner's owner too, and
+     the owner block is where those links live — a venue could cancel its own
+     show but never saw the link (DESIGN_SYNC row 446). */
+  const isShowOwner = isShowOrganizer(session, show);
+  const DEMAND_WINDOW_MS = 12 * 60 * 60 * 1000;
+  const DEMAND_BUCKETS = 8;
+  const demandWindowStart = new Date(Date.now() - DEMAND_WINDOW_MS);
+  const canWatchP = canViewerAccessShowMedia({
     showId: show.id,
     isTicketed: show.isTicketed,
     creatorId: show.creatorId,
@@ -184,6 +203,86 @@ export default async function ShowDetailPage({
     role: currentFan?.role ?? session?.user?.role,
     email: currentFan?.email ?? session?.user?.email,
   });
+  const socialP = Promise.all([
+    loadShowRsvpState(show.id, session?.user?.id),
+    loadShowSetlist(show.id),
+    session?.user?.id
+      ? db.notification.findFirst({
+          where: {
+            userId: session.user.id,
+            type: 'show_reminder_pending',
+            link: { in: showReminderLinkKeys(show.slug, show.id) },
+          },
+          select: { id: true },
+        }).catch(() => null)
+      : Promise.resolve(null),
+  ]);
+  const recentTicketOrdersP = isShowOwner || isAdminSession(session)
+    ? db.ticketOrder.findMany({
+        where: { showId: show.id },
+        orderBy: { createdAt: 'desc' },
+        take: 6,
+        select: {
+          id: true,
+          status: true,
+          totalTaxCents: true,
+          quantity: true,
+          totalChargeCents: true,
+          subtotalCents: true,
+          venuePayoutCents: true,
+          artistPayoutCents: true,
+          promoterPayoutCents: true,
+          tickets: { select: { reassignCount: true } },
+        },
+      })
+    : [];
+  const userShowHypeP = session?.user?.id
+    ? db.hypeEvent.findUnique({ where: { userId_showId: { userId: session.user.id, showId: show.id } }, select: { createdAt: true } })
+    : Promise.resolve(null);
+  const demandOrdersP = show.isTicketed
+    ? db.ticketOrder.findMany({
+        where: { showId: show.id, createdAt: { gte: demandWindowStart }, status: { not: 'VOID' } },
+        select: { createdAt: true, quantity: true },
+      })
+    : [];
+  const venueCompsP = show.isTicketed && show.venueProfileId
+    ? (async () => {
+        const siblings = await db.show.findMany({
+          where: {
+            venueProfileId: show.venueProfileId,
+            isTicketed: true,
+            id: { not: show.id },
+            status: { in: ['SCHEDULED', 'LIVE', 'ENDED'] },
+          },
+          orderBy: { hypeCount: 'desc' },
+          take: 3,
+          select: { id: true, title: true, hypeCount: true },
+        });
+        const combined = [
+          { id: show.id, title: `${show.title} (this show)`, hypeCount: show.hypeCount, isCurrent: true },
+          ...siblings.map((s) => ({ ...s, isCurrent: false })),
+        ].sort((a, b) => b.hypeCount - a.hypeCount);
+        const tiers = ['isFire', 'isHot', 'isWarm', 'isCold'] as const;
+        return combined.map((c, i) => {
+          const tier = tiers[Math.min(i, tiers.length - 1)];
+          return {
+            id: c.id,
+            title: c.title,
+            isCurrent: c.isCurrent,
+            isFire: tier === 'isFire',
+            isHot: tier === 'isHot',
+            isWarm: tier === 'isWarm',
+            isCold: tier === 'isCold',
+          };
+        });
+      })()
+    : [];
+  // A read that rejects is awaited, and thrown, at its own site below; this
+  // only stops the ones never reached from surfacing as unhandled rejections.
+  for (const started of [canWatchP, socialP, recentTicketOrdersP, userShowHypeP, demandOrdersP, venueCompsP]) {
+    void Promise.resolve(started).catch(() => undefined);
+  }
+  const canWatch = await canWatchP;
   const rawProductionPlan = parseShowProductionPlan(show.productionPlan);
   const productionPlan = canWatch && rawProductionPlan
     ? protectShowProductionPlan(rawProductionPlan, show.id)
@@ -245,65 +344,18 @@ export default async function ShowDetailPage({
   // The reminder state is the same lookup GET /api/shows/[id]/remind makes;
   // the page used to hardcode `initialReminded={false}`, so a fan who had set
   // a reminder was offered the button again on every visit (2026-09-06 audit).
-  const [rsvp, setlistTracks, viewerReminder] = await Promise.all([
-    loadShowRsvpState(show.id, session?.user?.id),
-    loadShowSetlist(show.id),
-    session?.user?.id
-      ? db.notification.findFirst({
-          where: {
-            userId: session.user.id,
-            type: 'show_reminder_pending',
-            link: { in: showReminderLinkKeys(show.slug, show.id) },
-          },
-          select: { id: true },
-        }).catch(() => null)
-      : Promise.resolve(null),
-  ]);
+  const [rsvp, setlistTracks, viewerReminder] = await socialP;
   const rsvpCount = rsvp.count;
   const viewerGoing = rsvp.viewerGoing;
   const viewerReminded = Boolean(viewerReminder);
 
-  /* The organiser set, not the creator alone: the cancel route, the door and
-     the edit route admit the venue's owner and the headliner's owner too, and
-     this block is where those links live — a venue could cancel its own show
-     but never saw the link (DESIGN_SYNC row 446). */
-  const isShowOwner = isShowOrganizer(session, show);
+  const recentTicketOrders = await recentTicketOrdersP;
 
-  const recentTicketOrders = isShowOwner || isAdminSession(session)
-    ? await db.ticketOrder.findMany({
-        where: { showId: show.id },
-        orderBy: { createdAt: 'desc' },
-        take: 6,
-        select: {
-          id: true,
-          status: true,
-          totalTaxCents: true,
-          quantity: true,
-          totalChargeCents: true,
-          subtotalCents: true,
-          venuePayoutCents: true,
-          artistPayoutCents: true,
-          promoterPayoutCents: true,
-          tickets: { select: { reassignCount: true } },
-        },
-      })
-    : [];
-
-  const userShowHype = session?.user?.id
-    ? await db.hypeEvent.findUnique({ where: { userId_showId: { userId: session.user.id, showId: show.id } }, select: { createdAt: true } })
-    : null;
+  const userShowHype = await userShowHypeP;
 
   // Demand sparkline — real ticket-order velocity over the last 12h, bucketed
   // into 8 windows (no fabricated data; all-cold when there's no order signal).
-  const DEMAND_WINDOW_MS = 12 * 60 * 60 * 1000;
-  const DEMAND_BUCKETS = 8;
-  const demandWindowStart = new Date(Date.now() - DEMAND_WINDOW_MS);
-  const demandOrders = show.isTicketed
-    ? await db.ticketOrder.findMany({
-        where: { showId: show.id, createdAt: { gte: demandWindowStart }, status: { not: 'VOID' } },
-        select: { createdAt: true, quantity: true },
-      })
-    : [];
+  const demandOrders = await demandOrdersP;
   const demandBucketMs = DEMAND_WINDOW_MS / DEMAND_BUCKETS;
   const demandBucketValues = Array.from({ length: DEMAND_BUCKETS }, () => 0);
   for (const order of demandOrders) {
@@ -330,38 +382,7 @@ export default async function ShowDetailPage({
   // Venue comps — real sibling shows at the same venue, ranked by hype count
   // (no fabricated demand numbers; falls back to an empty list when the venue
   // has no other ticketed shows yet).
-  const venueComps = show.isTicketed && show.venueProfileId
-    ? await (async () => {
-        const siblings = await db.show.findMany({
-          where: {
-            venueProfileId: show.venueProfileId,
-            isTicketed: true,
-            id: { not: show.id },
-            status: { in: ['SCHEDULED', 'LIVE', 'ENDED'] },
-          },
-          orderBy: { hypeCount: 'desc' },
-          take: 3,
-          select: { id: true, title: true, hypeCount: true },
-        });
-        const combined = [
-          { id: show.id, title: `${show.title} (this show)`, hypeCount: show.hypeCount, isCurrent: true },
-          ...siblings.map((s) => ({ ...s, isCurrent: false })),
-        ].sort((a, b) => b.hypeCount - a.hypeCount);
-        const tiers = ['isFire', 'isHot', 'isWarm', 'isCold'] as const;
-        return combined.map((c, i) => {
-          const tier = tiers[Math.min(i, tiers.length - 1)];
-          return {
-            id: c.id,
-            title: c.title,
-            isCurrent: c.isCurrent,
-            isFire: tier === 'isFire',
-            isHot: tier === 'isHot',
-            isWarm: tier === 'isWarm',
-            isCold: tier === 'isCold',
-          };
-        });
-      })()
-    : [];
+  const venueComps = await venueCompsP;
 
   /* The door time is the VENUE'S clock, and the clock is NAMED — this is the
      page that sells the ticket, and before `Show.timeZone` it rendered the
@@ -681,7 +702,7 @@ export default async function ShowDetailPage({
                     <div className="badge">{t('showsSlugPage.productionPlanBadge', 'Production plan')}</div>
                     <h2>{t('showsSlugPage.promoterRunOfShow', 'Promoter run of show')}</h2>
                     <p className="kicker">
-                      {t('showsSlugPage.productionPlanDesc', 'This show was assembled from artist songs and videos, recorded voice-over overdubs, sampler pads, and ad breaks inserted after every three media slots.')}
+                      {t('showsSlugPage.productionPlanAudioDesc', 'This show was assembled from artist tracks, recorded voice-over overdubs, sampler pads, and ad breaks inserted after every three media slots.')}
                     </p>
                   </div>
                 </div>
@@ -924,6 +945,24 @@ export default async function ShowDetailPage({
                   ))}
                 </div>
               </div>
+
+              {checkoutReturn && (
+                <p
+                  className="meta"
+                  data-checkout={checkoutReturn}
+                  role="status"
+                  style={{ margin: '0 0 12px', padding: '12px 16px', borderRadius: 10, background: 'var(--bg-2)', color: 'var(--ink)' }}
+                >
+                  {checkoutReturn === 'success' ? (
+                    <>
+                      {t('showsSlugPage.checkoutSuccess', 'Payment received. Your tickets reach your wallet within a minute, and a confirmation email is on its way.')}{' '}
+                      <Link href="/app/tickets">{t('showsSlugPage.checkoutWallet', 'Open your tickets')}</Link>
+                    </>
+                  ) : (
+                    t('showsSlugPage.checkoutCancelled', 'Checkout was cancelled, and nothing was charged.')
+                  )}
+                </p>
+              )}
 
               {!isPaymentProcessingConfigured() ? (
                 <div style={{ border: '1px solid rgba(var(--role-venue-rgb),.3)', borderRadius: 10, padding: 16, background: 'rgba(var(--role-venue-rgb),.06)' }}>

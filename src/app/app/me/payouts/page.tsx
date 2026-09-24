@@ -38,7 +38,7 @@ const TABS: { id: Tab; label: string }[] = [
 export default async function PayoutsHubPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ tab?: string }>;
+  searchParams?: Promise<{ tab?: string; payout?: string }>;
 }) {
   const t = await getServerT();
   const session = await auth();
@@ -156,6 +156,15 @@ export default async function PayoutsHubPage({
               releasedTotal={releasedTotals?._count._all ?? 0}
               releasedTotalCents={releasedTotals?._sum.amountCents ?? 0}
             />}
+      {/* Stripe's Connect flow returns here with `?payout=connected|incomplete`
+          (the return route), and until 2026-09-24 nothing read it (row 513). */}
+      {tab === 'settings' && (params?.payout === 'connected' || params?.payout === 'incomplete') && (
+        <p className="meta" data-payout-return={params.payout} role="status" style={{ margin: '0 0 12px' }}>
+          {params.payout === 'connected'
+            ? t('payoutsHub.connectReturned', 'Payout account connected. What you are owed is sent to it once each show has settled.')
+            : t('payoutsHub.connectIncomplete', 'Payout setup is not finished yet. Pick up where you left off below.')}
+        </p>
+      )}
       {tab === 'settings' && <PayoutSettingsPanel profiles={settingsProfiles} stripeReady={stripeReady} />}
       {tab === 'show' && <PayoutShowsPanel shows={shows} />}
     </div>

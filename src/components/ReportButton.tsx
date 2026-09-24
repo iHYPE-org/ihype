@@ -3,7 +3,7 @@
 import { useEffect, useId, useState } from 'react';
 import { useI18n } from '@/components/I18nProvider';
 
-type ReportTargetType = 'profile' | 'show' | 'media' | 'ticket';
+type ReportTargetType = 'profile' | 'show' | 'media' | 'ticket' | 'comment';
 
 type ReportButtonProps = {
   targetType: ReportTargetType;
@@ -17,7 +17,7 @@ type ReportButtonProps = {
 /**
  * Subtle flag-icon report control. Opens a minimal confirm/reason dialog and
  * POSTs to /api/content-reports (src/app/api/content-reports/route.ts) —
- * targetType must be one of that route's allowed values: 'profile' | 'show' | 'media' | 'ticket'.
+ * targetType must be one of that route's allowed values: 'profile' | 'show' | 'media' | 'ticket' | 'comment'.
  */
 export function ReportButton({ targetType, targetId, entityLabel, className }: ReportButtonProps) {
   const { t } = useI18n();

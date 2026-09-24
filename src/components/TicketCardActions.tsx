@@ -80,7 +80,12 @@ export function TicketCardActions({
         setError(data.error ?? t('ticketCardActions.transferErrorFallback', 'Transfer failed'));
         return;
       }
-      setDone(t('ticketCardActions.transferDoneMessage', 'Transferred. The recipient has been emailed their tickets.'));
+      // `emailed: false` means the tickets are already in the recipient's
+      // iHYPE wallet and only the notice failed (row 513) — say that, not
+      // that an email went.
+      setDone(data.emailed === false
+        ? t('ticketCardActions.transferDoneNoEmail', 'Transferred. The tickets are in their iHYPE wallet, but the email notice could not be sent — let them know.')
+        : t('ticketCardActions.transferDoneMessage', 'Transferred. The recipient has been emailed their tickets.'));
       router.refresh();
     } catch {
       setError(t('ticketCardActions.networkError', 'Network error'));

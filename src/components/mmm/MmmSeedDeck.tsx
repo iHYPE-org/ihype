@@ -273,6 +273,11 @@ export function MmmSeedDeck({
 
         <div
           className="mmm-deck-card"
+          /* The item's id, for the e2e: the card is ONE element reused for
+             every item and its controls are named by title, so two tracks
+             with the same title (a spec retried in one run uploads its track
+             twice) read as the same card to anything but the id. */
+          data-item={item.id}
           onPointerCancel={() => { drag.current = null; setDx(0); setDy(0); }}
           onPointerDown={(event) => {
             drag.current = { x: event.clientX, y: event.clientY };

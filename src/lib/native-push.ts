@@ -1,5 +1,10 @@
 import { db } from '@/lib/db';
 import { readRuntimeEnv } from '@/lib/runtime-env';
+import { log } from '@/lib/logger';
+
+/* Every vendor call here is bounded (2026-09-24, DESIGN_SYNC row 513): a
+   stalled FCM held the request that triggered the notice open with it. */
+const FCM_TIMEOUT_MS = 10_000;
 
 type NativePushPayload = {
   title: string;
@@ -65,9 +70,15 @@ async function getFcmAccessToken(clientEmail: string, privateKeyPem: string): Pr
       grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
       assertion: jwt,
     }),
+    signal: AbortSignal.timeout(FCM_TIMEOUT_MS),
   });
 
-  if (!res.ok) return null;
+  if (!res.ok) {
+    // The status and Google's reason are the whole diagnosis: a revoked
+    // service account, a mis-pasted key and a wrong project all land here.
+    const reason = await res.text().catch(() => '');
+    throw new Error(`FCM token endpoint answered HTTP ${res.status}: ${reason.slice(0, 300)}`);
+  }
   const data = (await res.json()) as { access_token?: string };
   return data.access_token ?? null;
 }
@@ -156,13 +167,18 @@ export async function sendNativePushNotification(userId: string, payload: Native
   });
   if (devices.length === 0) return;
 
-  const accessToken = await getFcmAccessToken(clientEmail, privateKey).catch(() => null);
-  if (!accessToken) {
-    console.warn('[native-push] failed to obtain an FCM access token');
-    return;
-  }
+  /* To Sentry, never only to the Worker log (row 513). Push is a headline
+     capability of the apps, the readiness check tests only that three secrets
+     exist, and a doubly-escaped key or an unlinked APNs key reads healthy
+     everywhere while nothing arrives. */
+  const accessToken = await getFcmAccessToken(clientEmail, privateKey).catch((error) => {
+    log.error('[native-push]', error, 'FCM access token exchange failed — no native push will deliver');
+    return null;
+  });
+  if (!accessToken) return;
 
   const staleIds: string[] = [];
+  const failures: string[] = [];
 
   await Promise.allSettled(
     devices.map(async (device) => {
@@ -180,19 +196,26 @@ export async function sendNativePushNotification(userId: string, payload: Native
               ...(payload.link ? { data: { link: payload.link } } : {}),
             },
           }),
+          signal: AbortSignal.timeout(FCM_TIMEOUT_MS),
         });
 
         // FCM v1 returns 404 for a token that's no longer registered.
         if (res.status === 404) {
           staleIds.push(device.id);
         } else if (!res.ok) {
-          console.warn('[native-push] send failed:', res.status, await res.text().catch(() => ''));
+          failures.push(`HTTP ${res.status} ${(await res.text().catch(() => '')).slice(0, 200)}`);
         }
       } catch (err) {
-        console.warn('[native-push] send error:', err);
+        failures.push(err instanceof Error ? err.message : String(err));
       }
     })
   );
+
+  // One report per notice, however many devices refused it, so one member's
+  // bad token cannot flood Sentry.
+  if (failures.length > 0) {
+    log.error('[native-push]', new Error(failures[0]), `FCM refused ${failures.length} of ${devices.length} device send(s)`);
+  }
 
   if (staleIds.length > 0) {
     await db.nativeDeviceToken.deleteMany({ where: { id: { in: staleIds } } }).catch(() => null);

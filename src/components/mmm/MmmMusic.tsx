@@ -3,7 +3,7 @@
 import { formatNumber } from '@/lib/format-locale';
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useMediaPlayer } from '@/components/GlobalMediaPlayer';
+import { useMediaPlayer, useMediaPlayerClock } from '@/components/GlobalMediaPlayer';
 import { useRouter } from 'next/navigation';
 import { MmmSearch } from './MmmSearch';
 import { useRegisterPlayIntent, useRegisterQueue } from '@/components/mmm/MmmPlayIntent';
@@ -254,6 +254,24 @@ function DemoHeader({ description }: { description: string }) {
  * DESIGN_SYNC rows 509 and 512.)
  */
 const TAB_CACHE_TTL_MS = 60_000;
+
+/* THE MEMBER'S OWN LIBRARY IS NEVER "FRESH FOR A MINUTE" (row 513). A rename,
+   a delete, a heart, an add-to-playlist from the full player or the free-use
+   crate all change these reads, from a dozen writers in five components; a
+   60 s TTL — or a router replaying the page's server payload on Back — put the
+   pre-write rows back on screen with nothing to correct them. Rather than ask
+   every writer to remember an invalidation (the drift this repository keeps
+   recording), these revalidate on every arrival once their reading is more
+   than two seconds old: a fresh document load is not fetched twice, and a
+   replayed or cached reading always is. Stations, charts and recommendations
+   keep the minute. */
+const OWN_LIBRARY_READS = ['/api/fan-favorites', '/api/likes', '/api/fan-playlists', '/api/media-listens'];
+const OWN_LIBRARY_TTL_MS = 2_000;
+function tabPayloadTtl(url: string): number {
+  return OWN_LIBRARY_READS.some((prefix) => url === prefix || url.startsWith(`${prefix}?`))
+    ? OWN_LIBRARY_TTL_MS
+    : TAB_CACHE_TTL_MS;
+}
 const tabPayloadCache = new Map<string, { payload: unknown; at: number }>();
 const tabPayloadInFlight = new Map<string, Promise<unknown>>();
 
@@ -296,9 +314,13 @@ function useJson<T>(url: string, map: (payload: unknown) => T) {
       // the router cache 30 s later looks like. The rows stay on screen
       // either way; a failed revalidation changes nothing.
       const existing = tabPayloadCache.get(url);
-      if (!existing || existing.at < initialAt) tabPayloadCache.set(url, { payload: initialPayload, at: initialAt });
-      setState({ status: 'ready', data: map(initialPayload) });
-      if (Date.now() - initialAt < TAB_CACHE_TTL_MS || tabPayloadInFlight.has(url)) {
+      // A reading this browser took AFTER the server's (Back to a page whose
+      // payload the router replays) is the newer one, so it is what shows.
+      const newer = existing && existing.at > initialAt ? existing : null;
+      if (!newer) tabPayloadCache.set(url, { payload: initialPayload, at: initialAt });
+      const shownAt = newer ? newer.at : initialAt;
+      setState({ status: 'ready', data: map(newer ? newer.payload : initialPayload) });
+      if (Date.now() - shownAt < tabPayloadTtl(url) || tabPayloadInFlight.has(url)) {
         return () => { cancelled = true; };
       }
       fetchTabPayload(url)
@@ -311,7 +333,7 @@ function useJson<T>(url: string, map: (payload: unknown) => T) {
     // own last reading, and the revalidation is already on the wire); an
     // uncached URL shows the plate.
     setState(hit ? { status: 'ready', data: map(hit.payload) } : { status: 'loading', data: null });
-    if (hit && Date.now() - hit.at < TAB_CACHE_TTL_MS && !tabPayloadInFlight.has(url)) {
+    if (hit && Date.now() - hit.at < tabPayloadTtl(url) && !tabPayloadInFlight.has(url)) {
       // Fresh enough: no request at all. Tab-to-tab inside the TTL is free.
       return () => { cancelled = true; };
     }
@@ -384,6 +406,20 @@ function RecentsRail() {
   );
 }
 
+/* A deck card is a SEED_CLIP_SECONDS clip, not the whole track: this stops it
+   there. It is its own component because it reads the playback clock, which
+   ticks about four times a second, and that used to re-render the whole deck
+   on every tick while a card played (2026-09-24, DESIGN_SYNC row 513). */
+function SeedClipStop({ seedId }: { seedId: string }) {
+  const { currentTrack, isPlaying, togglePlayback } = useMediaPlayer();
+  const { currentTime } = useMediaPlayerClock();
+  useEffect(() => {
+    if (currentTrack?.id !== seedId || !isPlaying) return;
+    if (currentTime >= SEED_CLIP_SECONDS) togglePlayback();
+  }, [currentTime, currentTrack?.id, isPlaying, seedId, togglePlayback]);
+  return null;
+}
+
 function DiscoverTab({ genre, city }: { genre?: string; city?: string }) {
   const { t } = useI18n();
   const router = useRouter();
@@ -395,7 +431,7 @@ function DiscoverTab({ genre, city }: { genre?: string; city?: string }) {
   // deck optimistically; when the route refuses it the state is put back and
   // this names what to press again. Cleared by the next verdict that lands.
   const [failed, setFailed] = useState<'hype' | 'save' | null>(null);
-  const { currentTrack, currentTime, isPlaying, playTrack, togglePlayback } = useMediaPlayer();
+  const { currentTrack, isPlaying, playTrack, togglePlayback } = useMediaPlayer();
   const trimmedGenre = genre?.trim() ?? '';
   const trimmedCity = city?.trim() ?? '';
   // One builder for this URL: the page preloads exactly what this fetches.
@@ -539,12 +575,6 @@ function DiscoverTab({ genre, city }: { genre?: string; city?: string }) {
     useCallback(() => { if (currentCard) playCard(currentCard); }, [currentCard, playCard]),
   );
 
-  const seedId = (data ?? [])[index]?.id;
-  useEffect(() => {
-    if (!seedId || currentTrack?.id !== seedId || !isPlaying) return;
-    if (currentTime >= SEED_CLIP_SECONDS) togglePlayback();
-  }, [currentTime, currentTrack?.id, isPlaying, seedId, togglePlayback]);
-
   // The active filter is always visible, and always clearable. A deck that is
   // quietly narrowed looks identical to a deck that has run out — which is the
   // shape of the bug this parameter exists to fix, just one step later.
@@ -585,6 +615,7 @@ function DiscoverTab({ genre, city }: { genre?: string; city?: string }) {
     <>
       <RecentsRail />
       {filterChip}
+      <SeedClipStop seedId={seed.id} />
       <MmmSeedDeck
         busy={busy}
         clipSeconds={SEED_CLIP_SECONDS}

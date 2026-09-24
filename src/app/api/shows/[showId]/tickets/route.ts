@@ -103,20 +103,10 @@ export async function POST(
     // touched. verifyTurnstileToken fails CLOSED in production when
     // TURNSTILE_SECRET_KEY is set and the token is missing or invalid, and
     // open in development so local work needs no Cloudflare account.
-    const humanVerified = await verifyTurnstileToken(body.turnstileToken, clientAddress ?? undefined);
-    if (!humanVerified) {
-      log.error(
-        '[ticket-purchase]',
-        { userId: session.user.id, showId },
-        'Ticket purchase failed the bot check',
-      );
-      return NextResponse.json(
-        { error: 'Bot check failed. Refresh the page and try again.', code: 'BOT_CHECK_FAILED' },
-        { status: 400 },
-      );
-    }
-
-    const [user, show] = await Promise.all([
+    /* The reads start WITH the bot check, not after it (2026-09-24, DESIGN_SYNC
+       row 513): they are read-only, and nothing below them writes, creates a
+       Stripe customer or touches inventory until the check has passed. */
+    const readsP = Promise.all([
       db.user.findUnique({
         where: { id: session.user.id },
         select: {
@@ -163,6 +153,24 @@ export async function POST(
         },
       }),
     ]);
+    // A refused check never awaits the reads; this only keeps a failure of
+    // theirs from surfacing as an unhandled rejection.
+    readsP.catch(() => undefined);
+
+    const humanVerified = await verifyTurnstileToken(body.turnstileToken, clientAddress ?? undefined);
+    if (!humanVerified) {
+      log.error(
+        '[ticket-purchase]',
+        { userId: session.user.id, showId },
+        'Ticket purchase failed the bot check',
+      );
+      return NextResponse.json(
+        { error: 'Bot check failed. Refresh the page and try again.', code: 'BOT_CHECK_FAILED' },
+        { status: 400 },
+      );
+    }
+
+    const [user, show] = await readsP;
 
     if (!user || user.role !== Role.FAN) {
       return NextResponse.json({ error: 'Only fan accounts can reserve or purchase tickets.' }, { status: 403 });
@@ -293,20 +301,27 @@ export async function POST(
        merchant and then rejected by Stripe for the missing capability —
        failing the purchase at the last step, after inventory was reserved, for
        paperwork the fan has nothing to do with. */
-    const venueDirectAccountId = venueConnectId
-      ? await isConnectMerchantReady(venueConnectId)
-          .then((ready: boolean) => (ready ? venueConnectId : null))
-          .catch(() => null)
-      : null;
-
-    const settlementAccountId =
-      !venueDirectAccountId && lineupSlotCount === 0 && headlinerConnectId
-        ? await isConnectPayoutReady(headlinerConnectId)
+    /* The merchant check, the payout check and the buyer's location are three
+       independent reads — two live Stripe retrievals and one geolocation —
+       and ran one after another ahead of the charge (row 513). They run
+       together now; the payout answer is used only when the venue cannot be
+       the merchant, exactly as before, so asking for it early can cost one
+       unused read and never changes which account is chosen. */
+    const [venueDirectAccountId, headlinerPayoutAccountId, buyerLocation] = await Promise.all([
+      venueConnectId
+        ? isConnectMerchantReady(venueConnectId)
+            .then((ready: boolean) => (ready ? venueConnectId : null))
+            .catch(() => null)
+        : Promise.resolve(null),
+      lineupSlotCount === 0 && headlinerConnectId
+        ? isConnectPayoutReady(headlinerConnectId)
             .then((ready: boolean) => (ready ? headlinerConnectId : null))
             .catch(() => null)
-        : null;
+        : Promise.resolve(null),
+      detectLocationFromHeaders(request.headers),
+    ]);
 
-    const buyerLocation = await detectLocationFromHeaders(request.headers);
+    const settlementAccountId = !venueDirectAccountId ? headlinerPayoutAccountId : null;
     const financials = calculateTicketOrderFinancials({
       ticketPriceCents: show.ticketPriceCents,
       quantity: body.quantity,

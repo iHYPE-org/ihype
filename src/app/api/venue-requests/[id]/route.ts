@@ -72,11 +72,16 @@ export async function PATCH(
       return updated;
     });
 
-    if (body.status === 'BOOKED') {
+    // Only a decision that CHANGED something tells anyone (row 513): pressing
+    // Booked on a row already booked used to re-send to every fan.
+    if (body.status === 'BOOKED' && connectionRequest.status !== 'BOOKED') {
       /* Who to tell is a read that only shapes a side effect: a failure here
-         costs notifications, never the booking. */
+         costs notifications, never the booking. Scoped to the rows THIS
+         decision wrote (`respondedAt` is the one instant the transaction
+         stamped), so fans told about an earlier booking of the same act at
+         this venue are not told again (row 513). */
       const toTell = await db.venueConnectionRequest.findMany({
-        where: { venueProfileId: connectionRequest.venueProfileId, status: 'BOOKED', notifyOnBooking: true, ...sameAct },
+        where: { venueProfileId: connectionRequest.venueProfileId, status: 'BOOKED', notifyOnBooking: true, respondedAt, ...sameAct },
         select: { requesterId: true },
         distinct: ['requesterId'],
         take: 500,

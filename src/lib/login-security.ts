@@ -1,4 +1,5 @@
 import { ADMIN_ALERT_ADDRESS } from '@/lib/env';
+import { escapeHtml } from '@/lib/html-escape';
 import { db } from '@/lib/db';
 import { deferWork } from '@/lib/defer-work';
 import { sendGenericEmail } from '@/lib/mailer';
@@ -81,8 +82,8 @@ export async function checkAndRecordLogin(user: LoginUser, request: Request) {
       html: `
         <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#10182a;">
           <h2 style="margin:0 0 12px;">New login from a different country</h2>
-          <p>Hi ${userName},</p>
-          <p>We detected a login to your iHYPE account from <strong>${currentCountry}</strong>. Your previous login was from <strong>${user.lastLoginCountry}</strong>.</p>
+          <p>Hi ${escapeHtml(userName)},</p>
+          <p>We detected a login to your iHYPE account from <strong>${escapeHtml(currentCountry)}</strong>. Your previous login was from <strong>${escapeHtml(user.lastLoginCountry ?? '')}</strong>.</p>
           <p>If this was you, no action is needed. If you did not log in, remove any passkeys you do not recognize from Settings and contact admin@ihype.org.</p>
           <p style="color:#5b657a;font-size:12px;">— iHYPE</p>
         </div>

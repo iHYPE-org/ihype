@@ -90,6 +90,21 @@ export async function POST(
     byAddress.set(key, { email: subscriber.email, because: 'newsletter', unsubscribeUrl: newsletterUnsubscribeUrl(subscriber.id) });
   }
 
+  /* THE WEEK IS CLAIMED BEFORE THE FIRST SEND, AS ONE CONDITIONAL WRITE
+     (2026-09-24, DESIGN_SYNC row 513). The cap was checked at the top and
+     recorded after the loop — one sequential provider call per fan — so a
+     second press, a retry or a request cut off mid-loop mailed the whole
+     audience again. Only one request can match this write. */
+  const sentAt = new Date();
+  const weekAgo = new Date(sentAt.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const claimed = await db.profile.updateMany({
+    where: { id: slug, OR: [{ fanMailLastSentAt: null }, { fanMailLastSentAt: { lte: weekAgo } }] },
+    data: { fanMailLastSentAt: sentAt },
+  });
+  if (claimed.count === 0) {
+    return NextResponse.json({ error: 'Fan mail was just sent from this profile. You can send again in seven days.' }, { status: 429 });
+  }
+
   let sent = 0;
   for (const recipient of byAddress.values()) {
     // The reason line has to match how they actually got here, or the
@@ -116,10 +131,14 @@ export async function POST(
     } catch { /* continue */ }
   }
 
-  await db.profile.update({
-    where: { id: slug },
-    data: { fanMailLastSentAt: new Date() },
-  });
+  // Nothing reached anyone (the provider refused every send): give the week
+  // back, so a mail outage does not cost the owner their broadcast.
+  if (sent === 0 && byAddress.size > 0) {
+    await db.profile.updateMany({
+      where: { id: slug, fanMailLastSentAt: sentAt },
+      data: { fanMailLastSentAt: profile.fanMailLastSentAt },
+    }).catch(() => undefined);
+  }
 
   /* Both numbers. `sent` counts deliveries the provider accepted; `recipients`
      is how many the list resolved to. They differ whenever mail is degraded —

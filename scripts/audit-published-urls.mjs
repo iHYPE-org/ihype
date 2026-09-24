@@ -178,7 +178,7 @@ const isBlocked = (path, disallow) =>
    is one segment of slug, so it stands in for exactly one segment and resolves
    against `[slug]`. Collapsing it to nothing instead would make every dynamic
    URL look like its own parent and hide the very cases worth checking. */
-/* `<` and `>` TERMINATE A PATH. `artists/verified.rss` writes its URLs inside
+/* `<` and `>` TERMINATE A PATH. An RSS feed (the retired `artists/verified.rss` did) writes its URLs inside
    XML — `<link>${baseUrl}/artists</link>` — and the first draft of this regex
    swallowed the closing tag, reporting `/artists</link>` as a dead route. The
    first list containing something like that is the last one anyone reads
@@ -231,9 +231,14 @@ function resolve(path) {
   const seen = new Set();
   let current = path;
   for (let hop = 0; hop < 5; hop++) {
-    if (routes.some((r) => routeMatches(r, current))) return { final: current, ok: true };
+    /* REDIRECTS FIRST, AS NEXT DOES (row 513). `redirects()` runs before the
+       filesystem, so a file route under a redirect's source is SHADOWED — the
+       `/artists/verified.rss` handler answered 307 into `/app/artists/…` in
+       production while this check, testing routes first, called it resolved. */
     const hit = redirects.find((r) => sourceMatches(r.source, current));
-    if (!hit) return { final: current, ok: false };
+    if (!hit) {
+      return routes.some((r) => routeMatches(r, current)) ? { final: current, ok: true } : { final: current, ok: false };
+    }
     if (seen.has(hit.destination)) return { final: current, ok: false };
     seen.add(hit.destination);
     current = hit.destination.split('?')[0].replace(/:[A-Za-z]+\*?/g, 'x');

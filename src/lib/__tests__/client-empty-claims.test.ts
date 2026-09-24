@@ -36,6 +36,7 @@ const FAILURE_STATE = /\[\s*\w*(?:[fF]ailed|[eE]rror|[uU]navailable)\w*\s*,\s*se
 /** Components whose empty sentence is not a fetched list — reasons, not silence. */
 const NOT_A_FETCHED_LIST: Record<string, string> = {
   'src/components/FanPlaylistManager.tsx': '"No current track" is the player\'s own state, set by playback, not by the fetch this file swallows',
+  'src/components/mmm/MmmMe.tsx': 'the empty sentences are over `data.activity`, a SERVER prop whose failed read is `null` and renders its own unavailable line (row 513); the one swallowed fetch is the listening card, which renders nothing at all on failure rather than a claim',
   'src/components/ShowSequencePlayer.tsx': 'the sequence is a prop resolved from the show\'s production plan; the swallowed catches are on media.play(), not on a fetch',
 };
 

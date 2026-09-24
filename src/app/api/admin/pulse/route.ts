@@ -1,6 +1,5 @@
-import { NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
-import { isAdminSession } from '@/lib/permissions';
+import { NextResponse, NextRequest } from 'next/server';
+import { requireAdminApi } from '@/lib/admin-api';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { log } from '@/lib/logger';
 import { getAdminPulse } from '@/lib/admin-pulse-data';
@@ -22,28 +21,25 @@ export const dynamic = 'force-dynamic';
  *
  * ## Admin-only, and never cached
  *
- * `isAdminSession()` is both locks — the ADMIN role and the allowlisted
- * address. The response is `private, no-store`: it carries member email
- * addresses, support-request subjects and revenue, and a shared cache in front
- * of that is a cross-account leak. Same rule the analytics engine (`analytics-metrics.ts`) follows
- * for platform scope.
+ * `requireAdminApi()` is all three locks — the ADMIN role, the allowlisted
+ * address, and the registered admin device (row 513). The response is
+ * `private, no-store`: it carries member email addresses, support-request
+ * subjects and revenue, and a shared cache in front of that is a
+ * cross-account leak. Same rule the analytics engine (`analytics-metrics.ts`)
+ * follows for platform scope.
  *
- * Note this endpoint deliberately does NOT check the admin device cookie. The
- * device gate is a navigation control enforced in middleware for `/admin/*`
- * (see `src/middleware.ts`); an API route under `/api` is not covered by that
- * matcher, and adding a second, partial copy of the rule here would be the
- * kind of hand-aligned duplicate this codebase has been bitten by. What
- * protects this route is the session, which is the same thing protecting every
- * other admin API route.
+ * This used to skip the device check on the reasoning that a second copy of
+ * the rule would drift. The device gate on `/admin` pages lives in the admin
+ * LAYOUT, not in middleware (whose matcher excludes `/api`), so no copy
+ * reached this route at all; `requireAdminApi` is the one shared
+ * implementation, and the console's fetches carry the device cookie because
+ * it is set at path `/`.
  */
-export async function GET(request: Request) {
-  const session = await auth();
-
-  if (!session?.user?.id || !isAdminSession(session)) {
-    // 403 rather than an empty snapshot: empty reads as "the platform is
-    // quiet", which is a claim, and the wrong one.
-    return NextResponse.json({ error: 'Forbidden.' }, { status: 403 });
-  }
+export async function GET(request: NextRequest) {
+  // 403 rather than an empty snapshot: empty reads as "the platform is
+  // quiet", which is a claim, and the wrong one.
+  const { session, response } = await requireAdminApi(request);
+  if (!session) return response;
 
   // Polled by an open console, so the bucket is per-admin and generous enough
   // for a 20s cadence with a little slack, and small enough that a runaway

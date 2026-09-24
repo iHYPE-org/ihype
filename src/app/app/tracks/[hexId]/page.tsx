@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { HypeButton } from '@/components/HypeButton';
+import { ReportButton } from '@/components/ReportButton';
 import { MmmMissing } from '@/components/mmm/MmmMissing';
 import { MmmPlayHere } from '@/components/mmm/MmmPlayHere';
 import { ReleasePlayButton } from '@/components/profile/ReleasePlayButton';
@@ -161,6 +162,8 @@ export default async function MmmTrackPage({ params }: { params: Promise<{ hexId
           targetId={asset.profile.id}
           targetType="profile"
         />
+        {/* Filed by hexId, which the moderation switch resolves (row 351). */}
+        <ReportButton entityLabel="track" targetId={asset.hexId} targetType="media" />
       </div>
 
       <section className="mmm-profile-section">

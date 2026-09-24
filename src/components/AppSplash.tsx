@@ -5,6 +5,7 @@ import { IhypeMark } from '@/components/brand/IhypeMark';
 
 const MIN_VISIBLE_MS = 900;
 const FADE_MS = 300;
+const SPLASH_SHOWN_KEY = 'ihype-splash-shown';
 
 /**
  * Launch splash for the installed PWA only — regular browser tabs never see
@@ -39,6 +40,17 @@ export function AppSplash() {
     const nav = window.navigator as Navigator & { standalone?: boolean };
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || nav.standalone === true;
     if (!isStandalone) return;
+    /* Once per LAUNCH, not once per document (2026-09-24, DESIGN_SYNC row
+       513). This ran on every full load, so inside the installed app every
+       reload and every hard navigation covered a page that was already
+       rendered and swallowed taps for 900ms before fading. A launch is a new
+       session; a reload inside one keeps its sessionStorage. */
+    try {
+      if (window.sessionStorage.getItem(SPLASH_SHOWN_KEY)) return;
+      window.sessionStorage.setItem(SPLASH_SHOWN_KEY, '1');
+    } catch {
+      // Storage refused: show it, as before.
+    }
 
     setVisible(true);
     const fadeTimer = setTimeout(() => setFading(true), MIN_VISIBLE_MS);

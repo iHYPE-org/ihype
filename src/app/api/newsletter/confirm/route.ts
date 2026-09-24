@@ -1,55 +1,32 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
-import { escapeHtml } from '@/lib/html-escape';
+import { standaloneHtmlPage } from '@/lib/standalone-html-page';
 
 export const dynamic = 'force-dynamic';
 
-/* `heading` and `body` are escaped HERE, not by the callers, because one of
-   them carries `Profile.name` — member-supplied text — and this route sits
-   outside the CSP middleware. Before 2026-09-02 a name containing markup ran
-   as script for anyone who clicked a real confirmation link. */
-function htmlPage(rawHeading: string, rawBody: string, status: number) {
-  const heading = escapeHtml(rawHeading);
-  const body = escapeHtml(rawBody);
-  return new NextResponse(
-    `<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="robots" content="noindex" />
-    <title>${heading} — iHYPE</title>
-  </head>
-  <body style="margin:0;background:var(--bg);color:#eef1f6;font-family:Arial,sans-serif;">
-    <div style="max-width:480px;margin:0 auto;padding:64px 24px;text-align:center;">
-      <h1 style="font-size:28px;margin:0 0 12px;">${heading}</h1>
-      <p style="margin:0 0 24px;color:#9a948c;line-height:1.5;">${body}</p>
-      <a href="https://ihype.org/" style="color:var(--accent);">Back to iHYPE →</a>
-    </div>
-  </body>
-</html>`,
-    { status, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } }
-  );
-}
+/* The page carries `Profile.name` — member-supplied text — and this route
+   sits outside the CSP middleware; `standaloneHtmlPage` escapes it. Before
+   2026-09-02 a name containing markup ran as script for anyone who clicked a
+   real confirmation link. */
 
 // Double opt-in confirm link. Token alone authorizes — must work logged-out.
 export async function GET(request: NextRequest) {
   const token = new URL(request.url).searchParams.get('token');
-  if (!token) return htmlPage('Invalid link', 'This confirmation link is missing its token.', 400);
+  if (!token) return standaloneHtmlPage('Invalid link', 'This confirmation link is missing its token.', 400);
 
   const subscription = await db.newsletterSubscription.findUnique({
     where: { confirmToken: token },
     select: { id: true, confirmedAt: true, confirmTokenExpiresAt: true, profile: { select: { name: true } } },
   });
 
-  if (!subscription) return htmlPage('Link not found', 'This confirmation link is invalid or has already been used.', 404);
+  if (!subscription) return standaloneHtmlPage('Link not found', 'This confirmation link is invalid or has already been used.', 404);
 
   if (subscription.confirmedAt) {
-    return htmlPage('Already confirmed', `You're already subscribed to updates from ${subscription.profile.name}.`, 200);
+    return standaloneHtmlPage('Already confirmed', `You're already subscribed to updates from ${subscription.profile.name}.`, 200);
   }
 
   if (!subscription.confirmTokenExpiresAt || subscription.confirmTokenExpiresAt < new Date()) {
-    return htmlPage('Link expired', 'This confirmation link has expired. Subscribe again to get a fresh one.', 410);
+    return standaloneHtmlPage('Link expired', 'This confirmation link has expired. Subscribe again to get a fresh one.', 410);
   }
 
   await db.newsletterSubscription.update({
@@ -57,5 +34,5 @@ export async function GET(request: NextRequest) {
     data: { confirmedAt: new Date(), confirmToken: null, confirmTokenExpiresAt: null },
   });
 
-  return htmlPage('Subscribed!', `You're confirmed for updates from ${subscription.profile.name}.`, 200);
+  return standaloneHtmlPage('Subscribed!', `You're confirmed for updates from ${subscription.profile.name}.`, 200);
 }

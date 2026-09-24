@@ -1,9 +1,8 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
-import { isAdminSession } from '@/lib/permissions';
 import { getServerI18n } from '@/lib/i18n/server';
 import { MmmTickets } from '@/components/mmm/MmmTickets';
-import { loadMmmMe } from '@/lib/mmm-me';
+import { loadWalletTickets } from '@/lib/mmm-me';
 
 /**
  * The wallet, promoted to a top-level destination by the MIDDLE ROAD
@@ -12,9 +11,11 @@ import { loadMmmMe } from '@/lib/mmm-me';
  * with the least tolerance for being hard to find, because the member using it
  * is standing at a door.
  *
- * It renders the same `MmmTickets` ME always rendered, from the same loader, so
- * there is exactly one implementation of a ticket list and one
- * `OfflineTicketWarmer`. What changed is the address.
+ * It renders the same `MmmTickets` ME always rendered, from the same ticket
+ * read, so there is exactly one implementation of a ticket list and one
+ * `OfflineTicketWarmer`. What changed is the address. Since 2026-09-24 (row
+ * 513) it calls `loadWalletTickets` alone rather than the whole ME loader,
+ * whose profiles, counts and fan board it never drew.
  *
  * Note this is `/app/tickets` while a single ticket stays `/app/me/tickets/<id>`
  * — the detail page is unmoved on purpose: that URL is in sent email and in
@@ -30,11 +31,11 @@ export default async function MmmTicketsPage() {
   // server-side check — the same rule every other MMM route follows.
   if (!session?.user?.id) redirect('/login?callbackUrl=/app/tickets');
   const { locale, t } = await getServerI18n();
-  const data = await loadMmmMe(session.user.id, undefined, locale, isAdminSession(session), { includeTickets: true });
+  const tickets = await loadWalletTickets(session.user.id, locale);
   return (
     <>
       <h1 className="sr-only">{t('mmmNav.tab.tickets', 'Tickets')}</h1>
-      <MmmTickets tickets={data.tickets} />
+      <MmmTickets tickets={tickets} />
     </>
   );
 }

@@ -1,4 +1,5 @@
 import { db } from '@/lib/db';
+import { escapeHtml } from '@/lib/html-escape';
 import { sendMarketingEmail } from '@/lib/mailer';
 import { getBaseUrl } from '@/lib/utils';
 
@@ -15,7 +16,7 @@ export async function sendNewToSceneEmail(): Promise<{ sent: number }> {
 
   const baseUrl = getBaseUrl();
   const items = newProfiles.map(p =>
-    `<p><strong><a href="${baseUrl}/app/artists/${p.slug}">${p.name}</a></strong> — ${(p.genres as string[]).slice(0, 2).join(', ')} · ${p.hypeCount} hypes<br/><small>${p.bio?.slice(0, 120) ?? ''}…</small></p>`
+    `<p><strong><a href="${baseUrl}/app/artists/${encodeURIComponent(p.slug)}">${escapeHtml(p.name)}</a></strong> — ${escapeHtml((p.genres as string[]).slice(0, 2).join(', '))} · ${p.hypeCount} hypes<br/><small>${escapeHtml(p.bio?.slice(0, 120) ?? '')}…</small></p>`
   ).join('');
 
   const users = await db.user.findMany({

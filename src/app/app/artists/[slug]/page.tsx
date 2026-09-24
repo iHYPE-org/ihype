@@ -10,6 +10,7 @@ import { db } from '@/lib/db';
 import { HypeButton } from '@/components/HypeButton';
 import { MmmLikeButton } from '@/components/mmm/MmmLikeButton';
 import { FollowButton } from '@/components/FollowButton';
+import { ReportButton } from '@/components/ReportButton';
 import { MmmMissing } from '@/components/mmm/MmmMissing';
 import { MmmPlayHere } from '@/components/mmm/MmmPlayHere';
 import { getDemoCreatorExclusion, isDemoUser, shouldHideDemoContent } from '@/lib/runtime-flags';
@@ -222,18 +223,27 @@ export default async function MmmArtistPage({
        public stat catalogue's listener figure, computed the way the owner's
        insights compute it (MediaListen is one row per listener per track).
        Null, not 0, when the read fails: a zero is a claim about the artist. */
-    db.artistMediaAsset
-      .findMany({ where: { profileId: profile.id }, select: { hexId: true } })
-      .then((assets) => (assets.length
-        ? db.mediaListen
-          .findMany({ where: { mediaId: { in: assets.map((asset) => asset.hexId) } }, select: { userId: true }, distinct: ['userId'] })
-          .then((rows) => rows.length)
-        : 0))
+    /* One counted round trip (2026-09-24, DESIGN_SYNC row 513). This read
+       the artist's hexIds, then fetched one row per distinct listener just to
+       take the array's length, on every view of the pane; the database counts
+       now, over the new MediaListen(mediaId) index. */
+    db.$queryRaw<Array<{ n: number }>>`
+      SELECT COUNT(DISTINCT ml."userId")::int AS n
+      FROM "MediaListen" ml
+      JOIN "ArtistMediaAsset" a ON a."hexId" = ml."mediaId"
+      WHERE a."profileId" = ${profile.id}`
+      .then((rows) => Number(rows[0]?.n ?? 0))
       .catch((): number | null => null),
     /* Same-genre acts, ranked. Independently caught like every other read on
        this page: a similarity lookup that fails must cost the Bio tab a row,
-       never the whole profile. */
-    getSimilarArtists(profile.slug, 6).catch((): SimilarArtist[] => []),
+       never the whole profile. Read ONLY on the Bio tab, the one tab that
+       draws it: it runs a model generation, and every tab switch is a server
+       render, so the Albums, Tour, Contact and Press tabs each used to wait on
+       an answer they threw away (2026-09-24, DESIGN_SYNC row 513). */
+    activeTab === 'bio'
+      ? getSimilarArtists(profile.slug, 6, { name: profile.name, genres: profile.genres, bio: profile.bio })
+        .catch((): SimilarArtist[] => [])
+      : Promise.resolve([] as SimilarArtist[]),
   ]);
   const upcoming = upcomingRead ?? [];
   const releases = releasesRead ?? [];
@@ -341,6 +351,7 @@ export default async function MmmArtistPage({
             {/* The third act: remember this artist. One like per account,
                 held until unliked — /api/likes holds the rule. */}
             <MmmLikeButton name={profile.name} targetId={profile.id} targetType="ARTIST" />
+            {!isOwner && <ReportButton entityLabel="profile" targetId={profile.id} targetType="profile" />}
           </div>
 
           {/* The public stat catalogue's three artist figures, as the console
@@ -398,7 +409,7 @@ export default async function MmmArtistPage({
             <section className="profile-album" key={album.id}>
               <header className="profile-album-lead">
                 {album.artworkUrl
-                  ? <img alt="" className="profile-release-art" src={album.artworkUrl} />
+                  ? <img alt="" className="profile-release-art" decoding="async" loading="lazy" src={album.artworkUrl} />
                   : <span aria-hidden="true" className="profile-release-art" />}
                 <span className="profile-release-body">
                   <span className="profile-release-title">{album.title}</span>
@@ -415,7 +426,7 @@ export default async function MmmArtistPage({
               <li className="profile-release-entry" key={release.id}>
                     <Link className="profile-release" href={`/app/tracks/${release.hexId}`}>
                       {coverFor(release)
-                        ? <img alt="" className="profile-release-art" src={coverFor(release) ?? undefined} />
+                        ? <img alt="" className="profile-release-art" decoding="async" loading="lazy" src={coverFor(release) ?? undefined} />
                         : <span aria-hidden="true" className="profile-release-art" />}
                       <span className="profile-release-body">
                         <span className="profile-release-title">{release.title}</span>
@@ -449,7 +460,7 @@ export default async function MmmArtistPage({
               <li className="profile-release-entry" key={release.id}>
                     <Link className="profile-release" href={`/app/tracks/${release.hexId}`}>
                       {coverFor(release)
-                        ? <img alt="" className="profile-release-art" src={coverFor(release) ?? undefined} />
+                        ? <img alt="" className="profile-release-art" decoding="async" loading="lazy" src={coverFor(release) ?? undefined} />
                         : <span aria-hidden="true" className="profile-release-art" />}
                       <span className="profile-release-body">
                         <span className="profile-release-title">{release.title}</span>

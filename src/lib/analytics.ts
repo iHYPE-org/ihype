@@ -43,6 +43,54 @@ export function track(event: string, props?: Record<string, unknown>): void {
   }
 }
 
+/* Client-side, batched: queued in memory and sent as ONE request when the page
+   is hidden or unloaded (2026-09-24, DESIGN_SYNC row 513). For events that
+   arrive in a burst and are not needed until later, Web Vitals above all: one
+   POST per metric was five Worker invocations and five KV rate-limit writes
+   per page view, the first two landing at `load` beside the hydration
+   fetches. `sendBeacon` survives the unload a keepalive fetch sometimes does
+   not; the fetch is the fallback where it is missing or refuses. */
+const MAX_TRACK_BATCH = 10;
+let trackQueue: Array<{ event: string; props?: Record<string, unknown> }> = [];
+let flushArmed = false;
+
+function flushTrackQueue(): void {
+  if (!trackQueue.length) return;
+  const events = trackQueue.slice(0, MAX_TRACK_BATCH);
+  trackQueue = trackQueue.slice(MAX_TRACK_BATCH);
+  const body = JSON.stringify({ events });
+  try {
+    const sent = typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function'
+      && navigator.sendBeacon('/api/analytics/track', new Blob([body], { type: 'application/json' }));
+    if (!sent) {
+      void fetch('/api/analytics/track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+        keepalive: true,
+      }).catch(() => {});
+    }
+  } catch {
+    // best-effort
+  }
+  if (trackQueue.length) flushTrackQueue();
+}
+
+export function trackBatched(event: string, props?: Record<string, unknown>): void {
+  if (typeof window === 'undefined') return;
+  const safe = sanitizeTelemetryEvent(event, props);
+  if (!safe) return;
+  trackQueue.push(safe);
+  if (!flushArmed) {
+    flushArmed = true;
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') flushTrackQueue();
+    });
+    window.addEventListener('pagehide', flushTrackQueue);
+  }
+  if (trackQueue.length >= MAX_TRACK_BATCH) flushTrackQueue();
+}
+
 // Server-side: records one named product event (Seeds swipe, checkout,
 // referral click, etc.) with its props JSON-encoded into a blob.
 export function trackEvent(event: string, props?: Record<string, unknown>): void {

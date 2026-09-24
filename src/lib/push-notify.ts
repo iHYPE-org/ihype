@@ -1,5 +1,7 @@
 import { db } from '@/lib/db';
 import { readRuntimeEnv } from '@/lib/runtime-env';
+import { log } from '@/lib/logger';
+import { isKnownPushEndpoint } from '@/lib/push-endpoint';
 
 type PushPayload = {
   title: string;
@@ -82,9 +84,16 @@ export async function sendPushNotification(userId: string, payload: PushPayload)
 
   const messageBytes = new TextEncoder().encode(JSON.stringify(payload));
   const staleIds: string[] = [];
+  const failures: string[] = [];
 
   await Promise.allSettled(
     subscriptions.map(async (sub) => {
+      // A row stored before the subscribe route checked the host is dropped,
+      // never fetched (row 513; see push-endpoint.ts).
+      if (!isKnownPushEndpoint(sub.endpoint)) {
+        staleIds.push(sub.id);
+        return;
+      }
       try {
         const authHeader = await buildVapidAuthHeader(sub.endpoint, subject, publicKey, privateKey);
 
@@ -140,18 +149,26 @@ export async function sendPushNotification(userId: string, payload: PushPayload)
             TTL: '86400',
           },
           body: encrypted,
+          // Bounded (row 513): the endpoint is a push service's, and a stall
+          // there must not hold the request that triggered the notice.
+          signal: AbortSignal.timeout(10_000),
         });
 
         if (res.status === 410 || res.status === 404) {
           staleIds.push(sub.id);
         } else if (!res.ok) {
-          console.warn('[push-notify] send failed:', res.status, await res.text().catch(() => ''));
+          failures.push(`HTTP ${res.status} ${(await res.text().catch(() => '')).slice(0, 200)}`);
         }
       } catch (err) {
-        console.warn('[push-notify] send error:', err);
+        failures.push(err instanceof Error ? err.message : String(err));
       }
     }),
   );
+
+  // To Sentry, once per notice (row 513); console.warn reached no instrument.
+  if (failures.length > 0) {
+    log.error('[push-notify]', new Error(failures[0]), `Web push refused ${failures.length} send(s)`);
+  }
 
   if (staleIds.length > 0) {
     await db.pushSubscription.deleteMany({ where: { id: { in: staleIds } } }).catch(() => null);

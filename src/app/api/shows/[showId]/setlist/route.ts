@@ -4,7 +4,7 @@ import { db } from '@/lib/db';
 import { recordAuditEvent } from '@/lib/audit';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
-import { isAdminSession } from '@/lib/permissions';
+import { isShowOrganizer, ORGANIZER_SHOW_SELECT } from '@/lib/show-organizer';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,9 +13,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (!session?.user?.id) return NextResponse.json({ error: 'Sign in required.' }, { status: 401 });
 
   const { showId } = await params;
-  const show = await db.show.findUnique({ where: { id: showId }, select: { id: true, creatorId: true } });
+  const show = await db.show.findUnique({ where: { id: showId }, select: { id: true, ...ORGANIZER_SHOW_SELECT } });
   if (!show) return NextResponse.json({ error: 'Show not found.' }, { status: 404 });
-  if (show.creatorId !== session.user.id && !isAdminSession(session)) {
+  // The organiser rule the show page draws this editor under (row 513) —
+  // the creator alone was refused to a venue or headliner owner it showed it to.
+  if (!isShowOrganizer(session, show)) {
     return NextResponse.json({ error: 'Forbidden.' }, { status: 403 });
   }
 

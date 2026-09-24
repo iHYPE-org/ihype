@@ -4,7 +4,7 @@ import { auth } from '@/lib/auth';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { db } from '@/lib/db';
 import { isConnectMerchantReady, isConnectPayoutReady, isStripeConfigured } from '@/lib/stripe';
-import { getProfilePathForType } from '@/lib/profile-paths';
+import { getAppProfilePathForType } from '@/lib/profile-paths';
 import { log } from '@/lib/logger';
 import { WORKBENCH_PATH } from '@/lib/auth-redirects';
 
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
       select: { id: true, stripeConnectAccountId: true, slug: true, type: true, ownerId: true }
     });
 
-    if (profile) fallback = getProfilePathForType(profile.type, profile.slug);
+    if (profile) fallback = getAppProfilePathForType(profile.type, profile.slug);
 
     /* Owner or admin only, like the sibling `refresh` route (security sweep,
        2026-09-02). This was unauthenticated: anyone could name a profileId,
@@ -77,7 +77,10 @@ export async function GET(request: NextRequest) {
        already renders its "Finish setup" state for exactly this case — an
        account that exists and is not onboarded. */
     if (!ready) redirect('/app/me/payouts?tab=settings&payout=incomplete');
-    redirect(`${fallback}?payout=connected`);
+    // Finished lands on the same settings tab, which now says so (row 513) —
+    // it used to drop the member on their profile under a `payout=connected`
+    // that nothing read.
+    redirect('/app/me/payouts?tab=settings&payout=connected');
   } catch (err) {
     // Re-throw redirect errors (Next.js redirect() throws internally)
     if (err instanceof Error && err.message === 'NEXT_REDIRECT') throw err;

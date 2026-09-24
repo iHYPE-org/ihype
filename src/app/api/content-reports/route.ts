@@ -8,7 +8,9 @@ import { consumeRateLimit, rateLimitKey } from '@/lib/rate-limit';
 import { log } from '@/lib/logger';
 
 const reportSchema = z.object({
-  targetType: z.enum(['profile', 'show', 'media', 'ticket']),
+  // `comment` since 2026-09-24 (row 513): the moderation switch has removed a
+  // reported comment since it was written, and nothing could file one.
+  targetType: z.enum(['profile', 'show', 'media', 'ticket', 'comment']),
   targetId: z.string().min(3).max(120),
   reason: z.string().trim().min(3).max(120),
   details: z.string().trim().max(1200).optional(),

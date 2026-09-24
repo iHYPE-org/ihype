@@ -1,4 +1,5 @@
 import { db } from '@/lib/db';
+import { escapeHtml } from '@/lib/html-escape';
 import { sendMarketingEmail } from '@/lib/mailer';
 import { getBaseUrl } from '@/lib/utils';
 
@@ -33,7 +34,7 @@ export async function sendArtistOnboardingNudges(): Promise<{ sent: number }> {
       await sendMarketingEmail(p.owner.id, {
         to: p.owner.email,
         subject: `${p.name} — add your first show on iHYPE`,
-        html: `<p>Hi ${p.name},</p><p>Your iHYPE profile is live! Add your upcoming shows so fans can discover and RSVP.</p><p><a href="${BASE_URL}/app/me/events/new">Add a show →</a></p>`,
+        html: `<p>Hi ${escapeHtml(p.name)},</p><p>Your iHYPE profile is live! Add your upcoming shows so fans can discover and RSVP.</p><p><a href="${BASE_URL}/app/me/events/new">Add a show →</a></p>`,
         text: `Add your first show: ${BASE_URL}/app/me/events/new`
       });
       sent++;

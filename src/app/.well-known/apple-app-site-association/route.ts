@@ -140,6 +140,18 @@ export async function GET() {
             '/artists/*', '/venues/*', '/fans/*', // redirect into the matching /app pane
             '/playlist/*',
             '/tickets',      // the wallet alias in sent email (a redirects() entry onto /app/tickets; Checkout returns to /shows/<slug>)
+            /* One ticket: the "View ticket & QR code" link in every ticket
+               email and the string every QR encodes (buildTicketVerificationUrl).
+               The legacy `paths` format matches '/tickets' exactly and nothing
+               under it, so on an iPhone with the app installed that link
+               opened Safari, which has no session and none of the wallet's
+               cached tickets (row 513). */
+            '/tickets/*',
+            /* Sign-up and sign-in (row 513). The access-approval email links
+               /register, and a member with the TestFlight app installed then
+               registered in Safari and had to sign in again inside the app,
+               whose cookie store is its own. */
+            '/register', '/login', '/join', '/invite/*',
             '/h/*',          // HYPE short links
             '/app/*',        // every in-app destination, once signed in
             '/api/auth/magic', // sign-in must be able to FINISH in the app

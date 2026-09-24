@@ -31,8 +31,12 @@ type PasskeyRegistrationOptions = Parameters<typeof startRegistration>[0]['optio
  * so those callers keep type-checking rather than being silently rewritten.
  */
 export function RegisterScreen({
+  initialRef,
   inviteOnly = false
 }: {
+  /** The inviting member's HYPE code from `?ref=`, sent with the signup so
+   *  the referral is credited (row 513). */
+  initialRef?: string;
   initialRole?: RoleOption;
   inviteOnly?: boolean;
 }) {
@@ -113,6 +117,7 @@ export function RegisterScreen({
       isThirteenOrOlder: acceptedAge,
       isEighteenOrOlder: acceptedAdult,
       inviteCode: inviteOnly ? inviteCode : undefined,
+      ref: initialRef || undefined,
       company,
       passkeyFlow: method === 'passkey',
       turnstileToken: turnstileToken || undefined,

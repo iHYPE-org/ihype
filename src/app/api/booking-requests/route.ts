@@ -8,7 +8,7 @@ import { consumeRateLimit, rateLimitKey } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: Request) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -18,9 +18,17 @@ export async function GET() {
   });
   if (!profiles.length) return NextResponse.json({ received: [], sent: [] });
 
+  /* `?profileId=` scopes the inbox to ONE of the caller's profiles (row 513):
+     each profile's inbox page mounts this with its own id, and the route used
+     to answer every profile's requests to every one of them. An id the caller
+     does not own narrows to nothing rather than widening to everything. */
+  const requested = new URL(request.url).searchParams.get('profileId');
+  const ownedIds = profiles.map((p) => p.id);
+  const inboxIds = requested ? ownedIds.filter((id) => id === requested) : ownedIds;
+
   const [received, sent] = await Promise.all([
     db.bookingRequest.findMany({
-      where: { toProfileId: { in: profiles.map(p => p.id) } },
+      where: { toProfileId: { in: inboxIds } },
       orderBy: { createdAt: 'desc' },
       take: 30,
       select: {
@@ -28,9 +36,16 @@ export async function GET() {
         fromUser: {
           select: {
             name: true, username: true,
-            // The requester's own performer profile, if they have one —
-            // lets the inbox link to "View profile" without exposing email.
-            profiles: { where: { type: 'ARTIST' }, select: { slug: true, type: true, genres: true, city: true }, take: 1 },
+            // The requester's VENUE — the only sender is the venue demand
+            // radar, so an offer comes from a room. This selected ARTIST
+            // profiles, so a venue's offer showed no venue and no link (row
+            // 513). Lets the inbox name it without exposing an email.
+            profiles: {
+              where: { type: 'VENUE' },
+              orderBy: { createdAt: 'asc' },
+              select: { slug: true, type: true, name: true, genres: true, city: true },
+              take: 1,
+            },
           },
         },
         toProfile: { select: { name: true, type: true } },

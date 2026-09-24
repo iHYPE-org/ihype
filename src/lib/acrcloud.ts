@@ -122,7 +122,9 @@ export async function identifyAudio(audioBytes: Uint8Array): Promise<AcrOutcome>
     form.append('sample_bytes', String(sample.byteLength));
     form.append('sample', new Blob([sample]), 'sample');
 
-    const res = await fetch(`https://${host}/v1/identify`, { method: 'POST', body: form });
+    // Bounded (row 513): this runs inside the upload's synchronous scan, and a
+    // timeout lands in the catch below as "error", which fails open.
+    const res = await fetch(`https://${host}/v1/identify`, { method: 'POST', body: form, signal: AbortSignal.timeout(15_000) });
     if (!res.ok) return { status: 'error', detail: `ACRCloud HTTP ${res.status}` };
 
     const json = (await res.json()) as AcrIdentifyResponse;

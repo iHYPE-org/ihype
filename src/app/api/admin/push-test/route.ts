@@ -1,10 +1,9 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
+import { requireAdminApi } from '@/lib/admin-api';
 
-import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { getNativePushReadiness } from '@/lib/native-push';
 import { sendPushToAllDevices } from '@/lib/notify';
-import { isAdminSession } from '@/lib/permissions';
 
 /**
  * Send the calling administrator a push, to their own devices only.
@@ -41,11 +40,9 @@ import { isAdminSession } from '@/lib/permissions';
  * a send and delivers asynchronously, and iOS delivery depends on Apple-side
  * state this codebase cannot read. Look at the phone.
  */
-export async function POST() {
-  const session = await auth();
-  if (!session || !isAdminSession(session)) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
+export async function POST(request: NextRequest) {
+  const { session, response } = await requireAdminApi(request);
+  if (!session) return response;
 
   const readiness = getNativePushReadiness();
 

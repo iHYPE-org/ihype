@@ -325,8 +325,11 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
         .legal-doc a.lp-btn-primary { color: var(--ink-on-accent); }
         .legal-doc a.lp-btn-ghost { color: var(--muted); }
         .legal-split-display { font-family: var(--f-d, 'Bricolage Grotesque', sans-serif) !important; font-weight: 800; font-size: 1.5rem; letter-spacing: -.03em; color: var(--ink) !important; line-height: 1.3; margin: 1rem 0 !important; }
-        /* Carried over from the standalone /charter page's own <style> block
-           when it was folded into this tab. */
+        /* Carried over from the standalone /charter page's own style block
+           when it was folded into this tab. (Never write the tag itself inside
+           this template: React's server renderer escapes that sequence in
+           style text and the client does not, so the page fails hydration —
+           it did, from 2026-07-29 until 2026-09-24, DESIGN_SYNC row 513.) */
         /* A recessed meter in a brass rail, not three flat pills. This is the
            charter's signature number and the one graphic the whole product is
            an argument about; on a hi-fi console it is the VU meter. */

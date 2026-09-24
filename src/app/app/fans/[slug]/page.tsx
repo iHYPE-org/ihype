@@ -6,6 +6,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { HypeButton } from '@/components/HypeButton';
 import { FollowButton } from '@/components/FollowButton';
+import { ReportButton } from '@/components/ReportButton';
 import { ShareButton } from '@/components/ShareButton';
 import { PromoteShareButton } from '@/components/PromoteShareButton';
 import { getPinnedStatValues } from '@/lib/profile-stats';
@@ -95,12 +96,28 @@ export default async function FanProfilePage({
   const isOwner = canManageOwnedResource(session, profile.ownerId);
   const themeVars = resolveProfileThemeVars(profile);
 
-  const [hypedShows, userHype, promoterDashboard, asksCount, asksRead] = await Promise.all([
+  const hypeWhere = { userId: profile.ownerId, ...getDemoShowRelationExclusion() };
+  const [hypedShows, hypesCast, userHype, promoterDashboard, asksCount, asksRead] = await Promise.all([
+    /* The show fields the Shows tab draws and the venue's city, never whole
+       rows (2026-09-24, DESIGN_SYNC row 513): this read every hype the fan
+       had ever cast with each show's full venue Profile attached, including
+       the inline verification document, to render a count and a few titles.
+       The count is a count now; the list is the most recent hypes, which is
+       where upcoming shows are. */
     db.hypeEvent.findMany({
-      where: { userId: profile.ownerId, ...getDemoShowRelationExclusion() },
-      include: { show: { include: { venueProfile: true } } },
+      where: hypeWhere,
+      select: {
+        show: {
+          select: {
+            id: true, slug: true, title: true, status: true, startsAt: true, timeZone: true,
+            venueProfile: { select: { city: true } },
+          },
+        },
+      },
       orderBy: { createdAt: 'desc' },
+      take: 200,
     }),
+    db.hypeEvent.count({ where: hypeWhere }),
     session?.user?.id
       ? db.profileHypeEvent.findUnique({ where: { userId_profileId: { userId: session.user.id, profileId: profile.id } }, select: { createdAt: true } })
       : null,
@@ -173,13 +190,14 @@ export default async function FanProfilePage({
                 <>
                   <FollowButton profileId={profile.id} variant="hero" />
                   <ShareButton className="fan-hero-btn" label={t('fansSlugPage.shareLabel', 'Share')} path={`/fans/${profile.slug}`} title={profile.name} />
+                  <ReportButton entityLabel="profile" targetId={profile.id} targetType="profile" />
                 </>
               )}
             </div>
           </div>
         </div>
         <div className="fan-stats">
-          <div><div className="fan-stat-val">{shows.length}</div><div className="fan-stat-label">{t('fansSlugPage.hypesCastLabel', 'Hypes Cast')}</div></div>
+          <div><div className="fan-stat-val">{hypesCast}</div><div className="fan-stat-label">{t('fansSlugPage.hypesCastLabel', 'Hypes Cast')}</div></div>
           <div><div className="fan-stat-val">{upcomingShows.length}</div><div className="fan-stat-label">{t('fansSlugPage.showsAttendingLabel', 'Shows Attending')}</div></div>
           <div><div className="fan-stat-val">{formatNumber(locale, profile._count.followers)}</div><div className="fan-stat-label">{t('fansSlugPage.followersLabel', 'Followers')}</div></div>
           <div><div className="fan-stat-val">{asksCount === null ? '—' : formatNumber(locale, asksCount)}</div><div className="fan-stat-label">{t('fansSlugPage.asksLabel', 'Asks')}</div></div>

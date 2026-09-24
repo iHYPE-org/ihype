@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
-import { isAdminSession } from '@/lib/permissions';
+import { requireAdminApi } from '@/lib/admin-api';
 import { db } from '@/lib/db';
 import { z } from 'zod';
 // One generator, shared with the approve action on the access-request queue,
@@ -8,11 +7,9 @@ import { z } from 'zod';
 // never drift into different alphabets or lengths.
 import { generateInviteCode } from '@/lib/access-requests';
 
-export async function GET() {
-  const session = await auth();
-  if (!session || !isAdminSession(session)) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
+export async function GET(request: NextRequest) {
+  const { session, response } = await requireAdminApi(request);
+  if (!session) return response;
 
   const codes = await db.inviteCode.findMany({
     orderBy: { createdAt: 'desc' },
@@ -28,10 +25,8 @@ const postSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
-  const session = await auth();
-  if (!session || !isAdminSession(session)) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
+  const { session, response } = await requireAdminApi(request);
+  if (!session) return response;
 
   let body: z.infer<typeof postSchema>;
   try {

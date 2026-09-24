@@ -4,7 +4,6 @@ import { db } from '@/lib/db';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { WelcomeStepsChecklist } from '@/components/WelcomeStepsChecklist';
-import { getProfilePathForType } from '@/lib/profile-paths';
 import { WORKBENCH_PATH } from '@/lib/auth-redirects';
 import { getServerT } from '@/lib/i18n/server';
 
@@ -38,9 +37,7 @@ export default async function WelcomePage() {
   });
 
   // Prefer the profile's own type over session.user.role: the profile is what
-  // the onboarding wizard is keyed to, and getProfilePathForType already owns
-  // the type -> URL-prefix mapping (ARTIST -> /artists,
-  // VENUE -> /venues), so there is no second copy of it here to drift.
+  // the onboarding wizard is keyed to.
   const profileRole: Role | null =
     profile?.type === 'ARTIST' || profile?.type === 'VENUE'
       ? profile.type
@@ -65,7 +62,9 @@ export default async function WelcomePage() {
   // set-up creator back through setup would undo the point of tracking it.
   const onboardingPath =
     profile && role !== 'FAN' && !profile.onboardedAt
-      ? `${getProfilePathForType(profile.type, profile.slug)}/onboarding`
+      // The wizard's own route, not the `/artists/<slug>/onboarding` alias
+      // that redirected there (row 513).
+      ? `/app/me/${profile.type === 'VENUE' ? 'venues' : 'artists'}/${profile.slug}/onboarding`
       : null;
 
   const CONFIG: Record<Role, {
@@ -107,7 +106,7 @@ export default async function WelcomePage() {
     ARTIST: {
       roleLabel: t('welcomePage.roleArtist', 'Artist'), tint: 'var(--accent)',
       sub: t('welcomePage.subArtist', 'Welcome to the platform where 70% of every ticket is yours — locked by charter, before a single ticket sells.'),
-      cta: t('welcomePage.ctaArtist', 'Set up your page →'), ctaHref: onboardingPath ?? '/pages',
+      cta: t('welcomePage.ctaArtist', 'Set up your page →'), ctaHref: onboardingPath ?? '/app/me/profiles',
       steps: [
         { title: t('welcomePage.artistStep1Title', 'Complete verification'), desc: t('welcomePage.artistStep1Desc', 'Link your catalog and confirm identity — the 70% split activates the moment you’re verified.') },
         { title: t('welcomePage.artistStep2Title', 'Upload your first track'), desc: t('welcomePage.artistStep2Desc', 'Choose all-rights or free-use licensing per track; free-use tracks can air on the station.') },
@@ -117,7 +116,7 @@ export default async function WelcomePage() {
     VENUE: {
       roleLabel: t('welcomePage.roleVenue', 'Venue'), tint: 'var(--role-venue)',
       sub: t('welcomePage.subVenue', 'A guaranteed 20% of every gate, by charter — plus real demand data on who fans actually want to see.'),
-      cta: t('welcomePage.ctaVenue', 'List your room →'), ctaHref: onboardingPath ?? '/pages',
+      cta: t('welcomePage.ctaVenue', 'List your room →'), ctaHref: onboardingPath ?? '/app/me/profiles',
       steps: [
         { title: t('welcomePage.venueStep1Title', 'Verify your room'), desc: t('welcomePage.venueStep1Desc', 'Confirm capacity and address so events can go live with serialized, QR-verified tickets.') },
         { title: t('welcomePage.venueStep2Title', 'Check the demand radar'), desc: t('welcomePage.venueStep2Desc', 'See which artists your city is hyping before you book — no promoter guesswork.') },

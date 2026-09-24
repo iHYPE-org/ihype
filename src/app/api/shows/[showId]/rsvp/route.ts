@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
 import { log } from '@/lib/logger';
+import { isUniqueViolation } from '@/lib/unique-violation';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,7 +34,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (existing) {
       await db.showRsvp.delete({ where: { id: existing.id } });
     } else {
-      await db.showRsvp.create({ data: { showId: show.id, userId: session.user.id } });
+      await db.showRsvp.create({ data: { showId: show.id, userId: session.user.id } })
+        .catch((error: unknown) => { if (!isUniqueViolation(error)) throw error; });
     }
 
     const count = await db.showRsvp.count({ where: { showId: show.id } });

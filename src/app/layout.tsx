@@ -25,6 +25,8 @@ import { AppSplash } from '@/components/AppSplash';
 import { getServerDictionary, getServerI18n } from '@/lib/i18n/server';
 import { RTL_LOCALES } from '@/lib/i18n/locales';
 import { isInviteCodeRequiredRuntime } from '@/lib/runtime-flags';
+import { auth } from '@/lib/auth';
+import type { Session } from 'next-auth';
 
 /**
  * Design System 8 ("Bulletin") type, served from files IN THIS REPO.
@@ -108,8 +110,8 @@ const instrumentSerif = localFont({
  * `preload: false` IS THE WHOLE REASON THIS IS AFFORDABLE, and removing it
  * silently undoes the trade. The four faces above are preloaded because every
  * page uses them (Work Sans excepted since row 511 — see its declaration);
- * these four are used by ONE theme each, so preloading them
- * would put 89KB of fonts on the critical path of every request to serve a
+ * these three are used by ONE theme each, so preloading them
+ * would put 66KB of fonts on the critical path of every request to serve a
  * theme the reader has probably not chosen. With preload off the browser
  * fetches a face only when a rule actually references it — which, because the
  * reference lives inside a `[data-theme]` block, means only when that theme is
@@ -118,7 +120,8 @@ const instrumentSerif = localFont({
  * Latin subset only, taken from Google's own woff2 files (same provenance as
  * the four above — see the note at the top of this file for why they are
  * vendored rather than fetched at build time). Sizes: Anton 18KB,
- * Chakra Petch 10KB, Playfair 38KB, Space Grotesk 22KB.
+ * Chakra Petch 10KB, Playfair 38KB. (Space Grotesk was declared here and read
+ * by no theme block; it was deleted in the 2026-09-24 pre-launch scan.)
  *
  * `adjustFontFallback` is deliberately omitted: these swap in only on a theme
  * change, where the reader is already looking at a repaint, and a metric
@@ -141,13 +144,6 @@ const playfair = localFont({
   src: './fonts/PlayfairDisplay-Variable.woff2',
   weight: '500 700',
   variable: '--font-playfair',
-  display: 'swap',
-  preload: false,
-});
-const spaceGrotesk = localFont({
-  src: './fonts/SpaceGrotesk-Variable.woff2',
-  weight: '400 700',
-  variable: '--font-space',
   display: 'swap',
   preload: false,
 });
@@ -203,20 +199,47 @@ export const viewport: Viewport = {
   themeColor: '#ffffff',
 };
 
+/**
+ * The session this document renders with, handed to SessionProvider so its
+ * first render is the signed-in one (2026-09-24, DESIGN_SYNC row 513).
+ *
+ * Unseeded, next-auth's provider starts in `loading` and fetches
+ * `/api/auth/session` on mount, so every document load (every cold launch of
+ * the native apps, every PWA open, every reload inside /app) painted the header
+ * with no navigation and waited one more round trip for Listen · Map · Tickets
+ * · Me to appear. A failure here must never cost a page: `undefined` leaves the
+ * provider to fetch exactly as it did before, while `null` (signed out) is an
+ * answer and needs no fetch. Safe only because no page is served with a public
+ * Cache-Control (next-config-cache-headers.test.ts), since every document now
+ * carries its member's session.
+ */
+async function readLayoutSession(): Promise<Session | null | undefined> {
+  try {
+    return await auth();
+  } catch {
+    return undefined;
+  }
+}
+
 export default async function RootLayout({ children }: { children: ReactNode }) {
-  const nonce = await getCspNonce();
-  const { locale, t } = await getServerI18n();
+  /* Independent request reads, side by side rather than one after another
+     (2026-09-24, DESIGN_SYNC row 513). The inviteOnly flag drives the header
+     join CTA's "Join Beta" vs "Join free" copy and is read here rather than in
+     HeaderAuthLinks because that is a client component and the flag lives in
+     KV. The session seeds SessionProvider — see readLayoutSession below. */
+  const [nonce, { locale, t }, inviteOnly, requestHeaders, session] = await Promise.all([
+    getCspNonce(),
+    getServerI18n(),
+    isInviteCodeRequiredRuntime(),
+    headers(),
+    readLayoutSession(),
+  ]);
   // The client provider is seeded with the same locale and dictionary this
   // request rendered with, so its first render matches the HTML byte for byte.
   const dictionary = await getServerDictionary(locale);
-  // Drives the header join CTA's "Join Beta" vs "Join free" copy. Read here
-  // rather than in HeaderAuthLinks because that is a client component and this
-  // flag lives in KV. One extra KV read per render, alongside the nonce and
-  // dictionary reads this layout already does.
-  const inviteOnly = await isInviteCodeRequiredRuntime();
   /* Middleware sets `x-pathname` on every request, so the root layout is
      not path-blind — the premise the CSS approach was built on. */
-  const wholeScreen = ownsWholeScreen((await headers()).get('x-pathname'));
+  const wholeScreen = ownsWholeScreen(requestHeaders.get('x-pathname'));
   // The signed-in app shell's chrome renders here, in the ROOT layout, because
   // the handoff's first chrome-contract rule is that the top bar and the player
   // never re-render on navigation — only the content region may be replaced.
@@ -256,7 +279,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
 try{if(window.CSS&&CSS.supports('font','-apple-system-body')){var p=document.createElement('div');p.style.cssText='font:-apple-system-body;position:absolute;top:-9999px;visibility:hidden';d.appendChild(p);var px=parseFloat(getComputedStyle(p).fontSize);p.remove();if(px>0)d.style.setProperty('--ihype-os-text-scale',String(Math.max(1,px/17)))}}catch(e){}
 try{var C=window.Capacitor;if(C&&C.getPlatform&&C.getPlatform()==='ios')d.classList.add('native-ios')}catch(e){}})();`;
   return (
-    <html lang={locale} dir={RTL_LOCALES.includes(locale) ? 'rtl' : 'ltr'} suppressHydrationWarning className={`${bricolage.variable} ${workSans.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable} ${anton.variable} ${chakraPetch.variable} ${playfair.variable} ${spaceGrotesk.variable}`}>
+    <html lang={locale} dir={RTL_LOCALES.includes(locale) ? 'rtl' : 'ltr'} suppressHydrationWarning className={`${bricolage.variable} ${workSans.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable} ${anton.variable} ${chakraPetch.variable} ${playfair.variable}`}>
       <head>
         <script
           nonce={nonce}
@@ -265,7 +288,7 @@ try{var C=window.Capacitor;if(C&&C.getPlatform&&C.getPlatform()==='ios')d.classL
         />
       </head>
       <body>
-        <AppProviders initialLocale={locale} initialDictionary={dictionary}>
+        <AppProviders initialLocale={locale} initialDictionary={dictionary} session={session}>
           <AppSplash />
           <a href="#main-content" className="skip-to-content">{t('layout.skipToContent', 'Skip to main content')}</a>
           <WebVitals />

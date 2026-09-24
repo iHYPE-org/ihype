@@ -502,7 +502,12 @@ export async function POST(request: Request) {
           reason: vetting.requiresManualReview ? 'auto_flag_ambiguous' : 'auto_flag_copyright',
           details: vetting.reasoning,
         },
-      }).catch(() => {});
+      }).catch((error: unknown) => {
+        /* Loud, not silent (row 513): the track is already stored HELD, and
+           this row is the only thing that puts it in front of a reviewer —
+           without it the upload is held with nobody told. */
+        log.error('[api/artist-media]', error instanceof Error ? error : { error: String(error) }, `held track ${hexId} has no moderation report`);
+      });
     }
 
     return NextResponse.json({

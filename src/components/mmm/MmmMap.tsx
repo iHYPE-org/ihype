@@ -571,12 +571,19 @@ const flownHome = useRef(false);
      "the map asks for location itself" failing on main.
 
      The flight keeps the protection it always had, in the effect below. */
+  /* ...AND ON ARRIVAL AT THE MAP, not at the shell (2026-09-24, row 513). The
+     layer is mounted under every pane so the camera survives navigation, and
+     this effect used to fire on mount — so a member who opened a ticket email,
+     a Settings link or ME straight away was asked where they were by a screen
+     that shows no map. `armed` is the same latch that defers MapLibre: it
+     flips the first time the map is the active surface and never back, and it
+     does not wait for tiles, so the tile-miss case above is still asked. */
   const asked = useRef(false);
   useEffect(() => {
-    if (asked.current) return;
+    if (!armed || asked.current) return;
     asked.current = true;
     requestPosition();
-  }, [requestPosition]);
+  }, [armed, requestPosition]);
 
   /* The deferred half: an answer that arrived before the canvas was up still
      gets its flight, once. Without this, moving the ask earlier would trade a

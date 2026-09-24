@@ -3,7 +3,8 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { sendGenericEmail } from '@/lib/mailer';
 import { consumeRateLimit, rateLimitKey } from '@/lib/rate-limit';
-import { createSerializedTicketId } from '@/lib/tickets';
+import { buildTicketVerificationUrl, createSerializedTicketId } from '@/lib/tickets';
+import { log } from '@/lib/logger';
 import { escapeHtml } from '@/lib/html-escape';
 
 export const dynamic = 'force-dynamic';
@@ -81,40 +82,82 @@ export async function POST(
   // works. holderName falls back to the recipient's email since a transfer
   // doesn't collect a real name.
   const recipientName = toEmail.split('@')[0];
-  const reissued = await db.$transaction(
-    order.tickets.map((t) =>
-      db.ticket.update({
+  const now = new Date();
+  // The new ids exist before anything is written, so the email can carry
+  // them either side of the commit (see the ordering note below).
+  const newIds = order.tickets.map(() => createSerializedTicketId());
+
+  const send = () => sendGenericEmail({
+    to: toEmail,
+    subject: `Ticket transfer: ${order.show.title}`,
+    text: `You've received tickets for ${order.show.title}!\n\n${newIds.map((id) => `• #${id} — ${buildTicketVerificationUrl(id)}`).join('\n')}\n\nOriginal confirmation: ${order.confirmationCode}`,
+    html: `<p>You've received tickets for <strong>${escapeHtml(order.show.title)}</strong>!</p><ul>${newIds.map((id) => `<li><a href="${escapeHtml(buildTicketVerificationUrl(id))}">#${id}</a></li>`).join('')}</ul><p>Confirmation: <strong>${order.confirmationCode}</strong></p>`,
+  });
+
+  /* THE EMAIL IS NOT A NOTICE FOR EVERY RECIPIENT, SO IT IS NOT ALWAYS SENT
+     AFTER (2026-09-24, DESIGN_SYNC row 513). It used to go after the commit
+     with `.catch(() => {})`, and the sender was told "the recipient has been
+     emailed" whatever the provider answered. For an address with no account
+     the email is the ONLY copy of the new codes — the order moves to nobody
+     who can open it — so a failed send stranded the tickets. So for that
+     recipient the email goes FIRST, and a failure transfers nothing. For a
+     member it goes after, because the tickets are in their wallet either way
+     and a failed notice is reported rather than fatal. */
+  if (!recipient) {
+    try {
+      await send();
+    } catch (error) {
+      log.error('[api/tickets/transfer]', error instanceof Error ? error : { error: String(error) }, 'transfer email failed; nothing was transferred');
+      return NextResponse.json(
+        { error: `The email to ${toEmail} could not be sent, so nothing was transferred. Try again in a minute.` },
+        { status: 502 },
+      );
+    }
+  }
+
+  /* ONE TRANSACTION, AND IT KILLS ANY LIVE TRANSFER CODE (row 513). The
+     rotation, the ownership move and the code expiry used to be separate
+     writes with no expiry at all — so a transfer code minted before an email
+     transfer stayed live, and whoever held it could claim the order back from
+     the new owner. The claim route also checks that the code's creator still
+     owns the order; this is the half that stops the code existing at all. */
+  await db.$transaction(async (tx) => {
+    for (const [index, t] of order.tickets.entries()) {
+      await tx.ticket.update({
         where: { serializedId: t.serializedId },
         data: {
-          serializedId: createSerializedTicketId(),
+          serializedId: newIds[index]!,
           holderName: recipientName,
           holderEmail: toEmail,
           reassignCount: { increment: 1 },
-          reassignedAt: new Date(),
+          reassignedAt: now,
         },
-        select: { serializedId: true },
-      })
-    )
-  );
-
-  await db.ticketOrder.update({
-    where: { id: serializedId },
-    data: {
-      transferredAt: new Date(),
-      transferredToEmail: toEmail,
-      buyerUserId: recipient?.id ?? null,
-      buyerEmail: toEmail,
-    },
+      });
+    }
+    await tx.ticketOrder.update({
+      where: { id: serializedId },
+      data: {
+        transferredAt: now,
+        transferredToEmail: toEmail,
+        buyerUserId: recipient?.id ?? null,
+        buyerEmail: toEmail,
+      },
+    });
+    await tx.ticketTransferCode.updateMany({
+      where: { ticketOrderId: serializedId, claimedAt: null, expiresAt: { gt: now } },
+      data: { expiresAt: now },
+    });
   });
 
-  const ticketList = reissued.map((t) => `• #${t.serializedId}`).join('\n');
+  let emailed = true;
+  if (recipient) {
+    try {
+      await send();
+    } catch (error) {
+      emailed = false;
+      log.error('[api/tickets/transfer]', error instanceof Error ? error : { error: String(error) }, 'transfer notice failed; tickets are in the recipient wallet');
+    }
+  }
 
-  await sendGenericEmail({
-    to: toEmail,
-    subject: `Ticket transfer: ${order.show.title}`,
-    text: `You've received tickets for ${order.show.title}!\n\n${ticketList}\n\nOriginal confirmation: ${order.confirmationCode}`,
-    html: `<p>You've received tickets for <strong>${escapeHtml(order.show.title)}</strong>!</p><ul>${reissued.map((t) => `<li>#${t.serializedId}</li>`).join('')}</ul><p>Confirmation: <strong>${order.confirmationCode}</strong></p>`,
-  }).catch(() => {});
-
-  return NextResponse.json({ transferred: true });
+  return NextResponse.json({ transferred: true, emailed });
 }

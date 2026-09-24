@@ -144,6 +144,12 @@ const PUBLIC_EXACT: readonly string[] = [
   // wall at the exact URL that exists to prove there isn't one.
   '/delete-account',
   '/about', '/audit', '/charter', '/dmca', '/legal', '/privacy', '/terms', '/transparency',
+  // The root page's share card (2026-09-24, DESIGN_SYNC row 513). Every
+  // public page names `/opengraph-image` as its og:image and twitter:image,
+  // and it answered 307 to /login, so every link to ihype.org unfurled with
+  // no image. A metadata route with no extension: the static-asset test
+  // cannot see it, and the per-show suffix rule below covers only its prefixes.
+  '/opengraph-image', '/twitter-image',
 ];
 
 const PUBLIC_PREFIXES: readonly string[] = [
@@ -177,12 +183,12 @@ const PUBLIC_PREFIXES: readonly string[] = [
 /**
  * Prefixes whose PUBLIC part is exactly one segment deep.
  *
- * `/shows/<slug>` has to serve a stranger. `/shows/<slug>/scan`, `/checkin`,
- * `/qr` and `/poster` are door-staff and organiser tooling and must not — so a
- * plain prefix rule here would be too generous by four routes. They each run
- * their own authorization (checkin returns 401 without a session), but a gate
- * that relies on every descendant defending itself is the posture this change
- * exists to replace.
+ * `/shows/<slug>` has to serve a stranger. `/shows/<slug>/poster` is
+ * organiser tooling and must not — so a plain prefix rule here would be too
+ * generous. (`/checkin` and `/qr` were
+ * handlers under this prefix with no caller, deleted 2026-09-24, row 513.)
+ * A gate that relies on every descendant defending itself is the posture this
+ * change exists to replace.
  *
  * `/h/<code>` and `/invite/<code>` are single-segment by construction, and
  * `/embed/<hexId>` is iframed onto other people's sites. Depth-limiting them

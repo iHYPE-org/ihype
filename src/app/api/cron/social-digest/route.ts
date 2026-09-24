@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { escapeHtml } from '@/lib/html-escape';
 import { isCronRequestAuthorized } from '@/lib/cron-auth';
 import { db } from '@/lib/db';
 import { sendGenericEmail } from '@/lib/mailer';
@@ -38,7 +39,7 @@ export async function GET(request: NextRequest) {
     to: getAdminAlertRecipients(),
     subject: '[iHYPE] Weekly Social Digest — top shows',
     text,
-    html: `<h2>Weekly Social Digest</h2><ol>${topShows.map((s) => `<li><strong>${s.title}</strong> — ${s.hypeCount} hypes</li>`).join('')}</ol><p>Copy ready to post.</p>`,
+    html: `<h2>Weekly Social Digest</h2><ol>${topShows.map((s) => `<li><strong>${escapeHtml(s.title)}</strong> — ${s.hypeCount} hypes</li>`).join('')}</ol><p>Copy ready to post.</p>`,
   }).catch(() => {});
 
   return NextResponse.json({ ok: true, postId: post.id });

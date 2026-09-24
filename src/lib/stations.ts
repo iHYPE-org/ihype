@@ -63,8 +63,6 @@ export function findStation(slug: string): StationDefinition | null {
   return STATIONS.find((station) => station.slug === slug) ?? null;
 }
 
-/** How wide "local" is, per the handoff's own subtitle. */
-export const LOCAL_RADIUS_MILES = 40;
 export const NEW_WINDOW_DAYS = 7;
 
 /**

@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { escapeHtml } from '@/lib/html-escape';
 import { isCronRequestAuthorized } from '@/lib/cron-auth';
 import { getAdminAlertRecipients } from '@/lib/env';
 import { pingCronAlive, WEEKLY_TTL } from '@/lib/cron-health';
 import { log } from '@/lib/logger';
+// An email client resolves no CSS variable; the literal palette is held to :root by brand-assets.test.ts.
+import { OG } from '@/app/api/og/palette';
 
 export const dynamic = 'force-dynamic';
 
@@ -65,7 +68,7 @@ export async function GET(request: NextRequest) {
             to: getAdminAlertRecipients(),
             subject: '[iHYPE] Health check failure',
             text: `iHYPE health check returned non-ok status.\n\n${summary}`,
-            html: `<p>iHYPE health check returned non-ok status.</p><pre style="font-family:monospace;font-size:12px;background:var(--bg);color:#eef1f6;padding:12px;border-radius:6px;white-space:pre-wrap;">${summary.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</pre>`
+            html: `<p>iHYPE health check returned non-ok status.</p><pre style="font-family:monospace;font-size:12px;background:${OG.bg2};color:${OG.ink};padding:12px;border-radius:6px;white-space:pre-wrap;">${summary.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</pre>`
           });
         } catch (err) {
           log.error('[cron/health-check]', err instanceof Error ? err : { error: String(err) }, 'alert email failed');
@@ -537,7 +540,7 @@ export async function GET(request: NextRequest) {
             to: getAdminAlertRecipients(),
             subject: `[iHYPE] Stripe Connect state is inconsistent (${corrupt.length})`,
             text: corrupt.map(line).join('\n'),
-            html: `<p>${corrupt.map((i) => `<strong>${i.name}</strong> (${i.slug}): marked onboarded with no Connect account id`).join('<br/>')}</p>`,
+            html: `<p>${corrupt.map((i) => `<strong>${escapeHtml(i.name)}</strong> (${escapeHtml(i.slug)}): marked onboarded with no Connect account id`).join('<br/>')}</p>`,
           },
           'stripe-connect-health',
         );

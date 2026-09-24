@@ -113,7 +113,6 @@
     "@capacitor/cli": "^8.5.2",
     "@next/bundle-analyzer": "^16.3.6",
     "@playwright/test": "^1.62.1",
-    "@types/bcryptjs": "^3.0.0",
     "@types/node": "^26.6.2",
     "@types/pg": "^8.23.1",
     "@types/react": "^19.3.0",

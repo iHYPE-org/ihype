@@ -691,33 +691,21 @@ const nextConfig = {
         headers: [{ key: 'Cache-Control', value: 'no-store' }]
       },
       {
-        source: '/search',
-        headers: [{ key: 'Cache-Control', value: 'public, s-maxage=300, stale-while-revalidate=600' }]
-      },
-      {
-        source: '/governance',
-        headers: [{ key: 'Cache-Control', value: 'public, s-maxage=300, stale-while-revalidate=600' }]
-      },
-      {
         source: '/investor',
         headers: [{ key: 'Cache-Control', value: 'no-cache, must-revalidate' }]
       },
-      {
-        source: '/artists/:slug',
-        headers: [{ key: 'Cache-Control', value: 'public, s-maxage=60, stale-while-revalidate=300' }]
-      },
-      {
-        source: '/shows/:slug',
-        headers: [{ key: 'Cache-Control', value: 'public, s-maxage=30, stale-while-revalidate=120' }]
-      },
-      {
-        source: '/venues/:slug',
-        headers: [{ key: 'Cache-Control', value: 'public, s-maxage=60, stale-while-revalidate=300' }]
-      },
-      {
-        source: '/fans/:slug',
-        headers: [{ key: 'Cache-Control', value: 'public, s-maxage=60, stale-while-revalidate=300' }]
-      },
+      /* `/shows/:slug` carried `public, s-maxage=30, stale-while-revalidate=120`
+         until 2026-09-24 (DESIGN_SYNC row 513), and the page is a
+         PERSONALISED render: the viewer's RSVP and hype, the organiser's own
+         order figures, and ad play tokens bound to the listener. The forced
+         `public` defeated the service worker's only defence (it trusts a
+         response's own Cache-Control), so a member was served their previous
+         render stale-first. Next's default for a dynamic render is private
+         and no-store, which is right; `next-config-cache-headers.test.ts`
+         refuses a `public` entry on any path. The five `public` entries that
+         sat beside it went the same day: `/search`, `/governance`,
+         `/artists/:slug`, `/venues/:slug` and `/fans/:slug` are `redirects()`
+         aliases, so each header decorated a 307 into an auth-gated pane. */
       // /profile/:slug — cache headers set directly in the route handler
     ];
   }

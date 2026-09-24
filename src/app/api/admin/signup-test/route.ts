@@ -1,19 +1,15 @@
 import { randomBytes } from 'crypto';
-import { NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { requireAdminApi } from '@/lib/admin-api';
+import { NextResponse, NextRequest } from 'next/server';
 import { recordAuditEvent } from '@/lib/audit';
 import { db } from '@/lib/db';
 import { createHexId } from '@/lib/hex-id';
-import { isAdminSession } from '@/lib/permissions';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
 
-export async function POST(request: Request) {
-  const session = await auth();
-
-  if (!isAdminSession(session)) {
-    return NextResponse.json({ error: 'Admin access required.' }, { status: 403 });
-  }
+export async function POST(request: NextRequest) {
+  const { session, response } = await requireAdminApi(request);
+  if (!session) return response;
 
   const rl = await consumeRateLimit(`admin-signup-test:${session?.user?.id ?? 'unknown'}`, { limit: 3, windowMs: 60 * 1000 });
   if (!rl.allowed) {

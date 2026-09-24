@@ -212,6 +212,74 @@ function normalizeLocationValue(value?: string | null) {
   return trimmed ? trimmed.toLowerCase() : null;
 }
 
+/* ONE SPELLING PER PLACE (2026-09-24, DESIGN_SYNC row 513).
+
+   The buyer's side of every comparison below comes from Cloudflare's edge
+   (`cf-ipcountry` is an ISO code, `US`; `cf-region-code` is a subdivision
+   code, `ME`), and the venue's side is whatever the owner typed into a free
+   80-character field (the demo seed alone writes `USA`). Compared raw, `us`
+   never equalled `usa`, so a Portland fan buying a Portland ticket was charged
+   the 7% cross-border rate instead of the domestic one — an overcharge on
+   every sale at a venue that spelled its country out. Both sides are reduced
+   to one code first: an ISO 3166-1 alpha-2 for a country (every English
+   region name Intl knows, plus the common short forms), a two-letter code for
+   a US state. Anything unrecognised is compared as typed, exactly as before. */
+const COUNTRY_ALIASES: Record<string, string> = {
+  usa: 'us', 'u.s.': 'us', 'u.s.a.': 'us', 'u.s': 'us', america: 'us',
+  'united states of america': 'us', uk: 'gb', 'u.k.': 'gb', england: 'gb',
+  scotland: 'gb', wales: 'gb', 'northern ireland': 'gb', 'great britain': 'gb',
+};
+
+let countryNames: Map<string, string> | null = null;
+function countryNameIndex(): Map<string, string> {
+  if (countryNames) return countryNames;
+  const index = new Map<string, string>();
+  try {
+    const names = new Intl.DisplayNames(['en'], { type: 'region' });
+    for (let a = 65; a <= 90; a += 1) {
+      for (let b = 65; b <= 90; b += 1) {
+        const code = String.fromCharCode(a, b);
+        const name = names.of(code);
+        if (name && name !== code) index.set(name.toLowerCase(), code.toLowerCase());
+      }
+    }
+  } catch {
+    // No Intl region names: codes and the alias table still work.
+  }
+  countryNames = index;
+  return index;
+}
+
+export function normalizeCountry(value?: string | null): string | null {
+  const raw = normalizeLocationValue(value);
+  if (!raw) return null;
+  if (COUNTRY_ALIASES[raw]) return COUNTRY_ALIASES[raw];
+  if (/^[a-z]{2}$/.test(raw)) return raw;
+  return countryNameIndex().get(raw) ?? raw;
+}
+
+const US_STATE_CODES: Record<string, string> = {
+  alabama: 'al', alaska: 'ak', arizona: 'az', arkansas: 'ar', california: 'ca', colorado: 'co',
+  connecticut: 'ct', delaware: 'de', 'district of columbia': 'dc', florida: 'fl', georgia: 'ga',
+  hawaii: 'hi', idaho: 'id', illinois: 'il', indiana: 'in', iowa: 'ia', kansas: 'ks', kentucky: 'ky',
+  louisiana: 'la', maine: 'me', maryland: 'md', massachusetts: 'ma', michigan: 'mi', minnesota: 'mn',
+  mississippi: 'ms', missouri: 'mo', montana: 'mt', nebraska: 'ne', nevada: 'nv', 'new hampshire': 'nh',
+  'new jersey': 'nj', 'new mexico': 'nm', 'new york': 'ny', 'north carolina': 'nc', 'north dakota': 'nd',
+  ohio: 'oh', oklahoma: 'ok', oregon: 'or', pennsylvania: 'pa', 'rhode island': 'ri',
+  'south carolina': 'sc', 'south dakota': 'sd', tennessee: 'tn', texas: 'tx', utah: 'ut', vermont: 'vt',
+  virginia: 'va', washington: 'wa', 'west virginia': 'wv', wisconsin: 'wi', wyoming: 'wy',
+  'puerto rico': 'pr',
+};
+
+export function normalizeStateRegion(value?: string | null): string | null {
+  const raw = normalizeLocationValue(value);
+  if (!raw) return null;
+  // `US-ME`, the ISO 3166-2 form, is the same state as `ME`.
+  const iso = /^[a-z]{2}-([a-z0-9]{1,3})$/.exec(raw);
+  if (iso) return iso[1];
+  return US_STATE_CODES[raw] ?? raw;
+}
+
 function hasSamePostalCode(buyerLocation?: TaxLocation | null, venueLocation?: TaxLocation | null) {
   return Boolean(
     normalizeLocationValue(buyerLocation?.postalCode) &&
@@ -221,16 +289,16 @@ function hasSamePostalCode(buyerLocation?: TaxLocation | null, venueLocation?: T
 
 function hasSameStateRegion(buyerLocation?: TaxLocation | null, venueLocation?: TaxLocation | null) {
   return Boolean(
-    normalizeLocationValue(buyerLocation?.stateRegion) &&
-      normalizeLocationValue(buyerLocation?.stateRegion) === normalizeLocationValue(venueLocation?.stateRegion) &&
+    normalizeStateRegion(buyerLocation?.stateRegion) &&
+      normalizeStateRegion(buyerLocation?.stateRegion) === normalizeStateRegion(venueLocation?.stateRegion) &&
       hasSameCountry(buyerLocation, venueLocation)
   );
 }
 
 function hasSameCountry(buyerLocation?: TaxLocation | null, venueLocation?: TaxLocation | null) {
   return Boolean(
-    normalizeLocationValue(buyerLocation?.country) &&
-      normalizeLocationValue(buyerLocation?.country) === normalizeLocationValue(venueLocation?.country)
+    normalizeCountry(buyerLocation?.country) &&
+      normalizeCountry(buyerLocation?.country) === normalizeCountry(venueLocation?.country)
   );
 }
 
@@ -249,8 +317,8 @@ export function calculateTicketTaxes({
   }
 
   const subtotalCents = ticketPriceCents * quantity;
-  const buyerCountry = normalizeLocationValue(buyerLocation?.country);
-  const venueCountry = normalizeLocationValue(venueLocation?.country);
+  const buyerCountry = normalizeCountry(buyerLocation?.country);
+  const venueCountry = normalizeCountry(venueLocation?.country);
 
   if (!buyerCountry && !venueCountry) {
     return {

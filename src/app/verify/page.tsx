@@ -30,8 +30,8 @@ export default async function VerifyPage() {
   };
 
   const NEXT_STEP: Record<string, { title: string; body: string; cta: string; href: string }> = {
-    ARTIST: { title: t('verifyPage.nextStepArtistTitle', 'Draft your artist page'), body: t('verifyPage.nextStepArtistBody', "Add a bio, pin a track, and set your genres now — it goes live the moment you're verified."), cta: t('verifyPage.nextStepArtistCta', 'Start your page'), href: '/pages?tab=creator' },
-    VENUE: { title: t('verifyPage.nextStepVenueTitle', 'Set up your room'), body: t('verifyPage.nextStepVenueBody', "Add capacity, amenities, and photos so promoters and artists can find you the moment you're verified."), cta: t('verifyPage.nextStepVenueCta', 'Set up your venue'), href: '/pages?tab=creator' },
+    ARTIST: { title: t('verifyPage.nextStepArtistTitle', 'Draft your artist page'), body: t('verifyPage.nextStepArtistBody', "Add a bio, pin a track, and set your genres now — it goes live the moment you're verified."), cta: t('verifyPage.nextStepArtistCta', 'Start your page'), href: '/app/me/profiles' },
+    VENUE: { title: t('verifyPage.nextStepVenueTitle', 'Set up your room'), body: t('verifyPage.nextStepVenueBody', "Add capacity, amenities, and photos so promoters and artists can find you the moment you're verified."), cta: t('verifyPage.nextStepVenueCta', 'Set up your venue'), href: '/app/me/profiles' },
   };
 
   const profiles = await db.profile.findMany({

@@ -223,6 +223,42 @@ describe('calculateTicketTaxes', () => {
   it('rejects invalid ticket price', () => {
     expect(() => calculateTicketTaxes({ ticketPriceCents: -100, quantity: 1 })).toThrow();
   });
+
+  /* Row 513: the buyer's country is Cloudflare's ISO code and the venue's is
+     free text. "US" against "USA" used to read as a cross-border sale. */
+  it('treats a spelled-out venue country as the same country as the edge code', () => {
+    for (const venueCountry of ['USA', 'United States', 'united states of america', 'U.S.A.']) {
+      const result = calculateTicketTaxes({
+        ...base,
+        buyerLocation: { stateRegion: 'ME', country: 'US', postalCode: '04101' },
+        venueLocation: { stateRegion: 'Maine', country: venueCountry, postalCode: '04101' }
+      });
+      expect(result.internationalCents, venueCountry).toBe(0);
+      expect(result.countryCents, venueCountry).toBeGreaterThan(0);
+      expect(result.stateCents, venueCountry).toBeGreaterThan(0);
+      expect(result.localCents, venueCountry).toBeGreaterThan(0);
+    }
+  });
+
+  it('still charges the cross-border rate between two different countries, however spelled', () => {
+    const result = calculateTicketTaxes({
+      ...base,
+      buyerLocation: { country: 'DE', stateRegion: null, postalCode: null },
+      venueLocation: { country: 'USA', stateRegion: 'ME', postalCode: '04101' }
+    });
+    expect(result.internationalCents).toBeGreaterThan(0);
+    expect(result.countryCents).toBe(0);
+  });
+
+  it('reads Germany and DE as one country', () => {
+    const result = calculateTicketTaxes({
+      ...base,
+      buyerLocation: { country: 'DE', stateRegion: null, postalCode: null },
+      venueLocation: { country: 'Germany', stateRegion: null, postalCode: null }
+    });
+    expect(result.internationalCents).toBe(0);
+    expect(result.countryCents).toBeGreaterThan(0);
+  });
 });
 
 describe('calculateTicketOrderFinancials', () => {

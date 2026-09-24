@@ -5,6 +5,7 @@ import { sendPushToAllDevices } from '@/lib/notify';
 import { sendOperationalEmail } from '@/lib/mailer';
 import { log } from '@/lib/logger';
 import { formatDoorTime } from '@/lib/format-locale';
+import { escapeHtml } from '@/lib/html-escape';
 
 export const dynamic = 'force-dynamic';
 
@@ -110,7 +111,7 @@ export async function GET(request: NextRequest) {
               to: rsvp.user.email,
               subject: `Reminder: ${show.title} is tomorrow`,
               text: `Your show "${show.title}" at ${venueName} is tomorrow (${dateStr}). See you there!\n\nhttps://ihype.org/shows/${show.slug}`,
-              html: `<p>Your show <strong>${show.title}</strong> at ${venueName} is <strong>tomorrow (${dateStr})</strong>.</p><p><a href="https://ihype.org/shows/${show.slug}">View on iHYPE →</a></p>`,
+              html: `<p>Your show <strong>${escapeHtml(show.title)}</strong> at ${escapeHtml(venueName)} is <strong>tomorrow (${escapeHtml(dateStr)})</strong>.</p><p><a href="https://ihype.org/shows/${encodeURIComponent(show.slug)}">View on iHYPE →</a></p>`,
             }
           : undefined,
       }));

@@ -246,20 +246,20 @@ const icons = {
 };
 
 const dashboardHref = (profile: ModuleProfile): string | null => {
-  if (profile.type === 'ARTIST') return `/artists/${profile.slug}/dashboard`;
-  if (profile.type === 'VENUE') return `/venues/${profile.slug}/dashboard`;
+  if (profile.type === 'ARTIST') return `/app/me/artists/${profile.slug}/dashboard`;
+  if (profile.type === 'VENUE') return `/app/me/venues/${profile.slug}/dashboard`;
   return null;
 };
 
 const analyticsHref = (profile: ModuleProfile): string | null => {
-  if (profile.type === 'ARTIST') return `/artists/${profile.slug}/analytics`;
-  if (profile.type === 'VENUE') return `/venues/${profile.slug}/analytics`;
+  if (profile.type === 'ARTIST') return `/app/me/artists/${profile.slug}/analytics`;
+  if (profile.type === 'VENUE') return `/app/me/venues/${profile.slug}/analytics`;
   return null;
 };
 
 const onboardingHref = (profile: ModuleProfile): string | null => {
-  if (profile.type === 'ARTIST') return `/artists/${profile.slug}/onboarding`;
-  if (profile.type === 'VENUE') return `/venues/${profile.slug}/onboarding`;
+  if (profile.type === 'ARTIST') return `/app/me/artists/${profile.slug}/onboarding`;
+  if (profile.type === 'VENUE') return `/app/me/venues/${profile.slug}/onboarding`;
   return null;
 };
 

@@ -55,7 +55,9 @@ export type MmmMeData = {
   /** Roles this account actually holds — the switcher renders only these. */
   availableRoles: MmmMeRole[];
   stats: MmmStat[];
-  activity: MmmActivityRow[];
+  /** `null` when the read FAILED — the pane says so rather than drawing an
+   *  empty-state sentence over it (row 513; row 408's rule). */
+  activity: MmmActivityRow[] | null;
   /** Artist and Venue only. Fans have no page creator — removed deliberately. */
   page: { name: string; status: string; slug: string; kind: 'artists' | 'venues' | 'advertising' } | null;
   hypeLink: { url: string; clicks: number | null; tickets: number | null; earnedCents: number | null } | null;
@@ -95,7 +97,6 @@ export type MmmMeData = {
    * thing either way here, because unlike a count there is no figure to be
    * wrong about: a list with nothing in it is a list with nothing in it.
    */
-  tickets: MmmMeTicket[];
 };
 
 export type MmmMeTicket = {
@@ -152,19 +153,101 @@ export function resolveAvailableRoles(profileTypes: readonly string[], hasAdvert
 }
 
 export type LoadMmmMeOptions = {
-  /**
-   * Whether to read the member's tickets and render a QR for each. TRUE only
-   * for the wallet (`/app/tickets`), the one surface that draws them. Until
-   * 2026-09-23 (DESIGN_SYNC row 509) the ME pane paid for this too — the
-   * ticket query plus one SVG encode per ticket, on every visit — and `MmmMe`
-   * renders no ticket: the count line is `ticketCount`, read separately.
-   */
-  includeTickets?: boolean;
+  /* `includeTickets` is gone (2026-09-24, DESIGN_SYNC row 513): the wallet
+     reads `loadWalletTickets` directly, and the ME pane never drew a ticket
+     (its count line is `ticketCount`). Row 509 had already taken the QR
+     encodes off ME; this takes the last reader of the flag with it. */
   now?: Date;
 };
 
+/**
+ * The wallet's tickets, ordered and with a QR each: the one read the Tickets
+ * tab draws (2026-09-24, DESIGN_SYNC row 513). `/app/tickets` used to call the
+ * whole of `loadMmmMe` for this, which also read the profiles, the advertiser
+ * account, the ticket count and the fan board's four counts and hype-link
+ * figures, none of which the wallet renders.
+ */
+/**
+ * `null` is a read that FAILED, never an empty wallet: the wallet draws demo
+ * tickets over an empty list, so a swallowed failure used to show a member
+ * holding real tickets two fake ones under a "Demo content" badge — at the
+ * door, on the one surface with no tolerance for it (row 513).
+ */
+export async function loadWalletTickets(userId: string, locale: Locale): Promise<MmmMeTicket[] | null> {
+  // SCANNED as well as VALID: a ticket you used is still yours, and the
+  // design shows it as an "attended" row with its check-in time. VOID is
+  // excluded — a refunded ticket is not a ticket.
+  const ticketRows = await db.ticket
+      .findMany({
+        where: { status: { in: ['VALID', 'SCANNED'] }, ticketOrder: { buyerUserId: userId } },
+        // Newest shows first at the database, then re-ordered below. Ascending
+        // here would spend the `take` on the oldest attended tickets and could
+        // push every upcoming show out of the list entirely.
+        orderBy: { show: { startsAt: 'desc' } },
+        take: 24,
+        select: {
+          serializedId: true,
+          scannedAt: true,
+          ticketOrder: { select: { processingFeeCents: true, quantity: true } },
+          show: {
+            select: {
+              title: true,
+              startsAt: true,
+              timeZone: true,
+              ticketPriceCents: true,
+              venueProfile: { select: { name: true, city: true } },
+            },
+          },
+        },
+      })
+      .catch(() => null);
+  if (!ticketRows) return null;
+
+  /**
+   * Upcoming first, soonest first; attended after them, most recent first.
+   *
+   * A single `startsAt` sort puts July's attended ticket above August's
+   * upcoming one, which is backwards for the only question this list answers —
+   * what am I going to, and when. It is also what the design draws.
+   */
+  const nowMs = Date.now();
+  const ordered = [...ticketRows].sort((a, b) => {
+    const aPast = a.show.startsAt.getTime() < nowMs;
+    const bPast = b.show.startsAt.getTime() < nowMs;
+    if (aPast !== bPast) return aPast ? 1 : -1;
+    return aPast
+      ? b.show.startsAt.getTime() - a.show.startsAt.getTime()
+      : a.show.startsAt.getTime() - b.show.startsAt.getTime();
+  });
+
+  return Promise.all(
+    ordered.map(async (row) => ({
+      serializedId: row.serializedId,
+      title: row.show.title,
+      where: [row.show.venueProfile?.name, row.show.venueProfile?.city]
+        .filter(Boolean)
+        .join(' · '),
+      startsAt: row.show.startsAt.toISOString(),
+      timeZone: row.show.timeZone ?? null,
+      // Free shows say Free rather than $0 — the same distinction the map pins
+      // already make. A price that could not be read is omitted, not zeroed.
+      faceValue: row.show.ticketPriceCents > 0 ? money(locale, row.show.ticketPriceCents) : 'Free',
+      // Per TICKET, not per order: an order of three carries one fee, and
+      // showing the whole thing on each ticket would treble it on screen.
+      // Orders placed before the fee existed carry 0 and show no line at all,
+      // rather than a $0.00 that reads as a fee that was waived.
+      processingFee:
+        row.ticketOrder.processingFeeCents > 0
+          ? money(locale, Math.round(row.ticketOrder.processingFeeCents / Math.max(1, row.ticketOrder.quantity)))
+          : null,
+      scannedAt: row.scannedAt?.toISOString() ?? null,
+      qrDataUrl: await buildTicketQrCodeDataUrl(row.serializedId),
+    })),
+  ).catch(() => null);
+}
+
 export async function loadMmmMe(userId: string, requestedRole: string | undefined, locale: Locale, isAdmin = false, options: LoadMmmMeOptions = {}): Promise<MmmMeData> {
-  const { includeTickets = false, now = new Date() } = options;
+  const { now = new Date() } = options;
   // The advertiser account is read beside the profiles because it decides a
   // ROLE now (row 510); a failed read hides the advertiser view and its card
   // rather than taking the surface down.
@@ -197,81 +280,9 @@ export async function loadMmmMe(userId: string, requestedRole: string | undefine
   // viewed. Both are `.catch()`'d separately: a failure hides the ticket line
   // rather than taking the whole surface down, which is the rule the admin
   // workbench and the analytics engine already follow.
-  const [ticketCount, ticketRows] = await Promise.all([
-    db.ticket
-      .count({ where: { status: 'VALID', ticketOrder: { buyerUserId: userId } } })
-      .catch(() => null),
-    // SCANNED as well as VALID: a ticket you used is still yours, and the
-    // design shows it as an "attended" row with its check-in time. VOID is
-    // excluded — a refunded ticket is not a ticket. Read only for the wallet;
-    // see `LoadMmmMeOptions.includeTickets`.
-    !includeTickets ? Promise.resolve([]) : db.ticket
-      .findMany({
-        where: { status: { in: ['VALID', 'SCANNED'] }, ticketOrder: { buyerUserId: userId } },
-        // Newest shows first at the database, then re-ordered below. Ascending
-        // here would spend the `take` on the oldest attended tickets and could
-        // push every upcoming show out of the list entirely.
-        orderBy: { show: { startsAt: 'desc' } },
-        take: 24,
-        select: {
-          serializedId: true,
-          scannedAt: true,
-          ticketOrder: { select: { processingFeeCents: true, quantity: true } },
-          show: {
-            select: {
-              title: true,
-              startsAt: true,
-              timeZone: true,
-              ticketPriceCents: true,
-              venueProfile: { select: { name: true, city: true } },
-            },
-          },
-        },
-      })
-      .catch(() => []),
-  ]);
-
-  /**
-   * Upcoming first, soonest first; attended after them, most recent first.
-   *
-   * A single `startsAt` sort puts July's attended ticket above August's
-   * upcoming one, which is backwards for the only question this list answers —
-   * what am I going to, and when. It is also what the design draws.
-   */
-  const nowMs = Date.now();
-  const ordered = [...ticketRows].sort((a, b) => {
-    const aPast = a.show.startsAt.getTime() < nowMs;
-    const bPast = b.show.startsAt.getTime() < nowMs;
-    if (aPast !== bPast) return aPast ? 1 : -1;
-    return aPast
-      ? b.show.startsAt.getTime() - a.show.startsAt.getTime()
-      : a.show.startsAt.getTime() - b.show.startsAt.getTime();
-  });
-
-  const tickets: MmmMeTicket[] = await Promise.all(
-    ordered.map(async (row) => ({
-      serializedId: row.serializedId,
-      title: row.show.title,
-      where: [row.show.venueProfile?.name, row.show.venueProfile?.city]
-        .filter(Boolean)
-        .join(' · '),
-      startsAt: row.show.startsAt.toISOString(),
-      timeZone: row.show.timeZone ?? null,
-      // Free shows say Free rather than $0 — the same distinction the map pins
-      // already make. A price that could not be read is omitted, not zeroed.
-      faceValue: row.show.ticketPriceCents > 0 ? money(locale, row.show.ticketPriceCents) : 'Free',
-      // Per TICKET, not per order: an order of three carries one fee, and
-      // showing the whole thing on each ticket would treble it on screen.
-      // Orders placed before the fee existed carry 0 and show no line at all,
-      // rather than a $0.00 that reads as a fee that was waived.
-      processingFee:
-        row.ticketOrder.processingFeeCents > 0
-          ? money(locale, Math.round(row.ticketOrder.processingFeeCents / Math.max(1, row.ticketOrder.quantity)))
-          : null,
-      scannedAt: row.scannedAt?.toISOString() ?? null,
-      qrDataUrl: await buildTicketQrCodeDataUrl(row.serializedId),
-    })),
-  ).catch(() => []);
+  const ticketCount = await db.ticket
+    .count({ where: { status: 'VALID', ticketOrder: { buyerUserId: userId } } })
+    .catch(() => null);
 
   // `availableRoles` is stamped here, once, for every branch. The per-role
   // loaders used to each return their own value and two of them returned an
@@ -284,7 +295,6 @@ export async function loadMmmMe(userId: string, requestedRole: string | undefine
     hasAdvertiser: advertiser !== null,
     isAdmin,
     ticketCount,
-    tickets,
   });
 
   if (role === 'fan') return withRoles(await loadFan(userId, linkProfile, now, locale));
@@ -341,7 +351,7 @@ async function loadFan(userId: string, linkProfile: { id: string; hexId: string 
       orderBy: { createdAt: 'desc' },
       take: 4,
       select: { id: true, totalChargeCents: true, createdAt: true, show: { select: { title: true, startsAt: true, timeZone: true } } },
-    }).catch(() => []),
+    }).catch(() => null),
     hypeLinkFor(linkProfile, now),
   ]);
 
@@ -357,7 +367,7 @@ async function loadFan(userId: string, linkProfile: { id: string; hexId: string 
     role: 'fan',
     // Overwritten by loadMmmMe — see withRoles().
     stats,
-    activity: orders.map((order) => ({
+    activity: orders === null ? null : orders.map((order) => ({
       title: order.show?.title ?? null,
       fallbackTitle: 'Ticket order' as const,
       /* The venue's clock. This forced UTC, which put a late-evening show on
@@ -413,7 +423,7 @@ async function loadAdvertiser(
         take: 4,
         select: { id: true, title: true, status: true, budgetCents: true, authorizedAt: true, createdAt: true },
       })
-      .catch(() => []),
+      .catch(() => null),
     hypeLinkFor(linkProfile, now),
   ]);
 
@@ -426,7 +436,7 @@ async function loadAdvertiser(
   return {
     role: 'advertiser',  // Overwritten by loadMmmMe — see withRoles().
     stats,
-    activity: recent.map((campaign) => ({
+    activity: recent === null ? null : recent.map((campaign) => ({
       title: campaign.title,
       fallbackTitle: 'Sponsorship' as const,
       when: formatDate(locale, campaign.createdAt, { month: 'short', day: 'numeric', timeZone: 'UTC' }),
@@ -435,7 +445,8 @@ async function loadAdvertiser(
       tone: campaign.status === 'APPROVED' ? ('positive' as const) : campaign.status === 'PENDING' || campaign.status === 'AWAITING_PAYMENT' ? ('hot' as const) : ('neutral' as const),
     })),
     page: {
-      name: account.companyName?.trim() || 'Advertiser',
+      // Empty rather than an English word: the card translates the fallback at the draw.
+      name: account.companyName?.trim() || '',
       slug: 'advertising',
       kind: 'advertising',
       status: 'Advertiser account',
@@ -464,7 +475,7 @@ async function loadArtist(
       orderBy: { paidAt: 'desc' },
       take: 4,
       select: { id: true, amountCents: true, paidAt: true, show: { select: { title: true, ticketsSoldCount: true } } },
-    }).catch(() => []),
+    }).catch(() => null),
     hypeLinkFor(linkProfile, now),
   ]);
 
@@ -476,7 +487,7 @@ async function loadArtist(
   return {
     role: 'artist',  // Overwritten by loadMmmMe — see withRoles().
     stats,
-    activity: releases.map((entry) => ({
+    activity: releases === null ? null : releases.map((entry) => ({
       title: entry.show?.title ?? null,
       fallbackTitle: 'Show payout' as const,
       when: entry.paidAt ? formatDate(locale, entry.paidAt, { month: 'short', day: 'numeric', timeZone: 'UTC' }) : null,
@@ -520,7 +531,7 @@ async function loadVenue(
       orderBy: { paidAt: 'desc' },
       take: 4,
       select: { id: true, amountCents: true, paidAt: true, show: { select: { title: true, ticketsSoldCount: true } } },
-    }).catch(() => []),
+    }).catch(() => null),
     hypeLinkFor(linkProfile, now),
   ]);
 
@@ -539,7 +550,7 @@ async function loadVenue(
   return {
     role: 'venue',  // Overwritten by loadMmmMe — see withRoles().
     stats,
-    activity: settlements.map((entry) => ({
+    activity: settlements === null ? null : settlements.map((entry) => ({
       title: entry.show?.title ?? null,
       fallbackTitle: 'Show settlement' as const,
       when: entry.paidAt ? formatDate(locale, entry.paidAt, { month: 'short', day: 'numeric', timeZone: 'UTC' }) : null,

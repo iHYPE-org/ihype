@@ -67,7 +67,7 @@ export async function sendFollowDigest(): Promise<{ sent: number }> {
       const allLines = showLines;
       const htmlLines = allLines.map(escHtml).join('<br/>');
       try {
-        const result = await sendMarketingEmail(f.follower.id, { to: f.follower.email, subject: `${update.name} has new activity on iHYPE`, html: `<p><strong><a href="${BASE}/artists/${escHtml(update.slug)}">${escHtml(update.name)}</a></strong> posted:</p><p>${htmlLines}</p>`, text: allLines.join('\n') });
+        const result = await sendMarketingEmail(f.follower.id, { to: f.follower.email, subject: `${update.name} has new activity on iHYPE`, html: `<p><strong><a href="${BASE}/app/artists/${encodeURIComponent(update.slug)}">${escHtml(update.name)}</a></strong> posted:</p><p>${htmlLines}</p>`, text: allLines.join('\n') });
         if (!result.skipped) sent++;
       } catch { /* continue */ }
     }

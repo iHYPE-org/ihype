@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 /**
  * The heart, for things that are not tracks — artists, venues, albums, ads.
@@ -29,13 +29,22 @@ export function MmmLikeButton({
 }) {
   const [liked, setLiked] = useState(false);
   const [pending, setPending] = useState(false);
+  /* THE MEMBER'S TAP OUTRANKS THE ARRIVAL READ (2026-09-24, DESIGN_SYNC row
+     513). The stored state is read on mount; a tap made before that read
+     returns used to be overwritten by it — the heart lit, the stale
+     `{liked:false}` landed a moment later and unlit it over a like the server
+     had saved, and the member's second tap then UNLIKED. Measured on the built
+     worker: GET issued before the tap, answered after it. Once tapped, the
+     read is ignored and the write's own answer is what shows. */
+  const touched = useRef(false);
 
   useEffect(() => {
     let stale = false;
+    touched.current = false;
     setLiked(false);
     void fetch(`/api/likes?targetType=${targetType}&targetId=${encodeURIComponent(targetId)}`)
       .then((response) => (response.ok ? response.json() : null))
-      .then((data) => { if (!stale && data) setLiked(Boolean(data.liked)); })
+      .then((data) => { if (!stale && !touched.current && data) setLiked(Boolean(data.liked)); })
       .catch(() => { /* the heart just stays unlit */ });
     return () => { stale = true; };
   }, [targetId, targetType]);
@@ -43,6 +52,7 @@ export function MmmLikeButton({
   const toggle = useCallback(async () => {
     if (pending) return;
     const previous = liked;
+    touched.current = true;
     setPending(true);
     setLiked(!previous); // Optimistic: a heart that lags reads as a dropped tap.
     try {
@@ -51,7 +61,12 @@ export function MmmLikeButton({
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ targetType, targetId }),
       });
-      if (!response.ok) setLiked(previous);
+      if (!response.ok) {
+        setLiked(previous);
+      } else {
+        const data = await response.json().catch(() => null) as { liked?: unknown } | null;
+        if (typeof data?.liked === 'boolean') setLiked(data.liked);
+      }
     } catch {
       setLiked(previous);
     } finally {

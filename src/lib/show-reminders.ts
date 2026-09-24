@@ -1,4 +1,5 @@
 import { db } from '@/lib/db';
+import { escapeHtml } from '@/lib/html-escape';
 import { sendMarketingEmail } from '@/lib/mailer';
 import { recordAuditEvent } from '@/lib/audit';
 import { getBaseUrl } from '@/lib/utils';
@@ -82,7 +83,7 @@ export async function sendShowReminders(): Promise<{ sent: number }> {
           to: user.email,
           subject: `${show.headlinerProfile.name} is playing tomorrow — don't miss it`,
           text,
-          html: `<pre style="font-family:sans-serif;white-space:pre-wrap">${text}</pre>`
+          html: `<pre style="font-family:sans-serif;white-space:pre-wrap">${escapeHtml(text)}</pre>`
         });
 
         await recordAuditEvent({

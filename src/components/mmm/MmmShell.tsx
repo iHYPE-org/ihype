@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ComponentProps, type ReactNode } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { MmmNowPlaying } from '@/components/mmm/MmmNowPlaying';
 import { MmmFullPlayer } from '@/components/mmm/MmmFullPlayer';
@@ -9,7 +9,7 @@ import { MmmMap, type MapLayer, type MapSheetTarget } from '@/components/mmm/Mmm
 import { MmmSheet } from '@/components/mmm/MmmSheet';
 import { MmmPlayIntentProvider } from '@/components/mmm/MmmPlayIntent';
 import { MmmStationsProvider } from '@/components/mmm/MmmStations';
-import { useMediaPlayer } from '@/components/GlobalMediaPlayer';
+import { useMediaPlayer, useMediaPlayerClock } from '@/components/GlobalMediaPlayer';
 import { defaultStationSlug, toQueue, type PlayableRow } from '@/lib/mmm-play';
 import { isMmmDetailPath, moduleForPath } from '@/lib/mmm-nav';
 import { formatHypeWait, hypeWaitUntil, HYPE_WINDOW_MS } from '@/lib/hype-window';
@@ -72,6 +72,29 @@ type HypeTarget = { profileId: string; hyped: boolean; nextHypeAt: string | null
  * and the pill keeps it — the alternative is a permanent control whose only
  * job is to reach a tab.
  */
+/* The one reader of the playback clock in the shell (2026-09-24, DESIGN_SYNC
+   row 513). The clock ticks about four times a second while a track plays, and
+   MmmShell used to read it for this player's progress bar alone, so the whole
+   shell (the map layer, its pins, the strip and the pill) re-rendered on every
+   tick. Only this wrapper subscribes now, and it is mounted only while the
+   player is open, which is also the only time MmmFullPlayer draws anything. */
+function ClockedFullPlayer({
+  seekTo,
+  ...props
+}: Omit<ComponentProps<typeof MmmFullPlayer>, 'durationSeconds' | 'onSeek' | 'progress'> & {
+  seekTo: (seconds: number) => void;
+}) {
+  const { currentTime, duration } = useMediaPlayerClock();
+  return (
+    <MmmFullPlayer
+      {...props}
+      durationSeconds={duration}
+      onSeek={(value) => { if (duration > 0) seekTo((value / 100) * duration); }}
+      progress={duration > 0 ? (currentTime / duration) * 100 : 0}
+    />
+  );
+}
+
 export function MmmShell({
   children,
   isAdmin = false,
@@ -123,9 +146,7 @@ export function MmmShell({
     canGoBack,
     canGoForward,
     currentIndex,
-    currentTime,
     currentTrack,
-    duration,
     isPlaying,
     playNext,
     playPrevious,
@@ -458,7 +479,7 @@ export function MmmShell({
             wired to exactly the same endpoints as before. What changed is the
             way in: the joystick's ▲ opens it at EVERY width, where the phone
             was previously the only place it could be reached. */}
-        <MmmFullPlayer
+        {fullOpen ? <ClockedFullPlayer
           addTarget={currentTrack ? {
             mediaId: currentTrack.mediaId ?? currentTrack.id,
             title: currentTrack.title,
@@ -472,7 +493,6 @@ export function MmmShell({
           canGoForward={canGoForward}
           canHype={canHype}
           canTogglePlay={Boolean(currentTrack)}
-          durationSeconds={duration}
           faved={faved}
           history={played}
           hyped={hyped}
@@ -491,18 +511,17 @@ export function MmmShell({
           onOpenAlbum={artistSlug ? () => { setFullOpen(false); router.push(`/app/artists/${artistSlug}`); } : undefined}
           onPickTrack={pickTrack}
           onPrev={playPrevious}
-          onSeek={(value) => { if (duration > 0) seekTo((value / 100) * duration); }}
+          seekTo={seekTo}
           onToggleFav={() => void toggleFav()}
           onToggleHype={() => void toggleHype()}
           onTogglePlay={togglePlayback}
           onVolume={(value) => setVolume(value / 100)}
           open={fullOpen}
           playing={Boolean(currentTrack) && isPlaying}
-          progress={duration > 0 ? (currentTime / duration) * 100 : 0}
           queue={upNext}
           track={dockTrack}
           volume={volume * 100}
-        />
+        /> : null}
 
         {/* The whole of the shell's own chrome: a now-playing pill, only while
             a track is loaded — see MmmNowPlaying.tsx. Navigation is the site

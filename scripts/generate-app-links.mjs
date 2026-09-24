@@ -81,7 +81,7 @@ async function appId() {
 function androidBody(id, sha256) {
   return `${JSON.stringify([
     {
-      relation: ['delegate_permission/common.handle_all_urls'],
+      relation: ['delegate_permission/common.handle_all_urls', 'delegate_permission/common.get_login_creds'],
       target: { namespace: 'android_app', package_name: id, sha256_cert_fingerprints: [sha256] },
     },
   ], null, 2)}\n`;

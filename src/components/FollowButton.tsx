@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useI18n } from '@/components/I18nProvider';
 
 /**
@@ -19,19 +19,28 @@ export function FollowButton({ profileId, variant = 'chip' }: { profileId: strin
   const [following, setFollowing] = useState(false);
   const [count, setCount] = useState(0);
   const [busy, setBusy] = useState(false);
+  /* A tap made before the arrival read returns is not overwritten by it
+     (row 513, the same race MmmLikeButton had): once tapped, the POST's own
+     answer is the state. */
+  const touched = useRef(false);
 
   useEffect(() => {
+    let stale = false;
+    touched.current = false;
     void fetch(`/api/follow?profileId=${profileId}`)
       .then((r) => r.json())
       .then((d: { count: number; following: boolean }) => {
+        if (stale || touched.current) return;
         setCount(d.count ?? 0);
         setFollowing(d.following ?? false);
       })
       .catch(() => null);
+    return () => { stale = true; };
   }, [profileId]);
 
   async function toggle() {
     if (busy) return;
+    touched.current = true;
     setBusy(true);
     // optimistic
     const prev = { following, count };

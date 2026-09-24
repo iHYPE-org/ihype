@@ -18,7 +18,13 @@ function canUseFanPlaylists(_role: string | null | undefined) {
   return true;
 }
 
-export async function GET() {
+/* The player sheet's playlist manager also shows the member's favourites, and
+   asks for them with `?include=favorites`. The Playlists tab and the full
+   player read `playlists` only, and the tab reads favourites from
+   /api/fan-favorites in the same render, so this read ran twice there
+   (2026-09-24, DESIGN_SYNC row 513). */
+export async function GET(request: Request) {
+  const includeFavorites = new URL(request.url).searchParams.get('include') === 'favorites';
   const session = await auth();
 
   if (!session?.user?.id) {
@@ -29,7 +35,9 @@ export async function GET() {
     return NextResponse.json({ error: 'Fan playlists are only available to fan accounts' }, { status: 403 });
   }
 
-  const [playlists, favorites, savedSeedRows] = await Promise.all([
+  /* `savedSeeds` is gone (row 513): it was two more queries per call, built
+     for a client that no longer exists, and read by nothing. */
+  const [playlists, favorites] = await Promise.all([
     db.fanPlaylist.findMany({
       where: { userId: session.user.id },
       include: {
@@ -39,43 +47,15 @@ export async function GET() {
       },
       orderBy: [{ createdAt: 'asc' }]
     }),
-    db.fanFavoriteMedia.findMany({
-      where: { userId: session.user.id },
-      orderBy: [{ createdAt: 'desc' }]
-    }),
-    db.seed.findMany({
-      where: { userId: session.user.id, action: 'save' },
-      orderBy: [{ createdAt: 'desc' }],
-      select: { id: true, mediaId: true }
-    })
+    includeFavorites
+      ? db.fanFavoriteMedia.findMany({
+          where: { userId: session.user.id },
+          orderBy: [{ createdAt: 'desc' }]
+        })
+      : Promise.resolve(null),
   ]);
 
-  const mediaIds = savedSeedRows.map((s) => s.mediaId);
-  const media = mediaIds.length
-    ? await db.artistMediaAsset.findMany({
-        where: { id: { in: mediaIds } },
-        select: { id: true, hexId: true, title: true, profile: { select: { name: true, slug: true, type: true } } }
-      })
-    : [];
-  const mediaById = new Map(media.map((m) => [m.id, m]));
-  const savedSeeds = savedSeedRows
-    .map((seed) => {
-      const asset = mediaById.get(seed.mediaId);
-      if (!asset || !asset.profile) return null;
-      return {
-        id: seed.id,
-        // A Seed is keyed on the asset's ROW id; what a client adds to a
-        // playlist from here is the TRACK, named as everything else names it.
-        mediaId: asset.hexId,
-        title: asset.title,
-        artistName: asset.profile.name,
-        artistProfileSlug: asset.profile.slug,
-        artistProfileType: asset.profile.type
-      };
-    })
-    .filter((s): s is NonNullable<typeof s> => s !== null);
-
-  return NextResponse.json({ playlists, favorites, savedSeeds });
+  return NextResponse.json(favorites ? { playlists, favorites } : { playlists });
 }
 
 export async function POST(request: Request) {

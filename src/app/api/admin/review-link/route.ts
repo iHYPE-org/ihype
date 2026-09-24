@@ -1,9 +1,8 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
+import { requireAdminApi } from '@/lib/admin-api';
 
-import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { log } from '@/lib/logger';
-import { isAdminSession } from '@/lib/permissions';
 import { DEFAULT_TTL_DAYS, DEFAULT_USES, planReviewLink, reviewLinkBaseUrl, validateMintOptions } from '@/lib/review-access';
 
 export const dynamic = 'force-dynamic';
@@ -28,9 +27,9 @@ export const dynamic = 'force-dynamic';
  * can recover the URL later. Losing it costs one more mint; being able to
  * recover it would make the row itself a credential.
  */
-export async function POST(request: Request) {
-  const session = await auth();
-  if (!isAdminSession(session)) {
+export async function POST(request: NextRequest) {
+  const { session } = await requireAdminApi(request);
+  if (!session) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
@@ -119,9 +118,9 @@ export async function POST(request: Request) {
  * The token hash is never returned: it is not the secret, but it is the lookup
  * key, and there is no reason for it to leave the database.
  */
-export async function GET() {
-  const session = await auth();
-  if (!isAdminSession(session)) {
+export async function GET(request: NextRequest) {
+  const { session } = await requireAdminApi(request);
+  if (!session) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
@@ -139,9 +138,9 @@ export async function GET() {
   }
 }
 
-export async function DELETE(request: Request) {
-  const session = await auth();
-  if (!isAdminSession(session)) {
+export async function DELETE(request: NextRequest) {
+  const { session } = await requireAdminApi(request);
+  if (!session) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 

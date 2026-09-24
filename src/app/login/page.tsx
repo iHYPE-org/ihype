@@ -1,4 +1,5 @@
 import { LoginScreen } from '@/components/AuthScreens';
+import { loginLinkErrorFromCode } from '@/lib/login-link-error';
 
 export const metadata = {
   title: 'Sign in | iHYPE.org',
@@ -8,7 +9,7 @@ export const metadata = {
 export default async function LoginPage({
   searchParams
 }: {
-  searchParams?: Promise<{ identifier?: string; registered?: string }>;
+  searchParams?: Promise<{ identifier?: string; registered?: string; error?: string }>;
 }) {
   const resolvedSearchParams = searchParams ? await searchParams : {};
 
@@ -16,6 +17,7 @@ export default async function LoginPage({
     <LoginScreen
       initialIdentifier={resolvedSearchParams.identifier}
       justRegistered={resolvedSearchParams.registered === '1'}
+      linkError={loginLinkErrorFromCode(resolvedSearchParams.error)}
     />
   );
 }

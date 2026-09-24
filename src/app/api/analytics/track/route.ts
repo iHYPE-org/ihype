@@ -13,10 +13,20 @@ import { exceedsDeclaredRequestSize } from '@/lib/request-size';
 // audit log — that's for accountable security/moderation actions, not
 // high-volume product analytics.
 
-const schema = z.object({
+const eventSchema = z.object({
   event: z.string().trim().min(1).max(80),
   props: z.record(z.string().max(60), z.union([z.string().max(200), z.number(), z.boolean(), z.null()])).optional()
 });
+
+/* One event, or a batch of up to ten (2026-09-24, DESIGN_SYNC row 513). Web
+   Vitals used to post one request per metric, five per page view, into the
+   per-IP bucket a whole venue's Wi-Fi shares; the client now flushes them as
+   one beacon when the page is hidden. */
+const MAX_BATCH = 10;
+const schema = z.union([
+  eventSchema,
+  z.object({ events: z.array(eventSchema).min(1).max(MAX_BATCH) }),
+]);
 
 export async function POST(request: Request) {
   const clientAddress = readClientAddress(request);
@@ -47,8 +57,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true });
   }
 
-  const safe = sanitizeTelemetryEvent(body.event, body.props);
-  if (safe) trackEvent(safe.event, safe.props);
+  const events = 'events' in body ? body.events : [body];
+  for (const item of events) {
+    const safe = sanitizeTelemetryEvent(item.event, item.props);
+    if (safe) trackEvent(safe.event, safe.props);
+  }
 
   return NextResponse.json({ ok: true });
 }

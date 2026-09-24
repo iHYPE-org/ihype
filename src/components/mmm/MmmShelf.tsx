@@ -117,7 +117,7 @@ export function MmmShelf({
               <span aria-hidden="true" className="mmm-shelf-art" data-tone={toneFor(tile.id)}>
                 {tile.artworkUrl
                   // eslint-disable-next-line @next/next/no-img-element -- uploader-sized remote artwork, same as the full player
-                  ? <img alt="" src={tile.artworkUrl} />
+                  ? <img alt="" decoding="async" loading="lazy" src={tile.artworkUrl} />
                   : (tile.title || '?').charAt(0).toUpperCase()}
               </span>
               <span className="mmm-shelf-title">{tile.title}</span>

@@ -37,7 +37,13 @@ type CronJob = {
   schedule: string;
 };
 
-const PRODUCTION_SMOKE_PATHS = ['/', '/login', '/shows', '/listen', '/pages', '/status'] as const;
+/* Real public pages, each answering 200 to a signed-out request with no
+   redirect (2026-09-24, DESIGN_SYNC row 513). This listed '/shows', a route
+   with no page, and '/listen' and '/pages', redirect aliases: all three
+   passed only because a signed-out request bounces to /login, so the relay
+   checked the sign-in page three times over. '/delete-account' is the URL the
+   Play Store's data-safety form names and must open with no account. */
+const PRODUCTION_SMOKE_PATHS = ['/', '/login', '/register', '/info', '/for-artists', '/delete-account', '/status'] as const;
 
 const JOBS: CronJob[] = [
   // Infrastructure — every 5 min

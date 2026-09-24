@@ -66,6 +66,20 @@ async function ownArtistPage(page: Page) {
   return href!;
 }
 
+/** The control lights OPTIMISTICALLY, so the DOM says nothing about whether
+ * the write landed. Wait for the route's own answer before reloading or
+ * navigating away — otherwise the next document can render before the write
+ * commits (measured 2026-09-24, DESIGN_SYNC row 513: at load the header's
+ * links prefetch eight shell routes, the POST queues behind them, and a reload
+ * 500 ms later rendered the pre-write state). The same rule mmm-shell.spec.ts
+ * follows for every optimistic control (row 455). */
+function mutation(page: Page, path: string, method: 'POST' | 'DELETE' = 'POST') {
+  return page.waitForResponse(
+    (response) => new URL(response.url()).pathname === path && response.request().method() === method,
+    { timeout: 15_000 },
+  );
+}
+
 test.describe('liking', () => {
   test('liking an artist survives a reload, and unliking survives one too', async ({ context, page }) => {
     await signIn(context, `e2e-like-artist-${RUN}@ihype.org`, {
@@ -79,7 +93,9 @@ test.describe('liking', () => {
        this test read as opposites rather than as a flag check. */
     const like = page.getByRole('button', { name: /^Like E2E Liked Artist$/ });
     await expect(like).toBeVisible({ timeout: 15_000 });
+    const liked = mutation(page, '/api/likes');
     await like.click();
+    expect((await liked).ok(), 'the like must be accepted').toBe(true);
     await expect(page.getByRole('button', { name: /^Unlike E2E Liked Artist$/ })).toBeVisible();
 
     // The reload is the assertion. Everything above passes against a heart
@@ -90,7 +106,9 @@ test.describe('liking', () => {
 
     // And back: an unlike that only unlights is the same bug wearing the
     // other face, and it is the one that loses data rather than inventing it.
+    const unliked = mutation(page, '/api/likes', 'DELETE');
     await unlike.click();
+    expect((await unliked).ok(), 'the unlike must be accepted').toBe(true);
     await expect(page.getByRole('button', { name: /^Like E2E Liked Artist$/ })).toBeVisible();
     await page.reload();
     await expect(page.getByRole('button', { name: /^Like E2E Liked Artist$/ })).toBeVisible({ timeout: 15_000 });
@@ -105,7 +123,9 @@ test.describe('liking', () => {
       profiles: [{ type: 'ARTIST', name: 'E2E Listed Artist' }],
     });
     await ownArtistPage(page);
+    const liked = mutation(page, '/api/likes');
     await page.getByRole('button', { name: /^Like E2E Listed Artist$/ }).click();
+    expect((await liked).ok(), 'the like must be accepted').toBe(true);
     await expect(page.getByRole('button', { name: /^Unlike E2E Listed Artist$/ })).toBeVisible();
 
     /* A SHELF since the middle road (2026-09-04), not a list of rows — an
@@ -200,7 +220,9 @@ test.describe('hyping', () => {
 
     const hype = page.getByRole('button', { name: /Hype this artist/i });
     await expect(hype).toBeVisible({ timeout: 15_000 });
+    const spent = mutation(page, '/api/hype');
     await hype.click();
+    expect((await spent).ok(), 'the hype must be accepted').toBe(true);
 
     /* The button flips to its cooldown face, and that is the honest end state:
        HYPE is once per target per 24 hours, so a control still offering another

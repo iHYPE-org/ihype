@@ -4,7 +4,7 @@ import { db } from '@/lib/db';
 import { log } from '@/lib/logger';
 import { consumeRateLimit, rateLimitKey } from '@/lib/rate-limit';
 import { createSerializedTicketId } from '@/lib/tickets';
-import { normalizeTransferCode } from '@/lib/ticket-transfer-code';
+import { isTransferCodeLive, normalizeTransferCode } from '@/lib/ticket-transfer-code';
 
 export const dynamic = 'force-dynamic';
 
@@ -79,9 +79,9 @@ export async function POST(request: Request) {
      tells a stranger holding a wrong code whether it was ever a real one, which
      is the only signal worth having when guessing. */
   const now = new Date();
-  const unusable = !record
-    || record.claimedAt !== null
-    || record.expiresAt.getTime() <= now.getTime();
+  // The rule lives beside the TTL it depends on, so this route and any UI
+  // countdown cannot disagree about when a code dies.
+  const unusable = !record || !isTransferCodeLive(record, now);
   if (unusable) {
     return NextResponse.json(
       { error: 'That code is not valid any more. Ask for a fresh one.' },
@@ -97,6 +97,19 @@ export async function POST(request: Request) {
   }
 
   const order = record.ticketOrder;
+  /* THE CODE SPEAKS FOR ITS CREATOR ONLY WHILE THE CREATOR OWNS THE ORDER
+     (2026-09-24, DESIGN_SYNC row 513). An email transfer moves `buyerUserId`
+     to someone else; a code minted before it used to stay live, so whoever
+     held it could claim the tickets back from the new owner. The email
+     route now expires open codes as well; this refuses one that survived,
+     and the transaction below re-checks it so a transfer racing the claim
+     cannot slip between the two. Same answer as an unknown code. */
+  if (order.buyerUserId !== record.createdById) {
+    return NextResponse.json(
+      { error: 'That code is not valid any more. Ask for a fresh one.' },
+      { status: 404 },
+    );
+  }
   if (order.status !== 'CAPTURED') {
     return NextResponse.json({ error: 'That order can no longer be transferred' }, { status: 409 });
   }
@@ -124,6 +137,20 @@ export async function POST(request: Request) {
       });
       if (spend.count === 0) return null;
 
+      /* The ownership move, conditional on the code's creator still owning
+         the order — the check above, repeated inside the write so it holds
+         against a concurrent transfer. Without the move the claimer would hold
+         valid QRs that never appear in their account. */
+      const moved = await tx.ticketOrder.updateMany({
+        where: { id: order.id, buyerUserId: record.createdById },
+        data: {
+          buyerUserId: session.user.id,
+          transferredAt: now,
+          transferredToEmail: holderEmail || null,
+        },
+      });
+      if (moved.count === 0) throw new OrderMovedError();
+
       for (const ticket of order.tickets) {
         await tx.ticket.update({
           where: { serializedId: ticket.serializedId },
@@ -137,18 +164,6 @@ export async function POST(request: Request) {
         });
       }
 
-      /* The ownership move. Without this the claimer would hold valid QRs that
-         never appear in their account, and the sender would keep the order in
-         theirs — which is precisely the defect of the email path. */
-      await tx.ticketOrder.update({
-        where: { id: order.id },
-        data: {
-          buyerUserId: session.user.id,
-          transferredAt: now,
-          transferredToEmail: holderEmail || null,
-        },
-      });
-
       return true;
     });
 
@@ -159,6 +174,12 @@ export async function POST(request: Request) {
       );
     }
   } catch (error) {
+    if (error instanceof OrderMovedError) {
+      return NextResponse.json(
+        { error: 'That code is not valid any more. Ask for a fresh one.' },
+        { status: 404 },
+      );
+    }
     log.error('[api/tickets/claim]', error instanceof Error ? error : { error: String(error) }, 'error');
     return NextResponse.json({ error: 'That transfer could not be completed.' }, { status: 500 });
   }
@@ -170,3 +191,6 @@ export async function POST(request: Request) {
     ticketCount: order.tickets.length,
   });
 }
+
+/** Thrown inside the claim transaction to roll it back when the order changed hands mid-claim. */
+class OrderMovedError extends Error {}

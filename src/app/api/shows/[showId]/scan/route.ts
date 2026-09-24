@@ -30,8 +30,13 @@ export async function POST(
     return NextResponse.json({ error: 'Forbidden.' }, { status: 403 });
   }
 
-  const body = await request.json();
-  const { ticketId, scannedAt: claimedAt } = body as { ticketId?: string; scannedAt?: unknown };
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON.' }, { status: 400 });
+  }
+  const { ticketId, scannedAt: claimedAt } = (body ?? {}) as { ticketId?: string; scannedAt?: unknown };
   if (!ticketId || typeof ticketId !== 'string') {
     return NextResponse.json({ error: 'ticketId is required.' }, { status: 400 });
   }
@@ -68,11 +73,17 @@ export async function POST(
     return NextResponse.json({ error: 'Ticket already scanned.', valid: false, scannedAt: ticket.scannedAt }, { status: 409 });
   }
 
-  const attendee = await db.user.findUnique({
-    where: { email: ticket.holderEmail.toLowerCase() },
-    select: { id: true },
-  });
+  /* Everything after the SCANNED write is best-effort (row 513). The admission
+     is already recorded; a 500 here used to make the door phone admit
+     offline, queue the scan, and later mark this fan "also scanned
+     elsewhere" when the sync met the 409 its own write had caused. */
   let hypeAwarded = 0;
+  const attendee = await db.user
+    .findUnique({ where: { email: ticket.holderEmail.toLowerCase() }, select: { id: true } })
+    .catch((error: unknown) => {
+      log.error('[show-scan]', error instanceof Error ? error : { error: String(error) }, `Attendee lookup failed after admitting ticket ${ticket.id}`);
+      return null;
+    });
   if (attendee) {
     try {
       const reward = await awardHype({

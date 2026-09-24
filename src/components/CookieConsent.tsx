@@ -145,7 +145,7 @@ export function CookieConsent() {
            a coarse pointer, which is load-bearing rather than tidy.
            mobile-fit.css sets .ihype-btn-primary/.ihype-btn-ghost to a 44px
            min-height under (pointer: coarse). Both rules score (0,1,0), and a
-           <style> element rendered into the body comes after every linked
+           style element rendered into the body comes after every linked
            stylesheet — so when this rule was unconditional it won on source
            order alone and every phone got 36px. The comment above the buttons
            asserted the opposite for as long as it was wrong.
@@ -153,7 +153,7 @@ export function CookieConsent() {
            order from the question entirely. Written "not all and" rather than
            the Media Queries Level 4 bare negation so it parses everywhere.
            audit:css cannot catch this class of bug: it reads .css files, not
-           <style> blocks inside components. */
+           style blocks inside components. */
         @media not all and (pointer: coarse) {
           .ihype-consent-btn { min-height: 36px; }
         }

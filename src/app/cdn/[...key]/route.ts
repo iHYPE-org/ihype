@@ -1,5 +1,4 @@
-import { parseRangeHeader } from '@/lib/http-range';
-import { readRuntimeBinding } from '@/lib/runtime-env';
+import { isPublicCdnKey, readMediaBucket, serveR2Object, type R2ObjectLike } from '@/lib/r2-object-response';
 
 /**
  * Serves an object out of the R2 bucket over the Worker's own origin.
@@ -15,34 +14,15 @@ import { readRuntimeBinding } from '@/lib/runtime-env';
  * PUBLIC PREFIXES ONLY, AND THAT IS THE IMPORTANT PART. A key is a bearer
  * token here — anyone holding it gets the bytes — so only namespaces whose
  * contents are already public may be served this way. `verification/` is the
- * one that must never appear below: those objects are identity and ownership
+ * one that must never appear in `PUBLIC_CDN_PREFIXES`: those objects are identity and ownership
  * documents (JPEG/PNG/PDF), and `/api/verify` deliberately keeps them out of
  * R2 entirely for the same reason. Adding a namespace here is a decision about
  * who can read it.
  */
-const PUBLIC_PREFIXES = [
-  'profile/',       // avatars, heroes, logos, gallery images — drawn on public pages
-  'artist-media/',  // uploaded tracks and their cover art
-  'ads/',           // advertiser audio spots, played to every listener
-];
-
+/* The public-prefix list, the bucket's structural type and the range logic
+   live in `src/lib/r2-object-response.ts`, shared with the media proxy (row
+   513). Read the prefix list's note there before adding a namespace. */
 export const dynamic = 'force-dynamic';
-
-type R2ObjectLike = {
-  body: ReadableStream | null;
-  httpMetadata?: { contentType?: string };
-  size?: number;
-  httpEtag?: string;
-};
-
-type R2GetOptions = { range?: { offset: number; length: number } };
-type R2BucketLike = {
-  get(key: string, options?: R2GetOptions): Promise<R2ObjectLike | null>;
-  /* Metadata only, no body. Optional because the binding is reached through a
-     structural type and a test double need not implement it; without it a
-     ranged request simply falls back to serving the whole object. */
-  head?(key: string): Promise<R2ObjectLike | null>;
-};
 
 /* Audio is the reason this route serves ranges, and a media element will not
    ask for one unless the first response says it can. Both headers go on the
@@ -74,70 +54,12 @@ export async function GET(
   // Traversal cannot escape a bucket the way it escapes a filesystem, but a
   // key containing ".." would still be matched against the prefix list before
   // normalisation, so refuse it rather than reason about it.
-  if (!key || key.includes('..')) {
-    return new Response('Not found', { status: 404 });
-  }
-  if (!PUBLIC_PREFIXES.some((prefix) => key.startsWith(prefix))) {
+  if (!isPublicCdnKey(key)) {
     return new Response('Not found', { status: 404 });
   }
 
-  const binding = readRuntimeBinding('R2');
-  const bucket = binding && typeof (binding as Partial<R2BucketLike>).get === 'function'
-    ? (binding as R2BucketLike)
-    : null;
+  const bucket = readMediaBucket();
   if (!bucket) return new Response('Not found', { status: 404 });
 
-  const rangeHeader = request.headers.get('range');
-
-  /* No range asked for: one read, whole object, and `Accept-Ranges` on it so
-     the player knows it may ask next time. */
-  if (!rangeHeader) {
-    const object = await bucket.get(key).catch(() => null);
-    if (!object?.body) return new Response('Not found', { status: 404 });
-    return new Response(object.body as unknown as BodyInit, {
-      headers: {
-        ...baseHeaders(object),
-        ...(typeof object.size === 'number' ? { 'Content-Length': String(object.size) } : {}),
-      },
-    });
-  }
-
-  /* A range was asked for, so the object's LENGTH has to be known before the
-     read: satisfiability, the 416's `Content-Range`, and the clamp on an
-     overshooting end all need it. `head` answers that without a body — asking
-     for the object and cancelling its stream would work and is a worse shape,
-     since a leaked stream on a Worker is a request that never settles. */
-  const meta = typeof bucket.head === 'function' ? await bucket.head(key).catch(() => null) : null;
-  const size = typeof meta?.size === 'number' ? meta.size : null;
-  const wanted = size === null ? ({ kind: 'full' } as const) : parseRangeHeader(rangeHeader, size);
-
-  if (wanted.kind === 'unsatisfiable') {
-    return new Response(null, {
-      status: 416,
-      headers: { ...baseHeaders(meta ?? {}), 'Content-Range': `bytes */${size}` },
-    });
-  }
-
-  if (wanted.kind === 'full') {
-    // Either the header was one this parser does not handle, or the size could
-    // not be read. Serving everything is always correct, just less efficient.
-    const object = await bucket.get(key).catch(() => null);
-    if (!object?.body) return new Response('Not found', { status: 404 });
-    return new Response(object.body as unknown as BodyInit, { headers: baseHeaders(object) });
-  }
-
-  const length = wanted.end - wanted.start + 1;
-  const ranged = await bucket
-    .get(key, { range: { offset: wanted.start, length } })
-    .catch(() => null);
-  if (!ranged?.body) return new Response('Not found', { status: 404 });
-
-  return new Response(ranged.body as unknown as BodyInit, {
-    status: 206,
-    headers: {
-      ...baseHeaders(ranged),
-      'Content-Range': `bytes ${wanted.start}-${wanted.end}/${size}`,
-      'Content-Length': String(length),
-    },
-  });
+  return serveR2Object(bucket, key, request.headers.get('range'), baseHeaders);
 }

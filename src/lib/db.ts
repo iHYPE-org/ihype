@@ -126,8 +126,23 @@ function makePrisma(url: string) {
     connectionString: url,
     // Fail fast instead of hanging the Worker until Cloudflare's 30s timeout fires.
     connectionTimeoutMillis: 8000,
-    // Each Worker invocation handles one request; one connection is enough.
-    max: 1,
+    /* FIVE, not one (2026-09-24, DESIGN_SYNC row 513). This read `max: 1`
+       under "each Worker invocation handles one request; one connection is
+       enough", which is true of requests and false of QUERIES: a single
+       request issues many at once — the artist pane's seven-read
+       Promise.all, /api/stations' eight counts, the Listen bootstrap running
+       four route handlers side by side — and a pg Pool of one queues every
+       one of them behind the single socket, so each Promise.all in the app
+       ran serially and paid the sum of its round trips. Cloudflare's own
+       Hyperdrive docs say one invocation "may obtain multiple connections",
+       Hyperdrive multiplexes client connections onto its origin pool in
+       transaction mode, and the Workers limit of six only counts a
+       connection while it is still waiting to be established — so five
+       leaves a slot for a fetch() opening beside them. It also removes a
+       latent deadlock: with one connection, any query issued with `db`
+       while an interactive transaction holds the socket waits for the
+       transaction that is waiting for it. */
+    max: 5,
     idleTimeoutMillis: 10000,
     ...(singleUse ? { maxUses: 1 } : {}),
   });

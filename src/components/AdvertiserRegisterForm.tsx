@@ -152,7 +152,7 @@ export function AdvertiserRegisterForm() {
 
         <p className="aar-fineprint">
           {t('advertiserRegisterForm.fineprint', "We'll email you a sign-in link — no password to set. Already have an advertiser account?")}{' '}
-          <Link href="/login?callbackUrl=/advertise/dashboard">{t('advertiserRegisterForm.signIn', 'Sign in')}</Link>.
+          <Link href="/login?callbackUrl=/app/me/advertising">{t('advertiserRegisterForm.signIn', 'Sign in')}</Link>.
         </p>
       </form>
       <style>{styles}</style>

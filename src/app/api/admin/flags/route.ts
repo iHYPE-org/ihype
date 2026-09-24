@@ -1,6 +1,5 @@
-import { NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
-import { isAdminSession } from '@/lib/permissions';
+import { NextResponse, NextRequest } from 'next/server';
+import { requireAdminApi } from '@/lib/admin-api';
 import { recordAuditEvent } from '@/lib/audit';
 import { readClientAddress } from '@/lib/request-meta';
 import { kvPut } from '@/lib/kv';
@@ -20,11 +19,9 @@ const ALLOWED_FLAGS = new Set([
   'maps_enabled',
 ]);
 
-export async function POST(request: Request) {
-  const session = await auth();
-  if (!isAdminSession(session) || !session?.user?.id) {
-    return NextResponse.json({ error: 'Forbidden.' }, { status: 403 });
-  }
+export async function POST(request: NextRequest) {
+  const { session, response } = await requireAdminApi(request);
+  if (!session) return response;
 
   let body: { flag?: string; enabled?: boolean };
   try {

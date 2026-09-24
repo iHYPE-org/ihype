@@ -60,7 +60,7 @@ export function FanPlaylistManager({
     setLoading(true);
 
     try {
-      const response = await fetch('/api/fan-playlists', { cache: 'no-store' });
+      const response = await fetch('/api/fan-playlists?include=favorites', { cache: 'no-store' });
 
       if (response.status === 401 || response.status === 403) {
         setAuthorized(false);

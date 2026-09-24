@@ -19,6 +19,7 @@ import { deriveUsernameCandidate, getUsernameValidationMessage, isValidUsername,
 import { generateUniqueNonwordSlug } from '@/lib/nonword-slug';
 import { log } from '@/lib/logger';
 import { resolveReferrer, runRegistrationPostProcessing } from '@/lib/registration-post-processing';
+import { readReferralCookie } from '@/lib/referral-attribution';
 import {
   createPasskeyBootstrapCapability,
   getPasskeyBootstrapCookieName,
@@ -437,7 +438,11 @@ export async function POST(request: Request) {
       user,
       clientAddress,
       spamText,
-      referral: body.ref ?? hypeCodeRef ?? undefined,
+      /* The body's `ref` first, then a HYPE code typed into the invite field,
+         then the `ihype_ref` cookie the /h/<code> link set — a member who
+         followed a friend's link, looked around, and signed up later is the
+         same referral (row 513). */
+      referral: body.ref ?? hypeCodeRef ?? (await readReferralCookie()) ?? undefined,
     });
 
     const response = NextResponse.json({

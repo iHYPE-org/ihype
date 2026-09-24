@@ -46,7 +46,23 @@ function dayParts(iso: string, locale: Locale, timeZone: string | null) {
   };
 }
 
-export function MmmTickets({ tickets }: { tickets: MmmMeTicket[] }) {
+/** `tickets` is null when the wallet read FAILED — never draw the demo rows
+ *  over that, because a member with real tickets would read two fake ones. */
+export function MmmTickets({ tickets }: { tickets: MmmMeTicket[] | null }) {
+  if (tickets === null) return <WalletUnavailable />;
+  return <WalletList tickets={tickets} />;
+}
+
+function WalletUnavailable() {
+  const { t } = useI18n();
+  return (
+    <p className="mmm-empty" role="alert">
+      {t('mmmTickets.unavailable', 'Your tickets could not be loaded right now. They are safe — reload to try again, and any ticket you saved to this phone still opens from its own page.')}
+    </p>
+  );
+}
+
+function WalletList({ tickets }: { tickets: MmmMeTicket[] }) {
   const { locale, t } = useI18n();
   const [open, setOpen] = useState<MmmMeTicket | null>(null);
   const demo = tickets.length === 0;
@@ -111,7 +127,7 @@ export function MmmTickets({ tickets }: { tickets: MmmMeTicket[] }) {
                   <>
                     <span className="mmm-ticket-checkin">{t('mmmTickets.doors', 'Doors {time}').replace('{time}', when.time)}</span>
                     <button className="mmm-ticket-view" onClick={() => setOpen(ticket)} type="button">
-                      View ticket
+                      {t('mmmTickets.viewTicket', 'View ticket')}
                     </button>
                   </>
                 )}
@@ -185,7 +201,7 @@ function TicketSheet({ demo, onClose, ticket }: { demo?: boolean; onClose: () =>
             no network of its own once this page is cached — which is what makes
             the offline promise hold at the door. */}
         <div className="mmm-ticket-qr">
-          <img alt={`Entry code ${ticket.serializedId}`} src={ticket.qrDataUrl} />
+          <img alt={t('mmmTickets.entryCodeAlt', 'Entry code {code}').replace('{code}', ticket.serializedId)} src={ticket.qrDataUrl} />
         </div>
         <div className="mmm-ticket-code">{ticket.serializedId}</div>
         <div className="mmm-ticket-rule">{t('mmmTickets.doors', 'Doors {time}').replace('{time}', when.time)} · {t('mmmTickets.oneScan', 'One scan, one entry')}</div>
@@ -216,8 +232,7 @@ function TicketSheet({ demo, onClose, ticket }: { demo?: boolean; onClose: () =>
             receives the ticket — iHYPE is a nonprofit and absorbs no fee, and
             saying so here is what makes that fair rather than a surprise. */}
         <p className="mmm-ticket-final">
-          All sales are final. Transfer a ticket instead — any processing fee on a
-          transfer is the recipient&rsquo;s.
+          {t('mmmTickets.salesFinal', 'All sales are final. Transfer a ticket instead — any processing fee on a transfer is the recipient’s.')}
         </p>
 
         {/* Transfer is a real endpoint that reissues every ticket in the order
