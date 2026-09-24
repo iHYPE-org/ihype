@@ -44,6 +44,18 @@
  *     one member's stations to the next. The payloads travel as PROPS, and the
  *     client seeds its own cache from them after hydration.
  *
+ * (4) A REQUEST MAY ASK TO READ IN THE BROWSER. A document request carrying
+ *     `x-ihype-read-in-browser: 1` (`READ_IN_BROWSER_HEADER`) gets no
+ *     payloads at all — the page then preloads every first read and the
+ *     client fetches each one over the network, row 511's shape. It exists
+ *     for the browser suite: `e2e/engagement-flows.spec.ts` proves that a
+ *     library or a stations shelf that could not be read SAYS so (row 408) by
+ *     faulting the endpoint with `page.route`, and a read this module answers
+ *     on the server never crosses the browser's network, so without the
+ *     header the fault could not land — which is exactly how CI first read
+ *     this module. Inert for anyone else: the worst a stranger can do with
+ *     it is give themselves one extra round trip.
+ *
  * The handlers are imported by module, not fetched over HTTP: a Worker
  * fetching its own origin is a second request through Cloudflare for an
  * answer this isolate can compute, and it would need the cookie forwarded by
@@ -66,6 +78,8 @@ import { GET as getStations } from '@/app/api/stations/route';
 import { log } from '@/lib/logger';
 
 export const BOOTSTRAP_DEADLINE_MS = 1500;
+/** Rule (4): a document request carrying this header (value `1`) is handed no payloads. */
+export const READ_IN_BROWSER_HEADER = 'x-ihype-read-in-browser';
 
 type Handler = (request: NextRequest) => Promise<Response>;
 
@@ -122,6 +136,7 @@ async function readOne(url: string, requestHeaders: Headers, origin: string): Pr
 export async function bootstrapMusicPayloads(urls: readonly string[]): Promise<InitialPayloads> {
   const requestHeaders = new Headers(await headers());
   const at = Date.now();
+  if (requestHeaders.get(READ_IN_BROWSER_HEADER) === '1') return { at, payloads: {} };
   const host = requestHeaders.get('x-forwarded-host') ?? requestHeaders.get('host') ?? 'ihype.org';
   const proto = requestHeaders.get('x-forwarded-proto') ?? 'https';
   const origin = `${proto}://${host}`;

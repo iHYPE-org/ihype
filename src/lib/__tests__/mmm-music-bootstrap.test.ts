@@ -7,7 +7,11 @@
  *  2. a handler past the deadline leaves its URL absent and does not hold the
  *     page;
  *  3. the module never touches the client's payload cache, and no GET it
- *     calls consumes a rate limit.
+ *     calls consumes a rate limit;
+ *  4. a request carrying `READ_IN_BROWSER_HEADER` is handed nothing and calls
+ *     no handler — and the browser spec that faults these endpoints sends it,
+ *     because a read answered on the server never crosses the network it
+ *     faults.
  *
  * There is deliberately no "navigation reads nothing" rule: Next hides every
  * mark of a client-side navigation from the render and the middleware alike,
@@ -117,6 +121,32 @@ describe('bootstrapMusicPayloads', () => {
     const out = await pending;
     expect(out.payloads).toEqual({ '/api/stations': { stations: [] } });
     expect('/api/recommend' in out.payloads).toBe(false);
+  });
+
+  it('a request that asks to read in the browser is handed nothing and calls no handler', async () => {
+    const { bootstrapMusicPayloads, READ_IN_BROWSER_HEADER } = await import('@/lib/mmm-music-bootstrap');
+    handlers.stations.mockResolvedValue(json({ stations: [{ slug: 'a' }] }));
+    requestHeaders.set(READ_IN_BROWSER_HEADER, '1');
+    const out = await bootstrapMusicPayloads(['/api/stations']);
+    expect(out.payloads).toEqual({});
+    expect(typeof out.at).toBe('number');
+    expect(handlers.stations).not.toHaveBeenCalled();
+  });
+
+  it('the browser spec that faults a Listen endpoint sends that header before it navigates', () => {
+    const root = process.cwd();
+    const spec = maskComments(readFileSync(join(root, 'e2e/engagement-flows.spec.ts'), 'utf8'));
+    const lib = maskComments(readFileSync(join(root, 'src/lib/mmm-music-bootstrap.ts'), 'utf8'));
+    const name = lib.match(/READ_IN_BROWSER_HEADER = '([^']+)'/)?.[1];
+    expect(name).toBeTruthy();
+    expect(spec).toContain(`'${name}': '1'`);
+    // Every page.route fault on a Listen read is preceded by the header on the same page.
+    const faults = [...spec.matchAll(/page\.route\('\*\*\/api\/(fan-favorites|stations)'/g)];
+    expect(faults.length).toBe(2);
+    for (const fault of faults) {
+      const before = spec.slice(Math.max(0, fault.index! - 400), fault.index);
+      expect(before, `the fault on ${fault[1]} needs setExtraHTTPHeaders(READ_IN_BROWSER) before it`).toMatch(/setExtraHTTPHeaders\(READ_IN_BROWSER\)/);
+    }
   });
 
   it('never imports the client component or names its cache, and calls no GET that consumes a rate limit', () => {
