@@ -217,3 +217,93 @@ test.describe('creating an event', () => {
     await expect(page.getByText(/published|live|view event/i).first()).toBeVisible({ timeout: 20_000 });
   });
 });
+
+/* ADVERTISING INSIDE THE iOS AND ANDROID APPS (DESIGN_SYNC row 514).
+ *
+ * The store apps are a WebView on this site, and Apple requires in-app
+ * purchase for ads that play in the same app — so inside the app an advertiser
+ * signs up and reads pricing, and builds and pays for a campaign on the web.
+ * The next store build appends `iHYPEApp/1` to its user agent; a build that
+ * predates it is recognised by `window.Capacitor`. Both are driven here, and a
+ * plain browser is driven too, because the failure worth fearing is the web
+ * losing its checkout, not only the app keeping one. */
+const APP_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 iHYPEApp/1';
+
+async function signInAdvertiser(context: BrowserContext, email: string) {
+  test.skip(!canSeedSession(), 'AUTH_SECRET and a scratch DATABASE_URL are required.');
+  await applySessionCookie(context, email, {
+    advertiser: {
+      companyName: 'Web Only Sound Co',
+      campaigns: [{
+        title: 'Unpaid spot',
+        status: 'AWAITING_PAYMENT',
+        pricingModel: 'SPONSORSHIP',
+        budgetCents: 2500,
+        createdAt: new Date('2026-09-01T12:00:00Z'),
+      }],
+    },
+  });
+}
+
+test.describe('advertising inside the app (user-agent token)', () => {
+  test.use({ userAgent: APP_UA });
+
+  test('the app shows pricing and sends building and paying to the web', async ({ context, page }) => {
+    await signInAdvertiser(context, `e2e-adweb-app-${RUN}@ihype.org`);
+
+    await page.goto('/app/me/advertising/new');
+    await settled(page, '[data-web-only="campaigns"]');
+    await expect(page.locator('.adv-compact')).toHaveCount(0);
+    await expect(page.locator('.mmm-ad-pricing-table:visible tbody tr')).toHaveCount(4);
+
+    await page.goto('/app/me/advertising');
+    await settled(page, '[data-web-only="new-campaign"]');
+    await expect(page.locator('a.mmm-advertiser-new')).toHaveCount(0);
+    // The unpaid campaign offers the web, never a checkout, inside the app.
+    await settled(page, '[data-web-only="pay"]');
+    await expect(page.getByRole('button', { name: /Pay now/ })).toHaveCount(0);
+
+    const create = await page.request.post('/api/advertise/campaigns', {
+      data: { title: 'From the app' },
+      headers: { 'user-agent': APP_UA },
+    });
+    expect(create.status()).toBe(403);
+    expect((await create.json()).code).toBe('CAMPAIGNS_WEB_ONLY');
+
+    await page.goto('/advertise');
+    await settled(page, '[data-web-only="landing-note"]');
+    await expect(page.locator('.mmm-ad-pricing-table:visible tbody tr')).toHaveCount(4);
+  });
+});
+
+test.describe('advertising inside an app build that predates the token', () => {
+  test('window.Capacitor alone still swaps the builder for the web page', async ({ context, page }) => {
+    await signInAdvertiser(context, `e2e-adweb-oldapp-${RUN}@ihype.org`);
+    // What the native bridge injects at document start on both platforms.
+    await context.addInitScript(() => {
+      (window as unknown as { Capacitor: unknown }).Capacitor = { isNativePlatform: () => true, getPlatform: () => 'ios' };
+    });
+
+    await page.goto('/app/me/advertising/new');
+    await settled(page, '[data-web-only="campaigns"]');
+    await expect(page.locator('.adv-compact')).toHaveCount(0);
+  });
+});
+
+test.describe('advertising in a browser', () => {
+  test('a browser keeps the builder and the checkout, with no in-app note', async ({ context, page }) => {
+    await signInAdvertiser(context, `e2e-adweb-browser-${RUN}@ihype.org`);
+
+    await page.goto('/app/me/advertising/new');
+    await settled(page, '.adv-compact');
+    await expect(page.locator('[data-web-only]')).toHaveCount(0);
+
+    await page.goto('/app/me/advertising');
+    await settled(page, 'a.mmm-advertiser-new');
+    await expect(page.getByRole('button', { name: /Pay now/ }).first()).toBeVisible();
+
+    await page.goto('/advertise');
+    await expect(page.locator('.mmm-ad-pricing-table:visible tbody tr')).toHaveCount(4);
+    await expect(page.locator('[data-web-only="landing-note"]')).toHaveCount(0);
+  });
+});

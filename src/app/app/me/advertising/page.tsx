@@ -4,6 +4,9 @@ import { redirect } from 'next/navigation';
 import { db } from '@/lib/db';
 import Link from 'next/link';
 import { CampaignCancelButton } from '@/components/CampaignCancelButton';
+import { NewCampaignAction } from '@/components/advertise/NewCampaignAction';
+import { SponsorshipPricing } from '@/components/advertise/SponsorshipPricing';
+import { isNativeAppRequest } from '@/lib/native-app-server';
 import { getServerI18n } from '@/lib/i18n/server';
 import { REFUND_WINDOW_BUSINESS_DAYS, sponsorshipRefundableCents } from '@/lib/ad-settlement-plan';
 
@@ -11,6 +14,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function AdvertiserDashboard() {
   const { locale, t } = await getServerI18n();
+  const nativeApp = await isNativeAppRequest();
   const session = await auth();
   if (!session?.user?.id) redirect('/login?callbackUrl=/app/me/advertising');
 
@@ -146,7 +150,9 @@ export default async function AdvertiserDashboard() {
           {advertiserAccount?.pitch && <p className="mmm-profile-lede">{advertiserAccount.pitch}</p>}
 
           <div className="mmm-profile-actions">
-            <Link href="/app/me/advertising/new" className="mmm-btn-primary mmm-advertiser-new">{t('advertiseDashboardPage.newCampaign', '+ New Campaign')}</Link>
+            {/* A link in a browser; a trip to the web in the iOS and Android
+                apps, which may not build or sell a campaign (row 514). */}
+            <NewCampaignAction initialNative={nativeApp} />
           </div>
 
           {/* NO COUNTERS HERE, and that is the difference between this card and
@@ -225,6 +231,10 @@ export default async function AdvertiserDashboard() {
               is on screen at both widths in this same state — so the plate's own
               key was two identical red buttons a hundred pixels apart, both
               going to the same place. One control, one promise. */}
+          {/* The price list, so a new advertiser can see what a campaign costs
+              before building one — in the apps too, where the builder is on the
+              web (row 514). */}
+          <SponsorshipPricing />
         </div>
       )}
 
@@ -336,6 +346,7 @@ export default async function AdvertiserDashboard() {
                   charged={Boolean(campaign.authorizedAt) && !campaign.settledAt}
                   refundableCents={refundableNow(campaign)}
                   pricingModel={campaign.pricingModel}
+                  nativeApp={nativeApp}
                 />
               </div>
             )}

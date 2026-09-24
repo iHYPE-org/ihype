@@ -1,6 +1,9 @@
 import Link from 'next/link';
 import { getServerT } from '@/lib/i18n/server';
 import type { Translate } from '@/lib/mmm-shell-labels';
+import { AdvertiseInAppNote } from '@/components/advertise/AdvertiseInAppNote';
+import { SponsorshipPricing } from '@/components/advertise/SponsorshipPricing';
+import { isNativeAppRequest } from '@/lib/native-app-server';
 
 /* The eligible categories, declared once in English and translated at the
    draw — the `mmm-shell-labels.ts` rule, because `extract-i18n-keys.mjs`
@@ -21,6 +24,7 @@ function eligibleLabel(t: Translate, label: string): string {
 
 export async function MmmAdvertiseLanding() {
   const t = await getServerT();
+  const nativeApp = await isNativeAppRequest();
   return (
     <main className="mmm-ad-landing">
       <section className="mmm-ad-hero">
@@ -50,6 +54,16 @@ export async function MmmAdvertiseLanding() {
         </div>
       </section>
 
+      {/* The price list (row 514). The page described the model and never showed
+          a price; the only figures were in the builder, which the iOS and
+          Android apps no longer show. Read from ad-pricing.ts, so it cannot
+          quote a number the builder does not charge. */}
+      <section aria-labelledby="ad-pricing" className="mmm-ad-section">
+        <p className="mmm-eyebrow">{t('mmmAdvertiseLanding.pricingEyebrow', 'Pricing')}</p>
+        <h2 id="ad-pricing">{t('mmmAdvertiseLanding.pricingTitle', 'One flat monthly price.')}</h2>
+        <SponsorshipPricing />
+      </section>
+
       <section aria-labelledby="ad-who" className="mmm-ad-section mmm-ad-eligibility">
         <div>
           <p className="mmm-eyebrow">{t('mmmAdvertiseLanding.whoEyebrow', 'Music industry only')}</p>
@@ -62,6 +76,7 @@ export async function MmmAdvertiseLanding() {
       <section className="mmm-ad-final">
         <h2>{t('mmmAdvertiseLanding.finalTitle', 'Ready to build your first campaign?')}</h2>
         <p>{t('mmmAdvertiseLanding.finalBody', 'No sales call and no contract. Create an account, verify the business and review pricing in the builder.')}</p>
+        <AdvertiseInAppNote initialNative={nativeApp} />
         <Link className="mmm-btn-primary" href="/advertise/register">{t('mmmAdvertiseLanding.getStarted', 'Get started')}</Link>
       </section>
     </main>

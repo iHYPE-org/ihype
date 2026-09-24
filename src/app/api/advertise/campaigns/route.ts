@@ -17,8 +17,26 @@ import {
   AD_SCOPE_LABELS, SPONSORSHIP_TERMS_MONTHS,
 } from '@/lib/ad-pricing';
 import { isAdvertisingEnabledRuntime } from '@/lib/runtime-flags';
+import { CAMPAIGNS_WEB_ONLY, isNativeAppUserAgent } from '@/lib/native-app';
 
 export const dynamic = 'force-dynamic';
+
+/**
+ * A campaign is built and paid for on the web, never inside the iOS or Android
+ * app (DESIGN_SYNC row 514): Apple requires in-app purchase for ads that play
+ * in the same app, and both routes below are the ones that create a Stripe
+ * checkout. The pages already send an app member to the browser; this is the
+ * server's own refusal, so a surface that forgets to gate cannot sell in the
+ * app anyway. It keys on the user-agent token the store builds append and
+ * never on its absence — a browser, desktop or phone, is always allowed to buy.
+ */
+function refuseInApp(request: NextRequest): NextResponse | null {
+  if (!isNativeAppUserAgent(request.headers.get('user-agent'))) return null;
+  return NextResponse.json(
+    { error: 'Campaigns are built and paid for on the web at ihype.org, not in the iHYPE app.', code: CAMPAIGNS_WEB_ONLY },
+    { status: 403 },
+  );
+}
 
 export async function GET() {
   const session = await auth();
@@ -39,6 +57,8 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
+  const inApp = refuseInApp(request);
+  if (inApp) return inApp;
 
   // The most expensive request in the application. A submission fetches the
   // spot's audio and runs vetAdAudioContent(): an ACRCloud identify call — a
@@ -295,6 +315,10 @@ export async function PATCH(request: NextRequest) {
   const action = body.action;
   if (!id || (action !== 'cancel' && action !== 'pause' && action !== 'resume' && action !== 'retry-checkout')) {
     return NextResponse.json({ error: 'id and action: "cancel" | "pause" | "resume" | "retry-checkout" are required.' }, { status: 400 });
+  }
+  if (action === 'retry-checkout') {
+    const inApp = refuseInApp(request);
+    if (inApp) return inApp;
   }
 
   const ad = await db.ad.findUnique({

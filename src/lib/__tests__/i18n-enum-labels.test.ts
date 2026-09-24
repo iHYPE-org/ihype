@@ -2,6 +2,7 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import * as labels from '@/lib/i18n-enum-labels';
+import { AD_SCOPES, AD_SCOPE_DESCRIPTIONS, AD_SCOPE_LABELS } from '@/lib/ad-pricing';
 
 /**
  * Two things hold the enumeration labels together. Every helper, given the
@@ -38,6 +39,8 @@ const SAMPLES: Array<[keyof typeof labels, string[]]> = [
   ['verifyProofLine', ['Business license or permits for the venue']],
   ['showTabLabel', ['About', 'Lineup', 'Venue']],
   ['supportCategoryLabel', ['Ticket issue', 'Payment / Payout', 'Other']],
+  ['adScopeLabel', ['Local', 'Regional', 'National', 'Global']],
+  ['adScopeDescription', ['Your city', 'State/metro', 'US-wide', 'Worldwide']],
 ];
 
 describe('enumeration labels', () => {
@@ -45,6 +48,16 @@ describe('enumeration labels', () => {
     for (const [name, english] of SAMPLES) {
       const fn = labels[name] as (t: labels.Translate, english: string) => string;
       for (const value of english) expect(fn(identity, value), `${name}(${value})`).toBe(value);
+    }
+  });
+
+  it('know every sponsorship tier ad-pricing.ts declares, so no tier name reaches a sponsor untranslated', () => {
+    // A marker translator returns something other than the fallback, so a
+    // value with no case (which hands the English straight back) is caught.
+    const marker = (key: string) => `[${key}]`;
+    for (const scope of AD_SCOPES) {
+      expect(labels.adScopeLabel(marker, AD_SCOPE_LABELS[scope]), scope).toMatch(/^\[adScope\.label\./);
+      expect(labels.adScopeDescription(marker, AD_SCOPE_DESCRIPTIONS[scope]), scope).toMatch(/^\[adScope\.description\./);
     }
   });
 

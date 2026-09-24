@@ -10,6 +10,18 @@ const config: CapacitorConfig = {
   appId: 'com.ihype.app',
   appName: 'iHYPE',
   webDir: 'capacitor-shell',
+  /**
+   * Tells the website it is running inside the app (DESIGN_SYNC row 514).
+   *
+   * The WebView's own user agent plus this token, so the server can decide
+   * before anything renders that a campaign is built and paid for on the web
+   * — Apple requires in-app purchase for ads that play in the same app, and
+   * the builder's checkout is Stripe. `src/lib/native-app.ts` reads it
+   * (`NATIVE_APP_UA_TOKEN`) and a test holds the two in step. It reaches a
+   * member only with the next store build; until then the site falls back to
+   * `window.Capacitor`, one effect after hydration.
+   */
+  appendUserAgent: 'iHYPEApp/1',
   server: {
     url: process.env.CAPACITOR_SERVER_URL || 'https://ihype.org',
     androidScheme: 'https',

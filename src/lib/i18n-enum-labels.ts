@@ -190,6 +190,29 @@ export function askStatusLabel(t: Translate, english: string): string {
   }
 }
 
+/* The four sponsorship reach tiers (`AD_SCOPE_LABELS` / `AD_SCOPE_DESCRIPTIONS`
+   in `ad-pricing.ts`). The builder drew them raw, so a Spanish sponsor read
+   "Local · Your city" beside a translated price (row 514). */
+export function adScopeLabel(t: Translate, english: string): string {
+  switch (english) {
+    case 'Local': return t('adScope.label.local', 'Local');
+    case 'Regional': return t('adScope.label.regional', 'Regional');
+    case 'National': return t('adScope.label.national', 'National');
+    case 'Global': return t('adScope.label.global', 'Global');
+    default: return english;
+  }
+}
+
+export function adScopeDescription(t: Translate, english: string): string {
+  switch (english) {
+    case 'Your city': return t('adScope.description.local', 'Your city');
+    case 'State/metro': return t('adScope.description.regional', 'State/metro');
+    case 'US-wide': return t('adScope.description.national', 'US-wide');
+    case 'Worldwide': return t('adScope.description.global', 'Worldwide');
+    default: return english;
+  }
+}
+
 export function trustCategoryLabel(t: Translate, english: string): string {
   switch (english) {
     case 'Track uploads': return t('trustSafetyPanel.category.track', 'Track uploads');
