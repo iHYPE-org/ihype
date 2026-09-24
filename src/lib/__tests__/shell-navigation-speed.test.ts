@@ -61,3 +61,62 @@ describe('shell navigation speed (row 509)', () => {
     expect(me).not.toMatch(/includeTickets/);
   });
 });
+
+/**
+ * The cold-load half (DESIGN_SYNC row 511): the bytes every shell screen
+ * downloaded for surfaces it was not showing. Each is again one line whose
+ * absence nothing else sees — the map still draws, Sentry still reports, the
+ * tabs still fill — only later.
+ */
+describe('shell cold-load weight (row 511)', () => {
+  it('MmmMap imports MapLibre only once the map has been the active surface', () => {
+    const map = readFileSync(join(root, 'src/components/mmm/MmmMap.tsx'), 'utf8');
+    // The latch: set from `active`, never reset, and the ONLY gate on the import.
+    expect(map).toMatch(/const \[armed, setArmed\] = useState\(active\)/);
+    expect(map).toMatch(/if \(active\) setArmed\(true\)/);
+    const importAt = map.indexOf("import('maplibre-gl')");
+    const gateAt = map.lastIndexOf('if (!armed || !containerRef.current) return;', importAt);
+    expect(importAt, 'the dynamic import is what makes the latch worth anything').toBeGreaterThan(-1);
+    expect(gateAt, 'the import runs only under the armed gate').toBeGreaterThan(-1);
+    // And the effect re-runs when the latch flips, or arming does nothing.
+    expect(map.slice(importAt)).toMatch(/mapRef\.current = null;\s*\};\s*\}, \[armed\]\);/);
+  });
+
+  it('the browser Sentry SDK is a dynamic import, loaded after the document, with the pre-load window covered', () => {
+    const entry = readFileSync(join(root, 'src/instrumentation-client.ts'), 'utf8');
+    expect(entry).not.toMatch(/^import \* as Sentry from '@sentry\/nextjs'/m);
+    expect(entry).toContain("import('@sentry/nextjs')");
+    // Not before the page is up: a load listener and an idle callback.
+    expect(entry).toMatch(/addEventListener\('load'/);
+    expect(entry).toMatch(/requestIdleCallback/);
+    // The window before the SDK is up is held and replayed, never dropped.
+    expect(entry).toMatch(/addEventListener\('error', onError\)/);
+    expect(entry).toMatch(/addEventListener\('unhandledrejection', onRejection\)/);
+    expect(entry).toMatch(/for \(const error of heldErrors\.splice\(0\)\) mod\.captureException\(error\)/);
+  });
+
+  it('Work Sans is not preloaded: the default theme never paints it', () => {
+    const layout = readFileSync(join(root, 'src/app/layout.tsx'), 'utf8');
+    const block = layout.slice(layout.indexOf('const workSans = localFont({'), layout.indexOf('const jetbrainsMono'));
+    expect(block).toMatch(/preload:\s*false/);
+    // And the claim behind it holds: the default body face is the system stack.
+    const globals = readFileSync(join(root, 'src/app/globals.css'), 'utf8');
+    const rootBlock = globals.slice(globals.indexOf(':root {'), globals.indexOf('[data-theme="dark"]'));
+    expect(rootBlock).not.toMatch(/var\(--font-work/);
+  });
+
+  it('the MUSIC page preloads the active tab\'s first reads from the same table the client fetches from', () => {
+    const page = readFileSync(join(root, 'src/app/app/music/[tab]/page.tsx'), 'utf8');
+    expect(page).toMatch(/import \{ preload \} from 'react-dom'/);
+    expect(page).toMatch(/musicTabFirstReads\(tab as MusicTabId, \{ genre, city \}\)/);
+    // A bare fetch() sends same-origin credentials; only an anonymous preload matches it.
+    expect(page).toMatch(/preload\(url, \{ as: 'fetch', crossOrigin: 'anonymous' \}\)/);
+    const music = readFileSync(join(root, 'src/components/mmm/MmmMusic.tsx'), 'utf8');
+    expect(music).toMatch(/import \{ TAB_WARM_URLS, discoverSeedsUrl \} from '@\/lib\/mmm-music-reads'/);
+    // No second copy of either: one table, one seeds URL builder.
+    expect(music).not.toMatch(/const TAB_WARM_URLS/);
+    expect(music).not.toMatch(/\/api\/discover\/seeds\?/);
+    // The fetch the preload must match: same URL, default credentials.
+    expect(music).toMatch(/fetch\(url, \{ cache: 'no-store' \}\)/);
+  });
+});

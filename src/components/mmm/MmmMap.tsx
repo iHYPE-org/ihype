@@ -207,8 +207,23 @@ export function MmmMap({
   /** Bumped on every map move so placement recomputes against the new camera. */
   const [cameraTick, setCameraTick] = useState(0);
 
+  /* THE MAP IS BUILT THE FIRST TIME IT IS THE ACTIVE SURFACE, NOT AT MOUNT
+     (2026-09-24, DESIGN_SYNC row 511). The layer is mounted under every pane
+     so that returning to MAP keeps the camera, and until this latch the
+     effect below ran on mount — so a cold load of ME, Tickets or Listen
+     downloaded MapLibre (two chunks and the vendored worker, ~1.5 MB of
+     JavaScript) and built a WebGL map for a surface it was not showing.
+     `armed` flips true once and never back: the first visit to MAP pays the
+     import, and every later hop keeps the built map exactly as before. On a
+     cold load of `/app/map` itself `active` is true from the first render, so
+     that path is unchanged. */
+  const [armed, setArmed] = useState(active);
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (active) setArmed(true);
+  }, [active]);
+
+  useEffect(() => {
+    if (!armed || !containerRef.current) return;
     let disposed = false;
     /* A basemap that never arrives must SAY SO rather than draw as an empty
        chart. `failed` used to mean only "the maplibre bundle would not load",
@@ -379,7 +394,7 @@ export function MmmMap({
       mapRef.current?.remove();
       mapRef.current = null;
     };
-  }, []);
+  }, [armed]);
 
   // Scope chip → camera. The prototype resets the view on scope change, which
   // is the point of the chips: they are presets, not filters.

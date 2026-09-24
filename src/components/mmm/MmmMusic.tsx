@@ -15,6 +15,7 @@ import type { StationSummary } from '@/app/api/stations/route';
 import { MmmFreeUseCrate } from '@/components/mmm/MmmFreeUseCrate';
 import { useI18n } from '@/components/I18nProvider';
 import type { Translate } from '@/lib/mmm-shell-labels';
+import { TAB_WARM_URLS, discoverSeedsUrl } from '@/lib/mmm-music-reads';
 
 export type MusicTabId = 'discover' | 'radio' | 'charts' | 'recommended' | 'playlists';
 
@@ -269,13 +270,8 @@ async function prefetchTabPayloads(urls: readonly string[], cancelled: () => boo
  * NOT warmed: the deck's `?genres=`/`?city=` narrowing makes its URL a
  * per-visit thing, and a warmed unfiltered deck would be dropped unread.
  */
-const TAB_WARM_URLS: Record<MusicTabId, readonly string[]> = {
-  discover: ['/api/media-listens'],
-  radio: ['/api/stations'],
-  charts: ['/api/charts?dataset=area&scope=local'],
-  recommended: ['/api/recommend'],
-  playlists: ['/api/fan-favorites', '/api/likes', '/api/stations', '/api/fan-playlists'],
-};
+/* `TAB_WARM_URLS` lives in `@/lib/mmm-music-reads` so the server page can
+   PRELOAD the active tab's first reads from the same table (row 511). */
 
 function useWarmSiblingTabs(tab: MusicTabId) {
   useEffect(() => {
@@ -397,14 +393,8 @@ function DiscoverTab({ genre, city }: { genre?: string; city?: string }) {
   const { currentTrack, currentTime, isPlaying, playTrack, togglePlayback } = useMediaPlayer();
   const trimmedGenre = genre?.trim() ?? '';
   const trimmedCity = city?.trim() ?? '';
-  const seedsQuery = new URLSearchParams();
-  // The endpoint's genre parameter is plural and comma-separated; one value is
-  // a valid list of one.
-  if (trimmedGenre) seedsQuery.set('genres', trimmedGenre);
-  if (trimmedCity) seedsQuery.set('city', trimmedCity);
-  const seedsUrl = seedsQuery.size
-    ? `/api/discover/seeds?${seedsQuery.toString()}`
-    : '/api/discover/seeds';
+  // One builder for this URL: the page preloads exactly what this fetches.
+  const seedsUrl = discoverSeedsUrl(genre, city);
   const { status, data } = useJson<SeedCard[]>(seedsUrl, (payload) => {
     const seeds = (payload as { seeds?: Array<Record<string, unknown>> }).seeds ?? [];
     return seeds.map((seed) => {

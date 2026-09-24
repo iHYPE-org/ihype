@@ -1,6 +1,8 @@
 import { MmmMissing } from '@/components/mmm/MmmMissing';
 import { MmmMusic, type MusicTabId } from '@/components/mmm/MmmMusic';
 import { MMM_MUSIC_TABS } from '@/lib/mmm-nav';
+import { preload } from 'react-dom';
+import { musicTabFirstReads } from '@/lib/mmm-music-reads';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,6 +34,14 @@ export default async function MmmMusicPage({
      on a page with no name. Visually hidden: a second visible title would be
      the one-dial rule's drift in another form. */
   const label = MMM_MUSIC_TABS.find((item) => item.id === tab)?.label ?? 'Music';
+  /* Start the tab's first reads while the document is still streaming, so the
+     rows do not wait on hydration (row 511; the rule and the credentials match
+     are in `mmm-music-reads.ts`). `crossOrigin: 'anonymous'` IS the match: a
+     bare `fetch()` sends same-origin credentials, and that is what an
+     anonymous same-origin preload does too. */
+  for (const url of musicTabFirstReads(tab as MusicTabId, { genre, city })) {
+    preload(url, { as: 'fetch', crossOrigin: 'anonymous' });
+  }
   return (
     <>
       <h1 className="sr-only">{label}</h1>

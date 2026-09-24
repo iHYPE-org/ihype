@@ -32,7 +32,14 @@ describe('browser Sentry wiring', () => {
     expect(existsSync(join(ROOT, 'src/instrumentation-client.ts'))).toBe(true);
     const entry = read('src/instrumentation-client.ts');
     expect(entry).toMatch(/process\.env\.NEXT_PUBLIC_SENTRY_DSN/);
-    expect(entry).toMatch(/export const onRouterTransitionStart = Sentry\.captureRouterTransitionStart/);
+    /* The SDK is a DYNAMIC import (row 511): a static one put 564 KB into the
+       chunk every page evaluates before hydration. The router hook must still
+       be exported, and must reach the loaded module rather than a static
+       binding — a static `Sentry.` reference here is the whole bundle back. */
+    expect(entry).toContain("import('@sentry/nextjs')");
+    expect(entry).not.toMatch(/^import \* as Sentry from '@sentry\/nextjs'/m);
+    expect(entry).toMatch(/export function onRouterTransitionStart\(/);
+    expect(entry).toMatch(/captureRouterTransitionStart\(href, navigationType\)/);
     /* The wizard's root files are entry points only under withSentryConfig,
        which next.config.mjs must not adopt (see worker.js). Their return
        would be a second, dead copy of this init. */
