@@ -574,7 +574,7 @@ html:has(.mmm-frame) {
   width: 100%;
   max-width: 420px;
   min-height: 44px;
-  padding: var(--seg-pad);
+  padding: var(--seg-track-pad);
   margin: 0 0 16px;
   border: 1px solid var(--seg-track-edge);
   border-radius: var(--seg-radius);
@@ -583,10 +583,10 @@ html:has(.mmm-frame) {
 .mmm-seg-thumb {
   position: absolute;
   z-index: 0;
-  top: var(--seg-pad);
-  bottom: var(--seg-pad);
-  left: calc(var(--seg-pad) + (100% - 2 * var(--seg-pad)) * var(--seg-index, 0) / var(--seg-count, 1));
-  width: calc((100% - 2 * var(--seg-pad)) / var(--seg-count, 1));
+  top: var(--seg-track-pad);
+  bottom: var(--seg-track-pad);
+  left: calc(var(--seg-track-pad) + (100% - 2 * var(--seg-track-pad)) * var(--seg-index, 0) / var(--seg-count, 1));
+  width: calc((100% - 2 * var(--seg-track-pad)) / var(--seg-count, 1));
   border-radius: var(--seg-thumb-radius);
   background: var(--seg-thumb);
   box-shadow: var(--seg-thumb-shadow);
@@ -596,8 +596,8 @@ html:has(.mmm-frame) {
 .mmm-seg-item {
   position: relative;
   z-index: 1;
-  /* 44 outside whatever the theme's pad is: the console sets --seg-pad to 0. */
-  min-height: calc(44px - 2 * var(--seg-pad));
+  /* 44 outside whatever the theme's pad is: the console sets --seg-track-pad to 0px. */
+  min-height: calc(44px - 2 * var(--seg-track-pad));
   display: inline-flex;
   align-items: center;
   justify-content: center;

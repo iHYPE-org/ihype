@@ -395,10 +395,14 @@
   --float-shadow-deep: 0 18px 40px rgba(0, 0, 0, .18), 0 0 0 0.5px rgba(0, 0, 0, .08);
   /* Keys: chips, ghost buttons, the add-profile pills. iOS's tinted grey. */
   --key-radius: 10px;
-  --key-edge: transparent;
-  --key-edge-hover: transparent;
+  /* A hairline edge and a whisper of cast on the default theme (2026-09-24,
+     DESIGN_SYNC row 510; owner: "the rounded buttons look bland"): a flat
+     --bg-2 key on a white page was findable only by its label. Ink-relative,
+     so the same values hold on dark. The character themes restate their own. */
+  --key-edge: rgba(var(--ink-1-rgb), .08);
+  --key-edge-hover: rgba(var(--ink-1-rgb), .16);
   --key-bg: var(--bg-2);
-  --key-shadow: none;
+  --key-shadow: 0 1px 2px rgba(var(--ink-1-rgb), .05);
   --key-press-shadow: none;
   --key-press-dim: .88;
   --key-hover-dim: .94;
@@ -439,6 +443,22 @@
   --seg-gap: 2px;
   --seg-item-radius: var(--radius-pill);
   --seg-divider: transparent;
+  /* THE SEGMENTED CONTROL (`.mmm-seg`, row 510): one grouped track with a
+     raised thumb that slides — iOS's UISegmentedControl — for a choice of
+     VIEW (Fan · Artist · Venue · Advertiser on ME), where the section strip's
+     separate pills are a choice of DESTINATION. Two controls a row apart used
+     to wear the same pill; the owner read them as one navigation.
+     `--seg-track-pad` is a LENGTH in every block (the map strip's `--seg-pad`
+     is a bare 0 on the console themes, and `100% - 2 * 0` is invalid calc). */
+  --seg-track: var(--bg-2);
+  --seg-track-edge: transparent;
+  --seg-track-pad: 3px;
+  --seg-radius: 10px;
+  --seg-thumb: var(--bg);
+  --seg-thumb-radius: 8px;
+  --seg-thumb-shadow: 0 1px 3px rgba(var(--ink-1-rgb), .14), 0 3px 8px rgba(var(--ink-1-rgb), .06);
+  --seg-ink: var(--ink-2);
+  --seg-on-ink: var(--ink);
   /* The profile card's ground. Apple Music's artist page is the page itself —
      hero, then name, then actions on white — so the card is the ground here
      and a plate on the console. On a grey card every grey key vanished. */
@@ -486,7 +506,10 @@
   /* The primary: a filled rounded rectangle. No machined edge, no sheen. */
   --cta-edge: transparent;
   --cta-sheen: none;
-  --cta-shadow: none;
+  /* An accent-tinted cast under the one red key on the screen, deeper on
+     hover — the key lifts 1px with it (row 510). */
+  --cta-shadow: 0 8px 20px -8px rgba(var(--accent-rgb), .55), 0 1px 2px rgba(var(--ink-1-rgb), .1);
+  --cta-shadow-hover: 0 12px 26px -8px rgba(var(--accent-rgb), .6), 0 1px 2px rgba(var(--ink-1-rgb), .1);
   /* Paper boxes — the search field, the like key, a pin's label. */
   --paper-edge: transparent;
   --paper-rule: 1px;
@@ -858,6 +881,9 @@
      is the plain companion to the default, as it is on the device. */
   color-scheme: dark;
   --bg: #000000; --bg-2: #1c1c1e; --bg-3: #2c2c2e; --bg-4: #3a3a3c;
+  /* iOS dark's segmented thumb is LIGHTER than its track, not the page black. */
+  --seg-thumb: var(--bg-4);
+  --seg-thumb-shadow: 0 1px 3px rgba(0, 0, 0, .5);
   --ink: #ffffff; --ink-2: #d1d1d6; --ink-3: #aeaeb2; --ink-4: #8e8e93;
   --bg-base-rgb: 0,0,0; --ink-1-rgb: 255,255,255; --surface-tint-rgb: 255,255,255;
   --ink-a10: rgba(255,255,255,.10);
@@ -1029,6 +1055,16 @@
   --seg-gap: 0;
   --seg-item-radius: 0;
   --seg-divider: var(--line);
+  --seg-track: var(--pill-bg);
+  --seg-track-edge: var(--plate-border);
+  --seg-track-pad: 0px;
+  --seg-radius: var(--pill-radius);
+  --seg-thumb: var(--pill-on-bg);
+  --seg-thumb-radius: var(--pill-radius);
+  --seg-thumb-shadow: var(--pill-on-ring);
+  --seg-ink: var(--ink-2);
+  --seg-on-ink: var(--pill-on-ink);
+  --cta-shadow-hover: var(--cta-shadow);
   --card-bg: var(--bg-surface);
   --back-edge: var(--line-2);
   --back-bg: transparent;
@@ -1207,6 +1243,16 @@
   --seg-gap: 0;
   --seg-item-radius: 0;
   --seg-divider: var(--line);
+  --seg-track: var(--pill-bg);
+  --seg-track-edge: var(--plate-border);
+  --seg-track-pad: 0px;
+  --seg-radius: var(--pill-radius);
+  --seg-thumb: var(--pill-on-bg);
+  --seg-thumb-radius: var(--pill-radius);
+  --seg-thumb-shadow: var(--pill-on-ring);
+  --seg-ink: var(--ink-2);
+  --seg-on-ink: var(--pill-on-ink);
+  --cta-shadow-hover: var(--cta-shadow);
   --card-bg: var(--bg-surface);
   --back-edge: var(--line-2);
   --back-bg: transparent;
@@ -1385,6 +1431,16 @@
   --seg-gap: 0;
   --seg-item-radius: 0;
   --seg-divider: var(--line);
+  --seg-track: var(--pill-bg);
+  --seg-track-edge: var(--plate-border);
+  --seg-track-pad: 0px;
+  --seg-radius: var(--pill-radius);
+  --seg-thumb: var(--pill-on-bg);
+  --seg-thumb-radius: var(--pill-radius);
+  --seg-thumb-shadow: var(--pill-on-ring);
+  --seg-ink: var(--ink-2);
+  --seg-on-ink: var(--pill-on-ink);
+  --cta-shadow-hover: var(--cta-shadow);
   --card-bg: var(--bg-surface);
   --back-edge: var(--line-2);
   --back-bg: transparent;
@@ -1558,6 +1614,16 @@
   --seg-gap: 0;
   --seg-item-radius: 0;
   --seg-divider: var(--line);
+  --seg-track: var(--pill-bg);
+  --seg-track-edge: var(--plate-border);
+  --seg-track-pad: 0px;
+  --seg-radius: var(--pill-radius);
+  --seg-thumb: var(--pill-on-bg);
+  --seg-thumb-radius: var(--pill-radius);
+  --seg-thumb-shadow: var(--pill-on-ring);
+  --seg-ink: var(--ink-2);
+  --seg-on-ink: var(--pill-on-ink);
+  --cta-shadow-hover: var(--cta-shadow);
   --card-bg: var(--bg-surface);
   --back-edge: var(--line-2);
   --back-bg: transparent;

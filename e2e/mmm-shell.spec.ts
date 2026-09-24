@@ -1216,8 +1216,16 @@ test.describe('Music · Map · Me shell', () => {
            so it is the anchor; the visibility assertion then runs against a
            finished document, and a GENUINE double render still fails here. */
         const notice = page.getByText('Paid tickets · Coming soon');
+        /* AND THE ORDER MATTERS (2026-09-24): with count first, the count can
+           read 1 while only the staging copy exists, and the visibility check
+           then lands in the window where both copies are present and fails
+           strict mode — which it did once more, retry passing, on the row-510
+           run. Anchor on the FIRST copy becoming visible (that is the copy Next
+           moved into place; the staging node is hidden), then assert the count,
+           which polls until the staging copy is gone and still fails a genuine
+           double render. */
+        await expect(notice.first()).toBeVisible();
         await expect(notice).toHaveCount(1);
-        await expect(notice).toBeVisible();
         await expect(page.locator('h1.mmm-show-title:visible')).toHaveCount(1);
         await expect(page.locator('h1.mmm-show-title:visible')).toHaveText(seeded.title);
         await expect(page.getByText('Split locked at publish')).toBeVisible();
