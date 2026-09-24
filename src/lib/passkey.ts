@@ -17,11 +17,29 @@ import type {
 } from '@simplewebauthn/server';
 import { db } from '@/lib/db';
 import { getBaseUrl } from '@/lib/utils';
+import { readRuntimeEnv } from '@/lib/runtime-env';
+import { androidApkKeyHashOrigin, parseAndroidFingerprints } from '@/lib/android-fingerprints';
+
+/**
+ * Every origin a genuine ceremony can carry: the site, plus the Android app
+ * once per signing certificate (row 513). The RP ID stays the site's hostname,
+ * so a credential made in the app is the same ihype.org passkey the browser
+ * uses. The certificates come from the same Worker secret assetlinks.json
+ * serves, so an app the site does not vouch for can never be accepted here.
+ */
+export function expectedPasskeyOrigins(appUrl: string, fingerprints: string | null | undefined): string[] {
+  const { valid } = parseAndroidFingerprints(fingerprints);
+  return [appUrl, ...valid.map(androidApkKeyHashOrigin)];
+}
 
 function getRpInfo() {
   const appUrl = getBaseUrl();
   const url = new URL(appUrl);
-  return { rpID: url.hostname, rpName: 'iHYPE', origin: appUrl };
+  return {
+    rpID: url.hostname,
+    rpName: 'iHYPE',
+    origin: expectedPasskeyOrigins(appUrl, readRuntimeEnv('ANDROID_CERT_SHA256_FINGERPRINTS')),
+  };
 }
 
 export async function getPasskeyRegistrationOptions(userId: string, userName: string) {

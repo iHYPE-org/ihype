@@ -12,6 +12,7 @@ import { log } from '@/lib/logger';
 import { applyHypeEntry, InsufficientHypeError } from '@/lib/hype-ledger';
 import { formatHypeWait, hypeWaitMs, nextHypeAt } from '@/lib/hype-window';
 import { escapeHtml } from '@/lib/html-escape';
+import { deferWork } from '@/lib/defer-work';
 
 const HYPE_MILESTONES = [10, 50, 100, 500, 1000];
 const SHOW_HYPE_MILESTONES = [10, 25, 50, 100, 250, 500];
@@ -59,7 +60,7 @@ async function checkAndRecordShowMilestone(showId: string, newCount: number) {
       `;
       await sendGenericEmail({
         to: ownerEmail,
-        subject: `🎉 Your show '${show.title}' just hit ${crossed} hypes`,
+        subject: `Your show '${show.title}' just hit ${crossed} hypes`,
         text,
         html
       }).catch(() => {});
@@ -114,7 +115,7 @@ async function checkAndRecordMilestone(profileId: string, newCount: number) {
       `;
       await sendGenericEmail({
         to: ownerEmail,
-        subject: `🎉 ${profile.name} just hit ${crossed} hypes`,
+        subject: `${profile.name} just hit ${crossed} hypes`,
         text,
         html
       }).catch(() => {});
@@ -325,20 +326,26 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Spam detected' }, { status: 429 });
       }
 
-      checkAndRecordShowMilestone(payload.targetId, updatedShow.hypeCount).catch(() => {});
-      checkAndAwardBadges(session.user.id).catch(() => {});
+      /* Through deferWork, not a bare floating promise (row 513): on a
+         Worker a promise nobody awaits or hands to waitUntil can be cancelled
+         the moment the response returns, so the milestone email, the badge
+         and the creator's push could silently never happen. */
+      deferWork(checkAndRecordShowMilestone(payload.targetId, updatedShow.hypeCount), 'hype-show-milestone');
+      deferWork(checkAndAwardBadges(session.user.id), 'hype-badges');
 
-      // Push notification to show creator (fire-and-forget, skip self-hype)
-      db.show.findUnique({ where: { id: payload.targetId }, select: { creatorId: true, title: true } })
-        .then(show => {
-          if (show && show.creatorId !== session.user.id) {
-            sendPushToAllDevices(show.creatorId, {
-              title: 'Your show got hyped!',
-              body: `Someone just hyped '${show.title}' on iHYPE.`,
-            }).catch(() => {});
-          }
-        })
-        .catch(() => {});
+      // Push notification to show creator (skip self-hype)
+      deferWork(
+        db.show.findUnique({ where: { id: payload.targetId }, select: { creatorId: true, title: true } })
+          .then(async (show) => {
+            if (show && show.creatorId !== session.user.id) {
+              await sendPushToAllDevices(show.creatorId, {
+                title: 'Your show got hyped!',
+                body: `Someone just hyped '${show.title}' on iHYPE.`,
+              });
+            }
+          }),
+        'hype-show-push',
+      );
 
       return NextResponse.json({
         action: 'hyped',
@@ -415,7 +422,7 @@ export async function POST(request: NextRequest) {
     });
 
     await checkAndRecordMilestone(profileId, updatedProfile.hypeCount);
-    checkAndAwardBadges(session.user.id).catch(() => {});
+    deferWork(checkAndAwardBadges(session.user.id), 'hype-badges');
 
     // Early-believer re-engagement. `hypeCount` is a running total and stopped
     // being a headcount the day HYPE started resetting every 24h — one member
@@ -428,32 +435,36 @@ export async function POST(request: NextRequest) {
         .count({ where: { profileId: profileId } })
         .catch(() => 0);
       if (rank > 0 && rank <= 25) {
-      db.profile.findUnique({ where: { id: profileId }, select: { slug: true, name: true, type: true } })
-        .then((p: { slug: string; name: string; type: string } | null) => {
-          if (p && p.type === 'ARTIST') {
-            notifyUser(session.user.id, {
-              type: 'EARLY_BELIEVER',
-              title: 'You called it early',
-              body: `You're early believer #${rank} in ${p.name}.`,
-              link: `/app/me/artists/${p.slug}/believers`,
-            }).catch(() => {});
-          }
-        })
-        .catch(() => {});
+      deferWork(
+        db.profile.findUnique({ where: { id: profileId }, select: { slug: true, name: true, type: true } })
+          .then(async (p: { slug: string; name: string; type: string } | null) => {
+            if (p && p.type === 'ARTIST') {
+              await notifyUser(session.user.id, {
+                type: 'EARLY_BELIEVER',
+                title: 'You called it early',
+                body: `You're early believer #${rank} in ${p.name}.`,
+                link: `/app/me/artists/${p.slug}/believers`,
+              });
+            }
+          }),
+        'hype-early-believer',
+      );
       }
     }
 
-    // Push notification to track owner (fire-and-forget, skip self-hype)
-    db.profile.findUnique({ where: { id: profileId }, select: { ownerId: true, name: true } })
-      .then(profile => {
-        if (profile && profile.ownerId !== session.user.id) {
-          sendPushToAllDevices(profile.ownerId, {
-            title: 'Your track got hyped!',
-            body: `Someone just hyped ${profile.name} on iHYPE.`,
-          }).catch(() => {});
-        }
-      })
-      .catch(() => {});
+    // Push notification to the profile owner (skip self-hype)
+    deferWork(
+      db.profile.findUnique({ where: { id: profileId }, select: { ownerId: true, name: true } })
+        .then(async (profile) => {
+          if (profile && profile.ownerId !== session.user.id) {
+            await sendPushToAllDevices(profile.ownerId, {
+              title: 'Your page got hyped!',
+              body: `Someone just hyped ${profile.name} on iHYPE.`,
+            });
+          }
+        }),
+      'hype-owner-push',
+    );
 
     return NextResponse.json({
       action: 'hyped',

@@ -37,9 +37,7 @@
   ],
   "exclude": [
     "node_modules",
-    "ihype",
     ".open-next",
-    ".wrangler",
-    "mobile"
+    ".wrangler"
   ]
 }

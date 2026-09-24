@@ -670,6 +670,14 @@ test.describe('Music · Map · Me shell', () => {
     const save = page.getByRole('button', { name: /^Save .+ to your Discover playlist$/ });
     await expect(save).toBeVisible();
     const before = await save.getAttribute('aria-label');
+    /* The card's id, not its label: the label is the track's TITLE, and a
+       title is not unique — the creation spec uploads the same one on every
+       attempt, so after a retry the next card carries this card's label and
+       "the card left" cannot be read off it (measured on a scratch database
+       holding three copies). */
+    const card = page.locator('.mmm-deck-card');
+    const cardId = await card.getAttribute('data-item');
+    expect(cardId, 'the deck card names its item').toBeTruthy();
     const answered = page.waitForResponse((r) => /\/api\/discover\/seeds\/[^/]+\/save$/.test(r.url()) && r.request().method() === 'POST');
     await save.click();
     expect((await answered).status()).toBe(500);
@@ -680,6 +688,7 @@ test.describe('Music · Map · Me shell', () => {
     /* The same card: a save that did not land must not move on, because
        moving on loses exactly the track the member asked to keep. */
     await expect(page.getByRole('button', { name: /^Save .+ to your Discover playlist$/ })).toHaveAttribute('aria-label', before ?? '');
+    await expect(card).toHaveAttribute('data-item', cardId ?? '');
 
     /* And the control still works once the route does: the note clears and
        the card moves on. NOT asserted: "1 saved" in the count — the fixture
@@ -692,7 +701,7 @@ test.describe('Music · Map · Me shell', () => {
     await save.click();
     expect((await landed).status()).toBe(200);
     await expect(note).toHaveCount(0);
-    await expect(page.getByRole('button', { name: before ?? '' })).toHaveCount(0);
+    await expect(page.locator(`.mmm-deck-card[data-item="${cardId}"]`)).toHaveCount(0);
   });
 
   // The module tab is a route, not state: it must survive a reload and a
@@ -841,6 +850,28 @@ test.describe('Music · Map · Me shell', () => {
     await expect(page.getByRole('button', { name: 'Near me', exact: true })).toHaveCount(0);
     // And with no answer ever arriving, the map is still there and still usable.
     await expect(page.getByRole('link', { name: 'Map', exact: true })).toBeVisible();
+  });
+
+  /* The layer is mounted under EVERY pane, and the ask used to fire on mount —
+     so a deep link to ME asked for location from a screen with no map. It is
+     latched on the map being the active surface now (row 513). */
+  test('a screen that is not the map does not ask for location', async ({ page }) => {
+    await page.addInitScript(() => {
+      Object.assign(window, { __geoAsks: 0 });
+      navigator.geolocation.getCurrentPosition = () => {
+        (window as unknown as { __geoAsks: number }).__geoAsks += 1;
+      };
+    });
+    await page.goto('/app/me');
+    await expect(page.locator('h1').first()).toBeAttached();
+    // Settled, not polled: the claim is that the count STAYS at zero.
+    await page.waitForTimeout(1500);
+    expect(await page.evaluate(() => (window as unknown as { __geoAsks: number }).__geoAsks)).toBe(0);
+    // And arriving at the map still asks, once.
+    await page.getByRole('link', { name: 'Map', exact: true }).click();
+    await expect
+      .poll(() => page.evaluate(() => (window as unknown as { __geoAsks: number }).__geoAsks))
+      .toBe(1);
   });
 
   /* No permission SHEET on arrival, which is a different claim from the test

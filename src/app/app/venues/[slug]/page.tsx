@@ -7,6 +7,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { HypeButton } from '@/components/HypeButton';
 import { FollowButton } from '@/components/FollowButton';
+import { ReportButton } from '@/components/ReportButton';
 import { MmmMissing } from '@/components/mmm/MmmMissing';
 import { getDemoCreatorExclusion, isDemoUser, shouldHideDemoContent } from '@/lib/runtime-flags';
 import { upcomingShowWhere } from '@/lib/profile-detail';
@@ -201,6 +202,7 @@ export default async function MmmVenuePage({
             {/* Remember this room. `/api/likes` has accepted VENUE since the
                 model was written; the pane never offered it. */}
             <MmmLikeButton name={profile.name} targetId={profile.id} targetType="VENUE" />
+            {!isOwner && <ReportButton entityLabel="profile" targetId={profile.id} targetType="profile" />}
           </div>
 
           {/* The public stat catalogue's three venue figures. Capacity moved to

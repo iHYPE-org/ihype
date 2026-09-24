@@ -6,6 +6,7 @@ import { log } from '@/lib/logger';
 import { readRuntimeEnv } from '@/lib/runtime-env';
 import { finalizeCapturedTicketOrder, voidReservedTicketOrder } from '@/lib/ticket-order-state';
 import { processNotificationJobs } from '@/lib/notification-jobs';
+import { deferWork } from '@/lib/defer-work';
 import {
   adEventIsPlatform,
   amountCoversOrder,
@@ -562,7 +563,13 @@ export async function POST(request: NextRequest) {
   // transient failure without asking Stripe to replay an already-processed
   // business event.
   if (finalizedOrderId || authorizedAdId || cancelledAdId || duplicate) {
-    await processNotificationJobs(5);
+    /* After the response, not before it (2026-09-24, DESIGN_SYNC row 513).
+       The jobs are the oldest five pending, which may be any member's, and
+       each is a claim, a delivery and a status write in series; Stripe waited
+       on all of it to learn the event had landed. `deferWork` keeps the
+       Worker alive for them through `waitUntil`, and the cron still retries
+       anything that fails. */
+    deferWork(processNotificationJobs(5), 'stripe-webhook-notify');
   }
 
   return NextResponse.json({ received: true, duplicate });

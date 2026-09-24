@@ -134,7 +134,7 @@ export function MmmNowPlaying({
   return (
     <div className="mmm-mini" role="region" aria-label={t('mmmNowPlaying.region', 'Now playing')}>
       <button
-        aria-label={`Now playing: ${track.title} by ${track.artist}. Open the player.`}
+        aria-label={t('mmmNowPlaying.openPlayer', 'Now playing: {title} by {artist}. Open the player.').replace('{title}', track.title).replace('{artist}', track.artist)}
         className="mmm-mini-open"
         onClick={onExpand}
         type="button"
@@ -159,7 +159,7 @@ export function MmmNowPlaying({
           <SkipGlyph dir="prev" />
         </button>
         <button
-          aria-label={playing ? 'Pause' : 'Play'}
+          aria-label={playing ? t('globalMediaPlayer.pause', 'Pause') : t('globalMediaPlayer.play', 'Play')}
           aria-pressed={playing}
           className="mmm-key"
           data-lit={playing}

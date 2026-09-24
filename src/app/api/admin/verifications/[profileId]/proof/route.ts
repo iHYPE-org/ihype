@@ -1,7 +1,6 @@
-import { NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { NextResponse, NextRequest } from 'next/server';
+import { requireAdminApi } from '@/lib/admin-api';
 import { db } from '@/lib/db';
-import { isAdminSession } from '@/lib/permissions';
 import { recordAuditEvent } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
@@ -25,13 +24,11 @@ const ALLOWED = new Set(['image/jpeg', 'image/png', 'application/pdf']);
 const EXTENSION: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'application/pdf': 'pdf' };
 
 export async function GET(
-  _request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ profileId: string }> },
 ) {
-  const session = await auth();
-  if (!isAdminSession(session) || !session?.user?.id) {
-    return NextResponse.json({ error: 'Admin only.' }, { status: 403 });
-  }
+  const { session, response } = await requireAdminApi(request);
+  if (!session) return response;
   const { profileId } = await params;
 
   const profile = await db.profile.findUnique({

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { Capacitor } from '@capacitor/core';
 import { needsBrowserNavigation, resolveInternalPath } from '@/lib/deep-link';
+import { rememberNativePushToken } from '@/lib/native-push-device';
 
 /**
  * Native-shell-only glue, mounted once at the app root (AppProviders) — a
@@ -77,6 +78,9 @@ export function NativePushRegistration() {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ token: token.value, platform: Capacitor.getPlatform() === 'ios' ? 'IOS' : 'ANDROID' }),
+            }).then((res) => {
+              // Remembered so sign-out can unbind this device (row 513).
+              if (res.ok) rememberNativePushToken(token.value);
             }).catch(() => {
               // Registration is a side effect — a failed POST just means this
               // device won't receive native pushes until the next launch retries.

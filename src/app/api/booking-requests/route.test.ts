@@ -11,6 +11,8 @@ const notifyUser = vi.fn().mockResolvedValue(undefined);
 vi.mock('@/lib/notify', () => ({ notifyUser: (...a: unknown[]) => notifyUser(...a) }));
 
 const profileFindUnique = vi.fn();
+const profileFindMany = vi.fn();
+const requestFindMany = vi.fn();
 const prefFindUnique = vi.fn();
 const requestFindFirst = vi.fn();
 const requestCreate = vi.fn();
@@ -18,19 +20,20 @@ const requestFindUnique = vi.fn();
 const requestUpdate = vi.fn();
 vi.mock('@/lib/db', () => ({
   db: {
-    profile: { findUnique: (...a: unknown[]) => profileFindUnique(...a) },
+    profile: { findUnique: (...a: unknown[]) => profileFindUnique(...a), findMany: (...a: unknown[]) => profileFindMany(...a) },
     notificationPreference: { findUnique: (...a: unknown[]) => prefFindUnique(...a) },
     bookingRequest: {
       findFirst: (...a: unknown[]) => requestFindFirst(...a),
       create: (...a: unknown[]) => requestCreate(...a),
       findUnique: (...a: unknown[]) => requestFindUnique(...a),
       update: (...a: unknown[]) => requestUpdate(...a),
+      findMany: (...a: unknown[]) => requestFindMany(...a),
     },
   },
 }));
 
 import { auth } from '@/lib/auth';
-import { PATCH, POST } from './route';
+import { GET, PATCH, POST } from './route';
 
 function req(method: string, body: Record<string, unknown>) {
   return new Request('https://ihype.org/api/booking-requests', {
@@ -113,5 +116,29 @@ describe('a booking request reaches the act, and the answer reaches the sender',
     prefFindUnique.mockResolvedValue(null);
     await POST(req('POST', { toProfileId: 'p_artist', message: 'We would love to have you play in March.' }));
     expect(notifyUser).toHaveBeenCalled();
+  });
+});
+
+describe('each profile reads its own inbox (row 513)', () => {
+  beforeEach(() => {
+    profileFindMany.mockResolvedValue([{ id: 'p_one' }, { id: 'p_two' }]);
+    requestFindMany.mockResolvedValue([]);
+  });
+
+  it('scopes received requests to the named profile', async () => {
+    await GET(new Request('https://ihype.org/api/booking-requests?profileId=p_two'));
+    expect(requestFindMany.mock.calls[0]![0].where).toEqual({ toProfileId: { in: ['p_two'] } });
+  });
+
+  it('narrows to nothing for a profile the caller does not own', async () => {
+    await GET(new Request('https://ihype.org/api/booking-requests?profileId=someone_else'));
+    expect(requestFindMany.mock.calls[0]![0].where).toEqual({ toProfileId: { in: [] } });
+  });
+
+  it('names the sending VENUE, not an artist profile the sender may not have', async () => {
+    await GET(new Request('https://ihype.org/api/booking-requests'));
+    const select = requestFindMany.mock.calls[0]![0].select;
+    expect(select.fromUser.select.profiles.where).toEqual({ type: 'VENUE' });
+    expect(select.fromUser.select.profiles.select.name).toBe(true);
   });
 });

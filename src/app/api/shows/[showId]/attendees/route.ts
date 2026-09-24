@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { isUniqueViolation } from '@/lib/unique-violation';
 
 // GET — public, returns opted-in attendees (name + avatar only)
 export async function GET(
@@ -74,7 +75,7 @@ export async function POST(
 
   await db.showAttendee.create({
     data: { userId: session.user.id, showId, optedIn: true },
-  });
+  }).catch((error: unknown) => { if (!isUniqueViolation(error)) throw error; });
 
   return NextResponse.json({ optedIn: true });
 }

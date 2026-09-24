@@ -136,7 +136,7 @@ describe('the Satori palette', () => {
   it('every image route draws the mark and none carries the old lockup or DS8 navy', () => {
     const routes = [
       'src/app/opengraph-image.tsx', 'src/app/artists/[slug]/opengraph-image.tsx', 'src/app/shows/[slug]/opengraph-image.tsx',
-      'src/app/venues/[slug]/opengraph-image.tsx', 'src/app/fans/[slug]/opengraph-image.tsx', 'src/app/shows/[slug]/qr/route.tsx',
+      'src/app/venues/[slug]/opengraph-image.tsx', 'src/app/fans/[slug]/opengraph-image.tsx',
       'src/app/shows/[slug]/poster/route.tsx', 'src/app/api/og/route.tsx', 'src/app/api/milestones/[profileId]/card/route.tsx',
     ];
     for (const r of routes) {

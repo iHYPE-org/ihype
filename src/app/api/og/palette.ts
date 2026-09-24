@@ -27,6 +27,7 @@ export const OG = {
   ink2: '#3a3a3c', /* --ink-2 */
   ink3: '#545458', /* --ink-3 */
   accent: '#e0263e', /* --accent */
+  inkOnAccent: '#ffffff', /* --ink-on-accent */
   venue: '#0f6b62', /* --role-venue */
   fan: '#5b3d8f', /* --role-fan */
   line: 'rgba(60,60,67,.29)', /* --line */

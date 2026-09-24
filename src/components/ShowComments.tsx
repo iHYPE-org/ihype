@@ -3,6 +3,7 @@
 import { formatDate } from '@/lib/format-locale';
 import { useEffect, useState } from 'react';
 import { useI18n } from '@/components/I18nProvider';
+import { ReportButton } from '@/components/ReportButton';
 
 type Reaction = { emoji: string; count: number };
 type Comment = {
@@ -168,6 +169,9 @@ export function ShowComments({ showId, canComment }: { showId: string; canCommen
                     </button>
                   );
                 })}
+                {/* A member can report what another member wrote (App Store
+                    guideline 1.2); approving the report removes the comment. */}
+                {canComment && <ReportButton entityLabel="comment" targetId={comment.id} targetType="comment" />}
               </div>
             </li>
           ))}

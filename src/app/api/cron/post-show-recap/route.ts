@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { sendPushToAllDevices } from '@/lib/notify';
 import { sendOperationalEmail } from '@/lib/mailer';
 import { log } from '@/lib/logger';
+import { escapeHtml } from '@/lib/html-escape';
 
 export const dynamic = 'force-dynamic';
 
@@ -85,19 +86,23 @@ export async function GET(request: NextRequest) {
       return show.rsvps.map((rsvp): RecapTask => ({
         userId: rsvp.userId,
         dedupKey: `post-show:${show.id}:${rsvp.userId}`,
-        notificationBody: `How was ${show.title}? Leave a hype, check the setlist, or tip the artist.`,
+        notificationBody: `How was ${show.title}? Leave a hype or check the setlist.`,
         link: `/shows/${show.slug}`,
         push: {
           title: `How was ${show.title}?`,
-          body: 'Leave a hype, check the setlist, or tip the artist',
+          body: 'Leave a hype or check the setlist',
           url: `/shows/${show.slug}`,
         },
         email: rsvp.user.email && !rsvp.user.emailBounced
           ? {
               to: rsvp.user.email,
               subject: `How was ${show.title}?`,
-              text: `Hope you had a great time at ${show.title} @ ${venueName}! Leave a hype, check the setlist, or tip the artist.\n\nhttps://ihype.org/shows/${show.slug}`,
-              html: `<p>Hope you had a great time at <strong>${show.title}</strong> @ ${venueName}!</p><p>Leave a hype, check the setlist, or tip the artist.</p><p><a href="https://ihype.org/shows/${show.slug}">View on iHYPE →</a></p>`,
+              text: `Hope you had a great time at ${show.title} @ ${venueName}! Leave a hype or check the setlist.\n\nhttps://ihype.org/shows/${show.slug}`,
+              /* A title and a venue name are member-typed; escaped in the HTML part so
+                 neither can carry markup into mail sent from iHYPE's own
+                 sender (row 513). "Tip the artist" is gone: nothing here
+                 takes a tip. */
+              html: `<p>Hope you had a great time at <strong>${escapeHtml(show.title)}</strong> @ ${escapeHtml(venueName)}!</p><p>Leave a hype or check the setlist.</p><p><a href="https://ihype.org/shows/${encodeURIComponent(show.slug)}">View on iHYPE →</a></p>`,
             }
           : undefined,
       }));

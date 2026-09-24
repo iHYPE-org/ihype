@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { clearPrivateCaches } from '@/lib/private-cache';
+import { unregisterNativePushDevice } from '@/lib/native-push-device';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { PasskeyManager } from '@/components/AuthScreens';
@@ -503,7 +504,7 @@ export function MmmSettings() {
          function that could silently reach no worker at all, and the
          navigation on the next line would then unload the page before it
          could. It resolves either way, so deletion is never held up. */
-      await clearPrivateCaches();
+      await Promise.allSettled([clearPrivateCaches(), unregisterNativePushDevice()]);
       window.location.href = '/api/auth/signout';
     } else {
       const d = await res.json().catch(() => ({}));
@@ -813,7 +814,7 @@ export function MmmSettings() {
                      in `finally`, because signing out of a shared device must
                      never depend on a cache operation succeeding. */
                   event.preventDefault();
-                  void clearPrivateCaches().finally(() => { window.location.href = '/api/auth/signout'; });
+                  void Promise.allSettled([clearPrivateCaches(), unregisterNativePushDevice()]).finally(() => { window.location.href = '/api/auth/signout'; });
                 }}
               >{t('settingsPage.signOut', 'Sign out')}</a>} detail={t('settingsPage.signOutDetail', 'Sign out of iHYPE on this device')} label={t('settingsPage.signOutLabel', 'Sign out')} />
               <Row action={<button className="settings-btn settings-btn-danger" onClick={deleteAccount} type="button">{t('settingsPage.delete', 'Delete')}</button>} detail={t('settingsPage.deleteAccountDetail', 'Permanent. All data removed within 30 days.')} label={t('settingsPage.deleteAccountLabel', 'Delete account')} />

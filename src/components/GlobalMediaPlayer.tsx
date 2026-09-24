@@ -12,12 +12,25 @@ import {
 } from 'react';
 import Image from 'next/image';
 import { useSession } from 'next-auth/react';
-import { FanPlaylistManager } from '@/components/FanPlaylistManager';
-import { PlayerQueuePanel } from '@/components/PlayerQueuePanel';
+import dynamic from 'next/dynamic';
 import { usePlayerKeyboard } from '@/lib/usePlayerKeyboard';
 import { useI18n } from '@/components/I18nProvider';
 import { resolvePlaybackFailure } from '@/lib/player-recovery';
 import { resolvePlaybackGain } from '@/lib/track-gain';
+
+/* Loaded only when the public pages' player sheet opens (2026-09-24, DESIGN_SYNC
+   row 513). Both render inside the `expanded &&` branch of SitePlayerDock,
+   which exists only for a signed-in member with a track loaded, yet they were
+   static imports and so shipped in the root bundle of every public page,
+   landing and sign-in included, to visitors who can never see them. */
+const FanPlaylistManager = dynamic(
+  () => import('@/components/FanPlaylistManager').then((m) => m.FanPlaylistManager),
+  { ssr: false },
+);
+const PlayerQueuePanel = dynamic(
+  () => import('@/components/PlayerQueuePanel').then((m) => m.PlayerQueuePanel),
+  { ssr: false },
+);
 
 export type MediaTrack = {
   id: string;
@@ -80,25 +93,37 @@ type MediaPlayerStableValue = {
   cancelSleepTimer: () => void;
 };
 
-type MediaPlayerVolatileValue = {
-  currentTime: number;
-  duration: number;
+/* Play state changes when the member acts; the clock changes on every
+   `timeupdate` (about four times a second while anything plays). They are two
+   contexts so that a component reading `isPlaying` does not re-render with the
+   clock (2026-09-24, DESIGN_SYNC row 513). Until then `useMediaPlayer()` merged
+   both, so the whole shell (the map layer and its pins included) and every
+   release row's play button re-rendered on every tick for as long as a track
+   played. Read the clock with `useMediaPlayerClock()`, and only in the small
+   component that draws it. */
+type MediaPlayerStateValue = {
   isPlaying: boolean;
   volume: number;
-  sleepRemainingSeconds: number | null;
   /** Set when a track's audio failed to load; cleared once anything decodes. */
   playbackError: string | null;
   isBuffering: boolean;
 };
 
-type MediaPlayerContextValue = MediaPlayerStableValue & MediaPlayerVolatileValue;
+type MediaPlayerClockValue = {
+  currentTime: number;
+  duration: number;
+  sleepRemainingSeconds: number | null;
+};
+
+type MediaPlayerContextValue = MediaPlayerStableValue & MediaPlayerStateValue;
 
 const MediaPlayerStableCtx = createContext<MediaPlayerStableValue | null>(null);
-const MediaPlayerVolatileCtx = createContext<MediaPlayerVolatileValue>({
-  currentTime: 0, duration: 0, isPlaying: false, volume: 0.85, sleepRemainingSeconds: null,
-  playbackError: null, isBuffering: false
+const MediaPlayerStateCtx = createContext<MediaPlayerStateValue>({
+  isPlaying: false, volume: 0.85, playbackError: null, isBuffering: false
 });
-const MediaPlayerContext = createContext<MediaPlayerContextValue | null>(null);
+const MediaPlayerClockCtx = createContext<MediaPlayerClockValue>({
+  currentTime: 0, duration: 0, sleepRemainingSeconds: null
+});
 
 type PersistedPlayerState = {
   queue: MediaTrack[];
@@ -113,6 +138,15 @@ type PersistedPlayerState = {
 };
 
 const STORAGE_KEY = 'ihype-global-media-player';
+
+/** The absolute URL a media element reports back from `.src` for `url`. */
+function resolveMediaUrl(url: string): string {
+  try {
+    return new URL(url, window.location.href).href;
+  } catch {
+    return url;
+  }
+}
 
 function shuffleAfter<T>(arr: T[], fromIndex: number): T[] {
   const head = arr.slice(0, fromIndex + 1);
@@ -337,8 +371,12 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const pre = preloadRef.current;
     if (!pre) return;
-    const nextUrl = queue[currentIndex + 1]?.url;
-    if (nextUrl && nextUrl !== pre.src) {
+    /* A track played outside the loaded queue (a deck card, a crate row)
+       leaves the index at -1, and `queue[0]` is then the PREVIOUS queue's
+       first track, which this element used to buffer in full with
+       preload=auto, unasked, on the member's data plan (row 513). */
+    const nextUrl = currentIndex >= 0 ? queue[currentIndex + 1]?.url : undefined;
+    if (nextUrl && resolveMediaUrl(nextUrl) !== pre.src) {
       pre.src = nextUrl;
       pre.preload = 'auto';
       pre.load();
@@ -565,9 +603,15 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
       setDuration(0);
       return;
     }
-    if (audio.src !== currentTrack.url) {
+    /* `audio.src` reads back the RESOLVED absolute URL, and the deck's cards
+       carry a root-relative one (`/api/media/<hexId>`), so comparing the two
+       raw was never equal: every pause and resume of a deck card reloaded the
+       clip from 0 and fetched it again, and a preloaded next track was never
+       reused (row 513). Compare like with like. */
+    const wanted = resolveMediaUrl(currentTrack.url);
+    if (audio.src !== wanted) {
       const pre = preloadRef.current;
-      if (pre && pre.src === currentTrack.url && pre.readyState >= 2) {
+      if (pre && pre.src === wanted && pre.readyState >= 2) {
         audio.src = pre.src;
         audio.currentTime = 0;
       } else {
@@ -763,14 +807,20 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
     [currentIndex, currentTrack, queue, repeatMode, isShuffle, isMuted, isAutoplay, playbackRate, sleepMinutes, history]
   );
 
-  const volatileValue = useMemo<MediaPlayerVolatileValue>(
-    () => ({ currentTime, duration, isPlaying, volume, sleepRemainingSeconds, playbackError, isBuffering }),
-    [currentTime, duration, isPlaying, volume, sleepRemainingSeconds, playbackError, isBuffering]
+  const stateValue = useMemo<MediaPlayerStateValue>(
+    () => ({ isPlaying, volume, playbackError, isBuffering }),
+    [isPlaying, volume, playbackError, isBuffering]
+  );
+
+  const clockValue = useMemo<MediaPlayerClockValue>(
+    () => ({ currentTime, duration, sleepRemainingSeconds }),
+    [currentTime, duration, sleepRemainingSeconds]
   );
 
   return (
     <MediaPlayerStableCtx.Provider value={stableValue}>
-      <MediaPlayerVolatileCtx.Provider value={volatileValue}>
+      <MediaPlayerStateCtx.Provider value={stateValue}>
+      <MediaPlayerClockCtx.Provider value={clockValue}>
         {children}
         {/* crossOrigin is set now rather than later: adding it after launch
             would require the R2/CDN CORS headers to already be right, and
@@ -778,7 +828,8 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
             waveforms, no visualisers). It is inert for same-origin media. */}
         <audio crossOrigin="anonymous" preload="metadata" ref={audioRef} />
         <audio crossOrigin="anonymous" preload="auto" ref={preloadRef} style={{ display: 'none' }} />
-      </MediaPlayerVolatileCtx.Provider>
+      </MediaPlayerClockCtx.Provider>
+      </MediaPlayerStateCtx.Provider>
     </MediaPlayerStableCtx.Provider>
   );
 }
@@ -786,8 +837,14 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
 export function useMediaPlayer(): MediaPlayerContextValue {
   const stable = useContext(MediaPlayerStableCtx);
   if (!stable) throw new Error('useMediaPlayer must be used within MediaPlayerProvider');
-  const volatile = useContext(MediaPlayerVolatileCtx);
-  return useMemo(() => ({ ...stable, ...volatile }), [stable, volatile]);
+  const state = useContext(MediaPlayerStateCtx);
+  return useMemo(() => ({ ...stable, ...state }), [stable, state]);
+}
+
+/** The playback clock. Re-renders its reader on every `timeupdate`, so read it
+ *  only in the component that draws the time, never in a surface's root. */
+export function useMediaPlayerClock(): MediaPlayerClockValue {
+  return useContext(MediaPlayerClockCtx);
 }
 
 // ── SVG icons (dock-only) ────────────────────────────────────────────────────
@@ -887,10 +944,11 @@ type DockPanel = 'queue' | 'history' | null;
 export function SitePlayerDock() {
   const { status: sessionStatus } = useSession();
   const { t } = useI18n();
+  const { currentTime, duration, sleepRemainingSeconds } = useMediaPlayerClock();
   const {
-    currentTrack, isPlaying, currentTime, duration,
+    currentTrack, isPlaying,
     queue, currentIndex, repeatMode, isShuffle, isMuted, isAutoplay, playbackRate,
-    sleepMinutes, sleepRemainingSeconds, history,
+    sleepMinutes, history,
     togglePlayback, playNext, playPrevious, seekTo, playTrack, setVolume,
     removeFromQueue, cycleRepeat, toggleShuffle, cycleSpeed,
     toggleMute, toggleAutoplay, cycleSleepTimer, cancelSleepTimer,

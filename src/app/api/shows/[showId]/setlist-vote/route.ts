@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { consumeRateLimit, rateLimitKey } from '@/lib/rate-limit';
 import { log } from '@/lib/logger';
+import { isUniqueViolation } from '@/lib/unique-violation';
 
 export const dynamic = 'force-dynamic';
 
@@ -60,7 +61,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { mediaId } = await request.json() as { mediaId: string };
+    // Validated as a string (row 513): an object here became a Prisma filter.
+    const raw = (await request.json().catch(() => null)) as { mediaId?: unknown } | null;
+    const mediaId = typeof raw?.mediaId === 'string' && raw.mediaId.length <= 120 ? raw.mediaId : '';
     if (!mediaId) return NextResponse.json({ error: 'mediaId required' }, { status: 400 });
 
     const rl = await consumeRateLimit(rateLimitKey('setlist-vote', session.user.id, null), { limit: 30, windowMs: 60 * 60 * 1000 });
@@ -78,7 +81,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (existing) {
       await db.setlistVote.delete({ where: { id: existing.id } });
     } else {
-      await db.setlistVote.create({ data: { showId, userId: session.user.id, mediaId } });
+      await db.setlistVote.create({ data: { showId, userId: session.user.id, mediaId } })
+        .catch((error: unknown) => { if (!isUniqueViolation(error)) throw error; });
     }
 
     const voteCount = await db.setlistVote.count({ where: { showId, mediaId } });

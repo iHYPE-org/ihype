@@ -28,15 +28,19 @@ export default async function TicketPage({
 
   const ticket = await db.ticket.findUnique({
     where: { serializedId },
+    /* The fields this page draws, never whole Profile rows (2026-09-24,
+       DESIGN_SYNC row 513): a Profile carries ~40 text columns including the
+       inline base64 verification document, and this page read the venue's row
+       twice. `profile-select-guard.test.ts` refuses a whole-row include. */
     include: {
       show: {
         include: {
-          venueProfile: true,
-          headlinerProfile: true
+          venueProfile: { select: { slug: true, name: true, city: true, postalCode: true, ownerId: true } },
+          headlinerProfile: { select: { name: true, ownerId: true } }
         }
       },
       ticketOrder: true,
-      venueProfile: true
+      venueProfile: { select: { ownerId: true } }
     }
   });
 

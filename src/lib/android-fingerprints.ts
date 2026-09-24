@@ -77,3 +77,20 @@ export function parseAndroidFingerprints(value: string | null | undefined): Fing
 
   return { valid, rejected };
 }
+
+/**
+ * The WebAuthn origin an Android app presents for one signing certificate.
+ *
+ * With `WEB_AUTHENTICATION_SUPPORT_FOR_APP` (MainActivity, row 513) the
+ * WebView asks Credential Manager on the APP's behalf, so `clientDataJSON`
+ * carries `android:apk-key-hash:<base64url(SHA-256 of the signing cert)>`
+ * rather than `https://ihype.org`. A server that accepts only the web origin
+ * refuses every passkey made or used in the app, while the credential still
+ * syncs to the member's other devices: a passkey that can never sign anyone
+ * in. `normalizeFingerprint` has already refused anything that is not 32
+ * bytes. Base64url WITHOUT padding, which is what Android sends.
+ */
+export function androidApkKeyHashOrigin(fingerprint: string): string {
+  const bytes = Buffer.from(fingerprint.replace(/:/g, ''), 'hex');
+  return `android:apk-key-hash:${bytes.toString('base64url').replace(/=+$/, '')}`;
+}

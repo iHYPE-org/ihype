@@ -91,13 +91,19 @@ export async function openExternalUrl(url: string, options: ExternalTripOptions 
      the plugin's listener is global, so leaving it attached would refresh on
      every later trip as well. */
   let finished: { remove: () => Promise<void> } | undefined;
-  finished = await Browser.addListener('browserFinished', () => {
-    void finished?.remove();
-    finished = undefined;
-    options.onReturn?.();
-  });
 
   try {
+    /* Inside the try (2026-09-24, DESIGN_SYNC row 513). The dynamic import
+       above succeeds on a binary built without the native plugin (a hand
+       build from Xcode with no `cap sync`), and Capacitor's proxy then
+       rejects HERE with "Browser plugin is not implemented on ios". Outside
+       the try that rejection skipped the fallback below, so every Stripe
+       button did nothing at all. */
+    finished = await Browser.addListener('browserFinished', () => {
+      void finished?.remove();
+      finished = undefined;
+      options.onReturn?.();
+    });
     await Browser.open({ url, presentationStyle: 'popover' });
   } catch {
     void finished?.remove();

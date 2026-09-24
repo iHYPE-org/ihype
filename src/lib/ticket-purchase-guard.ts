@@ -10,7 +10,7 @@
  *
  * Kept separate from the route so the arithmetic can be tested without Stripe,
  * a database, or a Workers runtime — the precedent set by
- * `src/lib/player-recovery.ts` and `src/lib/focus-trap.ts`.
+ * `src/lib/player-recovery.ts`.
  */
 
 /**

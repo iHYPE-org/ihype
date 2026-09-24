@@ -148,9 +148,8 @@
   /* Flat on the phone themes since 2026-09-22 — a gradient CTA is the
      "gradient action language" the launch scheme comment further down still
      names, and it reads as generated. The four character themes restate the
-     sweep. The name is kept because four readers use it. */
-  --accent-grad: var(--accent);
-  /* The warm CTA gradient. Seven pages had hand-written
+     sweep. (Its 90deg sibling `--accent-grad` had no reader and was deleted
+     in the 2026-09-24 pre-launch scan.) The warm CTA gradient. Seven pages had hand-written
      `linear-gradient(135deg, #ff5029, #ff3e6e)` on their primary button —
      same two stops, same angle, copied by hand each time. */
   --accent-grad-warm: var(--accent);
@@ -333,7 +332,6 @@
   --dock-shadow: none;
   --grain-texture: none;
   --pane-wash: none;
-  --tab-rail: transparent;
   --tab-on-ink: var(--accent);
   --plate-border: transparent;
   --plate-ring: none;
@@ -998,7 +996,6 @@
   --dock-shadow: inset 0 4px 0 -1px rgba(255, 214, 160, .18), 0 -10px 24px -12px rgba(0, 0, 0, .55);
   --grain-texture: url('/console/grain.png');
   --pane-wash: radial-gradient(120% 100% at 50% 30%, transparent 55%, rgba(120, 94, 52, .12) 100%);
-  --tab-rail: var(--brass);
   --tab-on-ink: var(--ink-on-walnut);
   --plate-border: var(--brass-deep);
   --plate-ring: 0 0 0 1px var(--brass), 0 14px 26px -16px rgba(0, 0, 0, .55);
@@ -1106,7 +1103,6 @@
   --tile-tone-3: linear-gradient(115deg, var(--plate-2), var(--plate-1));
   --tile-tone-4: linear-gradient(70deg, var(--tile-3), var(--tile-1));
   --tile-tone-5: linear-gradient(255deg, var(--plate-1), var(--plate-2));
-  --accent-grad: linear-gradient(90deg, var(--accent), var(--accent-2));
   --accent-grad-warm: linear-gradient(135deg, var(--accent), var(--accent-2));
   --empty-edge: 2px dashed var(--line-2);
   --empty-bg: transparent;
@@ -1186,7 +1182,6 @@
   --dock-shadow: inset 0 4px 0 -1px rgba(255, 214, 160, .18), 0 -10px 24px -12px rgba(0, 0, 0, .55);
   --grain-texture: url('/console/grain.png');
   --pane-wash: radial-gradient(120% 100% at 50% 30%, transparent 55%, rgba(120, 94, 52, .12) 100%);
-  --tab-rail: var(--brass);
   --tab-on-ink: var(--ink-on-walnut);
   --plate-border: var(--brass-deep);
   --plate-ring: 0 0 0 1px var(--brass), 0 14px 26px -16px rgba(0, 0, 0, .55);
@@ -1294,7 +1289,6 @@
   --tile-tone-3: linear-gradient(115deg, var(--plate-2), var(--plate-1));
   --tile-tone-4: linear-gradient(70deg, var(--tile-3), var(--tile-1));
   --tile-tone-5: linear-gradient(255deg, var(--plate-1), var(--plate-2));
-  --accent-grad: linear-gradient(90deg, var(--accent), var(--accent-2));
   --accent-grad-warm: linear-gradient(135deg, var(--accent), var(--accent-2));
   --empty-edge: 2px dashed var(--line-2);
   --empty-bg: transparent;
@@ -1374,7 +1368,6 @@
   --dock-shadow: inset 0 4px 0 -1px rgba(255, 214, 160, .18), 0 -10px 24px -12px rgba(0, 0, 0, .55);
   --grain-texture: url('/console/grain.png');
   --pane-wash: radial-gradient(120% 100% at 50% 30%, transparent 55%, rgba(120, 94, 52, .12) 100%);
-  --tab-rail: var(--brass);
   --tab-on-ink: var(--ink-on-walnut);
   --plate-border: var(--brass-deep);
   --plate-ring: 0 0 0 1px var(--brass), 0 14px 26px -16px rgba(0, 0, 0, .55);
@@ -1482,7 +1475,6 @@
   --tile-tone-3: linear-gradient(115deg, var(--plate-2), var(--plate-1));
   --tile-tone-4: linear-gradient(70deg, var(--tile-3), var(--tile-1));
   --tile-tone-5: linear-gradient(255deg, var(--plate-1), var(--plate-2));
-  --accent-grad: linear-gradient(90deg, var(--accent), var(--accent-2));
   --accent-grad-warm: linear-gradient(135deg, var(--accent), var(--accent-2));
   --empty-edge: 2px dashed var(--line-2);
   --empty-bg: transparent;
@@ -1557,7 +1549,6 @@
   --dock-shadow: inset 0 4px 0 -1px rgba(255, 214, 160, .18), 0 -10px 24px -12px rgba(0, 0, 0, .55);
   --grain-texture: url('/console/grain.png');
   --pane-wash: radial-gradient(120% 100% at 50% 30%, transparent 55%, rgba(120, 94, 52, .12) 100%);
-  --tab-rail: var(--brass);
   --tab-on-ink: var(--ink-on-walnut);
   --plate-border: var(--brass-deep);
   --plate-ring: 0 0 0 1px var(--brass), 0 14px 26px -16px rgba(0, 0, 0, .55);
@@ -1665,7 +1656,6 @@
   --tile-tone-3: linear-gradient(115deg, var(--plate-2), var(--plate-1));
   --tile-tone-4: linear-gradient(70deg, var(--tile-3), var(--tile-1));
   --tile-tone-5: linear-gradient(255deg, var(--plate-1), var(--plate-2));
-  --accent-grad: linear-gradient(90deg, var(--accent), var(--accent-2));
   --accent-grad-warm: linear-gradient(135deg, var(--accent), var(--accent-2));
   --empty-edge: 2px dashed var(--line-2);
   --empty-bg: transparent;

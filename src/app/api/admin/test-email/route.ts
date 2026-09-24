@@ -1,12 +1,12 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { requireAdminApi } from '@/lib/admin-api';
 import { sendGenericEmail } from '@/lib/mailer';
 import { log } from '@/lib/logger';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const { session, response } = await requireAdminApi();
-    if (response) return response;
+    const { session, response } = await requireAdminApi(request);
+    if (!session) return response;
 
     const to = session.user?.email;
     if (!to) {

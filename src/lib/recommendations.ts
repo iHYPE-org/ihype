@@ -107,6 +107,23 @@ export async function getRecommendations(
   let maxWantedFans = 0;
   const viewerSignals: ViewerSignals = { hypes: 0, seeds: 0, follows: 0, requests: 0 };
 
+  const notReady = (): RecommendationResult => ({
+    profiles: [],
+    meta: {
+      viewerHasLocation: Boolean(viewerState || viewerCountry),
+      viewerHasGenres: false,
+      viewerHasHypeHistory: false,
+      viewerGenres: [],
+      viewerCity,
+      viewerState,
+      collabCandidates: 0,
+      comparableCandidates: 0,
+      weights: WEIGHTS,
+      viewerSignals,
+      ready: false,
+    },
+  });
+
   if (requestLocation) {
     viewerState = requestLocation.stateRegion;
     viewerCountry = requestLocation.country;
@@ -149,6 +166,11 @@ export async function getRecommendations(
     viewerSignals.seeds = seedRows.length;
     viewerSignals.follows = follows.length;
     viewerSignals.requests = requests.requestedArtistIds.length + requests.requestedVenueIds.length;
+    /* Nothing to say yet, so say nothing now (2026-09-24, DESIGN_SYNC row
+       513). A viewer with no taste signal used to go on to pay for the
+       collaborative reads, the 400-profile pool and a platform-wide 7-day
+       groupBy, and then be answered `ready: false` by the route anyway. */
+    if (!isRecommendationReady(viewerSignals)) return notReady();
 
     /* The viewer's genre profile, weighted by how they came to know each act:
        a request outweighs a follow outweighs a hype. The reason map keeps the
@@ -270,29 +292,60 @@ export async function getRecommendations(
     }
   }
 
+  // No viewer, no signals: the same early answer as above.
+  if (!isRecommendationReady(viewerSignals)) return notReady();
+
   // Candidate pool.
   const since7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   const typeFilter: Prisma.ProfileWhereInput =
     typeParam && VALID_TYPES.includes(typeParam) ? { type: typeParam } : { type: { in: VALID_TYPES } };
 
-  const [profiles, recentHypeCounts] = await Promise.all([
+  const poolSelect = {
+    id: true, slug: true, hexId: true, type: true, name: true,
+    headline: true, city: true, stateRegion: true,
+    country: true, genres: true, hypeCount: true, verified: true,
+    avatarImage: true, createdAt: true,
+  } as const;
+  /* Every act a PERSONAL signal named — co-hyped by fans like the viewer,
+     loved by fans of comparable artists, seeded by the viewer, or wanted at a
+     venue the viewer follows — is scored whether or not it is popular. The
+     pool below is the 400 most-hyped profiles, and until 2026-09-24 it was
+     the ONLY thing scored, so a collaborative candidate outside it was
+     computed and then dropped: "fans like you also hype X" could only ever
+     re-rank acts that were already popular, which is the opposite of what a
+     local-music recommender is for. Bounded by construction — each map is
+     capped where it is built (80 + 80 + the viewer's own seeds and asks). */
+  const signalIds = [...new Set([
+    ...collabScores.keys(),
+    ...comparableScores.keys(),
+    ...seedSignals.keys(),
+    ...demandByProfile.keys(),
+  ])].filter((id) => !knownIds.has(id));
+
+  const [popularProfiles, signalProfiles, recentHypeCounts] = await Promise.all([
     db.profile.findMany({
       where: { ...typeFilter, ...getDemoOwnerExclusion() },
       orderBy: [{ hypeCount: 'desc' }, { verified: 'desc' }, { createdAt: 'desc' }],
       take: CANDIDATE_POOL,
-      select: {
-        id: true, slug: true, hexId: true, type: true, name: true,
-        headline: true, bio: true, city: true, stateRegion: true,
-        country: true, genres: true, hypeCount: true, verified: true,
-        avatarImage: true, createdAt: true,
-      },
+      select: poolSelect,
     }),
+    signalIds.length > 0
+      ? db.profile.findMany({
+          where: { ...typeFilter, ...getDemoOwnerExclusion(), id: { in: signalIds } },
+          select: poolSelect,
+        })
+      : Promise.resolve([]),
     db.profileHypeEvent.groupBy({
       by: ['profileId'],
       where: { createdAt: { gte: since7d } },
       _count: { _all: true },
     }),
   ]);
+  const poolIds = new Set(popularProfiles.map((p: { id: string }) => p.id));
+  const profiles = [
+    ...popularProfiles,
+    ...signalProfiles.filter((p: { id: string }) => !poolIds.has(p.id)),
+  ];
 
   if (!profiles.length) {
     return {
@@ -317,7 +370,7 @@ export async function getRecommendations(
 
   type PoolProfile = {
     id: string; slug: string; hexId: string; type: ProfileType; name: string;
-    headline: string | null; bio: string | null; city: string | null;
+    headline: string | null; city: string | null;
     stateRegion: string | null; country: string | null; genres: string[];
     hypeCount: number; verified: boolean; avatarImage: string | null; createdAt: Date;
   };

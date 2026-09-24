@@ -2,7 +2,7 @@ import NextAuth from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
 import { authConfig } from '@/lib/auth.config';
 import { ADMIN_DEVICE_COOKIE, WORKBENCH_PATH, isProtectedPath } from '@/lib/auth-redirects';
-import { MAP_TILE_HOSTS, isMapRoute } from '@/lib/csp-routes';
+import { MAP_TILE_HOSTS, isMapRoute, permissionsPolicyFor } from '@/lib/csp-routes';
 import { isLocalAuthSkipEnabled } from '@/lib/local-auth-skip';
 
 const { auth } = NextAuth(authConfig);
@@ -80,7 +80,7 @@ function applySecurityHeaders(response: NextResponse, nonce: string, pathname: s
   else response.headers.delete('X-Frame-Options');
   response.headers.set('X-Content-Type-Options', 'nosniff');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  response.headers.set('Permissions-Policy', `camera=(), microphone=(), geolocation=${allowSceneMap ? '(self)' : '()'}`);
+  response.headers.set('Permissions-Policy', permissionsPolicyFor(pathname));
   response.headers.set('Content-Security-Policy', buildContentSecurityPolicy(nonce, allowEmbedding, allowSceneMap));
   return response;
 }

@@ -33,14 +33,15 @@ export async function POST(
 
     const ticket = await db.ticket.findUnique({
       where: { serializedId },
+      // Named fields, never whole Profile rows (row 513; profile-select-guard.test.ts).
       include: {
         show: {
           include: {
-            venueProfile: true
+            venueProfile: { select: { name: true } }
           }
         },
         ticketOrder: true,
-        venueProfile: true
+        venueProfile: { select: { ownerId: true } }
       }
     });
 

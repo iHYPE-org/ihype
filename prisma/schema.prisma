@@ -861,6 +861,8 @@ model MediaListen {
 
   @@unique([userId, mediaId])
   @@index([userId])
+  // Every listener count filters on the track (row 513).
+  @@index([mediaId])
 }
 
 model ShowListen {
@@ -941,6 +943,8 @@ model HypeEvent {
   @@unique([userId, showId])
   @@index([userId])
   @@index([showId])
+  // The hype route's 5-second burst check reads by time (row 513).
+  @@index([createdAt])
 }
 
 /// Append-only accounting for HYPE earned and used. `idempotencyKey` makes
@@ -988,6 +992,8 @@ model ProfileHypeEvent {
 
   @@unique([userId, profileId])
   @@index([profileId])
+  // The recommender's 7-day momentum groupBy reads by time (row 513).
+  @@index([createdAt])
 }
 
 model VenueConnectionRequest {

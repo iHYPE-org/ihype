@@ -1,7 +1,6 @@
-import { NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { NextResponse, NextRequest } from 'next/server';
+import { requireAdminApi } from '@/lib/admin-api';
 import { db } from '@/lib/db';
-import { isAdminSession } from '@/lib/permissions';
 
 type CsvCell = string | number | boolean | Date | null | undefined | object;
 
@@ -144,12 +143,11 @@ async function buildCsv(kind: string) {
 }
 
 export async function GET(
-  _request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ kind: string }> }
 ) {
-  const session = await auth();
-
-  if (!isAdminSession(session)) {
+  const { session } = await requireAdminApi(request);
+  if (!session) {
     return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
   }
 

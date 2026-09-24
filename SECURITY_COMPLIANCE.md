@@ -22,7 +22,7 @@ controls below are in place.
 | Passwordless authentication only — passkeys (WebAuthn) + emailed magic links; no password login path exists | `src/lib/auth.ts` (providers intentionally empty), `src/lib/passkey.ts`, `src/lib/magic-link-token.ts` |
 | Session cookies: `httpOnly`, `SameSite=Lax`, `Secure` + `__Secure-` prefix in prod, 12-hour max age | `src/lib/auth-cookie.ts` |
 | Server-side session revocation — `userSecurityVersion` checked against the DB on every `auth()` call, so suspensions/credential changes invalidate live JWTs | `src/lib/auth.ts:35-48` |
-| RBAC — `ADMIN` role via `isAdminSession()`; admin API routes gated by `requireAdminApi()`; ownership checks via `canManageOwnedResource()` | `src/lib/permissions.ts`, `src/lib/admin-api.ts` |
+| RBAC — `ADMIN` role via `isAdminSession()`; admin API routes gated by `requireAdminApi(request)`, which also checks the registered admin device, or by a fresh passkey step-up (`requireRecentAdminReauth`) — enforced per route by `admin-api-guard.test.ts` since 2026-09-24 (DESIGN_SYNC row 513; before that, 13 routes checked the session alone); ownership checks via `canManageOwnedResource()` | `src/lib/permissions.ts`, `src/lib/admin-api.ts` |
 | Admin bootstrap endpoints require a bearer secret and **fail closed** when unset | `src/app/api/admin/setup/route.ts`, `src/app/api/admin/device-setup/route.ts` |
 | Admin device binding (registered-device token for admin access) | `src/lib/admin-device.ts` |
 | Every admin sign-in emails an audit alert (who/when/country/IP); all users get new-country login alerts; last-login country/timestamp recorded | `src/lib/login-security.ts` |
@@ -34,7 +34,7 @@ controls below are in place.
 | HTTPS enforced — 308 redirect on non-HTTPS `x-forwarded-proto` in prod | `src/middleware.ts:70-79` |
 | HSTS: `max-age=63072000; includeSubDomains; preload` on all routes | `next.config.mjs` |
 | Nonce-based CSP (per-request nonce, `object-src 'none'`, `frame-ancestors 'none'` outside `/embed/`), X-Frame-Options DENY, nosniff, Referrer-Policy, Permissions-Policy, COOP/CORP/Origin-Agent-Cluster | `src/middleware.ts:29-62`, `next.config.mjs` (API/static routes mirror) |
-| SSRF guard on all user-supplied outbound URLs: https/http only, no credentials/ports/IP literals/localhost/internal names, re-validated on every redirect hop, 512 KB / 10 s caps | `src/lib/safe-external-url.ts`, used by `src/app/api/page-builder/import-website/route.ts` |
+| SSRF guard on all user-supplied outbound URLs: https/http only, no credentials/ports/IP literals/localhost/internal names, re-validated on every redirect hop, 512 KB / 10 s caps | `src/lib/safe-external-url.ts`, used by `src/lib/push-endpoint.ts`, which `POST /api/push/subscribe` and `src/lib/push-notify.ts` call so a stored Web Push endpoint can only be a real push service (the page-builder import route that first used it was deleted 2026-09-01; corrected 2026-09-24, DESIGN_SYNC row 513) |
 | `/_next/image` optimizer restricted to `ihype.org` hosts (not an open proxy) | `next.config.mjs` `remotePatterns` |
 | Constant-time secret comparison for all bearer-token checks | `src/lib/secret-compare.ts` |
 | Cron endpoints require `CRON_SECRET` bearer auth, fail closed when unset | `src/lib/cron-auth.ts` |
@@ -187,7 +187,7 @@ Legend: ✅ technical controls in place · 🟡 partial / gap noted · 🏢 requ
 
 1. New API routes must ship with: session/role check, zod input validation, rate limit, and audit-log call where the action is security-relevant. Copy the pattern in `src/app/api/privacy/request/route.ts`.
 2. Never store card numbers, bank details, or government IDs — Stripe holds them. If a new field could contain a secret or third-party PII, add it to `OMITTED_EXPORT_KEYS` in the privacy export in the same PR.
-3. Outbound fetches to user-supplied URLs must go through `validatePublicHttpUrl` (`src/lib/safe-external-url.ts`).
+3. Outbound fetches to user-supplied URLs must go through `validatePublicHttpUrl` (`src/lib/safe-external-url.ts`). The one such fetch today is Web Push delivery, and it goes further: `isKnownPushEndpoint` (`src/lib/push-endpoint.ts`) admits only the browser push services.
 4. Bearer-token-gated endpoints must use `verifyBearerToken` (constant-time, fails closed on missing secret).
 5. Any change to the promises on `/legal` (rights, SLAs, retention windows) requires a matching implementation in `src/lib/privacy-actions.ts` and vice versa — a copy/code mismatch here is a GDPR Art. 5(1)(a) fairness risk, not just a bug.
 6. Keep `security.txt` `Expires:` current (annual refresh).

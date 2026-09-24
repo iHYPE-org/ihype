@@ -1,6 +1,16 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { maskComments } from '../../../scripts/lib/mask-comments.mjs';
+
+function walkSource(dir: string, out: string[] = []): string[] {
+  for (const name of readdirSync(dir)) {
+    const path = join(dir, name);
+    if (statSync(path).isDirectory()) { if (name !== '__tests__' && name !== 'node_modules') walkSource(path, out); }
+    else if (/\.(ts|tsx)$/.test(name)) out.push(path);
+  }
+  return out;
+}
 
 /**
  * The three configuration halves of the 2026-09-23 speed pass (DESIGN_SYNC
@@ -47,18 +57,33 @@ describe('shell navigation speed (row 509)', () => {
   it("auth()'s security-version read goes through the per-isolate memo, and every version bump forgets it", () => {
     const auth = readFileSync(join(root, 'src/lib/auth.ts'), 'utf8');
     expect(auth).toMatch(/readSessionUser\(token\.sub/);
-    for (const bumper of ['src/app/admin/users/actions.ts', 'src/lib/privacy-actions.ts']) {
+    // A SCAN, not a list (row 513): a list of two files passes a third writer
+    // that forgets the memo, which is exactly the writer this exists to catch.
+    // A write is an atomic operator or a literal number; `userSecurityVersion: true`
+    // is a select and `userSecurityVersion: user.userSecurityVersion` a copy.
+    const writesVersion = /userSecurityVersion:\s*(\{\s*(increment|decrement|set|multiply)\b|\d)/;
+    const bumpers = walkSource(join(root, 'src'))
+      .filter((file) => writesVersion.test(maskComments(readFileSync(file, 'utf8'))))
+      .map((file) => file.slice(root.length + 1));
+    expect(bumpers.sort()).toEqual(['src/app/admin/users/actions.ts', 'src/lib/privacy-actions.ts']);
+    for (const bumper of bumpers) {
       const source = readFileSync(join(root, bumper), 'utf8');
-      expect(source, `${bumper} bumps userSecurityVersion`).toMatch(/userSecurityVersion:\s*\{\s*increment:\s*1\s*\}/);
       expect(source, `${bumper} must forget the memo it just invalidated`).toMatch(/forgetSessionUser\(/);
     }
   });
 
-  it('the wallet is the one surface that pays for ticket QR codes', () => {
+  it('the wallet is the one surface that pays for ticket QR codes, and it pays for nothing else', () => {
     const tickets = readFileSync(join(root, 'src/app/app/tickets/page.tsx'), 'utf8');
     const me = readFileSync(join(root, 'src/app/app/me/page.tsx'), 'utf8');
-    expect(tickets).toMatch(/includeTickets:\s*true/);
-    expect(me).not.toMatch(/includeTickets/);
+    const lib = readFileSync(join(root, 'src/lib/mmm-me.ts'), 'utf8');
+    // Row 513: the wallet reads its tickets alone, not the whole ME board.
+    expect(tickets).toMatch(/loadWalletTickets\(/);
+    expect(tickets).not.toMatch(/loadMmmMe\(/);
+    expect(me).not.toMatch(/loadWalletTickets|buildTicketQrCodeDataUrl/);
+    // The QR encode lives in the wallet loader and nowhere else in the ME lib.
+    const wallet = lib.slice(lib.indexOf('export async function loadWalletTickets'), lib.indexOf('export async function loadMmmMe'));
+    expect(wallet).toMatch(/buildTicketQrCodeDataUrl/);
+    expect(lib.slice(lib.indexOf('export async function loadMmmMe'))).not.toMatch(/buildTicketQrCodeDataUrl|loadWalletTickets/);
   });
 });
 
@@ -94,7 +119,12 @@ describe('Listen rows are in the document (row 512)', () => {
     const seedAt = effect.indexOf('tabPayloadCache.set(url, { payload: initialPayload, at: initialAt })');
     expect(seedAt).toBeGreaterThan(-1);
     expect(seedAt).toBeLessThan(effect.indexOf('fetchTabPayload(url)'));
-    expect(effect.slice(seedAt, effect.indexOf('fetchTabPayload(url)'))).toMatch(/Date\.now\(\) - initialAt < TAB_CACHE_TTL_MS/);
+    expect(effect.slice(seedAt, effect.indexOf('fetchTabPayload(url)'))).toMatch(/Date\.now\(\) - shownAt < tabPayloadTtl\(url\)/);
+    // A reading the browser took after the server's wins (Back replays the
+    // server payload), and the member's own library is never fresh for a
+    // minute — a write anywhere changes it (row 513).
+    expect(effect).toMatch(/existing\.at > initialAt \? existing : null/);
+    expect(music).toMatch(/const OWN_LIBRARY_READS = \['\/api\/fan-favorites', '\/api\/likes', '\/api\/fan-playlists', '\/api\/media-listens'\]/);
     // Row 509's sibling warmer is gone: the server's answer wins, so a warmed
     // payload would never be read.
     expect(music).not.toMatch(/useWarmSiblingTabs|prefetchTabPayloads/);

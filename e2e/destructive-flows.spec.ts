@@ -29,7 +29,10 @@ async function signIn(context: BrowserContext, email = EMAIL) {
 
 test.describe('playlist rename and delete', () => {
   test('renaming a playlist persists across a reload', async ({ context, page }) => {
-    await signIn(context, 'e2e-destructive-rename@ihype.org');
+    /* Run-unique, so a rerun against the same database does not find last
+       run's "Renamed For Good" rows and pass the first check below before
+       this run's rename has landed (2026-09-24, DESIGN_SYNC row 513). */
+    await signIn(context, `e2e-destructive-rename-${Date.now().toString(36)}@ihype.org`);
     await page.goto('/app/music/playlists');
 
     const created = await page.request.post('/api/fan-playlists', {
@@ -42,7 +45,12 @@ test.describe('playlist rename and delete', () => {
     await page.getByRole('button', { name: 'Rename Rename Me' }).click();
     const field = page.getByLabel('Rename Rename Me');
     await field.fill('Renamed For Good');
+    const saved = page.waitForResponse(
+      (response) => /\/api\/fan-playlists\/[^/]+$/.test(new URL(response.url()).pathname) && response.request().method() === 'PATCH',
+      { timeout: 15_000 },
+    );
     await page.getByRole('button', { name: 'Save', exact: true }).click();
+    expect((await saved).ok(), 'the rename must be accepted').toBe(true);
     await expect(page.getByText('Renamed For Good').first()).toBeVisible();
 
     // The reload is the assertion that matters: an optimistic UI that never
@@ -53,7 +61,7 @@ test.describe('playlist rename and delete', () => {
   });
 
   test('deleting a playlist takes two taps, and the second one is final', async ({ context, page }) => {
-    await signIn(context, 'e2e-destructive-delete@ihype.org');
+    await signIn(context, `e2e-destructive-delete-${Date.now().toString(36)}@ihype.org`); // run-unique, as above
     await page.goto('/app/music/playlists');
 
     const created = await page.request.post('/api/fan-playlists', {
@@ -77,7 +85,7 @@ test.describe('playlist rename and delete', () => {
     await expect(page.getByText('Doomed Playlist')).toHaveCount(0, { timeout: 15_000 });
   });
 
-  test('a playlist cannot be deleted by someone who does not own it', async ({ context, page }) => {
+  test('a playlist cannot be deleted by someone who does not own it', async ({ browser, context, page }) => {
     await signIn(context, 'e2e-destructive-owner@ihype.org');
     await page.goto('/app/music/playlists');
     const created = await page.request.post('/api/fan-playlists', {
@@ -88,11 +96,28 @@ test.describe('playlist rename and delete', () => {
     const id = playlist.id ?? playlist.playlist?.id;
     expect(id).toBeTruthy();
 
-    /* Same browser, different member: re-seed the session as someone else and
-       aim the DELETE at the first member's playlist. The ownership boundary is
-       the API's, so the API is the right layer to attack it at. */
-    await signIn(context, 'e2e-destructive-thief@ihype.org');
-    const stolen = await page.request.delete(`/api/fan-playlists/${id}`);
-    expect([403, 404]).toContain(stolen.status());
+    /* A different member aims the DELETE at the first member's playlist. The
+       ownership boundary is the API's, so the API is the right layer to
+       attack it at.
+
+       In its OWN browser context, never by re-seeding this one: the owner's
+       page still has reads in flight after `goto`, and the middleware
+       refreshes the session cookie on each response, so a late response
+       re-set the OWNER's cookie over the thief's and the DELETE went out as
+       the owner — a 200 that read like a broken ownership check (the
+       2026-09-24 final scan, retry passing). The route deletes only
+       `where: { id, userId: session.user.id }`; a jar of the thief's own is
+       what makes the request the thief's. */
+    const thief = await browser.newContext({ baseURL: process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000' });
+    try {
+      await signIn(thief, 'e2e-destructive-thief@ihype.org');
+      const stolen = await thief.request.delete(`/api/fan-playlists/${id}`);
+      expect([403, 404]).toContain(stolen.status());
+    } finally {
+      await thief.close();
+    }
+    // And the owner still has it.
+    const mine = await page.request.get('/api/fan-playlists');
+    expect(JSON.stringify(await mine.json())).toContain(id!);
   });
 });

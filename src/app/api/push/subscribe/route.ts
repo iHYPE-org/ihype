@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { isKnownPushEndpoint } from '@/lib/push-endpoint';
 
 const MAX_SUBSCRIPTIONS_PER_USER = 10;
 
@@ -20,6 +21,11 @@ export async function POST(request: Request) {
   }
   if (sub.endpoint.length > 2048 || sub.keys.auth.length > 256 || sub.keys.p256dh.length > 256) {
     return NextResponse.json({ error: 'Subscription fields too long.' }, { status: 400 });
+  }
+  // The server POSTs to this URL on every notice, so only a real push
+  // service is accepted (row 513; see push-endpoint.ts).
+  if (!isKnownPushEndpoint(sub.endpoint)) {
+    return NextResponse.json({ error: 'Not a push service endpoint.' }, { status: 400 });
   }
   const pushGenre = typeof sub.pushGenre === 'string' ? sub.pushGenre.slice(0, 64) : undefined;
   const pushCity  = typeof sub.pushCity  === 'string' ? sub.pushCity.slice(0, 100) : undefined;

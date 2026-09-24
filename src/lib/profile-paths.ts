@@ -20,6 +20,20 @@ export function getProfilePathForType(type: ProfileType | (string & {}), slug: s
   return `/artists/${slug}`;
 }
 
+/**
+ * The SHELL pane for a profile — what the product links to itself (row 513).
+ * `getProfilePathForType` returns the public alias (`/artists/<slug>`, …),
+ * which is right for a URL that leaves the product (a Stripe business URL, a
+ * share) and wrong for an in-product link: every alias is a `redirects()` hop,
+ * and the profile editor built `/artists/<slug>` for FAN profiles, which the
+ * artist pane answers "No such artist".
+ */
+export function getAppProfilePathForType(type: ProfileType | (string & {}), slug: string) {
+  if (type === 'VENUE') return `/app/venues/${slug}`;
+  if (type === 'LISTENER') return `/app/fans/${slug}`;
+  return `/app/artists/${slug}`;
+}
+
 export function getDiscoverPathForType(type: ProfileType | (string & {})) {
   if (type === 'VENUE') return '/venues';
   if (type === 'LISTENER') return '/fans';

@@ -185,11 +185,20 @@ jobs:
           ls -d /Applications/Xcode*.app 2>/dev/null || true
 
           # Newest by version, not by name order: Xcode_26.1 must beat
-          # Xcode_9.0, and a lexical sort does not.
-          NEWEST=$(ls -d /Applications/Xcode*.app 2>/dev/null | sort -V | tail -1)
-          if [ -n "$NEWEST" ]; then
-            sudo xcode-select -s "$NEWEST/Contents/Developer"
+          # Xcode_9.0, and a lexical sort does not. PINNED to one major and
+          # never a beta (2026-09-24, DESIGN_SYNC row 513): "newest" picked
+          # whatever the runner image gained, so the first dispatch after an
+          # image shipped a beta or Xcode 27 would build on a beta SDK (which
+          # App Store Connect refuses) or on the SDK where UIScene becomes
+          # mandatory, which this project has not adopted yet. Move the pin
+          # deliberately, after `npx cap migrate`'s UIScene step.
+          NEWEST=$(ls -d /Applications/Xcode_${PINNED_XCODE_MAJOR}*.app 2>/dev/null | grep -vi beta | sort -V | tail -1 || true)
+          if [ -z "$NEWEST" ]; then
+            echo "::error::No non-beta Xcode ${PINNED_XCODE_MAJOR}.x on this runner image. Update PINNED_XCODE_MAJOR deliberately rather than taking whatever is newest."
+            exit 1
           fi
+          echo "Selected $NEWEST"
+          sudo xcode-select -s "$NEWEST/Contents/Developer"
 
           xcodebuild -version
           SDK=$(xcrun --sdk iphoneos --show-sdk-version)
@@ -205,6 +214,7 @@ jobs:
           # build that passes here and is refused by altool means this number
           # is stale, not that the build is broken.
           MIN_IOS_SDK_MAJOR: '26'
+          PINNED_XCODE_MAJOR: '26'
 
       - name: Install dependencies
         if: steps.check.outputs.configured == 'true'
@@ -518,9 +528,12 @@ jobs:
       # github.run_number is monotonic per workflow, so injecting it as the
       # versionCode (via AGP's built-in android.injected.version.code) makes
       # every one-click release upload a fresh, higher code with no manual
-      # edit. versionName (the human "1.0" users see) stays as-is in
-      # build.gradle — bump that by hand only when you want a new marketing
-      # version.
+      # edit. (The injection is `-PihypeVersionCode`, read by build.gradle —
+      # the AGP `android.injected.version.code` flag is retired; see below.)
+      # versionName — the "Version x" Play shows members — is package.json's
+      # `version`. It used to be passed the build counter too, so Play read
+      # "Version 38701" (2026-09-24, DESIGN_SYNC row 513). Bump package.json
+      # for a new marketing version; nothing else needs editing.
       - name: Build signed release bundle
         if: steps.check.outputs.configured == 'true'
         working-directory: android
@@ -550,10 +563,11 @@ jobs:
           # Still run_number-major so a re-run of a failed release outranks the
           # attempt before it: Play refuses a versionCode it has already seen.
           VERSION_CODE=$(( RUN_NUMBER * 100 + RUN_ATTEMPT ))
-          echo "versionCode $VERSION_CODE"
+          VERSION_NAME=$(node -p "require('../package.json').version")
+          echo "versionCode $VERSION_CODE, versionName $VERSION_NAME"
           ./gradlew bundleRelease \
             -PihypeVersionCode="$VERSION_CODE" \
-            -PihypeVersionName="$VERSION_CODE" \
+            -PihypeVersionName="$VERSION_NAME" \
             -Pandroid.injected.signing.store.file="$RUNNER_TEMP/release.keystore" \
             -Pandroid.injected.signing.store.password="$ANDROID_KEYSTORE_PASSWORD" \
             -Pandroid.injected.signing.key.alias="$ANDROID_KEY_ALIAS" \

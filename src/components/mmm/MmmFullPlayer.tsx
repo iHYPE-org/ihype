@@ -377,7 +377,7 @@ export function MmmFullPlayer({
 
           {canTogglePlay && (
             <button
-              aria-label={playing ? 'Pause' : 'Play'}
+              aria-label={playing ? t('globalMediaPlayer.pause', 'Pause') : t('globalMediaPlayer.play', 'Play')}
               className="mmm-full-play"
               data-paused={!playing || undefined}
               onClick={onTogglePlay}

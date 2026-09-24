@@ -83,18 +83,13 @@ const NETWORK_ONLY_PATHS = [
 // this header on every dynamically rendered page, so honouring it protects
 // signed-in surfaces the denylist above does not name.
 function isCacheable(response) {
-  if (!response || !response.ok) return false;
+  // 200 exactly, not `ok`: a 206 is `ok`, and Cache.put rejects it.
+  if (!response || response.status !== 200) return false;
   const cacheControl = (response.headers.get('Cache-Control') || '').toLowerCase();
   if (cacheControl.includes('no-store') || cacheControl.includes('private')) return false;
   if (response.headers.get('Set-Cookie')) return false;
   return true;
 }
-
-// Paths that should use stale-while-revalidate (ticket availability changes frequently)
-const SWR_PATHS = [
-  '/shows/',
-  '/artists/'
-];
 
 // True when a previous SW was already active — i.e. this is an update, not a first install.
 let isUpdate = false;
@@ -246,14 +241,26 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Cache QR code images from qrserver.com for offline ticket display.
-  // These are cross-origin image requests embedded in /tickets/[id] pages.
-  if (url.hostname === 'api.qrserver.com' && request.method === 'GET') {
-    event.respondWith(cacheFirst(request, TICKETS_CACHE));
-    return;
-  }
-
   if (url.origin !== location.origin) return;
+
+  /* MEDIA NEVER GOES THROUGH THIS WORKER (2026-09-24, DESIGN_SYNC row 513).
+     A media element asks for audio with `Range: bytes=0-`, and `/cdn` answers
+     a range with a 206. The catch-all at the bottom of this handler used to
+     route that request into networkWithCacheFallback, which awaited
+     `cache.put` on it — and the Cache API REJECTS a 206 by specification
+     ("Partial response (status code 206) is unsupported" in Chromium). The
+     rejection landed in the catch, `caches.match` found nothing, and the
+     audio element was handed the cached /offline HTML page. So in Chrome,
+     Android Chrome and the Android app's WebView, every uploaded track failed
+     to decode on every visit after the first (the first is uncontrolled),
+     and the player skipped through the queue and stopped. Nothing measured
+     it: the e2e station plays a static /audio/samples file, which answers
+     200 even to a range request, so the put succeeded in every test.
+     Nothing offline needs audio, a whole master is up to 60 MB of the
+     origin's storage quota (the same quota the offline ticket wallet lives
+     in), and waiting for a full file to be stored before handing it to the
+     player is a slower start, not a cache. */
+  if (request.headers.has('range') || request.destination === 'audio' || request.destination === 'video') return;
 
   /* BEFORE the network-only gate, not after. `/app` is network-only — it is a
      signed-in surface — and the ticket now lives under it, so the early return
@@ -279,12 +286,12 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (request.destination === 'document' || url.pathname.endsWith('.html')) {
-    // Ticket pages are handled above, before the network-only gate.
-    // Show and artist pages: stale-while-revalidate (ticket availability changes)
-    if (SWR_PATHS.some((p) => url.pathname.startsWith(p))) {
-      event.respondWith(staleWhileRevalidate(request, PAGE_CACHE));
-      return;
-    }
+    // Ticket pages are handled above, before the network-only gate. Every
+    // other document is network-first: the show page used to be served
+    // stale-first from this cache, which rendered a member's previous RSVP,
+    // hype and on-sale count and replayed ad play tokens bound to an earlier
+    // render (row 513). It is a personalised render and is not stored at all
+    // now that next.config.mjs no longer marks it public.
     event.respondWith(networkWithCacheFallback(request, PAGE_CACHE));
     return;
   }
@@ -366,34 +373,33 @@ async function cacheFirst(request, cacheName) {
   if (cached) return cached;
 
   const response = await fetch(request);
-  if (response.ok) {
-    const cache = await caches.open(cacheName);
-    await cache.put(request, response.clone());
+  if (response.status === 200) {
+    await storeQuietly(cacheName, request, response);
   }
 
   return response;
 }
 
-async function staleWhileRevalidate(request, cacheName) {
-  const cache = await caches.open(cacheName);
-  const cached = await cache.match(request);
-  const networkFetch = fetch(request)
-    .then((response) => {
-      if (isCacheable(response)) cache.put(request, response.clone());
-      return response;
-    })
-    .catch(() => null);
-
-  return cached || (await networkFetch) || (await offlineFallback());
+/* A cache write that fails — quota, a private window, a response the Cache
+   API refuses — must never cost the member the response the network already
+   gave them. Before row 513 an awaited `cache.put` rejection fell into the
+   caller's catch and the member was served the offline page over a good
+   answer. */
+async function storeQuietly(cacheName, request, response) {
+  try {
+    const cache = await caches.open(cacheName);
+    await cache.put(request, response.clone());
+  } catch {
+    // Not stored. The response is still returned.
+  }
 }
 
 async function networkWithCacheFallback(request, cacheName, options = {}) {
   try {
     const response = await fetch(request);
-    const storable = options.storePrivate ? Boolean(response && response.ok) : isCacheable(response);
+    const storable = options.storePrivate ? Boolean(response && response.status === 200) : isCacheable(response);
     if (storable && request.method === 'GET') {
-      const cache = await caches.open(cacheName);
-      await cache.put(request, response.clone());
+      await storeQuietly(cacheName, request, response);
     }
     return response;
   } catch {

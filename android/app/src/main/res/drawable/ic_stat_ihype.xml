@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The status-bar glyph: the mark's `i` (square dot, stem) in white on
+     transparent, because Android draws a notification's small icon as a
+     silhouette and the launcher tile would read as a solid white square
+     (2026-09-24, DESIGN_SYNC row 513). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M9,2h6v6h-6z M9,10h6v12h-6z" />
+</vector>

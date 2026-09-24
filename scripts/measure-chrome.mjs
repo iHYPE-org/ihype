@@ -93,7 +93,7 @@ for (const font of ['JetBrainsMono-Variable.woff2', 'BricolageGrotesque-Variable
 }
 /* The character themes' photographed textures, served the same way the app
    serves them; the default theme paints none of them. */
-for (const tex of ['walnut-v3.png', 'grain.png', 'brushed.png', 'brass-turned.png']) {
+for (const tex of ['walnut-v3.png', 'grain.png', 'brushed.png']) {
   await copyFile(path.join(root, 'public/console', tex), path.join(dir, 'console', tex));
 }
 

@@ -69,3 +69,27 @@ export const MAP_TILE_HOSTS = [
 export function isMapRoute(pathname: string): boolean {
   return pathname === '/app' || pathname.startsWith('/app/');
 }
+
+/**
+ * The Permissions-Policy header for a document (2026-09-24, DESIGN_SYNC row
+ * 513).
+ *
+ * This was `camera=()` on every page, which turns the camera off for the
+ * document itself, so Chromium and the Android app's WebView refused the door
+ * scanner's `getUserMedia` before any prompt, and the scanner told venue staff
+ * to change a phone setting that could not fix it. Camera is granted to the
+ * whole signed-in shell, not only to `/app/me/shows/<slug>/scan`, because the
+ * policy belongs to the DOCUMENT and the shell navigates client-side: a
+ * member who opened `/app/map` and walked to the scanner keeps the map's
+ * policy. The grant is `(self)` only; the browser still asks the member.
+ *
+ * Location is granted to the shell (the map starts where you are) and to the
+ * landing page, whose nearby-shows widget asks for it on a press. It was
+ * `geolocation=()` there, so the widget failed at once and vanished.
+ */
+export function permissionsPolicyFor(pathname: string): string {
+  const shell = isMapRoute(pathname);
+  const camera = shell ? '(self)' : '()';
+  const geolocation = shell || pathname === '/' ? '(self)' : '()';
+  return `camera=${camera}, microphone=(), geolocation=${geolocation}`;
+}

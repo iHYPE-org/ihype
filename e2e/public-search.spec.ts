@@ -39,6 +39,11 @@ test('the header search carries the query into the discover tab', async ({ page,
   }
   await expect(page).toHaveURL(/\/app\/music\/discover\?(?:[^#]*&)?focus=search(?:&|$)/);
   await expect(page).toHaveURL(/[?&]q=neon(?:&|$)/);
-  // The search field on the destination carries the words the member typed.
-  await expect(page.locator('.mmm-search-input')).toHaveValue('neon');
+  /* The search field on the destination carries the words the member typed.
+     By ROLE, not by class: while the route streams, Next holds a second copy
+     of the pane in a hidden container, and a class locator matches both and
+     fails strict mode on that frame (seen once in the 2026-09-24 final scan,
+     retry passing). A role locator excludes the hidden copy, so it asserts
+     the one field a member can see. */
+  await expect(page.getByRole('searchbox', { name: /Search artists, tracks, venues/ })).toHaveValue('neon');
 });

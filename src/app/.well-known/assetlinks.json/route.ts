@@ -57,7 +57,16 @@ import { log } from '@/lib/logger';
  * browser on Android too, that has to be solved in the intent filters in
  * AndroidManifest.xml, not here.
  *
- * ## No passkey relation here, and that is a QUESTION rather than a fix
+ * ## The passkey relation, and the question it answered (2026-09-24, row 513)
+ *
+ * Read the section below as the reasoning up to that date. The scan found
+ * the other half the question was missing: `MainActivity` never turned on
+ * WebView WebAuthn (`WebSettingsCompat.setWebAuthenticationSupport`), so a
+ * ceremony could not have worked with or without this grant. With the app
+ * side in place the grant is the documented pairing, not a speculative one,
+ * and it is served. A handset reading is still owed.
+ *
+ * ## (History) No passkey relation here, and that is a QUESTION rather than a fix
  *
  * The iOS association file gained a `webcredentials` section on 2026-09-15,
  * because the app claimed `webcredentials:ihype.org` and the domain never
@@ -115,7 +124,11 @@ export async function GET() {
 
   const body = [
     {
-      relation: ['delegate_permission/common.handle_all_urls'],
+      // `get_login_creds` since 2026-09-24 (row 513): MainActivity now turns
+      // on WebView passkeys for this app, and Credential Manager asks the
+      // domain to grant the app its credentials, as the iOS file's
+      // `webcredentials` section does.
+      relation: ['delegate_permission/common.handle_all_urls', 'delegate_permission/common.get_login_creds'],
       target: {
         namespace: 'android_app',
         package_name: 'com.ihype.app',

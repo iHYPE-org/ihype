@@ -164,6 +164,12 @@ const RETIRED = [
     retired: '2026-08-06',
     instead: 'There is no DJ role and promoter is not a role — anyone can promote with a HYPE Link.',
   },
+  {
+    pattern: /\btip (?:the |an? )?(?:artist|act|band)s?\b|\btip jar\b|\btipping\b/i,
+    what: 'tipping an artist',
+    retired: 'never existed (the post-show recap promised it until 2026-09-24, DESIGN_SYNC row 513)',
+    instead: 'There is no tip route, model or payment path. After a show a fan can HYPE, read the setlist, or buy a ticket to the next one.',
+  },
 ];
 
 const rootsArg = process.argv.find((arg) => arg.startsWith('--roots='));

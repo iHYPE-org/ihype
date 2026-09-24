@@ -38,4 +38,37 @@ describe('session-user-cache', () => {
     const ok = vi.fn(async () => ({ userSecurityVersion: 1, email: null }));
     expect(await readSessionUser('u1', ok)).toEqual({ userSecurityVersion: 1, email: null });
   });
+
+  it('shares one in-flight load between concurrent calls of the same request (row 513)', async () => {
+    let resolveLoad: (row: { userSecurityVersion: number; email: string | null }) => void = () => {};
+    const load = vi.fn(() => new Promise<{ userSecurityVersion: number; email: string | null }>((r) => { resolveLoad = r; }));
+    const scope = {};
+    const a = readSessionUser('u1', load, Date.now, scope);
+    const b = readSessionUser('u1', load, Date.now, scope);
+    resolveLoad({ userSecurityVersion: 2, email: null });
+    expect(await a).toEqual({ userSecurityVersion: 2, email: null });
+    expect(await b).toEqual({ userSecurityVersion: 2, email: null });
+    expect(load).toHaveBeenCalledTimes(1);
+  });
+
+  it('never shares a pending load across two requests', async () => {
+    const load = vi.fn(async () => ({ userSecurityVersion: 1, email: null }));
+    await Promise.all([
+      readSessionUser('u1', load, Date.now, {}),
+      readSessionUser('u1', load, Date.now, {}),
+    ]);
+    expect(load).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not memoise a row that was being read when the version was bumped', async () => {
+    let resolveLoad: (row: { userSecurityVersion: number; email: string | null }) => void = () => {};
+    const slow = vi.fn(() => new Promise<{ userSecurityVersion: number; email: string | null }>((r) => { resolveLoad = r; }));
+    const pending = readSessionUser('u1', slow, Date.now, {});
+    forgetSessionUser('u1');
+    resolveLoad({ userSecurityVersion: 1, email: null });
+    await pending;
+    const fresh = vi.fn(async () => ({ userSecurityVersion: 2, email: null }));
+    expect(await readSessionUser('u1', fresh)).toEqual({ userSecurityVersion: 2, email: null });
+    expect(fresh).toHaveBeenCalledTimes(1);
+  });
 });

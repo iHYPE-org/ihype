@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { escapeHtml } from '@/lib/html-escape';
 import { randomBytes } from 'crypto';
 import { z } from 'zod';
 import { db } from '@/lib/db';
@@ -6,6 +7,8 @@ import { consumeRateLimit } from '@/lib/rate-limit';
 import { sendGenericEmail } from '@/lib/mailer';
 import { getBaseUrl } from '@/lib/utils';
 import { log } from '@/lib/logger';
+// An email client resolves no CSS variable; the literal palette is held to :root by brand-assets.test.ts.
+import { OG } from '@/app/api/og/palette';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,8 +34,8 @@ function buildConfirmEmail(confirmUrl: string, profileName: string) {
     html: `
       <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#10182a;">
         <h2 style="margin:0 0 12px;">Confirm your subscription</h2>
-        <p>Confirm you'd like updates from <strong>${profileName}</strong> on iHYPE.</p>
-        <p><a href="${confirmUrl}" style="display:inline-block;padding:10px 20px;background:var(--accent);color:var(--ink-on-accent);text-decoration:none;border-radius:6px;font-weight:700;">Confirm subscription</a></p>
+        <p>Confirm you'd like updates from <strong>${escapeHtml(profileName)}</strong> on iHYPE.</p>
+        <p><a href="${confirmUrl}" style="display:inline-block;padding:10px 20px;background:${OG.accent};color:${OG.inkOnAccent};text-decoration:none;border-radius:6px;font-weight:700;">Confirm subscription</a></p>
         <p style="color:#5b657a;font-size:12px;">If you didn't request this, you can ignore this email — you won't be subscribed unless you click the link.</p>
       </div>
     `,

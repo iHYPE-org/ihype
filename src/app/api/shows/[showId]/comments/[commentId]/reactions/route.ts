@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { consumeRateLimit } from '@/lib/rate-limit';
+import { isUniqueViolation } from '@/lib/unique-violation';
 
 export const dynamic = 'force-dynamic';
 
@@ -57,9 +58,11 @@ export async function POST(
   if (existing) {
     await db.commentReaction.delete({ where: { id: existing.id } });
   } else {
+    // A double-tap's second create loses the race to the first: the reaction
+    // exists, which is what was asked for (row 513).
     await db.commentReaction.create({
       data: { commentId, userId: session.user.id, emoji }
-    });
+    }).catch((error: unknown) => { if (!isUniqueViolation(error)) throw error; });
   }
 
   const reactions = await db.commentReaction.groupBy({

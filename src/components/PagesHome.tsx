@@ -9,6 +9,7 @@ import { PullToRefresh } from '@/components/PullToRefresh';
 import { useI18n } from '@/components/I18nProvider';
 import { useRegisterStations } from '@/components/mmm/MmmStations';
 import { createCardDesc, createCardName, netFilterLabel, pagesTabLabel, profileTypeLabel } from '@/lib/i18n-enum-labels';
+import { getAppProfilePathForType } from '@/lib/profile-paths';
 
 const TYPE_COLOR: Record<string, string> = {
   ARTIST: 'var(--role-artist)',
@@ -22,8 +23,9 @@ const TYPE_LABEL: Record<string, string> = {
   LISTENER: 'Fan',
 };
 
-const profileRoute = (type: string, slug: string) =>
-  type === 'VENUE' ? `/venues/${slug}` : `/artists/${slug}`;
+// The shell pane for each type — a fan profile used to get `/artists/<slug>`,
+// which the artist pane answers "No such artist" (row 513).
+const profileRoute = (type: string, slug: string) => getAppProfilePathForType(type, slug);
 
 /**
  * Tab ids the app shell's context strip already carries for PAGES ('mypage' via
@@ -339,7 +341,7 @@ export function PagesHome({
     return (
       <div className="mmm-profiles-page mmm-profiles-centre">
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.375rem', fontWeight: 800, marginBottom: 10 }}>{t('pagesHome.signedOutHeading', 'Sign in to see your pages')}</h1>
-        <Link href="/login?callbackUrl=/pages" style={bSolid}>{t('pagesHome.logIn', 'Log in')}</Link>
+        <Link href="/login?callbackUrl=/app/me/profiles" style={bSolid}>{t('pagesHome.logIn', 'Log in')}</Link>
       </div>
     );
   }

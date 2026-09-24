@@ -19,6 +19,18 @@ import { readRuntimeEnv } from '@/lib/runtime-env';
 import { isSessionRevoked } from '@/lib/session-revocation';
 import { readSessionUser } from '@/lib/session-user-cache';
 
+/** The Cloudflare request context, the same object `db.ts` keys its per-request
+ *  client on; null outside a Worker (tests, scripts). */
+function currentRequestScope(): object | null {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { getCloudflareContext } = require('@opennextjs/cloudflare');
+    return getCloudflareContext() as object;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * ADMIN is granted by the User row, but ALLOWED by the address on it.
  *
@@ -85,6 +97,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               where: { id },
               select: { userSecurityVersion: true, email: true }
             }),
+            Date.now,
+            currentRequestScope(),
           );
           if (!dbUser || dbUser.userSecurityVersion !== (token.securityVersion ?? 0)) return null;
           // Re-checked on EVERY auth() call, not only at sign-in, for the same

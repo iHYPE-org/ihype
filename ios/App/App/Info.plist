@@ -35,6 +35,14 @@
 	     copy changes, change this. -->
 	<key>NSCameraUsageDescription</key>
 	<string>iHYPE uses the camera to scan ticket codes at the door. The frame is read and dropped — nothing is recorded and no image is stored.</string>
+	<!-- WKWebView's long-press menu on any image, the ticket QR above all,
+	     offers "Save to Photos", and iOS terminates an app that writes to the
+	     photo library without this string (final pre-launch scan,
+	     2026-09-24, DESIGN_SYNC row 513). A fan saving the QR before a show
+	     is the move this has to survive. Add-only: nothing here reads the
+	     library. -->
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Save a ticket code to your photos so it works with no signal.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

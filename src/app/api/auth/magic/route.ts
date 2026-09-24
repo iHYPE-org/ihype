@@ -203,7 +203,7 @@ export async function POST(request: NextRequest) {
    * Admin is a capability, not a home. The console is reached deliberately
    * from the ADMIN MODE control in the shell.
    */
-  const defaultDest = user.role === 'ADVERTISER' ? '/advertise/dashboard' : undefined;
+  const defaultDest = user.role === 'ADVERTISER' ? '/app/me/advertising' : undefined;
   const dest = resolvePostAuthRedirect(rawCallback ?? defaultDest);
 
   /* 303, so the browser turns the form POST into a GET of the destination.

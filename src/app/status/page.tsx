@@ -38,8 +38,17 @@ async function checkResend(): Promise<{ ok: boolean; label: string }> {
       headers: { Authorization: `Bearer ${apiKey}` },
       signal: AbortSignal.timeout(5_000),
     });
-    // 200 or 405 both mean the key is valid
-    return { ok: res.status < 500, label: res.status < 500 ? 'Reachable' : `HTTP ${res.status}` };
+    /* A 401/403 used to read "Reachable" here (row 513), so a revoked key
+       showed green while Resend refused every magic link. A sending-only key
+       answers this listing endpoint 401 `restricted_api_key`, which is a
+       valid key; anything else in the 4xx range is a key problem. */
+    if (res.ok || res.status === 405) return { ok: true, label: 'Reachable' };
+    if (res.status === 401 || res.status === 403) {
+      const body = await res.json().catch(() => null) as { name?: string } | null;
+      if (body?.name === 'restricted_api_key') return { ok: true, label: 'Reachable (sending key)' };
+      return { ok: false, label: 'Key rejected' };
+    }
+    return { ok: false, label: `HTTP ${res.status}` };
   } catch {
     return { ok: false, label: 'Unreachable' };
   }

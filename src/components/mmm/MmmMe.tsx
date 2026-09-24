@@ -181,7 +181,21 @@ function AboutMeActivity({ data }: { data: MmmMeData }) {
   return (
     <div className="mmm-me-about-in-profiles">
       <div className="mmm-section-label" style={{ marginBottom: 9 }}>{t('mmmMe.activity.eyebrow', 'About me · visible activity')}</div>
-      {data.activity.length === 0 ? (
+      {data.activity === null ? (
+        /* The read failed. An empty-state sentence here would be a claim about
+           the member over a query that never answered (row 408's rule). */
+        <p className="mmm-empty" role="alert">{t('mmmMe.activity.unavailable', 'Recent activity could not be loaded. Try again in a moment.')}</p>
+      ) : data.activity.length === 0 && data.role === 'advertiser' ? (
+        /* An advertiser's activity is their campaigns, not hypes and follows —
+           the fan sentence below told a sponsor to go HYPE a track (row 513). */
+        <div className="mmm-empty-state">
+          <strong>{t('mmmMe.activity.advertiserEmptyTitle', 'No campaigns yet')}</strong>
+          <p>{t('mmmMe.activity.advertiserEmptyBody', 'Your sponsorships appear here once you start one: what it costs, when it runs and how many listeners heard it.')}</p>
+          <div className="mmm-empty-actions">
+            <Link className="mmm-btn-primary" href="/app/me/advertising">{t('mmmMe.activity.advertiserStart', 'Open advertising')}</Link>
+          </div>
+        </div>
+      ) : data.activity.length === 0 ? (
         <div className="mmm-empty-state">
           <strong>{t('mmmMe.activity.emptyTitle', 'Build your visible activity')}</strong>
           <p>{t('mmmMe.activity.emptyBody', 'HYPE a track, follow local artists or save a show. This is the activity artists and venues can see.')}</p>
@@ -461,7 +475,7 @@ export function MmmMe({ data }: { data: MmmMeData }) {
       {data.page && (
         <div className="mmm-card mmm-card-accent" style={{ padding: 15, marginBottom: 16 }}>
           <div className="mmm-eyebrow mmm-eyebrow-accent" style={{ marginBottom: 6, fontSize: '0.9375rem' }}>{t('mmmMe.page.eyebrow', 'Your page')}</div>
-          <div style={{ fontWeight: 600, fontSize: '0.95rem', color: 'var(--ink)', marginBottom: 3 }}>{data.page.name}</div>
+          <div style={{ fontWeight: 600, fontSize: '0.95rem', color: 'var(--ink)', marginBottom: 3 }}>{data.page.name || t('mmmMe.page.advertiserName', 'Advertiser')}</div>
           <div style={{ fontSize: '0.9375rem', color: 'var(--ink-3)', lineHeight: 1.5, marginBottom: 12 }}>{data.page.status.split(' · ').map((part) => translateMeStatLabel(t, part)).join(' · ')}</div>
           <div style={{ display: 'flex', gap: 8 }}>
             {data.page.kind === 'advertising' ? (

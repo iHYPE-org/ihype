@@ -2,6 +2,7 @@ import { db } from '@/lib/db';
 import { sendMarketingEmail } from '@/lib/mailer';
 import { runAI } from '@/lib/ai';
 import { getBaseUrl } from '@/lib/utils';
+import { escapeHtml } from '@/lib/html-escape';
 
 export async function sendWeeklyPicksEmails(): Promise<{ sent: number; skipped: number }> {
   const topProfiles = await db.profile.findMany({
@@ -22,7 +23,7 @@ export async function sendWeeklyPicksEmails(): Promise<{ sent: number; skipped: 
 
   const baseUrl = getBaseUrl();
   const picksHtml = topProfiles.map((p, i) =>
-    `<p><strong>${i + 1}. <a href="${baseUrl}/app/artists/${p.slug}">${p.name}</a></strong> — ${(p.genres as string[] | null ?? []).join(', ')}</p>`
+    `<p><strong>${i + 1}. <a href="${baseUrl}/app/artists/${encodeURIComponent(p.slug)}">${escapeHtml(p.name)}</a></strong> — ${escapeHtml((p.genres as string[] | null ?? []).join(', '))}</p>`
   ).join('');
 
   const users = await db.user.findMany({
@@ -36,8 +37,8 @@ export async function sendWeeklyPicksEmails(): Promise<{ sent: number; skipped: 
     try {
       await sendMarketingEmail(user.id, {
         to: user.email,
-        subject: '🎵 iHYPE Weekly Picks',
-        html: `<p>${aiBlurb}</p><h2>This week's top picks</h2>${picksHtml}<p><a href="${baseUrl}/app/music/discover">Discover more on iHYPE</a></p>`,
+        subject: 'iHYPE Weekly Picks',
+        html: `<p>${escapeHtml(aiBlurb)}</p><h2>This week's top picks</h2>${picksHtml}<p><a href="${baseUrl}/app/music/discover">Discover more on iHYPE</a></p>`,
         text: `${aiBlurb}\n\nThis week's top picks:\n${topProfiles.map((p, i) => `${i + 1}. ${p.name} — ${baseUrl}/app/artists/${p.slug}`).join('\n')}`
       });
       sent++;

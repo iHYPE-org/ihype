@@ -3,7 +3,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { WORKBENCH_PATH } from '@/lib/auth-redirects';
 import { createConnectOnboardingUrl, isStripeConfigured } from '@/lib/stripe';
-import { getProfilePathForType } from '@/lib/profile-paths';
+import { getAppProfilePathForType } from '@/lib/profile-paths';
 
 /**
  * GET /api/stripe/connect/refresh?profileId=<id>
@@ -39,7 +39,7 @@ export async function GET(request: Request) {
     (profile.owner.id !== session.user.id && session.user.role !== 'ADMIN')
   ) {
     return profile
-      ? NextResponse.redirect(new URL(getProfilePathForType(profile.type, profile.slug), origin))
+      ? NextResponse.redirect(new URL(getAppProfilePathForType(profile.type, profile.slug), origin))
       : fallback;
   }
 

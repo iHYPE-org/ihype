@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, it, expect } from 'vitest';
 import { needsBrowserNavigation, resolveInternalPath } from '@/lib/deep-link';
+import { maskComments } from '../../../scripts/lib/mask-comments.mjs';
 
 describe('resolveInternalPath', () => {
   it('extracts the path from a real ihype.org URL', () => {
@@ -66,9 +67,10 @@ describe('resolveInternalPath', () => {
 });
 
 describe('the iOS association keeps Cloudflare Access in Safari', () => {
-  const source = readFileSync('src/app/.well-known/apple-app-site-association/route.ts', 'utf8')
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/\/\/[^\n]*/g, '');
+  /* The shared, string-aware masker (row 513): a bare `/\*…*\/` regex read
+     the `/*` inside `'/shows/*'` as a comment opener and deleted the path
+     list up to the next real comment, so the ordering it checks vanished. */
+  const source = maskComments(readFileSync('src/app/.well-known/apple-app-site-association/route.ts', 'utf8'));
 
   it('places explicit exclusions before every app-owned path', () => {
     const admin = source.indexOf("'NOT /admin'");

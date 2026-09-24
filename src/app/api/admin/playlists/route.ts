@@ -1,16 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdminApi } from '@/lib/admin-api';
 import type { Prisma } from '@prisma/client';
-import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { isAdminSession } from '@/lib/permissions';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
-  const session = await auth();
-  if (!isAdminSession(session)) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
+  const { session, response } = await requireAdminApi(request);
+  if (!session) return response;
 
   let body: { title?: string; description?: string; tracks?: unknown } = {};
   try {

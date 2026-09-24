@@ -91,6 +91,25 @@ describe('audit:published-urls', () => {
     expect(code).toBe(0);
   });
 
+  /* Next runs redirects() BEFORE the filesystem, so a route under a
+     redirect's source is shadowed and never answers. The scanner checked
+     routes first and called `/artists/verified.rss` resolved while production
+     answered 307 away from it (row 513). */
+  it('follows a redirect that shadows a file route, as Next does', () => {
+    const dir = scratchRepo({
+      'next.config.mjs': CONFIG,
+      'src/app/robots.ts': ROBOTS,
+      // A real handler at /old — shadowed by the `/old` → `/new` redirect.
+      'src/app/old/route.ts': 'export function GET() { return new Response(null); }',
+      'src/lib/mail.ts': 'const x = `${getBaseUrl()}/old`;',
+    });
+    // `/new` has no route, so following the redirect (not the shadowed
+    // handler) is what makes this DEAD.
+    const { code, out } = run(dir);
+    expect(out).toContain('DEAD     /old');
+    expect(code).toBe(1);
+  });
+
   /* THE DISTINCTION THE WHOLE SCRIPT TURNS ON. The same URL is right in an
      email, because the member is signed in, and wrong in the sitemap, because
      robots forbids where it lands. */

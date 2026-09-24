@@ -13,7 +13,7 @@ type ReceivedRequest = {
   fromUser: {
     name: string | null;
     username: string | null;
-    profiles: { slug: string; type: string; genres: string[]; city: string | null }[];
+    profiles: { slug: string; type: string; name: string; genres: string[]; city: string | null }[];
   };
 };
 
@@ -41,7 +41,7 @@ export function VenueBookingInboxTabs({ profileId }: { profileId: string }) {
   ];
 
   useEffect(() => {
-    fetch('/api/booking-requests')
+    fetch(`/api/booking-requests?profileId=${encodeURIComponent(profileId)}`)
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((data) => setRequests(data.received ?? []))
       .catch(() => setError(true));
@@ -104,7 +104,7 @@ export function VenueBookingInboxTabs({ profileId }: { profileId: string }) {
               <div className="vbi-card" key={r.id}>
                 <div className="vbi-card-head">
                   <div>
-                    <div className="vbi-name">{r.fromUser.name ?? r.fromUser.username ?? t('venueBookingInboxTabs.aUserFallback', 'A user')}</div>
+                    <div className="vbi-name">{requesterProfile?.name ?? r.fromUser.name ?? r.fromUser.username ?? t('venueBookingInboxTabs.aUserFallback', 'A user')}</div>
                     {requesterProfile && (
                       <div className="vbi-meta">
                         {[requesterProfile.genres[0], requesterProfile.city].filter(Boolean).join(' · ')}
@@ -134,7 +134,7 @@ export function VenueBookingInboxTabs({ profileId }: { profileId: string }) {
                     {requesterProfile && (
                       <Link
                         className="vbi-btn vbi-btn-outline"
-                        href={`/app/artists/${requesterProfile.slug}`}
+                        href={requesterProfile.type === 'VENUE' ? `/app/venues/${requesterProfile.slug}` : `/app/artists/${requesterProfile.slug}`}
                       >
                         {t('venueBookingInboxTabs.viewProfileLink', 'View profile')}
                       </Link>

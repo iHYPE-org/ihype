@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { getProfilePathForType } from '@/lib/profile-paths';
+import { getAppProfilePathForType } from '@/lib/profile-paths';
 import { PayoutConnectButton } from '@/components/PayoutConnectButton';
 import { getServerT } from '@/lib/i18n/server';
 
@@ -40,7 +40,7 @@ export async function PayoutSettingsPanel({ profiles, stripeReady }: { profiles:
               <div className="pset-card-top">
                 <div>
                   <div className="pset-name">{p.name}</div>
-                  <div className="pset-role">{roleLabel(p.type, t)} · <Link href={getProfilePathForType(p.type, p.slug)}>{t('payoutSettingsPanel.viewProfile', 'view profile')}</Link></div>
+                  <div className="pset-role">{roleLabel(p.type, t)} · <Link href={getAppProfilePathForType(p.type, p.slug)}>{t('payoutSettingsPanel.viewProfile', 'view profile')}</Link></div>
                 </div>
                 <span className={`pset-pill ${p.stripeConnectOnboarded ? 'pset-pill-on' : 'pset-pill-off'}`}>
                   {p.stripeConnectOnboarded ? t('payoutSettingsPanel.verified', 'Verified') : t('payoutSettingsPanel.notYetConnected', 'Not yet connected')}

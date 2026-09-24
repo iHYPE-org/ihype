@@ -260,7 +260,11 @@ async function sendConfiguredEmail(input: ConfiguredEmailInput) {
       text: input.text,
       html: input.html,
       ...(input.headers ? { headers: input.headers } : {})
-    })
+    }),
+    /* Bounded (2026-09-24, DESIGN_SYNC row 513). A magic link is the only way
+       in for many members, and a stalled Resend held that request open with
+       no end; a timeout throws into the same failure path as any refusal. */
+    signal: AbortSignal.timeout(10_000),
   });
 
   if (!response.ok) {

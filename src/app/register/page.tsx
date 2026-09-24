@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 export default async function RegisterPage({
   searchParams
 }: {
-  searchParams?: Promise<{ role?: string | string[] }>;
+  searchParams?: Promise<{ role?: string | string[]; ref?: string | string[] }>;
 }) {
   const params = searchParams ? await searchParams : undefined;
 
@@ -27,5 +27,11 @@ export default async function RegisterPage({
     normalized === 'DJ' ? 'ARTIST' :
     normalized === 'VENUE' || normalized === 'VENUES' ? 'VENUE' : 'FAN';
 
-  return <RegisterScreen initialRole={initialRole} inviteOnly={await isInviteCodeRequiredRuntime()} />;
+  /* The HYPE link and the invite page both send `?ref=<code>` here, and until
+     2026-09-24 (DESIGN_SYNC row 513) nothing read it: the form never sent it,
+     so every signup through a member's link credited nobody. */
+  const rawRef = Array.isArray(params?.ref) ? params.ref[0] : params?.ref;
+  const initialRef = rawRef?.trim().slice(0, 80) || undefined;
+
+  return <RegisterScreen initialRef={initialRef} initialRole={initialRole} inviteOnly={await isInviteCodeRequiredRuntime()} />;
 }

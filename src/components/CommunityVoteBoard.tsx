@@ -151,7 +151,7 @@ export function CommunityVoteBoard() {
         </button>
       </form> : (
         <p style={{ marginBottom: 24, fontSize: '0.9375rem', color: 'var(--ink-a65)' }}>
-          <Link href="/login?callbackUrl=/community">{t('communityVoteBoard.signIn', 'Sign in with a fan account')}</Link>{' '}
+          <Link href="/login?callbackUrl=/app/me/info/community">{t('communityVoteBoard.signIn', 'Sign in with a fan account')}</Link>{' '}
           {t('communityVoteBoard.signInSuffix', 'to propose changes and vote.')}
         </p>
       )}

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { isAdminSession } from '@/lib/permissions';
+import { isShowOrganizer, ORGANIZER_SHOW_SELECT } from '@/lib/show-organizer';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,12 +15,11 @@ export async function POST(
   }
 
   const { showId: id } = await params;
-  const show = await db.show.findUnique({ where: { id }, select: { id: true, creatorId: true, status: true } });
+  const show = await db.show.findUnique({ where: { id }, select: { id: true, status: true, ...ORGANIZER_SHOW_SELECT } });
   if (!show) return NextResponse.json({ error: 'Show not found' }, { status: 404 });
 
-  const isOwner = show.creatorId === session.user.id;
-  const isAdmin = isAdminSession(session);
-  if (!isOwner && !isAdmin) {
+  // The organiser rule the show page draws the recap form under (row 513).
+  if (!isShowOrganizer(session, show)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 

@@ -39,11 +39,13 @@ export async function POST(request: Request) {
     if (oldest) await db.nativeDeviceToken.delete({ where: { id: oldest.id } });
   }
 
-  // Same rule as /api/push/subscribe: a token bound to another account is not re-homed.
-  const boundTo = await db.nativeDeviceToken.findUnique({ where: { token }, select: { userId: true } });
-  if (boundTo && boundTo.userId !== session.user.id) {
-    return NextResponse.json({ error: 'This device is registered to another account.' }, { status: 409 });
-  }
+  /* RE-HOMED TO WHOEVER IS SIGNED IN ON THE DEVICE (2026-09-24, row 513).
+     This refused a token bound to another account, copying the Web Push
+     rule — but a native token is handed out only to this app on this phone,
+     and a push always lands on the phone that holds it. So the refusal did
+     not protect anyone: it left the previous account's pushes arriving on a
+     phone someone else now uses, and gave the account signed in on it none.
+     Re-homing can only ever move pushes TO the device's current user. */
   await db.nativeDeviceToken.upsert({
     where: { token },
     create: { userId: session.user.id, token, platform },
@@ -53,4 +55,21 @@ export async function POST(request: Request) {
   return NextResponse.json({ ok: true });
 }
 
-/** Called on sign-out from the native shell so a shared/reset device stops receiving another user's pushes. */
+/** Sign-out from the native shell (`unregisterNativePushDevice`), so a shared
+ *  device stops receiving the signed-out account's pushes. Only the caller's
+ *  own binding is removed. */
+export async function DELETE(request: Request) {
+  const session = await auth();
+  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
+  let body: { token?: unknown };
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid body.' }, { status: 400 });
+  }
+  if (typeof body.token !== 'string' || !body.token || body.token.length > 1024) {
+    return NextResponse.json({ error: 'token is required.' }, { status: 400 });
+  }
+  await db.nativeDeviceToken.deleteMany({ where: { token: body.token, userId: session.user.id } });
+  return NextResponse.json({ ok: true });
+}

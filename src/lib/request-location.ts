@@ -92,6 +92,37 @@ function extractIpValue(rawValue?: string | null) {
   return candidate.replace(/^\[|\]$/g, '');
 }
 
+/* One lookup per address per isolate, not one per page view (2026-09-24,
+   DESIGN_SYNC row 513). This ran on every public show page, every Recommended
+   render and every ticket purchase, with a 1.5 s ceiling ahead of the charge.
+   A miss is remembered too, for less time, so a slow or refusing ipapi costs
+   one wait per address rather than one per request. Bounded, and dropped in
+   insertion order, because an isolate can see many addresses. */
+const IP_LOCATION_TTL_MS = 6 * 60 * 60 * 1000;
+const IP_LOCATION_MISS_TTL_MS = 5 * 60 * 1000;
+const IP_LOCATION_MAX = 500;
+const ipLocationCache = new Map<string, { location: RequestLocation | null; expiresAt: number }>();
+
+async function lookupIpApiLocationCached(ipAddress: string): Promise<RequestLocation | null> {
+  const hit = ipLocationCache.get(ipAddress);
+  if (hit && hit.expiresAt > Date.now()) return hit.location;
+  const location = await lookupIpApiLocation(ipAddress);
+  if (ipLocationCache.size >= IP_LOCATION_MAX) {
+    const oldest = ipLocationCache.keys().next().value;
+    if (oldest !== undefined) ipLocationCache.delete(oldest);
+  }
+  ipLocationCache.set(ipAddress, {
+    location,
+    expiresAt: Date.now() + (location ? IP_LOCATION_TTL_MS : IP_LOCATION_MISS_TTL_MS),
+  });
+  return location;
+}
+
+/** Test seam: the cache is per isolate and must not leak between tests. */
+export function clearIpLocationCacheForTests() {
+  ipLocationCache.clear();
+}
+
 async function lookupIpApiLocation(ipAddress: string) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 1500);
@@ -135,7 +166,11 @@ async function lookupIpApiLocation(ipAddress: string) {
 function buildEdgeLocation(requestHeaders: Headers): RequestLocation {
   return {
     city: cleanValue(requestHeaders.get('cf-ipcity')),
-    stateRegion: cleanValue(requestHeaders.get('cf-ipcontinent')),
+    /* The subdivision code (`ME`), then the name (`Maine`). This read
+       `cf-ipcontinent` until 2026-09-24 (row 513): a continent code (`NA`) in
+       the state field, which won the merge over ipapi's real region and meant
+       no same-state sale ever matched the venue's state for tax. */
+    stateRegion: cleanValue(requestHeaders.get('cf-region-code')) ?? cleanValue(requestHeaders.get('cf-region')),
     country: cleanValue(requestHeaders.get('cf-ipcountry')),
     postalCode: cleanValue(requestHeaders.get('cf-postal-code')),
     latitude: parseCoordinate(requestHeaders.get('cf-iplatitude')),
@@ -155,8 +190,16 @@ export async function detectLocationFromHeaders(requestHeaders: Headers): Promis
     .map((value) => extractIpValue(value))
     .find((value) => (value ? isPublicIp(value) : false));
 
-  if (ipAddress) {
-    const ipLocation = await lookupIpApiLocation(ipAddress);
+  /* The edge already answered everything a caller reads: skip the third-party
+     hop entirely. Cloudflare sends these headers only when the zone's
+     visitor-location transform is on; without it, ipapi fills the gaps. */
+  const edgeIsComplete = Boolean(
+    edgeLocation.postalCode && edgeLocation.stateRegion && edgeLocation.country
+      && edgeLocation.latitude != null && edgeLocation.longitude != null,
+  );
+
+  if (ipAddress && !edgeIsComplete) {
+    const ipLocation = await lookupIpApiLocationCached(ipAddress);
     if (ipLocation) {
       return {
         city: edgeLocation.city ?? ipLocation.city,
