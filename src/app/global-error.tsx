@@ -2,17 +2,18 @@
 
 import { useEffect } from 'react';
 import { useI18n } from '@/components/I18nProvider';
+import { loadBrowserSentry } from '@/lib/browser-sentry';
 
 export default function GlobalError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   const { t } = useI18n();
 
   useEffect(() => {
-    // Keep the SDK behind the browser-only effect. A static import here is
-    // evaluated while Next prerenders /_global-error and pulls the SDK's
-    // Node-oriented server graph into the Cloudflare-targeted build.
-    void import('@sentry/nextjs').then((Sentry) => {
+    // Through the one shared loader (row 512): it resolves at once when the
+    // page is already up, and a root render failure is reported the moment
+    // the SDK is — never by a second import of the chunk.
+    void loadBrowserSentry().then((Sentry) => {
       Sentry.captureException(error);
-    });
+    }).catch(() => { /* no SDK, nothing to report to */ });
   }, [error]);
 
   return (

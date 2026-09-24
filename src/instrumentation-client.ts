@@ -35,13 +35,29 @@
  * starts before the SDK loads gets no span at all; that is a sampled trace,
  * not a lost error.
  *
+ * THE PACKAGE IS `@sentry/browser`, NOT `@sentry/nextjs` (2026-09-24,
+ * DESIGN_SYNC row 512). The Next package's client half is `@sentry/react`
+ * plus a router-transition hook and a stack-frame normaliser, and it built
+ * to a 556 KB chunk; the plain browser package with the integrations named
+ * below builds to about a third of that (measured with esbuild before the
+ * switch, then in the Next build after it). Nothing this app used was
+ * specific to the Next package: the App Router's navigations are pushState
+ * calls, which `browserTracingIntegration`'s history instrumentation already
+ * turns into navigation spans, so `onRouterTransitionStart` is gone with the
+ * package rather than kept as a hook that reached nothing. `defaultIntegrations`
+ * is off and the list is EXPLICIT, so what runs in a member's browser is what
+ * this file names — the SDK's own default set adds a conversation-id and a
+ * culture-context integration this project reads nowhere. The server half is
+ * `@sentry/cloudflare` in `worker.js` and is untouched.
+ *
  * Sampling is unchanged from the original file: errors always, traces at 5%
  * with the auth, registration and show routes at 50%. Browser events count
  * against the Sentry quota, which is the cost of finally seeing them.
  */
-type SentryModule = typeof import('@sentry/nextjs');
+import { loadBrowserSentry, type BrowserSentry } from '@/lib/browser-sentry';
 
-let sentry: SentryModule | null = null;
+type SentryModule = BrowserSentry;
+
 const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
 
 /* Exceptions that happen before the SDK is loaded. Bounded, because a page
@@ -60,6 +76,22 @@ function init(mod: SentryModule) {
     environment: process.env.NODE_ENV,
     release: process.env.NEXT_PUBLIC_APP_VERSION,
     sendDefaultPii: false,
+    /* Explicit, so the chunk carries what is listed and nothing else. Each
+       one is the browser SDK's own default minus the two named above, plus
+       tracing for the navigation spans the sampler below prices. */
+    defaultIntegrations: false,
+    integrations: [
+      mod.eventFiltersIntegration(),
+      mod.functionToStringIntegration(),
+      mod.browserApiErrorsIntegration(),
+      mod.breadcrumbsIntegration(),
+      mod.globalHandlersIntegration(),
+      mod.linkedErrorsIntegration(),
+      mod.dedupeIntegration(),
+      mod.httpContextIntegration(),
+      mod.browserSessionIntegration(),
+      mod.browserTracingIntegration(),
+    ],
     tracesSampler(ctx) {
       // Always sample requests that produced an error
       if (ctx.parentSampled !== undefined) return ctx.parentSampled;
@@ -98,42 +130,23 @@ function init(mod: SentryModule) {
       return event;
     },
   });
-  sentry = mod;
   window.removeEventListener('error', onError);
   window.removeEventListener('unhandledrejection', onRejection);
   for (const error of heldErrors.splice(0)) mod.captureException(error);
 }
 
 function load() {
-  void import('@sentry/nextjs').then(init).catch(() => {
+  /* `loadBrowserSentry` waits for `load` and an idle callback, and is the ONE
+     import of the SDK in this bundle — the Web Vitals reporter and the error
+     boundary share it, so no other caller can pull the chunk forward. */
+  void loadBrowserSentry().then(init).catch(() => {
     /* The SDK chunk failing to load is not an error worth a second attempt
        on this page: the next navigation is a new document and tries again. */
   });
 }
 
-function scheduleLoad() {
-  /* After `load`, then when the main thread is idle — with a ceiling, so a
-     page that is never idle (the map, the player) still gets its SDK. */
-  const whenIdle = () => {
-    if (typeof window.requestIdleCallback === 'function') {
-      window.requestIdleCallback(load, { timeout: 2500 });
-    } else {
-      window.setTimeout(load, 1500);
-    }
-  };
-  if (document.readyState === 'complete') whenIdle();
-  else window.addEventListener('load', whenIdle, { once: true });
-}
-
 if (dsn && typeof window !== 'undefined') {
   window.addEventListener('error', onError);
   window.addEventListener('unhandledrejection', onRejection);
-  scheduleLoad();
-}
-
-/* Next calls this on every App Router navigation; Sentry turns it into a
-   navigation span. Harmless when the SDK is not initialised or not yet
-   loaded. */
-export function onRouterTransitionStart(href: string, navigationType: string) {
-  sentry?.captureRouterTransitionStart(href, navigationType);
+  load();
 }

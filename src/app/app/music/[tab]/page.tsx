@@ -3,6 +3,7 @@ import { MmmMusic, type MusicTabId } from '@/components/mmm/MmmMusic';
 import { MMM_MUSIC_TABS } from '@/lib/mmm-nav';
 import { preload } from 'react-dom';
 import { musicTabFirstReads } from '@/lib/mmm-music-reads';
+import { bootstrapMusicPayloads } from '@/lib/mmm-music-bootstrap';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,18 +35,31 @@ export default async function MmmMusicPage({
      on a page with no name. Visually hidden: a second visible title would be
      the one-dial rule's drift in another form. */
   const label = MMM_MUSIC_TABS.find((item) => item.id === tab)?.label ?? 'Music';
-  /* Start the tab's first reads while the document is still streaming, so the
-     rows do not wait on hydration (row 511; the rule and the credentials match
-     are in `mmm-music-reads.ts`). `crossOrigin: 'anonymous'` IS the match: a
-     bare `fetch()` sends same-origin credentials, and that is what an
-     anonymous same-origin preload does too. */
-  for (const url of musicTabFirstReads(tab as MusicTabId, { genre, city })) {
-    preload(url, { as: 'fetch', crossOrigin: 'anonymous' });
+  /* The tab's first reads. The server answers them here, through the same
+     route handlers, and the rows ship in the render — the HTML on a document
+     load, the RSC payload on a navigation (row 512; the rules are in
+     `mmm-music-bootstrap.ts`). Whatever the bootstrap did not answer — a read
+     that failed or missed the deadline — is PRELOADED instead, so the browser starts it
+     while the document is still streaming (row 511; the credentials match is
+     in `mmm-music-reads.ts`): `crossOrigin: 'anonymous'` IS the match, since a
+     bare `fetch()` sends same-origin credentials and so does an anonymous
+     same-origin preload. */
+  const firstReads = musicTabFirstReads(tab as MusicTabId, { genre, city });
+  const initialPayloads = await bootstrapMusicPayloads(firstReads);
+  for (const url of firstReads) {
+    if (!(url in initialPayloads.payloads)) preload(url, { as: 'fetch', crossOrigin: 'anonymous' });
   }
   return (
     <>
       <h1 className="sr-only">{label}</h1>
-      <MmmMusic city={city} focusSearch={focus === 'search'} genre={genre} q={q} tab={tab as MusicTabId} />
+      <MmmMusic
+        city={city}
+        focusSearch={focus === 'search'}
+        genre={genre}
+        initialPayloads={initialPayloads}
+        q={q}
+        tab={tab as MusicTabId}
+      />
     </>
   );
 }

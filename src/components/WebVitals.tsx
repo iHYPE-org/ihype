@@ -2,6 +2,7 @@
 
 import { useReportWebVitals } from 'next/web-vitals';
 import { track } from '@/lib/analytics';
+import { loadBrowserSentry } from '@/lib/browser-sentry';
 import { telemetryModule, telemetryViewport } from '@/lib/telemetry';
 
 // Core Web Vitals (LCP, INP, CLS) plus FCP/TTFB, reported once per metric
@@ -9,16 +10,16 @@ import { telemetryModule, telemetryViewport } from '@/lib/telemetry';
 // transaction, visible alongside error/perf data) and to the existing
 // localStorage event pipeline for lightweight product-side inspection.
 //
-// @sentry/nextjs is imported dynamically inside the callback (browser-only)
-// rather than at module scope — a top-level import here gets evaluated
-// during static prerendering of every page (this component is mounted in
-// the root layout), and Sentry's package resolves incorrectly outside the
-// client entry point (src/instrumentation-client.ts), breaking the static build.
+// The SDK is reached through `loadBrowserSentry`, never imported here: the
+// first metric (TTFB) arrives at `load`, and an import fired from it pulled
+// the whole SDK chunk into the pre-hydration set on two of four measured
+// screens (row 512). The shared loader waits for `load` and idle, so the
+// measurement is recorded once the SDK is up and not a moment sooner.
 export function WebVitals() {
   useReportWebVitals((metric) => {
-    void import('@sentry/nextjs').then((Sentry) => {
+    void loadBrowserSentry().then((Sentry) => {
       Sentry.setMeasurement(metric.name, metric.value, metric.name === 'CLS' ? '' : 'millisecond');
-    });
+    }).catch(() => { /* no SDK, no measurement */ });
     track('web_vital', {
       name: metric.name,
       value: metric.value,
