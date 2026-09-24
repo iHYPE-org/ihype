@@ -27,7 +27,7 @@ sibling.** Leaving either behind splits a pair that must agree:
 | Exact pin | Caret sibling | Why it matters |
 |---|---|---|
 | `next` | `@next/bundle-analyzer` | the analyzer wraps the Next config; a version split is a silent mismatch |
-| `@sentry/cloudflare` | `@sentry/nextjs` | the Sentry packages share internals across the worker and the app |
+| `@sentry/cloudflare` | `@sentry/browser` | the Sentry packages share internals across the worker and the app (the app moved off `@sentry/nextjs` on 2026-09-24, DESIGN_SYNC row 512) |
 
 Bump those by hand with `--save-exact`. **A caret next to an exact pin of the
 same product is a drift generator — check for the sibling before updating

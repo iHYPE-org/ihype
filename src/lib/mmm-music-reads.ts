@@ -13,8 +13,9 @@
  * response is already in flight or landed. The client's `fetch()` and the
  * preload have to describe the SAME request or the browser fetches twice:
  * same URL, and `crossOrigin: 'anonymous'` on the preload, which is the
- * `credentials: 'same-origin'` a bare `fetch()` uses. Row 509's module cache
- * and sibling warming are unchanged; this is the cold load only.
+ * `credentials: 'same-origin'` a bare `fetch()` uses. As of row 512 the page
+ * ANSWERS these reads on the server first (`mmm-music-bootstrap.ts`) and
+ * preloads only what it could not; the module cache in `MmmMusic` stays.
  *
  * Pure on purpose — no React, no `@/lib/db` — so the client component and the
  * server page both import it, and so a test can hold the two callers to it.
@@ -34,12 +35,12 @@ export function discoverSeedsUrl(genre?: string | null, city?: string | null): s
 }
 
 /**
- * The reads the sibling-tab WARMER makes for a tab the member has not opened
- * yet. Discover's seeds are deliberately absent: that URL carries the visit's
- * `?genres=`/`?city=`, and a warm read under the wrong parameters is a read
- * the tab cannot use.
+ * Each tab's fixed first reads. Discover's seeds are deliberately absent: that
+ * URL carries the visit's `?genres=`/`?city=`, and `musicTabFirstReads` adds
+ * it per visit. (Row 509's sibling warmer read this table too; it is gone as
+ * of row 512, because the server now answers these on every render.)
  */
-export const TAB_WARM_URLS: Record<MusicTabId, readonly string[]> = {
+export const TAB_FIRST_READS: Record<MusicTabId, readonly string[]> = {
   discover: ['/api/media-listens'],
   radio: ['/api/stations'],
   charts: ['/api/charts?dataset=area&scope=local'],
@@ -48,14 +49,15 @@ export const TAB_WARM_URLS: Record<MusicTabId, readonly string[]> = {
 };
 
 /**
- * Everything the ACTIVE tab fetches on arrival — the warm list plus, for
+ * Everything the ACTIVE tab reads on arrival — the fixed list plus, for
  * Discover, the seeds URL the visit's parameters resolve to. This is what the
- * page preloads.
+ * page answers on the server (`mmm-music-bootstrap.ts`) and preloads when it
+ * could not.
  */
 export function musicTabFirstReads(
   tab: MusicTabId,
   params: { genre?: string | null; city?: string | null } = {},
 ): readonly string[] {
-  if (tab === 'discover') return [discoverSeedsUrl(params.genre, params.city), ...TAB_WARM_URLS.discover];
-  return TAB_WARM_URLS[tab];
+  if (tab === 'discover') return [discoverSeedsUrl(params.genre, params.city), ...TAB_FIRST_READS.discover];
+  return TAB_FIRST_READS[tab];
 }

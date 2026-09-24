@@ -133,10 +133,22 @@ test.describe('liking', () => {
      product — the endpoint has to fail — so the network is faulted here
      instead. Both halves are asserted in the negative as well as the
      positive: the point is not that a notice appears, it is that the false
-     claim does not. */
+     claim does not.
+
+     Since DESIGN_SYNC row 512 the page reads a tab's first rows ON THE
+     SERVER, inside the render, so by default these two endpoints never cross
+     the browser's network and a `page.route` fault has nothing to land on —
+     CI read exactly that on the first run after the bootstrap shipped. The
+     header below (`READ_IN_BROWSER_HEADER` in `mmm-music-bootstrap.ts`) asks
+     the server to hand over nothing, so the client fetches each read where
+     the fault is. The failure state it then draws is the same one a failed
+     server read falls back to. */
+  const READ_IN_BROWSER = { 'x-ihype-read-in-browser': '1' };
+
   test('a library that could not be read says so instead of reading as empty', async ({ context, page }) => {
     test.skip(!canSeedSession(), 'AUTH_SECRET and a scratch DATABASE_URL are required.');
     await signIn(context, `e2e-library-unreadable-${RUN}@ihype.org`);
+    await page.setExtraHTTPHeaders(READ_IN_BROWSER);
     await page.route('**/api/fan-favorites', (route) => route.fulfill({ status: 500, body: '{}' }));
     await page.goto('/app/music/playlists');
     await expect(page.getByText(/could not be read just now/i).first()).toBeVisible({ timeout: 15_000 });
@@ -156,6 +168,7 @@ test.describe('liking', () => {
     await expect(page.getByRole('button', { name: /^Unlike E2E Shelf Artist$/ })).toBeVisible();
 
     // Only the collection list, never `/api/stations/<slug>/tracks`.
+    await page.setExtraHTTPHeaders(READ_IN_BROWSER);
     await page.route('**/api/stations', (route) => route.fulfill({ status: 500, body: '{}' }));
     await page.goto('/app/music/playlists');
     await expect(page.getByText(/automatic stations could not be read/i)).toBeVisible({ timeout: 15_000 });
