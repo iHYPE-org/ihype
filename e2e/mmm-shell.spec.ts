@@ -674,8 +674,10 @@ test.describe('Music · Map · Me shell', () => {
        title is not unique — the creation spec uploads the same one on every
        attempt, so after a retry the next card carries this card's label and
        "the card left" cannot be read off it (measured on a scratch database
-       holding three copies). */
-    const card = page.locator('.mmm-deck-card');
+       holding three copies). `.first()` because the card can be in the
+       document twice for a frame while React swaps the streamed segment in
+       (CI read two nodes carrying the same id). */
+    const card = page.locator('.mmm-deck-card').first();
     const cardId = await card.getAttribute('data-item');
     expect(cardId, 'the deck card names its item').toBeTruthy();
     const answered = page.waitForResponse((r) => /\/api\/discover\/seeds\/[^/]+\/save$/.test(r.url()) && r.request().method() === 'POST');
