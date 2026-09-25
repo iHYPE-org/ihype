@@ -64,6 +64,7 @@ export async function PayoutSettingsPanel({ profiles, stripeReady }: { profiles:
                 {stripeReady && (
                   <PayoutConnectButton
                     profileId={p.id}
+                    profileType={p.type}
                     state={p.stripeConnectOnboarded ? 'reconnect' : p.stripeConnectAccountId ? 'finish-setup' : 'connect'}
                   />
                 )}
@@ -113,7 +114,7 @@ export async function PayoutSettingsPanel({ profiles, stripeReady }: { profiles:
         .pset-pill { flex-shrink: 0; font-family: var(--font-mono); font-size: 0.9375rem; text-transform: uppercase; letter-spacing: .1em; padding: 5px 10px; border-radius: var(--radius-pill); }
         .pset-pill-on { background: rgba(var(--role-venue-rgb),.15); color: var(--role-venue); }
         .pset-pill-off { background: var(--ink-a10, rgba(120,120,120,.15)); color: var(--ink-a65); }
-        .pset-account-row { display: flex; align-items: center; gap: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+        .pset-account-row { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
         .pset-account-icon { width: 40px; height: 40px; border-radius: 10px; background: rgba(var(--role-venue-rgb),.12); color: var(--role-venue); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .pset-account-info { flex: 1; min-width: 0; }
         .pset-account-label { font-size: 0.9375rem; font-weight: 500; color: var(--ink); }

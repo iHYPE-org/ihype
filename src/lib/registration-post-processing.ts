@@ -52,7 +52,6 @@ export async function resolveReferrer(refValue: string) {
     select: {
       id: true,
       username: true,
-      isEighteenOrOlder: true,
       profiles: { select: { id: true }, orderBy: { createdAt: 'asc' }, take: 1 },
     },
   });
@@ -61,20 +60,18 @@ export async function resolveReferrer(refValue: string) {
     return {
       resolvedUsername: refUser.username,
       referrerId: refUser.id,
-      referrerIsAdult: refUser.isEighteenOrOlder,
       referrerProfileId: refUser.profiles[0]?.id ?? null,
     };
   }
 
   const refProfile = await db.profile.findUnique({
     where: { hexId: refValue },
-    select: { id: true, owner: { select: { id: true, username: true, isEighteenOrOlder: true } } },
+    select: { id: true, owner: { select: { id: true, username: true } } },
   });
   if (refProfile?.owner) {
     return {
       resolvedUsername: refProfile.owner.username,
       referrerId: refProfile.owner.id,
-      referrerIsAdult: refProfile.owner.isEighteenOrOlder,
       referrerProfileId: refProfile.id,
     };
   }
@@ -87,14 +84,9 @@ async function processReferral(user: RegistrationUser, refValue: string) {
   const resolvedUsername = resolved?.resolvedUsername ?? null;
   const referrerId = resolved?.referrerId ?? null;
   const referrerProfileId = resolved?.referrerProfileId ?? null;
-  const referrerIsAdult = resolved?.referrerIsAdult ?? false;
 
   if (!resolvedUsername || !referrerId || referrerId === user.id) return;
 
-  // Referring is 18+. The API won't hand out a HYPE link without the
-  // attestation, but a link learned earlier still resolves — the new signup
-  // proceeds, the un-attested referrer just earns no credit for it.
-  if (!referrerIsAdult) return;
 
   await recordAuditEvent({
     actorUserId: null,

@@ -6,6 +6,8 @@ import { useI18n } from '@/components/I18nProvider';
 import { useMarkOnboarded } from '@/lib/use-mark-onboarded';
 import { useRouter } from 'next/navigation';
 import { openExternalUrl } from '@/lib/open-external';
+import { MoneyTermsDisclosure } from '@/components/MoneyTermsDisclosure';
+import { MONEY_TERMS_VERSION } from '@/lib/money-terms';
 
 // Step 2 is verification. Artists previously had no such step at all, while
 // the DJ and venue wizards both did — an artist claimed a stage name and the
@@ -48,6 +50,7 @@ export function ArtistOnboardingWizard({
 
   const [payoutBusy, setPayoutBusy] = useState(false);
   const [payoutError, setPayoutError] = useState<string | null>(null);
+  const [moneyTermsAck, setMoneyTermsAck] = useState(false);
 
   // Step 4 is the done screen, reached either by connecting payouts or by the
   // explicit Skip. Both count: skipping an optional step is still finishing.
@@ -128,7 +131,7 @@ export function ArtistOnboardingWizard({
       const res = await fetch('/api/stripe/connect/onboard', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ profileId }),
+        body: JSON.stringify({ profileId, acceptedMoneyTermsVersion: MONEY_TERMS_VERSION }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -304,11 +307,15 @@ export function ArtistOnboardingWizard({
               {t('artistOnboardingWizard.step3SubNet', 'Your 75% share pays out automatically after each show, via Stripe Connect.')}
             </p>
 
+            {/* Every fee and money duty, read and acknowledged before Stripe
+                (row 521); the route refuses setup without the acknowledgement. */}
+            <MoneyTermsDisclosure acknowledged={moneyTermsAck} onAcknowledgeChange={setMoneyTermsAck} role="ARTIST" />
+
             {payoutError && <div className="aow-error">{payoutError}</div>}
 
             <button
               className="aow-btn aow-btn-solid"
-              disabled={payoutBusy}
+              disabled={payoutBusy || !moneyTermsAck}
               onClick={connectStripe}
               type="button"
             >

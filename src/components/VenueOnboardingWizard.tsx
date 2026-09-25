@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useI18n } from '@/components/I18nProvider';
+import { MoneyTermsDisclosure } from '@/components/MoneyTermsDisclosure';
 import { useMarkOnboarded } from '@/lib/use-mark-onboarded';
 
 type VerificationStatus = 'UNVERIFIED' | 'PENDING' | 'VERIFIED' | 'REJECTED';
@@ -234,6 +235,11 @@ export default function VenueOnboardingWizard({
               {t('venueOnboardingWizard.splitArtistNet', '75% artist after Stripe’s fee')} · <span className="von-split-venue-text">{t('venueOnboardingWizard.splitVenueNet', '25% your venue')}</span> · {t('venueOnboardingWizard.splitIhype', '0% iHYPE')}
             </div>
           </div>
+
+          {/* Every fee and money duty a venue takes on as the seller (row 521).
+              Shown here, before verification; acknowledged when the venue
+              connects payouts, which is the step that lets it sell. */}
+          <MoneyTermsDisclosure role="VENUE" />
 
           <div className="von-sublabel">{t('venueOnboardingWizard.bookingInboxLabel', 'Booking inbox')}</div>
           <div className="von-empty">

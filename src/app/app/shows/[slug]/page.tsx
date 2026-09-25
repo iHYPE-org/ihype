@@ -36,7 +36,7 @@ export const dynamic = 'force-dynamic';
  * ## Why TicketSaleCard is reused rather than rebuilt
  *
  * It is the transaction: quantity, the per-show cap, Turnstile (whose tokens
- * are single-use and must be reset between attempts), the 18+ gate, the
+ * are single-use and must be reset between attempts), the
  * unverified-email path, stored payment tokens, and the capacity read. Every
  * one of those is a rule someone learned the hard way. CLAUDE.md's first rule
  * is that a design sync updates the UI layer and never replaces the wiring, so

@@ -94,7 +94,7 @@ describe('there is no iHYPE platform fee', () => {
         }
       }
     }
-    expect(offenders, 'iHYPE charges 0%; the 10% that exists is the promoter pool').toEqual([]);
+    expect(offenders, 'iHYPE charges 0%; the only fee on a ticket is Stripe’s card fee').toEqual([]);
   });
 
   it('still says so on the surfaces that promise it', () => {

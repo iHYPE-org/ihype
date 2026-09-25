@@ -770,8 +770,8 @@ export async function refundTicketPaymentIntent(
       ...(artistWasRouted ? { reverse_transfer: true, refund_application_fee: true } : {}),
       /* On a VENUE-DIRECT refund the refund is debited from the VENUE (they
        * are the merchant), so the platform returns its application fee — the
-       * artist's 70% and the promoter's 10% it was carrying — or the venue
-       * would be funding the fan's whole refund out of the 20% it kept.
+       * artist's 75% share it was carrying — or the venue would be funding
+       * the fan's whole refund out of the 25% it kept.
        * There is no transfer to reverse on a direct charge. */
       ...(venueIsMerchant ? { refund_application_fee: true } : {}),
     },

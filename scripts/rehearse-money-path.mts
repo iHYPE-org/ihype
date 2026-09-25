@@ -370,11 +370,6 @@ async function seedEverything(prisma: PrismaClient) {
 
   const stamp = Date.now().toString(36);
   const fan = await seedSessionCookie(`rehearsal-fan-${stamp}@example.com`);
-  /* The purchase route requires an adult attestation (`isEighteenOrOlder`)
-     before it will sell — the e2e fixture seeds a bare fan, so stamp it the
-     way Settings would. Deliberately NOT part of the fixture's defaults: specs
-     that assert the AGE_18_REQUIRED refusal need a fan without it. */
-  await prisma.user.update({ where: { id: fan.user.id }, data: { isEighteenOrOlder: true } });
   const promoter = await seedSessionCookie(`rehearsal-promoter-${stamp}@example.com`, {
     profiles: [{ type: 'ARTIST', name: 'Rehearsal Promoter' }],
   });

@@ -8,6 +8,8 @@ import Link from 'next/link';
 import { PasskeyManager } from '@/components/AuthScreens';
 import { useI18n } from '@/components/I18nProvider';
 import { openExternalUrl } from '@/lib/open-external';
+import { MoneyTermsDisclosure } from '@/components/MoneyTermsDisclosure';
+import { MONEY_TERMS_VERSION, isMoneyTermsRole } from '@/lib/money-terms';
 import { PAYOUT_HOLD_DAYS } from '@/lib/payout-release';
 
 interface Prefs {
@@ -170,8 +172,6 @@ export function MmmSettings() {
   const [email, setEmail] = useState('');
   const [emailVerified, setEmailVerified] = useState(true);
   const [role, setRole] = useState('FAN');
-  const [isAdult, setIsAdult] = useState(false);
-  const [attesting, setAttesting] = useState(false);
   const [prefs, setPrefs] = useState<Prefs>({
     newShows: true, milestones: true, weeklyDigest: true,
     crateUploads: true, bookingRequests: true,
@@ -181,7 +181,9 @@ export function MmmSettings() {
   const [inviteHexId, setInviteHexId] = useState<string | null>(null);
   const [inviteCopied, setInviteCopied] = useState(false);
   const [paymentSaved, setPaymentSaved] = useState(false);
-  const [payout, setPayout] = useState<{ profileId: string; connected: boolean; started: boolean } | null>(null);
+  const [payout, setPayout] = useState<{ profileId: string; profileType?: string; connected: boolean; started: boolean } | null>(null);
+  /* The money terms, acknowledged beside the Connect control (row 521). */
+  const [moneyTermsAck, setMoneyTermsAck] = useState(false);
   const [moneyBusy, setMoneyBusy] = useState<'payment' | 'payout' | null>(null);
   const [hypeStats, setHypeStats] = useState<Record<string, number | null> | null>(null);
   const [loading, setLoading] = useState(true);
@@ -215,7 +217,6 @@ export function MmmSettings() {
         setEmail(data.email ?? '');
         setEmailVerified(Boolean(data.emailVerified));
         setRole(data.role ?? 'FAN');
-        setIsAdult(Boolean(data.isEighteenOrOlder));
         if (data.notificationPreference) setPrefs((p) => ({ ...p, ...data.notificationPreference }));
         if (data.creatorProfile) setDiscoverable(Boolean(data.creatorProfile.discoverable));
         if (data.inviteHexId) setInviteHexId(data.inviteHexId);
@@ -339,29 +340,6 @@ export function MmmSettings() {
     }
   }
 
-  async function attestAdult() {
-    if (!confirm(t('settingsPage.confirmAdult', 'Confirm that you are 18 years of age or older? This unlocks ticket purchases and referral links and cannot be undone.'))) return;
-    setAttesting(true);
-    setError(null);
-    try {
-      const res = await fetch('/api/me', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ attestEighteenOrOlder: true }),
-      });
-      if (res.ok) {
-        setIsAdult(true);
-      } else {
-        const d = await res.json().catch(() => ({}));
-        setError(d.error ?? t('settingsPage.ageConfirmFailed', 'Could not save your age confirmation.'));
-      }
-    } catch {
-      setError(t('settingsPage.networkError', 'Network error'));
-    } finally {
-      setAttesting(false);
-    }
-  }
-
   async function detachIdentity() {
     if (!confirm(t('settingsPage.confirmDetach', 'Detach your identity from activity history now?'))) return;
     setDetaching(true);
@@ -443,7 +421,7 @@ export function MmmSettings() {
       const res = await fetch('/api/stripe/connect/onboard', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ profileId: payout.profileId }),
+        body: JSON.stringify({ profileId: payout.profileId, ...(isMoneyTermsRole(payout.profileType) ? { acceptedMoneyTermsVersion: MONEY_TERMS_VERSION } : {}) }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.onboardingUrl) throw new Error(data.error ?? t('settingsPage.payoutConnectFailed', 'Could not open payout onboarding.'));
@@ -663,11 +641,15 @@ export function MmmSettings() {
                   </div>
                 </div>
                 {payout && (
-                  <button className="settings-btn settings-btn-ghost" disabled={moneyBusy === 'payout'} onClick={() => void connectPayouts()} type="button">
+                  <button className="settings-btn settings-btn-ghost" disabled={moneyBusy === 'payout' || (isMoneyTermsRole(payout.profileType) && !moneyTermsAck)} onClick={() => void connectPayouts()} type="button">
                     {moneyBusy === 'payout' ? t('settingsPage.opening', 'Opening…') : payout.connected ? t('settingsPage.manage', 'Manage') : t('settingsPage.connect', 'Connect')}
                   </button>
                 )}
               </div>
+
+              {payout && isMoneyTermsRole(payout.profileType) ? (
+                <MoneyTermsDisclosure acknowledged={moneyTermsAck} onAcknowledgeChange={setMoneyTermsAck} role={payout.profileType} />
+              ) : null}
 
               {isCreator && (
                 <Row action={<Link className="settings-btn settings-btn-ghost" href="/app/me/payouts?tab=history">{t('settingsPage.view', 'View')}</Link>} detail={t('settingsPage.payoutHistoryDetailNet', 'Every payout receipt, itemized by share')} label={t('settingsPage.payoutHistory', 'Payout history')} />
@@ -703,19 +685,6 @@ export function MmmSettings() {
                 action={<Link className="settings-btn settings-btn-ghost" href="/verify">{t('settingsPage.manage', 'Manage')}</Link>}
                 detail={role.charAt(0) + role.slice(1).toLowerCase()}
                 label={t('settingsPage.role', 'Role')}
-              />
-              <Row
-                action={
-                  isAdult ? (
-                    <span className="settings-row-detail" style={{ color: 'var(--role-venue)' }}>{t('settingsPage.adultConfirmed', '✓ 18+ confirmed')}</span>
-                  ) : (
-                    <button className="settings-btn settings-btn-ghost" disabled={attesting} onClick={attestAdult} type="button">
-                      {attesting ? t('settingsPage.saving', 'Saving…') : t('settingsPage.imEighteen', "I'm 18 or older")}
-                    </button>
-                  )
-                }
-                detail={isAdult ? t('settingsPage.adultUnlockedDetail', 'Ticket purchases and referral links are unlocked') : t('settingsPage.adultRequiredDetail', 'Required to buy tickets or share referral links (13+ to listen)')}
-                label={t('settingsPage.ageVerification', 'Age verification')}
               />
             </div>
           </div>

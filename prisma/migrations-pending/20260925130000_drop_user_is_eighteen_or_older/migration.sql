@@ -1,0 +1,21 @@
+-- @gated
+-- Drops User.isEighteenOrOlder, the 18+ attestation (owner, 2026-09-25:
+-- "since we no longer require financial info for fans, remove the 18+
+-- requirement from the entire site"). Nothing reads or writes it any more:
+-- ticket purchase, ticket resale, HYPE links and referral credit no longer
+-- ask, signup and Settings no longer offer it, and the column is out of
+-- schema.prisma. The 13+ attestation (isThirteenOrOlder) is kept.
+--
+-- The attestation history is also in AuditLog (action age_attested_eighteen)
+-- for every member who confirmed in Settings, so dropping the column loses
+-- no record of who attested and when; it loses the signup-time ticks, which
+-- nothing ever audited.
+--
+-- Before applying, run against production and record the numbers here:
+--   SELECT count(*) FILTER (WHERE "isEighteenOrOlder") AS is_eighteen_or_older_true,
+--          count(*) AS users
+--   FROM "User";
+-- Any count is acceptable — the value gates nothing — the point is that the
+-- number is written down before the data goes.
+
+ALTER TABLE "User" DROP COLUMN "isEighteenOrOlder";

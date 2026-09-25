@@ -88,7 +88,6 @@ export function TicketSaleCard({
   const [quantity, setQuantity] = useState('1');
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [ageGated, setAgeGated] = useState(false);
   const [emailUnverified, setEmailUnverified] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState('');
   const turnstileRef = useRef<TurnstileWidgetHandle>(null);
@@ -158,7 +157,6 @@ export function TicketSaleCard({
     event.preventDefault();
     setPending(true);
     setMessage(null);
-    setAgeGated(false);
     setEmailUnverified(false);
 
     const response = await fetch(`/api/shows/${showId}/tickets`, {
@@ -191,7 +189,6 @@ export function TicketSaleCard({
       );
       router.refresh();
     } else {
-      setAgeGated(data.code === 'AGE_18_REQUIRED');
       setEmailUnverified(data.code === 'EMAIL_NOT_VERIFIED');
       setMessage(
         data.code === 'PAYMENTS_UNAVAILABLE'
@@ -508,12 +505,6 @@ export function TicketSaleCard({
             {message ? (
               <span className="meta">
                 {message}
-                {ageGated ? (
-                  <>
-                    {' '}
-                    <Link href="/app/me/settings">{t('ticketSaleCard.confirmAgeLink', 'Confirm your age in Settings →')}</Link>
-                  </>
-                ) : null}
                 {emailUnverified ? (
                   <>
                     {' '}

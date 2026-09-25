@@ -164,6 +164,17 @@ const RETIRED = [
     instead: 'Stripe\'s card fee comes off the face value; the rest is 75% to the artist and 25% to the venue; iHYPE takes 0%. The buyer pays the ticket price plus tax. A HYPE link tracks referrals and earns nothing.',
   },
   {
+    /* THE 18+ REQUIREMENT IS GONE (owner, 2026-09-25: "since we no longer
+       require financial info for fans, remove the 18+ requirement from the
+       entire site"). A fan pays the venue through Stripe's hosted checkout
+       and iHYPE stores no card, so the attestation guarded nothing. A show's
+       own "18+" door policy is the venue's and is NOT matched here. */
+    pattern: /\b18 (?:years )?(?:or older|and over|of age or older)\b|\bconfirm your age\b|\b18\+ (?:confirmed|to buy|required)\b/i,
+    what: 'an 18+ requirement to buy tickets or share a HYPE link',
+    retired: '2026-09-25 — owner decision; the column drop is parked',
+    instead: 'The only age rule is the 13+ attestation at signup. A venue may still mark its own show 18+ or 21+ at the door.',
+  },
+  {
     pattern: /\bspots? per day\b|\beffective CPM\b|\bcost per 1,?000\b/i,
     what: 'per-impression ad pricing',
     retired: '2026-09-10 (DESIGN_SYNC row 384)',

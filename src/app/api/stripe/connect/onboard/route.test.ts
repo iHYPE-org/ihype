@@ -20,6 +20,9 @@ vi.mock('@/lib/stripe', () => ({
 const logError = vi.fn();
 vi.mock('@/lib/logger', () => ({ log: { error: (...a: unknown[]) => logError(...a) } }));
 
+const recordAuditEvent = vi.fn().mockResolvedValue(undefined);
+vi.mock('@/lib/audit', () => ({ recordAuditEvent: (...a: unknown[]) => recordAuditEvent(...a) }));
+
 const profileFindUnique = vi.fn();
 const profileUpdate = vi.fn();
 vi.mock('@/lib/db', () => ({
@@ -32,6 +35,9 @@ vi.mock('@/lib/db', () => ({
 }));
 
 import { POST } from './route';
+import { MONEY_TERMS_VERSION } from '@/lib/money-terms';
+
+const ACCEPTED = { acceptedMoneyTermsVersion: MONEY_TERMS_VERSION };
 
 const PROFILE = {
   id: 'prof_1',
@@ -62,7 +68,7 @@ beforeEach(() => {
 
 describe('POST /api/stripe/connect/onboard', () => {
   it('creates the account, stores its id, and hands back an onboarding link', async () => {
-    const res = await POST(makeRequest({ profileId: 'prof_1' }));
+    const res = await POST(makeRequest({ profileId: 'prof_1', ...ACCEPTED }));
 
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ onboardingUrl: 'https://connect.stripe.com/setup/x' });
@@ -81,7 +87,7 @@ describe('POST /api/stripe/connect/onboard', () => {
        complete. */
     profileUpdate.mockRejectedValue(new Error('connection terminated'));
 
-    const res = await POST(makeRequest({ profileId: 'prof_1' }));
+    const res = await POST(makeRequest({ profileId: 'prof_1', ...ACCEPTED }));
 
     expect(res.status).toBe(500);
     expect(createConnectOnboardingUrl).not.toHaveBeenCalled();
@@ -93,7 +99,7 @@ describe('POST /api/stripe/connect/onboard', () => {
   it('never creates a second account for a profile that already has one', async () => {
     profileFindUnique.mockResolvedValue({ ...PROFILE, stripeConnectAccountId: 'acct_existing' });
 
-    const res = await POST(makeRequest({ profileId: 'prof_1' }));
+    const res = await POST(makeRequest({ profileId: 'prof_1', ...ACCEPTED }));
 
     expect(res.status).toBe(200);
     expect(createStripeConnectAccount).not.toHaveBeenCalled();
@@ -103,10 +109,41 @@ describe('POST /api/stripe/connect/onboard', () => {
     );
   });
 
+  it('refuses an artist or venue that has not acknowledged the current money terms, before any Stripe call', async () => {
+    for (const body of [{ profileId: 'prof_1' }, { profileId: 'prof_1', acceptedMoneyTermsVersion: '2000-01-01' }]) {
+      const res = await POST(makeRequest(body));
+      expect(res.status).toBe(400);
+      expect(await res.json()).toMatchObject({ code: 'MONEY_TERMS_REQUIRED', version: MONEY_TERMS_VERSION });
+    }
+    profileFindUnique.mockResolvedValue({ ...PROFILE, type: 'VENUE' });
+    expect((await POST(makeRequest({ profileId: 'prof_1' }))).status).toBe(400);
+    expect(createStripeConnectAccount).not.toHaveBeenCalled();
+    expect(createConnectOnboardingUrl).not.toHaveBeenCalled();
+    expect(recordAuditEvent).not.toHaveBeenCalled();
+  });
+
+  it('records the acknowledgement with its version', async () => {
+    await POST(makeRequest({ profileId: 'prof_1', ...ACCEPTED }));
+    expect(recordAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'money_terms_accepted',
+        entityId: 'prof_1',
+        metadata: { version: MONEY_TERMS_VERSION, profileType: 'ARTIST' },
+      }),
+    );
+  });
+
+  it('does not ask a fan profile, which sells nothing', async () => {
+    profileFindUnique.mockResolvedValue({ ...PROFILE, type: 'LISTENER' });
+    const res = await POST(makeRequest({ profileId: 'prof_1' }));
+    expect(res.status).toBe(200);
+    expect(recordAuditEvent).not.toHaveBeenCalled();
+  });
+
   it('refuses a profile the caller does not own', async () => {
     auth.mockResolvedValue({ user: { id: 'someone_else', role: 'ARTIST' } });
 
-    const res = await POST(makeRequest({ profileId: 'prof_1' }));
+    const res = await POST(makeRequest({ profileId: 'prof_1', ...ACCEPTED }));
 
     expect(res.status).toBe(403);
     expect(createStripeConnectAccount).not.toHaveBeenCalled();

@@ -354,19 +354,9 @@ async function main() {
   const seededBalanceUsers = new Set<string>();
   const fan = await seedSessionCookie(`alpha-fan-${run}@example.com`, { hypeBalance: 500 });
   seededBalanceUsers.add(fan.user.id);
-  /* `isEighteenOrOlder` defaults to FALSE and the ticket route refuses a
-     purchase without it ("Confirm your age in Settings to buy tickets"). That
-     gate is correct and worth keeping, so the fan confirms their age here —
-     the same state the Settings toggle writes — rather than the walk pretending
-     the gate does not exist. */
-  await prisma.user.update({ where: { id: fan.user.id }, data: { isEighteenOrOlder: true } });
   const promoter = await seedSessionCookie(`alpha-promoter-${run}@example.com`, {
     profiles: [{ type: 'ARTIST', name: `Test Promoter ${run}`, verified: true }],
   });
-  /* `processReferral` pays nothing when the REFERRER is not 18+ (a deliberate
-     gate on paying minors), and the fixture defaults the flag to false. Without
-     this the referral item measures the gate rather than the reward. */
-  await prisma.user.update({ where: { id: promoter.user.id }, data: { isEighteenOrOlder: true } });
 
   const artistProfile = creator.profiles.find((p) => p.type === 'ARTIST')!;
   const venueProfile = creator.profiles.find((p) => p.type === 'VENUE')!;
@@ -489,7 +479,6 @@ async function main() {
       /* Both attestations are legal, not preference — the route refuses the
          signup without them, which is the behaviour worth keeping. */
       isThirteenOrOlder: true,
-      isEighteenOrOlder: true,
       turnstileToken: 'alpha-walk-token',
     };
 
@@ -538,7 +527,7 @@ async function main() {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           email, name: shared, role: 'FAN',
-          isThirteenOrOlder: true, isEighteenOrOlder: true,
+          isThirteenOrOlder: true,
           turnstileToken: 'alpha-walk-token', inviteCode: code,
         }),
       });
@@ -578,7 +567,7 @@ async function main() {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           email, name, role: 'FAN',
-          isThirteenOrOlder: true, isEighteenOrOlder: true,
+          isThirteenOrOlder: true,
           turnstileToken: 'alpha-walk-token', inviteCode: code,
         }),
       });
@@ -1779,10 +1768,24 @@ async function main() {
   // ── 29. Update payout method ─────────────────────────────────────────────
   await item('29. Update payout method (Stripe Connect onboarding)', async () => {
     if (!stripe) blocked('STRIPE_SECRET_KEY not set');
-    const attempt = await api('/api/stripe/connect/onboard', {
+    /* The money terms first (row 521): an artist who never acknowledged them
+       is refused before any Stripe account exists, and the refusal names the
+       version to acknowledge — which is what the retry sends, so the walk
+       proves the gate and the pass with one source of the version. */
+    const unacknowledged = await api('/api/stripe/connect/onboard', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ profileId: artistProfile.id }),
+      cookie: creator.cookie,
+    });
+    assert(
+      unacknowledged.status === 400 && unacknowledged.body?.code === 'MONEY_TERMS_REQUIRED' && unacknowledged.body?.version,
+      `onboarding without the money terms answered ${unacknowledged.status} ${JSON.stringify(unacknowledged.body).slice(0, 160)}, expected 400 MONEY_TERMS_REQUIRED`,
+    );
+    const attempt = await api('/api/stripe/connect/onboard', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ profileId: artistProfile.id, acceptedMoneyTermsVersion: unacknowledged.body.version }),
       cookie: creator.cookie,
     });
 
@@ -1912,7 +1915,7 @@ async function main() {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         email, name: `Referred ${run}`, role: 'FAN',
-        isThirteenOrOlder: true, isEighteenOrOlder: true,
+        isThirteenOrOlder: true,
         turnstileToken: 'alpha-walk-token', inviteCode: code,
         ref: referrerProfile.hexId,
       }),

@@ -6,6 +6,7 @@ import { FollowButton } from '@/components/FollowButton';
 import { PageEditor } from '@/components/PageEditor';
 import { PageRoleModules } from '@/components/PageRoleModules';
 import { PullToRefresh } from '@/components/PullToRefresh';
+import { MoneyTermsDisclosure } from '@/components/MoneyTermsDisclosure';
 import { useI18n } from '@/components/I18nProvider';
 import { useRegisterStations } from '@/components/mmm/MmmStations';
 import { createCardDesc, createCardName, netFilterLabel, pagesTabLabel, profileTypeLabel } from '@/lib/i18n-enum-labels';
@@ -710,6 +711,9 @@ export function PagesHome({
                   <div key={card.type} style={{
                     border: `1px solid ${hexA(card.color, 0.35)}`, borderRadius: 14, padding: 20,
                     background: hexA(card.color, 0.06), display: 'flex', flexDirection: 'column', gap: 12,
+                    /* An artist or venue page reads the money terms before it
+                       exists, so the card takes the whole row to hold them. */
+                    ...(card.type === 'ARTIST' || card.type === 'VENUE' ? { gridColumn: '1 / -1' } : {}),
                   }}>
                     <div style={{ width: 40, height: 40, borderRadius: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', background: card.bg }}>
                       {card.icon}
@@ -739,6 +743,7 @@ export function PagesHome({
                         <span>{t('pagesHome.uploadPolicyAttestation', 'I confirm I am authorized to upload or use the music/media I add to iHYPE.')}</span>
                       </label>
                     )}
+                    {(card.type === 'ARTIST' || card.type === 'VENUE') && <MoneyTermsDisclosure role={card.type} />}
                     {createError && <div style={{ fontSize: '0.9375rem', color: 'var(--accent-text)' }}>{createError}</div>}
                     <div style={{ display: 'flex', gap: 8 }}>
                       <button

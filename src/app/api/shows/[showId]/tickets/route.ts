@@ -115,7 +115,6 @@ export async function POST(
           name: true,
           role: true,
           emailVerified: true,
-          isEighteenOrOlder: true,
           createdAt: true,
           storedPaymentTokenRef: true,
           stripeCustomerId: true,
@@ -175,15 +174,12 @@ export async function POST(
         { status: 403 },
       );
     }
-    if (!user.isEighteenOrOlder) {
-      return NextResponse.json(
-        {
-          error: 'Ticket purchases require you to be 18 or older. Confirm your age in Settings to buy tickets.',
-          code: 'AGE_18_REQUIRED',
-        },
-        { status: 403 },
-      );
-    }
+    /* There is no 18+ gate (owner, 2026-09-25: "since we no longer require
+       financial info for fans, remove the 18+ requirement from the entire
+       site"). A buyer pays the venue through Stripe's hosted checkout and
+       iHYPE stores no card, so the attestation guarded nothing here; the 13+
+       attestation at signup is the product's one age rule. A venue's own
+       door policy is the show's age restriction, printed on the page. */
     if (!show) return NextResponse.json({ error: 'Show not found' }, { status: 404 });
 
     if (

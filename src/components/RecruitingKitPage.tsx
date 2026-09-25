@@ -1,6 +1,7 @@
 import { formatNumber } from '@/lib/format-locale';
 import Link from 'next/link';
 import { IhypeMark } from '@/components/brand/IhypeMark';
+import { MoneyTermsDisclosure } from '@/components/MoneyTermsDisclosure';
 import { getServerI18n } from '@/lib/i18n/server';
 
 type Stat = { value: string; label: string };
@@ -126,6 +127,15 @@ export async function RecruitingKitPage({ config, cityHeat }: { config: Recruiti
         {config.fanFitBody && <p className="rk-fanfit">{config.fanFitBody}</p>}
       </section>
 
+      {/* The money terms are read BEFORE the apply button is pressed, not
+          after: an artist or venue deciding whether to sign up is exactly who
+          must not be surprised by a fee or a tax duty later (row 521). */}
+      {config.role !== 'FAN' && (
+        <section className="rk-money">
+          <MoneyTermsDisclosure role={config.role} />
+        </section>
+      )}
+
       <section className="rk-features">
         <div className="rk-features-inner">
           <div className="rk-features-eyebrow">{config.featuresEyebrow}</div>
@@ -193,6 +203,7 @@ export async function RecruitingKitPage({ config, cityHeat }: { config: Recruiti
         .rk-heat-track { flex: 1; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
         .rk-heat-bar { height: 100%; border-radius: 3px; }
         .rk-charter { background: color-mix(in srgb, var(--rk-glow) 3%, transparent); border-top: 1px solid color-mix(in srgb, var(--rk-glow) 8%, transparent); border-bottom: 1px solid color-mix(in srgb, var(--rk-glow) 8%, transparent); padding: 80px 0; }
+        .rk-money { max-width: 760px; margin: 0 auto; padding: 64px 32px 0; }
         .rk-charter-inner { max-width: 1080px; margin: 0 auto; padding: 0 32px; display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
         .rk-quote { font-family: var(--font-serif, 'Instrument Serif', serif); font-style: italic; font-size: clamp(1.8rem, 4vw, 3.2rem); line-height: 1.12; }
         .rk-quote span { color: var(--rk-tint); }

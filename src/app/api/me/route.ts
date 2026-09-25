@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { recordAuditEvent } from '@/lib/audit';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 
@@ -13,7 +12,7 @@ export async function GET() {
     where: { id: session.user.id },
     select: {
       id: true, name: true, email: true, username: true, role: true,
-      isEighteenOrOlder: true, emailVerified: true, stripeCustomerId: true,
+      emailVerified: true, stripeCustomerId: true,
       notificationPreference: {
         select: {
           newShows: true, milestones: true, weeklyDigest: true,
@@ -45,7 +44,7 @@ export async function GET() {
   const inviteProfile = await db.profile.findFirst({
     where: { ownerId: session.user.id },
     orderBy: { createdAt: 'asc' },
-    select: { hexId: true, id: true, stripeConnectAccountId: true, stripeConnectOnboarded: true },
+    select: { hexId: true, id: true, type: true, stripeConnectAccountId: true, stripeConnectOnboarded: true },
   });
 
   const { stripeCustomerId, ...safeUser } = user;
@@ -62,7 +61,7 @@ export async function GET() {
        Stripe ids stay server-side. */
     payment: { saved: Boolean(stripeCustomerId) },
     payout: inviteProfile
-      ? { profileId: inviteProfile.id, connected: Boolean(inviteProfile.stripeConnectOnboarded), started: Boolean(inviteProfile.stripeConnectAccountId) }
+      ? { profileId: inviteProfile.id, profileType: inviteProfile.type, connected: Boolean(inviteProfile.stripeConnectOnboarded), started: Boolean(inviteProfile.stripeConnectAccountId) }
       : null,
   });
 }
@@ -73,7 +72,6 @@ export async function PATCH(req: Request) {
 
   let body: {
     name?: string;
-    attestEighteenOrOlder?: boolean;
     discoverable?: boolean;
     notificationPreference?: {
       newShows: boolean; milestones: boolean; weeklyDigest: boolean;
@@ -86,10 +84,8 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  const updates: { name?: string; isEighteenOrOlder?: boolean } = {};
+  const updates: { name?: string } = {};
   if (typeof body.name === 'string') updates.name = body.name.trim().slice(0, 100);
-  // One-way: the 18+ attestation can only be set, never cleared.
-  if (body.attestEighteenOrOlder === true) updates.isEighteenOrOlder = true;
 
   await db.user.update({ where: { id: session.user.id }, data: updates });
 
@@ -104,16 +100,6 @@ export async function PATCH(req: Request) {
     if (creatorProfile) {
       await db.profile.update({ where: { id: creatorProfile.id }, data: { discoverable: body.discoverable } });
     }
-  }
-
-  if (updates.isEighteenOrOlder) {
-    // Age attestations need a compliance trail — record who attested and when.
-    await recordAuditEvent({
-      actorUserId: session.user.id,
-      action: 'age_attested_eighteen',
-      entityType: 'user',
-      entityId: session.user.id,
-    }).catch(() => {});
   }
 
   if (body.notificationPreference) {

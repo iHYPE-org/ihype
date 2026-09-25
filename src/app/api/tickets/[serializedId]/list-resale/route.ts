@@ -32,28 +32,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
     const { resalePriceCents } = body;
 
-    const [user, ticket] = await Promise.all([
-      db.user.findUnique({
-        where: { id: session.user.id },
-        select: { isEighteenOrOlder: true },
-      }),
-      db.ticket.findUnique({
-        where: { serializedId },
-        select: { id: true, status: true, ticketOrder: { select: { buyerUserId: true } }, show: { select: { ticketPriceCents: true } } }
-      }),
-    ]);
+    const ticket = await db.ticket.findUnique({
+      where: { serializedId },
+      select: { id: true, status: true, ticketOrder: { select: { buyerUserId: true } }, show: { select: { ticketPriceCents: true } } }
+    });
     if (!ticket) return NextResponse.json({ error: 'Ticket not found.' }, { status: 404 });
     if (ticket.ticketOrder.buyerUserId !== session.user.id) return NextResponse.json({ error: 'Not your ticket.' }, { status: 403 });
-    // Same 18+ rule as purchasing — selling a ticket is a financial transaction.
-    if (!user?.isEighteenOrOlder) {
-      return NextResponse.json(
-        {
-          error: 'Ticket resale requires you to be 18 or older. Confirm your age in Settings first.',
-          code: 'AGE_18_REQUIRED',
-        },
-        { status: 403 },
-      );
-    }
     if (ticket.status !== 'VALID') return NextResponse.json({ error: 'Ticket is not eligible for resale.' }, { status: 400 });
     if (resalePriceCents > (ticket.show?.ticketPriceCents ?? 0) * 1.1) {
       return NextResponse.json({ error: 'Resale price cannot exceed 110% of original price.' }, { status: 400 });
