@@ -6,7 +6,6 @@ import {
   validateTicketSplit,
   formatCurrencyFromCents,
   formatPercent,
-  getRemainingPayoutPercent,
   PLATFORM_COMMISSION_PERCENT
 } from '../ticketing';
 
@@ -19,9 +18,8 @@ describe('ticket scan: payout integrity checks', () => {
     const input = {
       ticketPriceCents: 4500,
       quantity: 2,
-      venuePayoutPercent: 45,
-      artistPayoutPercent: 50,
-      promoterPayoutPercent: 5
+      venuePayoutPercent: 25,
+      artistPayoutPercent: 75
     };
     const first = calculateTicketOrderPayouts(input);
     const second = calculateTicketOrderPayouts(input);
@@ -33,20 +31,14 @@ describe('ticket scan: payout integrity checks', () => {
       const result = calculateTicketOrderPayouts({
         ticketPriceCents: price,
         quantity: 1,
-        venuePayoutPercent: 45,
-        artistPayoutPercent: 50,
-        promoterPayoutPercent: 5
+        venuePayoutPercent: 25,
+        artistPayoutPercent: 75
       });
       expect(result.platformCommissionCents).toBe(0);
       expect(PLATFORM_COMMISSION_PERCENT).toBe(0);
     }
   });
 
-  it('remaining payout percent reflects promoter share correctly', () => {
-    expect(getRemainingPayoutPercent(5)).toBe(95);
-    expect(getRemainingPayoutPercent(0)).toBe(100);
-    expect(getRemainingPayoutPercent(10)).toBe(90);
-  });
 });
 
 describe('ticket scan: tax verification by venue location', () => {
@@ -107,28 +99,22 @@ describe('ticket scan: complete order validation', () => {
   const validOrder = {
     ticketPriceCents: 2000,
     quantity: 1,
-    venuePayoutPercent: 45,
-    artistPayoutPercent: 50,
-    promoterPayoutPercent: 5,
+    venuePayoutPercent: 25,
+    artistPayoutPercent: 75,
     buyerLocation: { stateRegion: 'NY', country: 'US', postalCode: '10001' },
     venueLocation: { stateRegion: 'NY', country: 'US', postalCode: '10001' }
   };
 
-  it('total charge is subtotal + taxes + reserve + the buyer-paid Stripe fee', () => {
-    // Four named components and nothing else. The protection reserve joined
-    // this sum on 2026-08-27; like processing it rides on top of face value
-    // and is not part of anyone's share.
+  it('total charge is face value plus tax, and nothing else', () => {
     const result = calculateTicketOrderFinancials(validOrder);
-    expect(result.totalChargeCents).toBe(
-      result.subtotalCents + result.totalTaxCents + result.reserveFeeCents + result.processingFeeCents,
-    );
+    expect(result.totalChargeCents).toBe(result.subtotalCents + result.totalTaxCents);
   });
 
-  it('payouts never exceed subtotal (taxes are buyer-side surcharges)', () => {
+  it('the shares and Stripe fee account for the whole face value (platform takes 0%)', () => {
     const result = calculateTicketOrderFinancials(validOrder);
-    const payoutTotal = result.venuePayoutCents + result.artistPayoutCents + result.promoterPayoutCents;
-    expect(payoutTotal).toBeLessThanOrEqual(result.subtotalCents);
-    expect(payoutTotal).toBe(result.subtotalCents); // exactly equal since platform takes 0%
+    const payoutTotal = result.venuePayoutCents + result.artistPayoutCents;
+    expect(payoutTotal + result.stripeFeeCents).toBe(result.subtotalCents);
+    expect(result.promoterPayoutCents).toBe(0);
   });
 
   it('rejects fractional ticket prices at scan validation', () => {
@@ -151,21 +137,21 @@ describe('ticket scan: complete order validation', () => {
 });
 
 describe('ticket scan: split validation at check-in', () => {
-  it('validates a 45/50/5 split', () => {
+  it('validates the 75/25 charter split', () => {
     expect(() =>
-      validateTicketSplit({ venuePayoutPercent: 45, artistPayoutPercent: 50, promoterPayoutPercent: 5 })
+      validateTicketSplit({ venuePayoutPercent: 25, artistPayoutPercent: 75 })
     ).not.toThrow();
   });
 
   it('rejects mismatched split totals', () => {
     expect(() =>
-      validateTicketSplit({ venuePayoutPercent: 40, artistPayoutPercent: 40, promoterPayoutPercent: 5 })
+      validateTicketSplit({ venuePayoutPercent: 20, artistPayoutPercent: 70 })
     ).toThrow();
   });
 
-  it('rejects non-integer promoter percent', () => {
+  it('rejects non-integer percentages', () => {
     expect(() =>
-      validateTicketSplit({ venuePayoutPercent: 45, artistPayoutPercent: 50, promoterPayoutPercent: 4.5 })
+      validateTicketSplit({ venuePayoutPercent: 24.5, artistPayoutPercent: 75.5 })
     ).toThrow('whole number');
   });
 });

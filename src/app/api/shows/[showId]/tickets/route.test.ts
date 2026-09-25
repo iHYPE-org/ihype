@@ -28,6 +28,8 @@ vi.mock('@/lib/tickets', () => ({
   formatTicketStatus: vi.fn().mockReturnValue('Captured'),
 }));
 vi.mock('@/lib/ticketing', () => ({
+  ARTIST_SHARE_PERCENT: 75,
+  VENUE_SHARE_PERCENT: 25,
   calculateTicketOrderFinancials: vi.fn().mockReturnValue({
     subtotalCents: 2000,
     localCents: 0,
@@ -43,19 +45,16 @@ vi.mock('@/lib/ticketing', () => ({
   formatCurrencyFromCents: vi.fn((cents: number) => `$${(cents / 100).toFixed(2)}`),
 }));
 
-const createTicketCheckoutSession = vi.fn();
 const getOrCreateStripeCustomer = vi.fn().mockResolvedValue('cus_existing');
-/* Defaults to NOT payout-ready, which is the state most shows are in until the
-   headliner finishes Connect onboarding. The destination-charge path gets its
-   own test below rather than becoming the assumed default here. */
-const isConnectPayoutReady = vi.fn().mockResolvedValue(false);
-const isConnectMerchantReady = vi.fn().mockResolvedValue(false);
+/* Defaults to MERCHANT-ready: since 2026-09-25 the venue is the merchant on
+   every sale and a show whose venue is not ready sells nothing, so the ready
+   venue is the state every purchase-path test starts from. The refusal gets
+   its own tests below. */
+const isConnectMerchantReady = vi.fn().mockResolvedValue(true);
 const createVenueDirectCheckoutSession = vi.fn();
 vi.mock('@/lib/stripe', () => ({
-  createTicketCheckoutSession: (...args: unknown[]) => createTicketCheckoutSession(...args),
   createVenueDirectCheckoutSession: (...args: unknown[]) => createVenueDirectCheckoutSession(...args),
   getOrCreateStripeCustomer: (...args: unknown[]) => getOrCreateStripeCustomer(...args),
-  isConnectPayoutReady: (...args: unknown[]) => isConnectPayoutReady(...args),
   isConnectMerchantReady: (...args: unknown[]) => isConnectMerchantReady(...args),
 }));
 
@@ -156,6 +155,8 @@ const params = { params: Promise.resolve({ showId: 'show_1' }) };
 
 beforeEach(() => {
   vi.clearAllMocks();
+  isConnectMerchantReady.mockResolvedValue(true);
+  createVenueDirectCheckoutSession.mockResolvedValue({ checkoutSessionId: 'cs_direct', checkoutUrl: 'https://checkout.stripe.com/test' });
   mockAuth.mockResolvedValue({ user: { id: 'user_1' } });
   mockReadiness.mockReturnValue({ ready: true });
   dbUserFindUnique.mockResolvedValue(baseUser());
@@ -177,11 +178,11 @@ describe('POST /api/shows/[showId]/tickets', () => {
     const res = await POST(makeRequest({ quantity: 1 }), params);
 
     expect(res.status).toBe(503);
-    expect(createTicketCheckoutSession).not.toHaveBeenCalled();
+    expect(createVenueDirectCheckoutSession).not.toHaveBeenCalled();
   });
 
   it('reserves inventory and returns secure hosted checkout', async () => {
-    createTicketCheckoutSession.mockResolvedValue({ checkoutSessionId: 'cs_test', checkoutUrl: 'https://checkout.stripe.com/test' });
+    createVenueDirectCheckoutSession.mockResolvedValue({ checkoutSessionId: 'cs_test', checkoutUrl: 'https://checkout.stripe.com/test' });
 
     const res = await POST(makeRequest({ quantity: 1 }), params);
     const json = await res.json();
@@ -189,12 +190,12 @@ describe('POST /api/shows/[showId]/tickets', () => {
     expect(res.status).toBe(201);
     expect(json.captureMode).toBe('checkout');
     expect(json.checkoutUrl).toBe('https://checkout.stripe.com/test');
-    expect(createTicketCheckoutSession).toHaveBeenCalledTimes(1);
+    expect(createVenueDirectCheckoutSession).toHaveBeenCalledTimes(1);
     expect(voidReservedTicketOrder).not.toHaveBeenCalled();
   });
 
   it('answers 503 PAYMENTS_UNAVAILABLE, not 500, when Stripe cannot be reached — and the reservation is voided', async () => {
-    createTicketCheckoutSession.mockRejectedValue(Object.assign(new Error('An error occurred with our connection to Stripe.'), { type: 'StripeConnectionError' }));
+    createVenueDirectCheckoutSession.mockRejectedValue(Object.assign(new Error('An error occurred with our connection to Stripe.'), { type: 'StripeConnectionError' }));
 
     const res = await POST(makeRequest({ quantity: 1 }), params);
     const json = await res.json();
@@ -206,116 +207,78 @@ describe('POST /api/shows/[showId]/tickets', () => {
   });
 
   it('still answers 500 for an error that is not Stripe being unavailable', async () => {
-    createTicketCheckoutSession.mockRejectedValue(Object.assign(new Error('No such customer'), { type: 'StripeInvalidRequestError' }));
+    createVenueDirectCheckoutSession.mockRejectedValue(Object.assign(new Error('No such customer'), { type: 'StripeInvalidRequestError' }));
     const res = await POST(makeRequest({ quantity: 1 }), params);
     expect(res.status).toBe(500);
   });
 
-  describe('who settles the charge', () => {
+  describe('the venue is the merchant on every sale', () => {
     beforeEach(() => {
-      /* vi.clearAllMocks() clears CALLS, not implementations, so a
-         mockResolvedValue set in one test leaks into the next. Both readiness
-         mocks are re-floored here: without this the venue-direct test's `true`
-         would silently make every later test in this block pick mode 1. */
-      isConnectPayoutReady.mockResolvedValue(false);
-      isConnectMerchantReady.mockResolvedValue(false);
-      createTicketCheckoutSession.mockResolvedValue({
-        checkoutSessionId: 'cs_test', checkoutUrl: 'https://checkout.stripe.com/test',
-      });
+      /* vi.clearAllMocks() clears CALLS, not implementations, so a readiness
+         set false in one test would leak into the next. */
+      isConnectMerchantReady.mockResolvedValue(true);
     });
 
-    it('prefers a venue-direct charge when the venue is onboarded', async () => {
-      /* Mode 1 and the one the product wants: the VENUE becomes the merchant,
-         so disputes and tax leave iHYPE entirely and the buyer pays no
-         protection reserve. It outranks routing to the headliner. */
-      isConnectMerchantReady.mockResolvedValue(true);
-      createVenueDirectCheckoutSession.mockResolvedValue({
-        checkoutSessionId: 'cs_direct', checkoutUrl: 'https://checkout.stripe.com/direct',
-      });
-
+    it('charges on the venue account and claims only the artist share', async () => {
       const res = await POST(makeRequest({ quantity: 1 }), params);
       expect(res.status).toBe(201);
-      expect(createTicketCheckoutSession).not.toHaveBeenCalled();
 
       const [call] = createVenueDirectCheckoutSession.mock.calls.at(-1) as [Record<string, unknown>];
       expect(call.venueAccountId).toBe('acct_venue');
-      // iHYPE claims only what it owes onward — never the venue's share, and
-      // never the tax the venue is the one remitting.
       expect(call.artistPayoutCents).toBe(1600);
-      expect(call.promoterPayoutCents).toBe(0);
+      expect(call).not.toHaveProperty('promoterPayoutCents');
       // Selected on card_payments, never on the payout capability.
       expect(isConnectMerchantReady).toHaveBeenCalledWith('acct_venue');
+
+      const [{ data }] = dbTicketOrderCreate.mock.calls.at(-1) as [{ data: Record<string, unknown> }];
+      expect(data.settlementMode).toBe('VENUE_DIRECT');
+      expect(data.settlementAccountId).toBe('acct_venue');
     });
 
-    it('does not pick venue-direct for a venue that is only payout-ready', async () => {
-      /* THE DISTINCTION THIS BRANCH TURNS ON, and the bug it had until
-         2026-08-28. `stripe_transfers` lets money be sent TO an account;
-         `card_payments` lets a charge be created ON it, and only the second
-         makes a venue capable of being the merchant. They are separate
-         capabilities on separate configurations and neither implies the other,
-         so a venue that completed recipient onboarding alone looks payout-ready
-         and cannot take a charge.
+    it('computes the sale under the charter split, not the show row', async () => {
+      // The row carries 20/80 here; the sale is made under 75/25.
+      const { calculateTicketOrderFinancials } = await import('@/lib/ticketing');
+      await POST(makeRequest({ quantity: 1 }), params);
+      const [input] = vi.mocked(calculateTicketOrderFinancials).mock.calls.at(-1) as [Record<string, unknown>];
+      expect(input.artistPayoutPercent).toBe(75);
+      expect(input.venuePayoutPercent).toBe(25);
+    });
 
-         Choosing on the wrong one does not degrade quietly: Stripe rejects
-         `createVenueDirectCheckoutSession` for the missing capability, and the
-         fan's purchase fails at the last step, after inventory is reserved,
-         over paperwork they have nothing to do with. */
-      isConnectPayoutReady.mockResolvedValue(true);
+    it('refuses a sale, holding nothing, when the venue is not ready to be the merchant', async () => {
+      /* A venue that finished recipient onboarding alone is payout-ready and
+         still cannot take a charge; the old fallbacks (a destination charge to
+         the act, or iHYPE as merchant) are gone, so the sale waits. */
       isConnectMerchantReady.mockResolvedValue(false);
 
       const res = await POST(makeRequest({ quantity: 1 }), params);
-      expect(res.status).toBe(201);
+      expect(res.status).toBe(409);
+      expect((await res.json()).code).toBe('VENUE_NOT_PAYMENT_READY');
+      expect(dbTicketOrderCreate).not.toHaveBeenCalled();
+      expect(dbShowUpdateMany).not.toHaveBeenCalled();
       expect(createVenueDirectCheckoutSession).not.toHaveBeenCalled();
-      // Steps down a mode rather than failing — the venue is still the
-      // headliner's venue, but the act's own account carries the routing.
-      expect(createTicketCheckoutSession).toHaveBeenCalled();
     });
 
-    it('falls back to routing the headliner when only they are onboarded', async () => {
-      // No venue account at all, so mode 1 is unavailable and mode 2 applies.
+    it('refuses a sale when the show has no venue on iHYPE', async () => {
       dbShowFindUnique.mockResolvedValueOnce(baseShow({ venueProfile: null }));
-      isConnectPayoutReady.mockResolvedValue(true);
-
       const res = await POST(makeRequest({ quantity: 1 }), params);
-      expect(res.status).toBe(201);
-
-      const [call] = createTicketCheckoutSession.mock.calls.at(-1) as [Record<string, unknown>];
-      expect(call.destinationAccountId).toBe('acct_artist');
-      // Their share of FACE VALUE, routed by Stripe with the charge — not the
-      // total, which carries tax and the processing fee that stay behind.
-      expect(call.destinationPayoutCents).toBe(1600);
+      expect(res.status).toBe(409);
+      expect((await res.json()).code).toBe('VENUE_NOT_PAYMENT_READY');
+      expect(isConnectMerchantReady).not.toHaveBeenCalled();
+      expect(dbTicketOrderCreate).not.toHaveBeenCalled();
     });
 
-    it('falls back to platform settlement when the headliner is not ready', async () => {
-      // The ordinary state until an act finishes Connect onboarding. A
-      // fan must never be blocked by the act's paperwork, so this is a
-      // fallback, not a failure.
-      isConnectPayoutReady.mockResolvedValue(false);
-
+    it('answers 503, holding nothing, when Stripe cannot be reached for the merchant check', async () => {
+      isConnectMerchantReady.mockRejectedValue(Object.assign(new Error('An error occurred with our connection to Stripe.'), { type: 'StripeConnectionError' }));
       const res = await POST(makeRequest({ quantity: 1 }), params);
-      expect(res.status).toBe(201);
-
-      const [call] = createTicketCheckoutSession.mock.calls.at(-1) as [Record<string, unknown>];
-      expect(call.destinationAccountId).toBeNull();
-      // Both or neither: an account with no amount would make Stripe route the
-      // ENTIRE charge to it, which is the 2026-07-14 bug.
-      expect(call.destinationPayoutCents).toBeUndefined();
-    });
-
-    it('falls back when Stripe cannot be reached, rather than failing the sale', async () => {
-      // The order is already reserved by this point. Stripe being briefly
-      // unreachable should downgrade the settlement mode, not lose the sale.
-      isConnectPayoutReady.mockRejectedValue(new Error('Stripe API unreachable'));
-
-      const res = await POST(makeRequest({ quantity: 1 }), params);
-      expect(res.status).toBe(201);
-      const [call] = createTicketCheckoutSession.mock.calls.at(-1) as [Record<string, unknown>];
-      expect(call.destinationAccountId).toBeNull();
+      expect(res.status).toBe(503);
+      expect((await res.json()).code).toBe('PAYMENTS_UNAVAILABLE');
+      expect(dbTicketOrderCreate).not.toHaveBeenCalled();
+      expect(voidReservedTicketOrder).not.toHaveBeenCalled();
     });
   });
 
   it('rolls back the reservation when hosted checkout creation fails', async () => {
-    createTicketCheckoutSession.mockRejectedValue(new Error('Stripe API unreachable'));
+    createVenueDirectCheckoutSession.mockRejectedValue(new Error('Stripe API unreachable'));
 
     const res = await POST(makeRequest({ quantity: 1 }), params);
     const json = await res.json();
@@ -326,7 +289,7 @@ describe('POST /api/shows/[showId]/tickets', () => {
   });
 
   it('rolls back the reservation when Stripe authorization itself throws', async () => {
-    createTicketCheckoutSession.mockRejectedValue(new Error('Stripe API unreachable'));
+    createVenueDirectCheckoutSession.mockRejectedValue(new Error('Stripe API unreachable'));
 
     const res = await POST(makeRequest({ quantity: 1 }), params);
 
@@ -340,7 +303,7 @@ describe('POST /api/shows/[showId]/tickets', () => {
     const res = await POST(makeRequest({ quantity: 1 }), params);
 
     expect(res.status).toBe(403);
-    expect(createTicketCheckoutSession).not.toHaveBeenCalled();
+    expect(createVenueDirectCheckoutSession).not.toHaveBeenCalled();
   });
 });
 
@@ -365,7 +328,7 @@ describe('POST /api/shows/[showId]/tickets — anti-bot guards', () => {
     expect((await response.json()).code).toBe('BOT_CHECK_FAILED');
     // The point of ordering the check first: no customer created, no hold.
     expect(getOrCreateStripeCustomer).not.toHaveBeenCalled();
-    expect(createTicketCheckoutSession).not.toHaveBeenCalled();
+    expect(createVenueDirectCheckoutSession).not.toHaveBeenCalled();
   });
 
   it('refuses when either rate-limit bucket is exhausted', async () => {
@@ -386,7 +349,7 @@ describe('POST /api/shows/[showId]/tickets — anti-bot guards', () => {
 
     expect(response.status).toBe(429);
     expect(response.headers.get('Retry-After')).toBe('900');
-    expect(createTicketCheckoutSession).not.toHaveBeenCalled();
+    expect(createVenueDirectCheckoutSession).not.toHaveBeenCalled();
   });
 
   it('refuses once the account already holds the per-show maximum', async () => {
@@ -436,6 +399,6 @@ describe('POST /api/shows/[showId]/tickets — anti-bot guards', () => {
     );
 
     expect(response.status).toBeGreaterThanOrEqual(400);
-    expect(createTicketCheckoutSession).not.toHaveBeenCalled();
+    expect(createVenueDirectCheckoutSession).not.toHaveBeenCalled();
   });
 });

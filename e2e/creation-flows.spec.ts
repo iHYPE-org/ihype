@@ -212,7 +212,7 @@ test.describe('creating an event', () => {
 
     /* Publishing answers with the slug and the page flips to its published
        state. The charter warning above the button is the sentence that
-       matters legally; asserting the publish succeeded asserts the 70/20/10
+       matters legally; asserting the publish succeeded asserts the 75/25
        freeze it describes was accepted. */
     await expect(page.getByText(/published|live|view event/i).first()).toBeVisible({ timeout: 20_000 });
   });

@@ -6,7 +6,7 @@ import { db, withDbRetry } from '@/lib/db';
 import { canManageOwnedResource, isAdminSession } from '@/lib/permissions';
 import { showProductionPlanSchema } from '@/lib/show-composer';
 import { resolveAdBreakClips } from '@/lib/ad-clip-selection';
-import { DEFAULT_PROMOTER_AFFILIATE_PERCENT, validateTicketSplit } from '@/lib/ticketing';
+import { ARTIST_SHARE_PERCENT, VENUE_SHARE_PERCENT } from '@/lib/ticketing';
 import { slugify } from '@/lib/utils';
 import { isValidTimeZone } from '@/lib/format-locale';
 import { consumeRateLimit, rateLimitHeaders, rateLimitKey } from '@/lib/rate-limit';
@@ -49,9 +49,6 @@ const schema = z.object({
   bookingLegalNotes: z.string().optional(),
   ticketPriceCents: z.coerce.number().int().nonnegative().optional(),
   ticketCapacity: z.coerce.number().int().positive().optional(),
-  venuePayoutPercent: z.coerce.number().int().min(0).max(95).optional(),
-  artistPayoutPercent: z.coerce.number().int().min(0).max(95).optional(),
-  promoterPayoutPercent: z.coerce.number().int().min(0).max(10).optional(),
   tags: z.array(z.string()).default([]),
   productionPlan: showProductionPlanSchema.optional()
 });
@@ -221,28 +218,10 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Ticket price and capacity are required for ticketed events' }, { status: 400 });
       }
 
-      if (body.venuePayoutPercent === undefined || body.artistPayoutPercent === undefined) {
-        return NextResponse.json(
-          { error: 'Venue and artist payout percentages are required for ticketed events' },
-          { status: 400 }
-        );
-      }
-
-      const promoterPayoutPercent =
-        body.promoterPayoutPercent ?? DEFAULT_PROMOTER_AFFILIATE_PERCENT;
-
-      try {
-        validateTicketSplit({
-          venuePayoutPercent: body.venuePayoutPercent,
-          artistPayoutPercent: body.artistPayoutPercent,
-          promoterPayoutPercent
-        });
-      } catch (error) {
-        return NextResponse.json(
-          { error: 'Invalid payout split configuration.' },
-          { status: 400 }
-        );
-      }
+      /* The split is the charter's, not the request's: 75% to the artist and
+         25% to the venue of the net face value (2026-09-25). An organiser
+         used to send the percentages and the route validated them; nothing
+         a client sends can change them now. */
     }
 
     const show = await createShowWithUniqueSlug(body.title, (slug) => withDbRetry(() => db.show.create({
@@ -263,9 +242,9 @@ export async function POST(request: NextRequest) {
         isTicketed: body.isTicketed,
         ticketPriceCents: body.isTicketed ? body.ticketPriceCents : 0,
         ticketCapacity: body.isTicketed ? body.ticketCapacity : null,
-        venuePayoutPercent: body.isTicketed ? body.venuePayoutPercent : null,
-        artistPayoutPercent: body.isTicketed ? body.artistPayoutPercent : null,
-        promoterPayoutPercent: body.isTicketed ? body.promoterPayoutPercent ?? DEFAULT_PROMOTER_AFFILIATE_PERCENT : DEFAULT_PROMOTER_AFFILIATE_PERCENT,
+        venuePayoutPercent: body.isTicketed ? VENUE_SHARE_PERCENT : null,
+        artistPayoutPercent: body.isTicketed ? ARTIST_SHARE_PERCENT : null,
+        promoterPayoutPercent: 0,
         productionPlan: body.productionPlan,
         status: body.status,
         moderationStatus,

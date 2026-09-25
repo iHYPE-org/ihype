@@ -1195,9 +1195,11 @@ test.describe('Music · Map · Me shell', () => {
       // open at a door with no signal.
       await expect(sheet.locator('.mmm-ticket-qr img')).toHaveAttribute('src', /^data:image\/svg\+xml/);
       await expect(sheet).toContainText(seeded.serializedId);
-      // The money lines: face value, the buyer-paid Stripe fee, and $0 iHYPE.
+      // The money lines: face value and $0 iHYPE. Since 2026-09-25 the buyer
+      // pays no processing line — Stripe's fee comes off the top on the venue's
+      // side — so an order sold under that model shows none.
       await expect(sheet).toContainText('Face value');
-      await expect(sheet).toContainText('Stripe processing');
+      await expect(sheet).not.toContainText('Stripe processing');
       await expect(sheet).toContainText('$0.00');
       // Sales are final, stated where a holder looks for a way out.
       await expect(sheet).toContainText(/All sales are final/i);
@@ -1262,7 +1264,7 @@ test.describe('Music · Map · Me shell', () => {
         await expect(page.locator('h1.mmm-show-title:visible')).toHaveCount(1);
         await expect(page.locator('h1.mmm-show-title:visible')).toHaveText(seeded.title);
         await expect(page.getByText('Split locked at publish')).toBeVisible();
-        await expect(page.getByText('70 / 20 / 10 · iHYPE $0')).toBeVisible();
+        await expect(page.getByText('75 / 25 · iHYPE $0')).toBeVisible();
         return;
       }
 
@@ -1285,11 +1287,13 @@ test.describe('Music · Map · Me shell', () => {
       // follows the information, not the retired node: the numbers must be the
       // show's own, and every share must still be NAMED somewhere on the pane.
       await expect(page.getByText('Split locked at publish')).toBeVisible();
-      await expect(page.getByText('70 / 20 / 10 · iHYPE $0')).toBeVisible();
+      await expect(page.getByText('75 / 25 · iHYPE $0')).toBeVisible();
       const saleCard = page.locator('.mmm-show-sale:visible');
-      await expect(saleCard).toContainText('· 70%');
-      await expect(saleCard).toContainText('· 20%');
-      await expect(saleCard).toContainText('· 10%');
+      // Stripe's fee is its own row, and the artist and venue split what is
+      // left 75/25 — no promoter row since 2026-09-25.
+      await expect(saleCard).toContainText('Card processing (Stripe)');
+      await expect(saleCard).toContainText('75% to the artist and 25% to the venue');
+      await expect(saleCard).not.toContainText('Promoter');
       // WHAT the percentages are a share of — the face-value line survives.
       await expect(page.locator('.mmm-show-fee').first()).toContainText('face value');
       // And the disclosure that changes what the buyer is agreeing to.

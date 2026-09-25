@@ -640,7 +640,7 @@ model Show {
   ticketCapacity         Int?
   venuePayoutPercent     Int?
   artistPayoutPercent    Int?
-  promoterPayoutPercent  Int                    @default(10)
+  promoterPayoutPercent  Int                    @default(0)
   ticketsSoldCount       Int                    @default(0)
   hypeCount              Int                    @default(0)
   tags                   String[]

@@ -374,6 +374,34 @@ async function main() {
 
   console.log(`  cast     artist=${artistProfile.slug} venue=${venueProfile.slug} fan=${fan.user.id}\n`);
 
+  /* ── The venue is the merchant (2026-09-25) ─────────────────────────────
+     A ticket sells only on the VENUE's Stripe account, so the walk's venue
+     needs a connected account that can take a charge. The test account's
+     existing accounts are searched for one with `card_payments` active — the
+     same pass `stripe-payout-rehearsal.mjs` makes — because a new account
+     cannot finish KYC from a script. None found is a BLOCK on every item that
+     sells, naming the missing capability, never a failure: the product is not
+     broken because a test account lapsed. */
+  let venueMerchantId: string | null = null;
+  let venueMerchantReason = 'Stripe is not configured';
+  if (stripe) {
+    try {
+      const accounts = await stripe.accounts.list({ limit: 100 });
+      const merchant = accounts.data.find((a) => a.capabilities?.card_payments === 'active' && a.charges_enabled);
+      if (merchant) {
+        venueMerchantId = merchant.id;
+        await prisma.profile.update({
+          where: { id: venueProfile.id },
+          data: { stripeConnectAccountId: merchant.id, stripeConnectOnboarded: true },
+        });
+      } else {
+        venueMerchantReason = `the Stripe test account has no connected account with an active card_payments capability (of ${accounts.data.length}) — onboard one as a merchant so the venue can sell`;
+      }
+    } catch (error) {
+      venueMerchantReason = `listing connected accounts failed: ${error instanceof Error ? error.message : String(error)}`;
+    }
+  }
+
   /* ── Ad delivery helpers, shared by items 20c, 22 and 33 ────────────────
      A break is never placed first or last, so a one-track station has nowhere
      to put one — two is the minimum rotation that can carry an ad at all. The
@@ -765,8 +793,8 @@ async function main() {
         isTicketed: true,
         ticketPriceCents: TICKET_PRICE_CENTS,
         ticketCapacity: 50,
-        artistPayoutPercent: 70,
-        venuePayoutPercent: 20,
+        artistPayoutPercent: 75,
+        venuePayoutPercent: 25,
         /* On sale from now. `isTicketingOpen()` reads this column and the
            purchase route refuses a closed sale, so a ticketed show created
            without it can be published and never sold — which is exactly the
@@ -807,8 +835,10 @@ async function main() {
      SECOND, UNSCANNED order: cancelling a show whose only ticket was scanned
      refunds nothing (by design), so a single-order walk would report a refund
      path that never ran. */
-  async function sellTicket(buyerCookie: string): Promise<{ confirmationCode: string; serializedId: string; payables: number; promoterCents: number; totalCents: number }> {
+  async function sellTicket(buyerCookie: string): Promise<{ confirmationCode: string; serializedId: string; payables: number; artistCents: number; totalCents: number }> {
     assert(stripe && WEBHOOK_SECRET, 'Stripe is not configured');
+    if (!venueMerchantId) blocked(venueMerchantReason);
+    const merchant = venueMerchantId!;
 
     const purchase = await api(`/api/shows/${showId}/tickets`, {
       method: 'POST',
@@ -835,20 +865,25 @@ async function main() {
        scripts/rehearse-money-path.mts, for the same reason. */
     let session: Stripe.Checkout.Session | undefined;
     for (let attempt = 0; attempt < 5 && !session; attempt++) {
-      const list = await stripe.checkout.sessions.list({ limit: 20 });
+      // The session lives on the VENUE's account, so it is listed there.
+      const list = await stripe.checkout.sessions.list({ limit: 20 }, { stripeAccount: merchant });
       session = list.data.find((s) => s.metadata?.confirmationCode === code);
       if (!session) await new Promise((r) => setTimeout(r, 1200));
     }
     assert(session, 'no Checkout Session carried this confirmationCode');
 
+    const orderRow = await prisma.ticketOrder.findUnique({ where: { confirmationCode: code }, select: { artistPayoutCents: true } });
+    // A direct charge on the venue, carrying the artist's share as the
+    // application fee — the shape the hosted session would have created.
     const intent = await stripe.paymentIntents.create({
       amount: session.amount_total ?? 0,
       currency: session.currency ?? 'usd',
       payment_method: 'pm_card_visa',
       confirm: true,
       automatic_payment_methods: { enabled: true, allow_redirects: 'never' },
+      application_fee_amount: orderRow?.artistPayoutCents ?? 0,
       metadata: { confirmationCode: code, alpha: 'true' },
-    }, { idempotencyKey: `alpha-pay:${code}` });
+    }, { idempotencyKey: `alpha-pay:${code}`, stripeAccount: merchant });
 
     const event = {
       id: `evt_alpha_${code}`,
@@ -856,6 +891,9 @@ async function main() {
       api_version: '2026-07-29.dahlia',
       created: Math.floor(Date.now() / 1000),
       type: 'checkout.session.completed',
+      // A Connect event names the account it happened on; the webhook refuses
+      // a ticket event whose account is not the order's merchant.
+      account: merchant,
       data: { object: { ...session, payment_intent: intent.id, payment_status: 'paid', status: 'complete' } },
       livemode: false,
       pending_webhooks: 1,
@@ -881,28 +919,40 @@ async function main() {
     assert(order.status === 'CAPTURED', `order is ${order.status}, expected CAPTURED`);
     assert(order.tickets.length === 1, `expected 1 ticket, got ${order.tickets.length}`);
 
+    /* THE 75/25 OF THE NET, AS PAYABLES. The venue is the merchant, so its
+       quarter and the tax never left its account and carry no payable; the
+       artist's 75% came to iHYPE as the application fee and is the one payable
+       the order owes. A HYPE link was attached and earns nothing. */
+    assert(order.settlementMode === 'VENUE_DIRECT', `order settled as ${order.settlementMode}, expected VENUE_DIRECT`);
+    assert(order.processingFeeCents === 0 && order.reserveFeeCents === 0, `the buyer paid ${order.processingFeeCents}c processing + ${order.reserveFeeCents}c reserve on top of face value`);
+    assert(order.promoterPayoutCents === 0, `the order records a ${order.promoterPayoutCents}c promoter share`);
     const payables = await prisma.accountsPayableEntry.findMany({ where: { ticketOrderId: order.id } });
-    const promoterEntry = payables.find((p) => p.profileId === promoterProfile.id);
-    assert(promoterEntry, `no promoter payable — the HYPE-link 10% was dropped (payables: ${payables.map((p) => `${p.category}:${p.amountCents}`).join(', ')})`);
+    const shape = payables.map((p) => `${p.category}:${p.amountCents}`).join(', ');
+    const artistEntry = payables.find((p) => p.category === 'ARTIST_PAYOUT');
+    assert(artistEntry, `no artist payable (payables: ${shape})`);
+    assert(artistEntry.amountCents === order.artistPayoutCents, `artist payable ${artistEntry.amountCents}c does not match the order's ${order.artistPayoutCents}c`);
+    assert(payables.length === 1, `expected only the artist payable on a venue-direct order, got: ${shape}`);
+    const net = order.artistPayoutCents + order.venuePayoutCents;
+    assert(net < order.subtotalCents, `artist + venue (${net}c) is not under the face value (${order.subtotalCents}c) — the card fee did not come off the top`);
+    assert(order.venuePayoutCents === Math.round(net * 0.25), `venue share ${order.venuePayoutCents}c is not 25% of the ${net}c net`);
 
     return {
       confirmationCode: code,
       serializedId: order.tickets[0].serializedId,
       payables: payables.length,
-      promoterCents: promoterEntry.amountCents,
+      artistCents: artistEntry.amountCents,
       totalCents: order.totalChargeCents,
     };
   }
 
-  // ── 16 + 31. Sell a ticket, carrying a HYPE-link promoter ────────────────
-  await item('16 + 31. Sell a ticket (with a HYPE-link promoter attached)', async () => {
+  // ── 16 + 31. Sell a ticket, carrying a HYPE link ─────────────────────────
+  await item('16 + 31. Sell a ticket (a HYPE link attached, earning nothing)', async () => {
     if (!showId) blocked('no show was created');
     if (!stripe || !WEBHOOK_SECRET) blocked('STRIPE_SECRET_KEY / STRIPE_WEBHOOK_SECRET not set');
     const sale = await sellTicket(fan.cookie);
     confirmationCode = sale.confirmationCode;
     serializedId = sale.serializedId;
-    const share = ((sale.promoterCents / TICKET_PRICE_CENTS) * 100).toFixed(1);
-    return `order CAPTURED ${sale.totalCents}c · ${sale.payables} payables · promoter earned ${sale.promoterCents}c = ${share}% of the ${TICKET_PRICE_CENTS}c face value`;
+    return `order CAPTURED ${sale.totalCents}c on the venue's account · ${sale.payables} payable · artist owed ${sale.artistCents}c = 75% of the face value after Stripe's fee`;
   });
 
   // ── 19. Scan the ticket ──────────────────────────────────────────────────
@@ -1018,7 +1068,12 @@ async function main() {
     const refundedOrder = await prisma.ticketOrder.findUnique({ where: { confirmationCode: unscanned.confirmationCode } });
     assert(refundedOrder?.stripeRefundId, 'order was marked refunded but carries no stripeRefundId');
     const scannedOrder = await prisma.ticketOrder.findUnique({ where: { confirmationCode } });
-    const refund = await stripe!.refunds.retrieve(refundedOrder.stripeRefundId);
+    const refund = await stripe!.refunds.retrieve(
+      refundedOrder.stripeRefundId,
+      {},
+      // A venue-direct refund lives on the venue's account.
+      refundedOrder.settlementAccountId ? { stripeAccount: refundedOrder.settlementAccountId } : undefined,
+    );
 
     return `show CANCELED · refunded=${refunded} skipped=${skipped} failed=${failed} · Stripe refund ${refund.id} ${refund.status} ${refund.amount}c · scanned order left ${scannedOrder?.status}`;
   });
@@ -1433,8 +1488,8 @@ async function main() {
         isTicketed: true,
         ticketPriceCents: TICKET_PRICE_CENTS,
         ticketCapacity: 10,
-        artistPayoutPercent: 70,
-        venuePayoutPercent: 20,
+        artistPayoutPercent: 75,
+        venuePayoutPercent: 25,
         // Deliberately omitted: no ticketingOpensAt means sales are not open.
       }),
       cookie: creator.cookie,
@@ -1972,7 +2027,11 @@ async function main() {
     if (!refunded) blocked('no refunded order exists to reconcile');
     if (!stripe) blocked('Stripe is not configured');
 
-    const refund = await stripe.refunds.retrieve(refunded.stripeRefundId!);
+    const refund = await stripe.refunds.retrieve(
+      refunded.stripeRefundId!,
+      {},
+      refunded.settlementMode === 'VENUE_DIRECT' && refunded.settlementAccountId ? { stripeAccount: refunded.settlementAccountId } : undefined,
+    );
     assert(refund.status === 'succeeded', `Stripe reports the refund as ${refund.status}`);
     /* The processing fee is deliberately NOT returned (see the refundableCents
        comment in the cancel route), so the expected refund is the charge minus

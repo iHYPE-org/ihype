@@ -60,23 +60,15 @@ describe('isTicketingOpen', () => {
 });
 
 describe('resolveShowSplits', () => {
-  it('states the split only when the artist and venue shares both exist', () => {
-    expect(resolveShowSplits({ artistPayoutPercent: 70, venuePayoutPercent: 20, promoterPayoutPercent: 10 }))
-      .toEqual({ artist: 70, venue: 20, promoter: 10 });
-    expect(resolveShowSplits({ artistPayoutPercent: null, venuePayoutPercent: 20, promoterPayoutPercent: 10 })).toBeNull();
-    expect(resolveShowSplits({ artistPayoutPercent: 70, venuePayoutPercent: null, promoterPayoutPercent: 10 })).toBeNull();
+  it('states the split only when the show is ticketed with both shares set', () => {
+    expect(resolveShowSplits({ artistPayoutPercent: 75, venuePayoutPercent: 25 })).toEqual({ artist: 75, venue: 25 });
+    expect(resolveShowSplits({ artistPayoutPercent: null, venuePayoutPercent: 25 })).toBeNull();
+    expect(resolveShowSplits({ artistPayoutPercent: 75, venuePayoutPercent: null })).toBeNull();
   });
 
-  it('carries a zero promoter share rather than dropping the slice', () => {
-    // `Show.promoterPayoutPercent` is `Int @default(10)` — never null — so 0
-    // means a real zero share and has to survive as one.
-    expect(resolveShowSplits({ artistPayoutPercent: 80, venuePayoutPercent: 20, promoterPayoutPercent: 0 }))
-      .toEqual({ artist: 80, venue: 20, promoter: 0 });
-  });
-
-  it('does not invent the charter split when the show carries a different one', () => {
-    expect(resolveShowSplits({ artistPayoutPercent: 60, venuePayoutPercent: 30, promoterPayoutPercent: 10 }))
-      .toEqual({ artist: 60, venue: 30, promoter: 10 });
+  it('states the charter split even over a row still carrying the retired one', () => {
+    // A sale is made under the charter constants, so the page must say them.
+    expect(resolveShowSplits({ artistPayoutPercent: 70, venuePayoutPercent: 20 })).toEqual({ artist: 75, venue: 25 });
   });
 });
 
@@ -90,67 +82,36 @@ describe('formatShowWhere', () => {
   });
 });
 
-describe('splitFaceValueCents', () => {
-  const evenSplit = { artist: 70, venue: 20, promoter: 10 };
+describe('splitFaceValueCents — the card fee off the top, then 75/25', () => {
+  const charter = { artist: 75, venue: 25 };
 
-  it('splits a whole-dollar face value the obvious way', () => {
-    expect(splitFaceValueCents(1800, evenSplit)).toEqual({ artist: 1260, venue: 360, promoter: 180 });
+  it('splits an $18 ticket the way the purchase route does', () => {
+    // Stripe's standard 2.9% + 30c on 1800 is 82c; the 1718 left splits 75/25.
+    expect(splitFaceValueCents(1800, charter)).toEqual({ fee: 82, artist: 1288, venue: 430 });
   });
 
   it('always sums to exactly the face value, however awkward the price', () => {
-    for (const price of [1, 7, 99, 333, 1799, 2501, 9999, 123_457]) {
-      const shares = splitFaceValueCents(price, evenSplit)!;
-      expect(shares.artist + shares.venue + shares.promoter, `price ${price}`).toBe(price);
-    }
-  });
-
-  it('sums exactly for a show that moved its own percentages', () => {
-    for (const splits of [
-      { artist: 60, venue: 30, promoter: 10 },
-      { artist: 80, venue: 20, promoter: 0 },
-      { artist: 45, venue: 45, promoter: 10 },
-      { artist: 33, venue: 33, promoter: 34 },
-    ]) {
-      const shares = splitFaceValueCents(2999, splits)!;
-      expect(shares.artist + shares.venue + shares.promoter, JSON.stringify(splits)).toBe(2999);
-    }
-  });
-
-  it('gives a free show and a nonsense split no figures rather than $0.00 rows', () => {
-    expect(splitFaceValueCents(0, evenSplit)).toBeNull();
-    expect(splitFaceValueCents(-100, evenSplit)).toBeNull();
-    expect(splitFaceValueCents(1800, { artist: 0, venue: 0, promoter: 0 })).toBeNull();
-  });
-});
-
-/* The float version this replaced, kept so the test states what it is testing
-   AGAINST: three independent roundings of a dollar float, which is what
-   `/shows/[slug]` painted its split bar with until 2026-09-03. */
-function floatSplitDollars(faceValueCents: number, pct: number): string {
-  return ((faceValueCents / 100) * (pct / 100)).toFixed(2);
-}
-
-describe('the split a reader is shown is the split that is paid', () => {
-  const charter = { artist: 70, venue: 20, promoter: 10 };
-
-  it('never disagrees with the payout arithmetic, at any price', () => {
     const disagreements: string[] = [];
     for (let cents = 100; cents <= 15000; cents += 1) {
       const shares = splitFaceValueCents(cents, charter)!;
-      // What the reader sees must sum to exactly what they are charged.
-      if (shares.artist + shares.venue + shares.promoter !== cents) {
-        disagreements.push(`${cents}c does not sum`);
-      }
+      if (shares.fee + shares.artist + shares.venue !== cents) disagreements.push(`${cents}c`);
     }
     expect(disagreements).toEqual([]);
   });
 
-  it('is why the float version had to go — it differs on ordinary prices', () => {
-    /* $19.95 is the case that made this concrete: the artist row read $13.96
-       against the $13.97 actually paid. If this ever stops differing the float
-       version is no longer a hazard and this test has lost its subject. */
-    const shares = splitFaceValueCents(1995, charter)!;
-    expect((shares.artist / 100).toFixed(2)).toBe('13.97');
-    expect(floatSplitDollars(1995, 70)).toBe('13.96');
+  it('agrees with the purchase arithmetic on every price', async () => {
+    const { calculateTicketOrderFinancials } = await import('@/lib/ticketing');
+    for (const cents of [500, 999, 1800, 1995, 2500, 12345]) {
+      const shares = splitFaceValueCents(cents, charter)!;
+      const order = calculateTicketOrderFinancials({ ticketPriceCents: cents, quantity: 1, venuePayoutPercent: 25, artistPayoutPercent: 75 });
+      expect({ fee: order.stripeFeeCents, artist: order.artistPayoutCents, venue: order.venuePayoutCents }).toEqual(shares);
+    }
+  });
+
+  it('gives a free show, a price the fee would swallow and a fractional price no figures', () => {
+    expect(splitFaceValueCents(0, charter)).toBeNull();
+    expect(splitFaceValueCents(-100, charter)).toBeNull();
+    expect(splitFaceValueCents(30, charter)).toBeNull();
+    expect(splitFaceValueCents(19.5, charter)).toBeNull();
   });
 });

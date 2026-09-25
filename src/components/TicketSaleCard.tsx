@@ -7,6 +7,8 @@ import { ShareButton } from '@/components/ShareButton';
 import { TurnstileWidget, type TurnstileWidgetHandle } from '@/components/TurnstileWidget';
 import { useI18n } from '@/components/I18nProvider';
 import {
+  ARTIST_SHARE_PERCENT,
+  VENUE_SHARE_PERCENT,
   calculateTicketOrderFinancials,
   formatCurrencyFromCents,
   formatPercent
@@ -24,16 +26,16 @@ type TicketSaleCardProps = {
   ticketPriceCents: number;
   ticketCapacity: number | null;
   ticketsSoldCount: number;
-  venuePayoutPercent: number;
-  artistPayoutPercent: number;
-  promoterPayoutPercent: number;
   venueName: string;
   artistName: string;
-  promoterName: string | null;
   ticketingOpen: boolean;
   ticketingOpensAtLabel?: string | null;
+  /** Whether the venue can be the merchant on a sale — its Connect account
+   *  finished onboarding. No sale happens until it has (2026-09-25). */
+  venuePaymentReady: boolean;
+  /** Whose HYPE link brought the buyer here: recorded on the order as the
+   *  referral, and earning nothing since the promoter share ended. */
   affiliatePromoterProfileId?: string | null;
-  affiliatePromoterName?: string | null;
   currentFan?: {
     name: string | null;
     email: string;
@@ -71,16 +73,12 @@ export function TicketSaleCard({
   ticketPriceCents,
   ticketCapacity,
   ticketsSoldCount,
-  venuePayoutPercent,
-  artistPayoutPercent,
-  promoterPayoutPercent,
   venueName,
   artistName,
-  promoterName,
   ticketingOpen,
   ticketingOpensAtLabel,
+  venuePaymentReady,
   affiliatePromoterProfileId,
-  affiliatePromoterName,
   currentFan,
   viewerLocation,
   venueLocation
@@ -112,33 +110,15 @@ export function TicketSaleCard({
       calculateTicketOrderFinancials({
         ticketPriceCents,
         quantity: quantityForPreview,
-        venuePayoutPercent,
-        artistPayoutPercent,
-        promoterPayoutPercent,
-        /* THE PURCHASE ROUTE PASSES THIS AND THIS PREVIEW DID NOT.
-         *
-         * `hasAffiliatePromoter` defaults to TRUE (ticketing.ts), so without
-         * it the card showed the fan a 70/20/10 breakdown of their own money
-         * while the order about to be written records 77.78/22.22/0 — the
-         * charter's "(if applicable)": with no HYPE link there is no promoter
-         * share and the tenth redistributes to the artist and venue in the
-         * same 7:2 ratio. The route has always read
-         * `Boolean(affiliatePromoterProfile)`; this card already held the same
-         * fact as a prop and never handed it over. */
-        hasAffiliatePromoter: Boolean(affiliatePromoterProfileId),
+        /* The charter split, the same constants the purchase route passes —
+           never the show's stored percentages, which a show created under
+           70/20/10 still carries. */
+        venuePayoutPercent: VENUE_SHARE_PERCENT,
+        artistPayoutPercent: ARTIST_SHARE_PERCENT,
         buyerLocation: viewerLocation,
         venueLocation
       }),
-    [
-      affiliatePromoterProfileId,
-      artistPayoutPercent,
-      promoterPayoutPercent,
-      quantityForPreview,
-      ticketPriceCents,
-      venueLocation,
-      venuePayoutPercent,
-      viewerLocation
-    ]
+    [quantityForPreview, ticketPriceCents, venueLocation, viewerLocation]
   );
 
   /* One share per row, each percentage read back off the amount the SAME
@@ -147,17 +127,15 @@ export function TicketSaleCard({
   const splitRows = useMemo(() => {
     const base = preview.subtotalCents;
     const pct = (cents: number) => (base > 0 ? Math.round((cents / base) * 1000) / 10 : 0);
+    /* Stripe's card fee is a row of its own and comes FIRST: it is taken off
+       the face value before the 75/25, so the artist's and venue's lines are
+       shares of what is left, and the three rows sum to the face value. */
     return [
+      { key: 'var(--ink-3)', name: t('ticketSaleCard.stripeFeeRow', 'Card processing (Stripe)'), cents: preview.stripeFeeCents, percent: pct(preview.stripeFeeCents) },
       { key: 'var(--accent)', name: artistName, cents: preview.artistPayoutCents, percent: pct(preview.artistPayoutCents) },
       { key: 'var(--role-venue)', name: venueName, cents: preview.venuePayoutCents, percent: pct(preview.venuePayoutCents) },
-      {
-        key: 'var(--role-promoter)',
-        name: affiliatePromoterName ?? promoterName ?? t('ticketSaleCard.promoterAffiliatePoolFallback', 'Promoter affiliate pool'),
-        cents: preview.promoterPayoutCents,
-        percent: pct(preview.promoterPayoutCents),
-      },
     ];
-  }, [affiliatePromoterName, artistName, preview, promoterName, t, venueName]);
+  }, [artistName, preview, t, venueName]);
 
   const fanPaymentLabel =
     currentFan?.storedPaymentTokenBrand && currentFan?.storedPaymentTokenLast4
@@ -238,8 +216,8 @@ export function TicketSaleCard({
           <h2>{heading ?? title}</h2>
           <p className="kicker">
             {t(
-              'ticketSaleCard.kicker',
-              'Reserved tickets are tied to fan payment tokens and route venue, artist, affiliate promoter, and tax amounts into a clean accounts-payable trail.'
+              'ticketSaleCard.kickerVenueSeller',
+              'The venue sells these tickets through Stripe. The artist’s share is paid out to them after the show.'
             )}
           </p>
         </div>
@@ -298,17 +276,11 @@ export function TicketSaleCard({
             </div>
           ))}
         </div>
-        {preview.promoterPayoutCents === 0 ? (
-          <div style={{ fontSize: '0.9375rem', color: 'var(--ink-3)', lineHeight: 1.4 }}>
-            {t('ticketSaleCard.noPromoterShare', 'No HYPE link was used, so the promoter share goes to the artist and venue instead.')}
-          </div>
-        ) : null}
-        {affiliatePromoterName ? (
-          <div style={{ borderTop: '1px solid var(--line)', paddingTop: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ flex: 1, fontSize: '0.9375rem', color: 'var(--ink-2)' }}>{t('ticketSaleCard.creditedTo', 'Credited to')}</span>
-            <span style={{ fontSize: '0.9375rem', fontWeight: 500, color: 'var(--role-promoter-text)' }}>{affiliatePromoterName}</span>
-          </div>
-        ) : null}
+        <div style={{ fontSize: '0.9375rem', color: 'var(--ink-3)', lineHeight: 1.4 }}>
+          {t('ticketSaleCard.splitNote', 'Stripe’s card fee comes off the top; what is left is split {artist}% to the artist and {venue}% to the venue. iHYPE takes nothing.')
+            .replace('{artist}', String(ARTIST_SHARE_PERCENT))
+            .replace('{venue}', String(VENUE_SHARE_PERCENT))}
+        </div>
       </div>
 
       {/* ALL SALES ARE FINAL — rendered for EVERY state of this card, not just
@@ -340,6 +312,14 @@ export function TicketSaleCard({
 
       {remainingTickets === 0 ? (
         <div className="empty">{t('ticketSaleCard.soldOut', 'This ticket allocation is sold out.')}</div>
+      ) : !venuePaymentReady ? (
+        /* The venue is the merchant on every sale, and the purchase route
+           refuses one until its payments are set up (409
+           VENUE_NOT_PAYMENT_READY). Saying so here keeps a buyer from filling
+           in a form the server will refuse. */
+        <div className="empty">
+          {t('ticketSaleCard.venueNotPaymentReady', 'Tickets go on sale once the venue finishes setting up payments. Follow the venue to hear when they do.')}
+        </div>
       ) : !ticketingOpen ? (
         /* Tickets that are not on sale cannot be bought, and the card used to
            offer the whole purchase form anyway with a sentence promising the
@@ -456,18 +436,6 @@ export function TicketSaleCard({
                   { label: t('ticketSaleCard.countryTaxLabel', 'Country tax'), cents: preview.countryCents },
                   { label: t('ticketSaleCard.internationalTaxLabel', 'International tax'), cents: preview.internationalCents },
                   { label: t('ticketSaleCard.totalTaxLabel', 'Total tax'), cents: preview.totalTaxCents },
-                  /* Disclosed before payment, as its own line and in the
-                     buyer's favour: iHYPE is a nonprofit, takes $0, and does
-                     not absorb Stripe's cost of moving the money either.
-                     Naming Stripe is the point — this is not an iHYPE fee. */
-                  { label: t('ticketSaleCard.processingFeeLabel', 'Stripe processing, paid by the buyer'), cents: preview.processingFeeCents },
-                  /* The protection reserve, on its own line for the same
-                     reason as the one above: a charge the buyer cannot account
-                     for is the thing this ledger exists to prevent. Named for
-                     what it DOES rather than what it is called internally —
-                     "reserve" is an accounting word and means nothing at a
-                     checkout. */
-                  { label: t('ticketSaleCard.reserveFeeLabel', 'Refund & dispute protection'), cents: preview.reserveFeeCents },
                   { label: t('ticketSaleCard.ihypeFeeLabel', 'iHYPE fee'), cents: 0, zero: true },
                 ].map((line) => (
                   <div key={line.label} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -494,15 +462,11 @@ export function TicketSaleCard({
                     to shrink — caught by `npm run lint`, not by review. */}
                 <p style={{ margin: 0, fontSize: '0.9375rem', lineHeight: 1.55, color: 'var(--ink-2)' }}>
                   {t(
-                    'ticketSaleCard.feeExplainer',
-                    'Every cent above face value covers a real cost: Stripe’s charge for handling your card, and a small fund that pays for refunds and card disputes. iHYPE takes nothing — the {artist}% / {venue}% / {promoter}% split is of the ticket price itself, and it is unaffected by either line.',
+                    'ticketSaleCard.feeExplainerNet',
+                    'You pay the ticket price and its tax, and nothing more. Stripe’s card fee comes out of the ticket price, and what is left is split {artist}% to the artist and {venue}% to the venue, who is the seller on this sale. iHYPE takes nothing.',
                   )
-                    .replace('{artist}', String(artistPayoutPercent))
-                    .replace('{venue}', String(venuePayoutPercent))
-                    // The show's own configured share, not a hardcoded 10:
-                    // this sentence is a claim about where the buyer's money
-                    // goes, so it has to read the same figures the split does.
-                    .replace('{promoter}', String(100 - artistPayoutPercent - venuePayoutPercent))}
+                    .replace('{artist}', String(ARTIST_SHARE_PERCENT))
+                    .replace('{venue}', String(VENUE_SHARE_PERCENT))}
                 </p>
               </div>
             </div>

@@ -389,13 +389,17 @@ export async function seedShowWithTicket({
       select: { id: true },
     });
 
+    /* Onboarded as a merchant: since 2026-09-25 a ticket sells only on the
+       venue's own Stripe account, and the sale card says "not on sale until
+       the venue sets up payments" for a venue that is not. The flag is what
+       the card reads; no real Connect account is needed to render it. */
     const venue = await prisma.profile.upsert({
       where: { slug: venueSlug },
-      update: {},
+      update: { stripeConnectOnboarded: true },
       create: {
         slug: venueSlug, hexId: hex(venueSlug), name: 'E2E Venue', type: 'VENUE',
         ownerId: organiser.id, genres: [], city: 'Portland', stateRegion: 'ME', country: 'US',
-        discoverable: true,
+        discoverable: true, stripeConnectOnboarded: true,
       },
     });
     const artist = await prisma.profile.upsert({
@@ -456,9 +460,9 @@ export async function seedShowWithTicket({
         isTicketed: true,
         ticketPriceCents: 1800,
         ticketCapacity: 100,
-        venuePayoutPercent: 20,
-        artistPayoutPercent: 70,
-        promoterPayoutPercent: 10,
+        venuePayoutPercent: 25,
+        artistPayoutPercent: 75,
+        promoterPayoutPercent: 0,
       },
     });
 
@@ -492,13 +496,16 @@ export async function seedShowWithTicket({
         ...(orderCreatedAt ? { createdAt: orderCreatedAt } : {}),
         quantity: 1,
         subtotalCents: 1800,
-        // The buyer pays Stripe's fee; iHYPE absorbs none of it. Seeded so the
-        // ticket sheet's money lines have the same shape production produces.
-        processingFeeCents: 85,
-        totalChargeCents: 1885,
-        venuePayoutCents: 360,
-        artistPayoutCents: 1260,
-        promoterPayoutCents: 180,
+        /* The shape a sale takes since 2026-09-25: the buyer pays face value
+           and nothing on top, Stripe's 82c comes off the top on the venue's
+           account, and the remaining 1718 splits 75/25 (artist 1288, venue
+           430), sold VENUE_DIRECT with no promoter share. */
+        processingFeeCents: 0,
+        totalChargeCents: 1800,
+        venuePayoutCents: 430,
+        artistPayoutCents: 1288,
+        promoterPayoutCents: 0,
+        settlementMode: 'VENUE_DIRECT',
         status: 'CAPTURED',
       },
     });
