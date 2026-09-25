@@ -3,25 +3,23 @@
 import { useState } from 'react';
 import { useI18n } from '@/components/I18nProvider';
 import { PAYOUT_HOLD_DAYS } from '@/lib/payout-release';
+import { stripeCutOf } from '@/lib/stripe-fees';
+import { VENUE_SHARE_PERCENT } from '@/lib/ticketing';
 
-export function PayoutFanView({
-  priceCents,
-  artistPct,
-  venuePct,
-  promoterPct,
-}: {
-  priceCents: number;
-  artistPct: number;
-  venuePct: number;
-  promoterPct: number;
-}) {
+/* One ticket at the terms in force since 2026-09-25: Stripe's card fee comes
+   off the face value first, then 75% to the artist and 25% to the venue, 0%
+   to iHYPE. There is no promoter share. The fee is an estimate at the
+   standard US card rate on a one-ticket order; tax is added for the buyer and
+   is never part of the split. */
+export function PayoutFanView({ priceCents }: { priceCents: number }) {
   const { t } = useI18n();
   const [expanded, setExpanded] = useState(false);
 
   const fmt = (cents: number) => `$${(cents / 100).toFixed(2)}`;
-  const artistShare = Math.round(priceCents * artistPct / 100);
-  const venueShare = Math.round(priceCents * venuePct / 100);
-  const promoterShare = Math.round(priceCents * promoterPct / 100);
+  const feeShare = stripeCutOf(priceCents);
+  const netCents = Math.max(0, priceCents - feeShare);
+  const venueShare = Math.round(netCents * (VENUE_SHARE_PERCENT / 100));
+  const artistShare = netCents - venueShare;
 
   return (
     <div className="payout-card" style={{ background: 'var(--bg-2)', border: '1px solid var(--line, var(--hair-80))', borderRadius: 18, padding: '1.5rem', marginBottom: '1.25rem' }}>
@@ -45,15 +43,14 @@ export function PayoutFanView({
           <div style={{ display: 'grid', gap: 8 }}>
             <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', color: 'var(--ink-3)', flexShrink: 0, minWidth: 90 }}>{t('payoutFanView.yourLabel', 'Your')} {fmt(priceCents)}</span>
-              <span style={{ fontSize: '0.9375rem', color: 'var(--ink-2)', lineHeight: 1.5 }}>{fmt(artistShare)} {t('payoutFanView.artistLabel', 'artist')} · {fmt(venueShare)} {t('payoutFanView.venueLabel', 'venue')} · {fmt(promoterShare)} {t('payoutFanView.promoterLabel', 'promoter')} · $0 {t('payoutFanView.ihypeLabel', 'iHYPE')}</span>
+              <span style={{ fontSize: '0.9375rem', color: 'var(--ink-2)', lineHeight: 1.5 }}>{fmt(feeShare)} {t('payoutFanView.stripeFeeLabel', 'Stripe card fee')} · {fmt(artistShare)} {t('payoutFanView.artistLabel', 'artist')} · {fmt(venueShare)} {t('payoutFanView.venueLabel', 'venue')} · $0 {t('payoutFanView.ihypeLabel', 'iHYPE')}</span>
             </div>
             <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', color: 'var(--ink-3)', flexShrink: 0, minWidth: 90 }} />
-              {/* The promoter tenth is the charter's "(if applicable)": with no
-                  HYPE link on the order it is zero and redistributes to the
-                  artist and venue in the same 7:2 ratio. The line above states
-                  a split that only holds when one was used. */}
-              <span style={{ fontSize: '0.9375rem', color: 'var(--ink-3)', lineHeight: 1.5 }}>{t('payoutFanView.promoterConditional', 'The promoter share applies only when the fan arrived on a HYPE link; otherwise it goes to the artist and venue.')}</span>
+              {/* The fee is Stripe's, estimated at the standard US card rate,
+                  and it comes off the face value before the split — the buyer
+                  pays the ticket price plus tax and nothing else. */}
+              <span style={{ fontSize: '0.9375rem', color: 'var(--ink-3)', lineHeight: 1.5 }}>{t('payoutFanView.feeOffTheTop', 'Stripe’s card fee comes off the face value first (estimated at the standard US card rate); the rest splits 75% to the artist and 25% to the venue. The buyer pays the ticket price plus tax and nothing else.')}</span>
             </div>
             <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', color: 'var(--ink-3)', flexShrink: 0, minWidth: 90 }}>{t('payoutFanView.ihypeFeeLabel', 'iHYPE fee')}</span>

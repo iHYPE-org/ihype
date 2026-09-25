@@ -318,8 +318,8 @@ async function main() {
          * 70/20 are the charter's figures; the promoter's 10 is
          * `@default(10)` and is deliberately not restated here.
          */
-        artistPayoutPercent: 70,
-        venuePayoutPercent: 20,
+        artistPayoutPercent: 75,
+        venuePayoutPercent: 25,
       };
       await prisma.show.upsert({
         where: { slug },

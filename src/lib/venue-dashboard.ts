@@ -58,7 +58,8 @@ function nextCronRun(from: Date): Date {
  * Owner-only aggregate data for the Venue Dashboard hub. Every number here is
  * a real Prisma query result — no projections, no placeholders. "This
  * month's earnings" is summed directly from TicketOrder.venuePayoutCents
- * (the venue's actual stored 20%-style split for each captured order), not
+ * (the venue's actual stored share for each captured order — 25% of the net
+ * face value since 2026-09-25, 20% of the face value before), not
  * derived from getProfileInsights' ticketRevenueCents — that field is gross
  * ticket-order revenue across all three payout parties, so treating it as
  * "the venue's share" would misrepresent the number. getProfileInsights is
@@ -129,7 +130,7 @@ export async function getVenueDashboardData(profileId: string, locale: Locale): 
 
      THE ARITHMETIC IS NOT THE THING TO NORMALISE, and that is the trap worth
      recording: a venue on `VENUE_DIRECT` is the merchant on its own shows, so
-     its 20% never becomes a payable at all (`buildPayableEntries`'s
+     its share never becomes a payable at all (`buildPayableEntries`'s
      `venueIsMerchant`). Summing RELEASED rows here would read $0.00 for a
      venue holding the money in its own Stripe balance. The asymmetry is what
      the settlement modes actually do; what was wrong is that neither card

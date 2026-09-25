@@ -63,12 +63,13 @@ describe('the retired-claims audit', () => {
     // The profile editor's empty state read "Create an artist, venue, or
     // promoter page to get started" while the entry matched account, role,
     // signup and profile but not page (DESIGN_SYNC row 454). The 10% pool
-    // in the same sentence family must still pass.
+    // in the same sentence family is refused too since the pool was retired.
     const { out, status } = probe('export const C = () => <p>Create an artist, venue, or promoter page to get started.</p>;\n');
     expect(status).toBe(1);
     expect(out).toContain('promoter as an account type');
     const pool = probe('export const D = () => <p>10% goes to the promoter pool — anyone with a HYPE Link.</p>;\n');
-    expect(pool.status).toBe(0);
+    // The pool itself is retired since 2026-09-25, so this is refused now too.
+    expect(pool.status).toBe(1);
   });
 
   it('never fires on a comment, including this scanner documenting itself', () => {

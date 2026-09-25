@@ -8,6 +8,8 @@ import Link from 'next/link';
 import { PasskeyManager } from '@/components/AuthScreens';
 import { useI18n } from '@/components/I18nProvider';
 import { openExternalUrl } from '@/lib/open-external';
+import { MoneyTermsDisclosure } from '@/components/MoneyTermsDisclosure';
+import { MONEY_TERMS_VERSION, isMoneyTermsRole } from '@/lib/money-terms';
 import { PAYOUT_HOLD_DAYS } from '@/lib/payout-release';
 
 interface Prefs {
@@ -170,8 +172,6 @@ export function MmmSettings() {
   const [email, setEmail] = useState('');
   const [emailVerified, setEmailVerified] = useState(true);
   const [role, setRole] = useState('FAN');
-  const [isAdult, setIsAdult] = useState(false);
-  const [attesting, setAttesting] = useState(false);
   const [prefs, setPrefs] = useState<Prefs>({
     newShows: true, milestones: true, weeklyDigest: true,
     crateUploads: true, bookingRequests: true,
@@ -181,7 +181,9 @@ export function MmmSettings() {
   const [inviteHexId, setInviteHexId] = useState<string | null>(null);
   const [inviteCopied, setInviteCopied] = useState(false);
   const [paymentSaved, setPaymentSaved] = useState(false);
-  const [payout, setPayout] = useState<{ profileId: string; connected: boolean; started: boolean } | null>(null);
+  const [payout, setPayout] = useState<{ profileId: string; profileType?: string; connected: boolean; started: boolean } | null>(null);
+  /* The money terms, acknowledged beside the Connect control (row 521). */
+  const [moneyTermsAck, setMoneyTermsAck] = useState(false);
   const [moneyBusy, setMoneyBusy] = useState<'payment' | 'payout' | null>(null);
   const [hypeStats, setHypeStats] = useState<Record<string, number | null> | null>(null);
   const [loading, setLoading] = useState(true);
@@ -215,7 +217,6 @@ export function MmmSettings() {
         setEmail(data.email ?? '');
         setEmailVerified(Boolean(data.emailVerified));
         setRole(data.role ?? 'FAN');
-        setIsAdult(Boolean(data.isEighteenOrOlder));
         if (data.notificationPreference) setPrefs((p) => ({ ...p, ...data.notificationPreference }));
         if (data.creatorProfile) setDiscoverable(Boolean(data.creatorProfile.discoverable));
         if (data.inviteHexId) setInviteHexId(data.inviteHexId);
@@ -339,29 +340,6 @@ export function MmmSettings() {
     }
   }
 
-  async function attestAdult() {
-    if (!confirm(t('settingsPage.confirmAdult', 'Confirm that you are 18 years of age or older? This unlocks ticket purchases and referral links and cannot be undone.'))) return;
-    setAttesting(true);
-    setError(null);
-    try {
-      const res = await fetch('/api/me', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ attestEighteenOrOlder: true }),
-      });
-      if (res.ok) {
-        setIsAdult(true);
-      } else {
-        const d = await res.json().catch(() => ({}));
-        setError(d.error ?? t('settingsPage.ageConfirmFailed', 'Could not save your age confirmation.'));
-      }
-    } catch {
-      setError(t('settingsPage.networkError', 'Network error'));
-    } finally {
-      setAttesting(false);
-    }
-  }
-
   async function detachIdentity() {
     if (!confirm(t('settingsPage.confirmDetach', 'Detach your identity from activity history now?'))) return;
     setDetaching(true);
@@ -393,10 +371,7 @@ export function MmmSettings() {
   /* One sentence, used by the OS share sheet and by the three channel links
      below it, so a member's link never arrives bare with no idea what it is. */
   const hypeLinkShareText = inviteHexId
-    ? t(
-        'settingsPage.hypeLinkShareText',
-        'Come find live music with me on iHYPE — artists keep 70% of every ticket: https://ihype.org/invite/{code}',
-      ).replace('{code}', inviteHexId)
+    ? t('settingsPage.hypeLinkShareTextNet', 'Come find live music with me on iHYPE — artists keep 75% of every ticket after the card fee: https://ihype.org/invite/{code}').replace('{code}', inviteHexId)
     : '';
 
   async function shareInviteLink() {
@@ -446,7 +421,7 @@ export function MmmSettings() {
       const res = await fetch('/api/stripe/connect/onboard', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ profileId: payout.profileId }),
+        body: JSON.stringify({ profileId: payout.profileId, ...(isMoneyTermsRole(payout.profileType) ? { acceptedMoneyTermsVersion: MONEY_TERMS_VERSION } : {}) }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.onboardingUrl) throw new Error(data.error ?? t('settingsPage.payoutConnectFailed', 'Could not open payout onboarding.'));
@@ -531,8 +506,9 @@ export function MmmSettings() {
           )}
           {/* The HYPE link, first (owner, 2026-08-24: "put HYPE link at top —
               it does a lot"). One link, four jobs: shares liked playlists,
-              shares events, invites new members past the alpha gate, and earns
-              the 10% promoter share on shows it sells. The scoreboard below is
+              shares events, invites new members past the alpha gate, and records
+              the tickets it helps sell (a referral, not a share, since
+              2026-09-25). The scoreboard below is
               /api/me/hype-link-stats — every figure a real table, an em dash
               where one could not be read. */}
           {inviteHexId && (
@@ -575,14 +551,14 @@ export function MmmSettings() {
                   </a>
                 </div>
                 <p className="settings-invite-note">
-                  {t('settingsPage.hypeLinkNote', 'Your HYPE link shares liked playlists and events, invites new members past the alpha gate, and earns you the 10% promoter share on any show it sells.')}
+                  {t('settingsPage.hypeLinkNoteTracks', 'Your HYPE link shares liked playlists and events, invites new members past the alpha gate, and records every ticket it helps sell as your referral.')}
                 </p>
                 <div className="settings-hype-stats">
                   {([
                     [t('settingsPage.hypesEarned', 'HYPEs earned'), hypeStats?.hypesEarned],
                     [t('settingsPage.hypesGiven', 'HYPEs given'), hypeStats?.hypesGiven],
                     [t('settingsPage.ticketReferrals', 'Ticket referrals'), hypeStats?.ticketReferrals],
-                    [t('settingsPage.dollarsEarned', '$ earned'), typeof hypeStats?.dollarsEarnedCents === 'number' ? `$${(hypeStats.dollarsEarnedCents / 100).toFixed(2)}` : null],
+                    [t('settingsPage.dollarsEarnedPast', '$ earned (old split)'), typeof hypeStats?.dollarsEarnedCents === 'number' ? `$${(hypeStats.dollarsEarnedCents / 100).toFixed(2)}` : null],
                     [t('settingsPage.newUsers', 'New members from your link'), hypeStats?.newUsers],
                     [t('settingsPage.artistsHyped', 'Artists HYPEd'), hypeStats?.artistsHyped],
                     [t('settingsPage.venuesHyped', 'Venues HYPEd'), hypeStats?.venuesHyped],
@@ -600,10 +576,10 @@ export function MmmSettings() {
 
           {/* Money methods — BOTH, for every role (owner, 2026-08-24:
               "Settings needs payment method AND payout method"). A payment
-              method buys tickets; a payout method receives what your HYPE
-              link earns — the 10% promoter share lands on any account whose
-              link sold the ticket, so neither card is gated on role. Both run
-              through Stripe's hosted pages. */}
+              method buys tickets; a payout method receives an artist's or a
+              venue's share. A HYPE link earns nothing since 2026-09-25, so the
+              payout card tells a member with no creator page that they do not
+              need one. Both run through Stripe's hosted pages. */}
           <div className="settings-section">
             <div className="settings-section-title">{t('settingsPage.moneyMethods', 'Payment & payouts')}</div>
             <div className="settings-group">
@@ -649,7 +625,7 @@ export function MmmSettings() {
                       edited, so every locale falls back to correct English. */}
                   <div className="settings-row-detail">
                     {!isCreator
-                      ? t('settingsPage.payoutPromoterDetail', 'Receives the 10% promoter share your HYPE link earns')
+                      ? t('settingsPage.payoutNonCreatorDetail', 'Only needed if you run an artist or venue page — a HYPE link earns no share of a ticket')
                       : payout?.connected
                         ? t('settingsPage.payoutsLandHold', 'Released about {days} days after a show ends, once the dispute window closes')
                             .replace('{days}', String(PAYOUT_HOLD_DAYS))
@@ -657,23 +633,26 @@ export function MmmSettings() {
                   </div>
                   <div className="settings-split-mini">
                     {isCreator ? (
-                      <span style={{ color: roleColor }}>{role === 'VENUE' ? t('settingsPage.splitVenueYou', '20% you') : t('settingsPage.splitArtistYou', '70% you')}</span>
-                    ) : (
-                      <span style={{ color: 'var(--role-promoter)' }}>{t('settingsPage.splitPromoterYou', '10% you')}</span>
-                    )}
-                    <span style={{ color: 'var(--ink-a65)' }}>{t('settingsPage.splitArtist', '70% artist')}</span>
-                    <span style={{ color: 'var(--ink-a65)' }}>{t('settingsPage.splitVenue', '20% venue')}</span>
+                      <span style={{ color: roleColor }}>{role === 'VENUE' ? t('settingsPage.splitVenueYouNet', '25% you') : t('settingsPage.splitArtistYouNet', '75% you')}</span>
+                    ) : null}
+                    <span style={{ color: 'var(--ink-a65)' }}>{t('settingsPage.splitArtistNet', '75% artist')}</span>
+                    <span style={{ color: 'var(--ink-a65)' }}>{t('settingsPage.splitVenueNet', '25% venue')}</span>
+                    <span style={{ color: 'var(--ink-a65)' }}>{t('settingsPage.splitAfterFee', 'after Stripe’s fee')}</span>
                   </div>
                 </div>
                 {payout && (
-                  <button className="settings-btn settings-btn-ghost" disabled={moneyBusy === 'payout'} onClick={() => void connectPayouts()} type="button">
+                  <button className="settings-btn settings-btn-ghost" disabled={moneyBusy === 'payout' || (isMoneyTermsRole(payout.profileType) && !moneyTermsAck)} onClick={() => void connectPayouts()} type="button">
                     {moneyBusy === 'payout' ? t('settingsPage.opening', 'Opening…') : payout.connected ? t('settingsPage.manage', 'Manage') : t('settingsPage.connect', 'Connect')}
                   </button>
                 )}
               </div>
 
+              {payout && isMoneyTermsRole(payout.profileType) ? (
+                <MoneyTermsDisclosure acknowledged={moneyTermsAck} onAcknowledgeChange={setMoneyTermsAck} role={payout.profileType} />
+              ) : null}
+
               {isCreator && (
-                <Row action={<Link className="settings-btn settings-btn-ghost" href="/app/me/payouts?tab=history">{t('settingsPage.view', 'View')}</Link>} detail={t('settingsPage.payoutHistoryDetail', 'Every payout receipt, itemized 70/20/10')} label={t('settingsPage.payoutHistory', 'Payout history')} />
+                <Row action={<Link className="settings-btn settings-btn-ghost" href="/app/me/payouts?tab=history">{t('settingsPage.view', 'View')}</Link>} detail={t('settingsPage.payoutHistoryDetailNet', 'Every payout receipt, itemized by share')} label={t('settingsPage.payoutHistory', 'Payout history')} />
               )}
             </div>
           </div>
@@ -706,19 +685,6 @@ export function MmmSettings() {
                 action={<Link className="settings-btn settings-btn-ghost" href="/verify">{t('settingsPage.manage', 'Manage')}</Link>}
                 detail={role.charAt(0) + role.slice(1).toLowerCase()}
                 label={t('settingsPage.role', 'Role')}
-              />
-              <Row
-                action={
-                  isAdult ? (
-                    <span className="settings-row-detail" style={{ color: 'var(--role-venue)' }}>{t('settingsPage.adultConfirmed', '✓ 18+ confirmed')}</span>
-                  ) : (
-                    <button className="settings-btn settings-btn-ghost" disabled={attesting} onClick={attestAdult} type="button">
-                      {attesting ? t('settingsPage.saving', 'Saving…') : t('settingsPage.imEighteen', "I'm 18 or older")}
-                    </button>
-                  )
-                }
-                detail={isAdult ? t('settingsPage.adultUnlockedDetail', 'Ticket purchases and referral links are unlocked') : t('settingsPage.adultRequiredDetail', 'Required to buy tickets or share referral links (13+ to listen)')}
-                label={t('settingsPage.ageVerification', 'Age verification')}
               />
             </div>
           </div>

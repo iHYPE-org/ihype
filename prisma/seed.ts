@@ -11,7 +11,7 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { buildArtistMediaCollection } from '../src/lib/media';
 import { isProductionSeedingAllowed } from '../src/lib/runtime-flags';
 import { createSerializedTicketId } from '../src/lib/tickets';
-import { calculateTicketOrderPayouts, DEFAULT_PROMOTER_AFFILIATE_PERCENT } from '../src/lib/ticketing';
+import { calculateTicketOrderPayouts } from '../src/lib/ticketing';
 
 // Prisma 7 requires a driver adapter — a bare `new PrismaClient()` throws at
 // construction ("PrismaClient failed to initialize ... provide adapter").
@@ -973,9 +973,9 @@ async function main() {
       ticketingOpensAt: seedTicketingOpensAt,
       ticketPriceCents: 3200,
       ticketCapacity: 260,
-      venuePayoutPercent: 20,
-      artistPayoutPercent: 70,
-      promoterPayoutPercent: DEFAULT_PROMOTER_AFFILIATE_PERCENT,
+      venuePayoutPercent: 25,
+      artistPayoutPercent: 75,
+      promoterPayoutPercent: 0,
       tags: ['live', 'techno', 'warehouse'],
       ticketsSoldCount: 184,
       hypeCount: 54
@@ -994,9 +994,9 @@ async function main() {
       ticketingOpensAt: seedTicketingOpensAt,
       ticketPriceCents: 3200,
       ticketCapacity: 260,
-      venuePayoutPercent: 20,
-      artistPayoutPercent: 70,
-      promoterPayoutPercent: DEFAULT_PROMOTER_AFFILIATE_PERCENT,
+      venuePayoutPercent: 25,
+      artistPayoutPercent: 75,
+      promoterPayoutPercent: 0,
       tags: ['live', 'techno', 'warehouse'],
       ticketsSoldCount: 184,
       hypeCount: 54
@@ -1018,9 +1018,9 @@ async function main() {
       ticketingOpensAt: seedTicketingOpensAt,
       ticketPriceCents: 2800,
       ticketCapacity: 180,
-      venuePayoutPercent: 15,
+      venuePayoutPercent: 25,
       artistPayoutPercent: 75,
-      promoterPayoutPercent: DEFAULT_PROMOTER_AFFILIATE_PERCENT,
+      promoterPayoutPercent: 0,
       tags: ['scheduled', 'indie', 'rooftop'],
       ticketsSoldCount: 126,
       hypeCount: 37
@@ -1039,9 +1039,9 @@ async function main() {
       ticketingOpensAt: seedTicketingOpensAt,
       ticketPriceCents: 2800,
       ticketCapacity: 180,
-      venuePayoutPercent: 15,
+      venuePayoutPercent: 25,
       artistPayoutPercent: 75,
-      promoterPayoutPercent: DEFAULT_PROMOTER_AFFILIATE_PERCENT,
+      promoterPayoutPercent: 0,
       tags: ['scheduled', 'indie', 'rooftop'],
       ticketsSoldCount: 126,
       hypeCount: 37
@@ -1063,9 +1063,9 @@ async function main() {
       ticketingOpensAt: seedTicketingOpensAt,
       ticketPriceCents: 3500,
       ticketCapacity: 400,
-      venuePayoutPercent: 19,
-      artistPayoutPercent: 71,
-      promoterPayoutPercent: DEFAULT_PROMOTER_AFFILIATE_PERCENT,
+      venuePayoutPercent: 25,
+      artistPayoutPercent: 75,
+      promoterPayoutPercent: 0,
       tags: ['live', 'chicago', 'house'],
       ticketsSoldCount: 342,
       hypeCount: 61
@@ -1084,9 +1084,9 @@ async function main() {
       ticketingOpensAt: seedTicketingOpensAt,
       ticketPriceCents: 3500,
       ticketCapacity: 400,
-      venuePayoutPercent: 19,
-      artistPayoutPercent: 71,
-      promoterPayoutPercent: DEFAULT_PROMOTER_AFFILIATE_PERCENT,
+      venuePayoutPercent: 25,
+      artistPayoutPercent: 75,
+      promoterPayoutPercent: 0,
       tags: ['live', 'chicago', 'house'],
       ticketsSoldCount: 342,
       hypeCount: 61
@@ -1109,8 +1109,8 @@ async function main() {
       ticketPriceCents: 2400,
       ticketCapacity: 150,
       venuePayoutPercent: 25,
-      artistPayoutPercent: 65,
-      promoterPayoutPercent: DEFAULT_PROMOTER_AFFILIATE_PERCENT,
+      artistPayoutPercent: 75,
+      promoterPayoutPercent: 0,
       tags: ['scheduled', 'midwest', 'regional'],
       ticketsSoldCount: 98,
       hypeCount: 27
@@ -1130,8 +1130,8 @@ async function main() {
       ticketPriceCents: 2400,
       ticketCapacity: 150,
       venuePayoutPercent: 25,
-      artistPayoutPercent: 65,
-      promoterPayoutPercent: DEFAULT_PROMOTER_AFFILIATE_PERCENT,
+      artistPayoutPercent: 75,
+      promoterPayoutPercent: 0,
       tags: ['scheduled', 'midwest', 'regional'],
       ticketsSoldCount: 98,
       hypeCount: 27
@@ -1154,9 +1154,9 @@ async function main() {
       ticketingOpensAt: seedTicketingOpensAt,
       ticketPriceCents: 1800,
       ticketCapacity: 240,
-      venuePayoutPercent: 20,
-      artistPayoutPercent: 70,
-      promoterPayoutPercent: DEFAULT_PROMOTER_AFFILIATE_PERCENT,
+      venuePayoutPercent: 25,
+      artistPayoutPercent: 75,
+      promoterPayoutPercent: 0,
       tags: ['archive', 'late-night'],
       ticketsSoldCount: 211,
       hypeCount: 19
@@ -1176,9 +1176,9 @@ async function main() {
       ticketingOpensAt: seedTicketingOpensAt,
       ticketPriceCents: 1800,
       ticketCapacity: 240,
-      venuePayoutPercent: 20,
-      artistPayoutPercent: 70,
-      promoterPayoutPercent: DEFAULT_PROMOTER_AFFILIATE_PERCENT,
+      venuePayoutPercent: 25,
+      artistPayoutPercent: 75,
+      promoterPayoutPercent: 0,
       tags: ['archive', 'late-night'],
       ticketsSoldCount: 211,
       hypeCount: 19
@@ -1200,9 +1200,9 @@ async function main() {
       ticketingOpensAt: seedTicketingOpensAt,
       ticketPriceCents: 2600,
       ticketCapacity: 190,
-      venuePayoutPercent: 17,
-      artistPayoutPercent: 73,
-      promoterPayoutPercent: DEFAULT_PROMOTER_AFFILIATE_PERCENT,
+      venuePayoutPercent: 25,
+      artistPayoutPercent: 75,
+      promoterPayoutPercent: 0,
       tags: ['scheduled', 'austin', 'indie-dance'],
       ticketsSoldCount: 132,
       hypeCount: 31
@@ -1221,9 +1221,9 @@ async function main() {
       ticketingOpensAt: seedTicketingOpensAt,
       ticketPriceCents: 2600,
       ticketCapacity: 190,
-      venuePayoutPercent: 17,
-      artistPayoutPercent: 73,
-      promoterPayoutPercent: DEFAULT_PROMOTER_AFFILIATE_PERCENT,
+      venuePayoutPercent: 25,
+      artistPayoutPercent: 75,
+      promoterPayoutPercent: 0,
       tags: ['scheduled', 'austin', 'indie-dance'],
       ticketsSoldCount: 132,
       hypeCount: 31
@@ -1246,9 +1246,9 @@ async function main() {
       ticketingOpensAt: seedTicketingOpensAt,
       ticketPriceCents: 3000,
       ticketCapacity: 220,
-      venuePayoutPercent: 18,
-      artistPayoutPercent: 72,
-      promoterPayoutPercent: DEFAULT_PROMOTER_AFFILIATE_PERCENT,
+      venuePayoutPercent: 25,
+      artistPayoutPercent: 75,
+      promoterPayoutPercent: 0,
       tags: ['archive', 'seattle', 'breakbeat'],
       ticketsSoldCount: 159,
       hypeCount: 29
@@ -1268,9 +1268,9 @@ async function main() {
       ticketingOpensAt: seedTicketingOpensAt,
       ticketPriceCents: 3000,
       ticketCapacity: 220,
-      venuePayoutPercent: 18,
-      artistPayoutPercent: 72,
-      promoterPayoutPercent: DEFAULT_PROMOTER_AFFILIATE_PERCENT,
+      venuePayoutPercent: 25,
+      artistPayoutPercent: 75,
+      promoterPayoutPercent: 0,
       tags: ['archive', 'seattle', 'breakbeat'],
       ticketsSoldCount: 159,
       hypeCount: 29
@@ -1471,7 +1471,6 @@ async function main() {
       quantity,
       venuePayoutPercent: show.venuePayoutPercent ?? 0,
       artistPayoutPercent: show.artistPayoutPercent ?? 0,
-      promoterPayoutPercent: show.promoterPayoutPercent
     });
 
     return {

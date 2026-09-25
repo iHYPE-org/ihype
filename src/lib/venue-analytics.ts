@@ -94,8 +94,8 @@ function bucketDefsFor(range: VenueAnalyticsRange, rangeStart: Date, now: Date, 
  * real Prisma aggregate over Show/TicketOrder rows for shows whose startsAt
  * falls in the selected window — no fabricated numbers or placeholder deltas.
  *
- * Gross uses TicketOrder.venuePayoutCents (the venue's own stored 20%-style
- * split for each captured order), the same real field src/lib/venue-dashboard.ts
+ * Gross uses TicketOrder.venuePayoutCents (the venue's own stored share for
+ * each captured order — 25% of the net face value since 2026-09-25), the same real field src/lib/venue-dashboard.ts
  * uses — NOT getProfileInsights().ticketRevenueCents, which is gross
  * shared revenue across all three payout parties and would misrepresent the
  * venue's actual take.

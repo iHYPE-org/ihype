@@ -145,7 +145,7 @@ export async function getHealthSnapshot() {
     /* WHETHER ANYONE CAN BE PAID, beside the figures for whether there is
        anything to listen to. `buildAlphaBlockers` had no payout condition at
        all — not blocking, not reported — on a product whose charter promise is
-       that 70% of a ticket reaches the act, so the readiness payload could
+       that the artist's share of a ticket reaches the act, so the readiness payload could
        read fully ready with every payee unreachable.
 
        REPORTED, NOT A BLOCKER, and `alphaReadiness.content` is the precedent

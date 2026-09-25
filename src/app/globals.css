@@ -5915,3 +5915,75 @@ body:has(.fan-entry) #main-content { width: 100%; }
   color: var(--ink-a65);
 }
 .showpage-inline { display: inline-flex; align-items: center; gap: 6px; }
+
+/* ── Money terms (DESIGN_SYNC row 521) ────────────────────────────────────
+   The fees and money duties an artist or venue agrees to, shown open at
+   sign-up, in onboarding and beside every Connect control. Paints from tokens
+   only; the example card is a grouped cell, the list is plain reading text. */
+.money-terms {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--bg-2);
+  color: var(--ink);
+  text-align: left;
+}
+.money-terms-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+.money-terms-lead,
+.money-terms-note,
+.money-terms-list {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+.money-terms-example {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border-radius: var(--radius-card);
+  background: var(--bg);
+}
+.money-terms-example-head {
+  font-weight: 600;
+}
+.money-terms-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.9375rem;
+  font-variant-numeric: tabular-nums;
+}
+.money-terms-subtitle {
+  margin: 4px 0 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+.money-terms-list {
+  display: grid;
+  gap: 8px;
+  padding-left: 20px;
+}
+.money-terms-ack {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-height: 44px;
+  padding-top: 4px;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  cursor: pointer;
+}
+.money-terms-ack input {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+}

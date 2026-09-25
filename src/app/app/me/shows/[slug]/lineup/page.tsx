@@ -38,7 +38,7 @@ export default async function LineupSplitPage({ params }: { params: Promise<{ sl
     where: { slug },
     select: {
       id: true, slug: true, title: true, startsAt: true, status: true,
-      artistPayoutPercent: true, venuePayoutPercent: true, promoterPayoutPercent: true,
+      artistPayoutPercent: true, venuePayoutPercent: true,
       venueProfile: { select: { id: true, ownerId: true, name: true } },
     },
   });
@@ -86,7 +86,6 @@ export default async function LineupSplitPage({ params }: { params: Promise<{ sl
   }
 
   const venuePercent = show.venuePayoutPercent ?? 0;
-  const promoterPercent = show.promoterPayoutPercent ?? 0;
 
   return (
     <div className="lsp-page">
@@ -101,11 +100,10 @@ export default async function LineupSplitPage({ params }: { params: Promise<{ sl
           <div key={s.id} className="lsp-splitbar-seg" style={{ flex: s.splitPercent, background: s.isHeadliner ? 'var(--accent)' : 'var(--accent-2)' }} />
         ))}
         <div className="lsp-splitbar-seg" style={{ flex: venuePercent, background: 'var(--role-venue)' }} />
-        <div className="lsp-splitbar-seg" style={{ flex: promoterPercent, background: 'var(--role-promoter)' }} />
       </div>
       <div className="lsp-splitbar-legend">
         <span>{slots.map((s) => `${s.profile.name} ${s.splitPercent}%`).join(' · ')}</span>
-        <span>{t('showsSlugLineupPage.venueLabel', 'Venue')} {venuePercent}% · {t('showsSlugLineupPage.promotersLabel', 'Promoters')} {promoterPercent}%</span>
+        <span>{t('showsSlugLineupPage.venueLabel', 'Venue')} {venuePercent}% · {t('showsSlugLineupPage.afterStripeFee', 'of the face value after Stripe’s card fee')}</span>
       </div>
 
       <div className="lsp-eyebrow" style={{ marginTop: 32, marginBottom: 14 }}>{t('showsSlugLineupPage.lineup', 'Lineup')}</div>

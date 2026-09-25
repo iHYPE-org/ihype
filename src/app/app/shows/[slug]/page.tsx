@@ -36,7 +36,7 @@ export const dynamic = 'force-dynamic';
  * ## Why TicketSaleCard is reused rather than rebuilt
  *
  * It is the transaction: quantity, the per-show cap, Turnstile (whose tokens
- * are single-use and must be reset between attempts), the 18+ gate, the
+ * are single-use and must be reset between attempts), the
  * unverified-email path, stored payment tokens, and the capacity read. Every
  * one of those is a rule someone learned the hard way. CLAUDE.md's first rule
  * is that a design sync updates the UI layer and never replaces the wiring, so
@@ -97,7 +97,7 @@ export default async function MmmShowPage({
         headlinerProfile: { select: { name: true, slug: true } },
         promoterProfile: { select: { name: true } },
         venueProfile: {
-          select: { name: true, city: true, stateRegion: true, postalCode: true, country: true },
+          select: { name: true, city: true, stateRegion: true, postalCode: true, country: true, stripeConnectOnboarded: true },
         },
       },
     }),
@@ -215,30 +215,31 @@ export default async function MmmShowPage({
       )}
 
       {/* The split, stated on the surface where money changes hands rather than
-          only in the charter. These are the show's OWN percentages, not the
-          70/20/10 default — a lineup or a promoter agreement can move them, and
-          showing the constant here would be showing a number that is not what
-          this ticket does. Absent when the show has not set one. */}
+          only in the charter: Stripe's card fee off the top, then 75% to the
+          artist and 25% to the venue of what is left (2026-09-25). The same
+          arithmetic the purchase route runs, so the page cannot state a split
+          the sale does not make. Absent when the show is not ticketed. */}
       {splits && (
         <>
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, padding: '13px 0', borderTop: '1px solid var(--line)', borderBottom: '1px solid var(--line)' }}>
             <span style={{ fontSize: '0.9375rem', color: 'var(--ink-2)' }}>{t('mmmShowPane.splitLocked', 'Split locked at publish')}</span>
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '0.14em' }}>
-              {splits.artist} / {splits.venue} / {splits.promoter} · iHYPE $0
+              {splits.artist} / {splits.venue} · iHYPE $0
             </span>
           </div>
-          {/* WHAT the percentages are a share OF, which the row above cannot
-              say on its own. The design system's money rule: the split is shown
-              against face value only — against the total it would imply the
-              artist's share includes money Stripe took, and the sale card
-              below this ends in a total carrying tax and Stripe's processing. */}
+          {/* WHAT the percentages are a share OF: the face value after Stripe's
+              fee. The buyer pays face value and tax and nothing on top. */}
           <div className="mmm-show-fee">
             {faceShares
-              ? `${formatCurrencyFromCents(show.ticketPriceCents, locale)} face value · ${formatCurrencyFromCents(faceShares.artist, locale)} artist · ${formatCurrencyFromCents(faceShares.venue, locale)} venue · ${formatCurrencyFromCents(faceShares.promoter, locale)} promoters`
-              : show.ticketPriceCents > 0 ? formatCurrencyFromCents(show.ticketPriceCents, locale) : 'Free'}
+              ? t('mmmShowPane.faceSharesNet', '{face} face value · {fee} card fee · {artist} artist · {venue} venue')
+                  .replace('{face}', formatCurrencyFromCents(show.ticketPriceCents, locale))
+                  .replace('{fee}', formatCurrencyFromCents(faceShares.fee, locale))
+                  .replace('{artist}', formatCurrencyFromCents(faceShares.artist, locale))
+                  .replace('{venue}', formatCurrencyFromCents(faceShares.venue, locale))
+              : show.ticketPriceCents > 0 ? formatCurrencyFromCents(show.ticketPriceCents, locale) : t('mmmShowPane.free', 'Free')}
           </div>
           <div className="mmm-show-fee">
-            $0 iHYPE fee · Stripe&rsquo;s processing is charged separately and shown before you pay
+            {t('mmmShowPane.feeNoteNet', '$0 iHYPE fee · you pay the ticket price and its tax, nothing more')}
           </div>
         </>
       )}
@@ -272,7 +273,7 @@ export default async function MmmShowPage({
       {show.isTicketed && venue && show.headlinerProfile && splits && !paymentsReady ? (
         <div className="mmm-empty">
           <strong style={{ display: 'block', marginBottom: 6 }}>{t('mmmShowPane.paidComingSoon', 'Paid tickets · Coming soon')}</strong>
-          {t('mmmShowPane.paidComingSoonBody', 'Ticket sales have not opened on iHYPE yet. Face-value pricing with the locked 70/20/10 split starts the moment they do.')}
+          {t('mmmShowPane.paidComingSoonBodyNet', 'Ticket sales have not opened on iHYPE yet. When they do, you pay the face value and its tax, nothing more.')}
         </div>
       ) : null}
 
@@ -280,10 +281,8 @@ export default async function MmmShowPage({
         <div className="mmm-show-sale">
           <TicketSaleCard
             heading="Tickets"
-            affiliatePromoterName={affiliatePromoter?.name ?? null}
             affiliatePromoterProfileId={affiliatePromoter?.id ?? null}
             artistName={show.headlinerProfile.name}
-            artistPayoutPercent={splits.artist}
             currentFan={
               currentFan?.role === 'FAN'
                 ? {
@@ -295,13 +294,12 @@ export default async function MmmShowPage({
                   }
                 : null
             }
-            promoterName={show.promoterProfile?.name ?? null}
-            promoterPayoutPercent={splits.promoter}
             showId={show.id}
             showSlug={show.slug}
             ticketCapacity={show.ticketCapacity}
             ticketPriceCents={show.ticketPriceCents}
             ticketingOpen={ticketingOpen}
+            venuePaymentReady={Boolean(venue.stripeConnectOnboarded)}
             ticketingOpensAtLabel={show.ticketingOpensAt ? formatShowTime(show.ticketingOpensAt, locale, show.timeZone) : null}
             ticketsSoldCount={show.ticketsSoldCount}
             title={show.title}
@@ -311,7 +309,6 @@ export default async function MmmShowPage({
               country: venue.country,
             }}
             venueName={venue.name}
-            venuePayoutPercent={splits.venue}
             viewerLocation={{
               city: viewerLocation?.city,
               stateRegion: viewerLocation?.stateRegion,

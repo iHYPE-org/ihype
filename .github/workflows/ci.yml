@@ -194,7 +194,7 @@ jobs:
         # because nothing measures it between passes. Tighten it in the change
         # that lowers the count, and this line stops being necessary.
         # 874 -> 872 (2026-09-24, row 513): the pre-launch scan's deletions.
-        run: npm run audit:spacing -- --max=872
+        run: npm run audit:spacing -- --max=871
 
       - name: Route inventory ratchet
         # `audit:routes` classifies every page.tsx three ways and --max-legacy

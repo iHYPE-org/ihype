@@ -307,7 +307,7 @@ export default async function MmmVenuePage({
             </div>
             <div>
               <dt>{t('profilePane.factSplit', 'Split')}</dt>
-              <dd>{t('profilePane.factSplitBody', '70% artist · 20% venue · 10% promoters, fixed by the')} <Link href="/info?tab=charter">{t('profilePane.charter', 'charter')}</Link>.</dd>
+              <dd>{t('profilePane.factSplitBodyNet', 'After Stripe’s card fee, 75% artist · 25% venue, fixed by the')} <Link href="/info?tab=charter">{t('profilePane.charter', 'charter')}</Link>.</dd>
             </div>
             <div>
               <dt>{t('venuePane.factLineup', 'Lineup')}</dt>

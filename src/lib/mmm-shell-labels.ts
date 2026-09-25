@@ -109,7 +109,7 @@ export function translateMeRow(t: Translate, row: { href: string; label: string;
     case '/app/me/support/tickets':
       return { label: t('mmmMe.row.support', 'Support'), detail: t('mmmMe.row.supportDetail', 'Get help, report a problem, or check a request you filed') };
     case '/app/me/info/charter':
-      return { label: t('mmmMe.row.charter', 'The charter'), detail: t('mmmMe.row.charterDetail', '70% artist · 20% venue · 10% promoters · $0 iHYPE') };
+      return { label: t('mmmMe.row.charter', 'The charter'), detail: t('mmmMe.row.charterDetailNet', '75% artist · 25% venue after Stripe’s fee · $0 iHYPE') };
     case '/app/me/info/community':
       return { label: t('mmmMe.row.community', 'Community roadmap'), detail: t('mmmMe.row.communityDetail', 'See what members have asked for, add one, vote') };
     case '/app/me/info/transparency':
@@ -143,7 +143,7 @@ export function translateMeStatLabel(t: Translate, label: string): string {
   switch (label) {
     case 'Hypes cast': return t('mmmMe.stat.hypesCast', 'Hypes cast');
     case 'Shows attended': return t('mmmMe.stat.showsAttended', 'Shows attended');
-    case 'Promoter earnings': return t('mmmMe.stat.promoterEarnings', 'Promoter earnings');
+    case 'Past referral earnings': return t('mmmMe.stat.pastReferralEarnings', 'Past referral earnings');
     case 'Following': return t('mmmMe.stat.following', 'Following');
     case 'Total hypes': return t('mmmMe.stat.totalHypes', 'Total hypes');
     case 'Paid out 30d': return t('mmmMe.stat.paidOut30d', 'Paid out 30d');

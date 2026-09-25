@@ -1,3 +1,5 @@
+import { stripeCutOf } from '@/lib/stripe-fees';
+import { ARTIST_SHARE_PERCENT, VENUE_SHARE_PERCENT, calculateTicketOrderPayouts } from '@/lib/ticketing';
 import type { ShowStatus } from '@prisma/client';
 
 /**
@@ -21,8 +23,8 @@ import type { ShowStatus } from '@prisma/client';
  *    fixed there, and recorded in that file's own comment.
  *  - **The split panel.** Both gate on the percentages being set rather than
  *    defaulting them, for the same reason, and that reason is worth stating
- *    once: this is where money changes hands, and a split shown as 70/20/10
- *    because the real one is missing is a promise the payout engine never made.
+ *    once: this is where money changes hands, and a default split shown
+ *    because the show has none is a promise the payout engine never made.
  *
  * These are pure and tested. Each page keeps its own query and its own layout —
  * the design gives the shell a deliberately slimmer surface — but neither gets
@@ -77,63 +79,52 @@ export function isTicketingOpen(show: ShowTicketing, now: Date = new Date()): bo
 export type ShowSplitSource = {
   artistPayoutPercent: number | null;
   venuePayoutPercent: number | null;
-  promoterPayoutPercent: number;
 };
 
 export type ShowSplits = {
   artist: number;
   venue: number;
-  promoter: number;
 };
 
 /**
- * The 70/20/10 split for this show, or null when it cannot be stated.
+ * The charter split for this show, or null when it is not ticketed.
  *
  * Null whenever the artist or venue share is missing — see the header. The
- * promoter share is NOT nullable and is not treated as though it were:
- * `Show.promoterPayoutPercent` is `Int @default(10)` in the schema, so every
- * show has one whether or not a promoter is attached to it. (This started out
- * typed as nullable on the reasoning that a show without a promoter would
- * carry no share. The schema disagrees, and the compiler said so.)
+ * NUMBERS are the charter's (75/25 since 2026-09-25), never the row's: a show
+ * created under 70/20/10 carried those percentages until the migration moved
+ * it, and a sale is always made under the charter constants, so the page must
+ * state the same split the purchase route will use.
  */
 export function resolveShowSplits(show: ShowSplitSource): ShowSplits | null {
   if (show.artistPayoutPercent === null || show.venuePayoutPercent === null) return null;
-  return {
-    artist: show.artistPayoutPercent,
-    venue: show.venuePayoutPercent,
-    promoter: show.promoterPayoutPercent,
-  };
+  return { artist: ARTIST_SHARE_PERCENT, venue: VENUE_SHARE_PERCENT };
 }
 
 /**
- * What each share of the FACE VALUE is worth, in cents.
+ * What one ticket's face value becomes, in cents: Stripe's card fee first,
+ * then the artist's and the venue's shares of what is left.
  *
- * The percentages alone are not enough on a purchase surface, and the design
- * system says why: "The 70/20/10 split is shown against **face value only**.
- * Against the total it would imply the artist's 70% includes money Stripe took."
- * The shell's split bar sat directly above a sale card whose bottom line is a
- * total carrying tax and Stripe's processing, and named no base at all — so a
- * buyer read "70% artist" against the number they were about to pay.
- *
- * Integer cents, and the LAST share absorbs the rounding remainder, so the three
- * always sum to exactly the face value. The same rule the payout entries follow
- * (`splitArtistPayoutAcrossLineup`): a display that does not add up invites
- * exactly the question the charter exists to answer.
+ * The same arithmetic the purchase route runs (`calculateTicketOrderPayouts`
+ * with the standard-rate fee on the face value), so a page can never state a
+ * split the sale does not make. The three always sum to the face value. Tax is
+ * not in it: the venue collects and remits tax as the merchant, and the page
+ * states the split of the ticket price.
  */
 export function splitFaceValueCents(
   faceValueCents: number,
   splits: ShowSplits,
-): { artist: number; venue: number; promoter: number } | null {
-  if (!Number.isFinite(faceValueCents) || faceValueCents <= 0) return null;
-  const total = splits.artist + splits.venue + splits.promoter;
-  if (total <= 0) return null;
-
-  const artist = Math.round((faceValueCents * splits.artist) / total);
-  const venue = Math.round((faceValueCents * splits.venue) / total);
-  /* Not rounded independently: the remainder has to land somewhere, and the
-     promoter pool is the share the charter already describes as a pool rather
-     than one party's fee. */
-  return { artist, venue, promoter: faceValueCents - artist - venue };
+): { fee: number; artist: number; venue: number } | null {
+  if (!Number.isFinite(faceValueCents) || !Number.isInteger(faceValueCents) || faceValueCents <= 0) return null;
+  const fee = stripeCutOf(faceValueCents);
+  if (fee >= faceValueCents) return null;
+  const payouts = calculateTicketOrderPayouts({
+    ticketPriceCents: faceValueCents,
+    quantity: 1,
+    venuePayoutPercent: splits.venue,
+    artistPayoutPercent: splits.artist,
+    stripeFeeCents: fee,
+  });
+  return { fee, artist: payouts.artistPayoutCents, venue: payouts.venuePayoutCents };
 }
 
 /** "The Armory · Portland" — the one-line place, from whatever parts exist. */

@@ -28,7 +28,7 @@ const REVENUE = {
   ],
   notes: [
     'Founder compensation is not self-approved. It must be approved in advance by conflict-free members of the independent board using comparable compensation data, documented, reviewed annually, and published through transparency reporting.',
-    'None of it touches the ticket split. Stripe\u2019s card-processing fee is the only charge above face value, passed through at cost.',
+    'None of it touches the ticket split. Tickets are sold by the venue through Stripe. Stripe\u2019s card fee comes off the face value before the split, and the buyer pays the ticket price plus tax and nothing else.',
   ],
 } as const;
 
@@ -42,8 +42,8 @@ const SECTIONS = [
     body: "iHYPE was incorporated with a single non-negotiable structural commitment: the platform takes nothing from ticket sales. This commitment is embedded in the company's founding documents and cannot be amended by management, board resolution, investor pressure, or acquisition.",
   },
   {
-    title: 'Promoters and the 10%',
-    body: 'The 10% promoter pool is distributed among everyone whose HYPE Links contributed to ticket sales for an event. There is no promoter role and no promoter account: promoting is something every account can do.',
+    title: 'HYPE Links and referrals',
+    body: 'A HYPE Link records who referred a sale, and earns no share of the ticket. There is no promoter role and no promoter account: sharing a link is something every account can do.',
   },
   {
     title: 'Open by design',
@@ -79,11 +79,11 @@ const SECTIONS = [
   },
   {
     title: 'What “locked in” means',
-    body: 'The 70/20/10 split is a condition of incorporation. Changing it would require dissolving the company and re-incorporating under a different structure. No board vote, no shareholder approval, no acquisition clause overrides it.',
+    body: 'iHYPE\u2019s 0% of ticket sales is a condition of incorporation. Changing it would require dissolving the company and re-incorporating under a different structure. No board vote, no shareholder approval, no acquisition clause overrides it.',
   },
   {
     title: 'What actually makes this real',
-    body: 'A charter is just a promise on paper until a fan buys a ticket. Every dollar that hits this split exists because someone hyped an artist, showed up, and paid face value instead of going through a scalper. Artists write the songs, venues open the doors — but fans are the ones who make the 70/20/10 mean anything at all.',
+    body: 'A charter is just a promise on paper until a fan buys a ticket. Every dollar that hits this split exists because someone hyped an artist, showed up, and paid face value instead of going through a scalper. Artists write the songs, venues open the doors — but fans are the ones who make the split mean anything at all.',
   },
 ] as const;
 
@@ -93,9 +93,10 @@ const SECTIONS = [
  *
  * TRANSLATED: how you got here, what the document is called, when it changed,
  * who to write to, and the ROLE LABELS on the split bar. A member who cannot
- * read "Artist · Venue · Promoters" cannot read the single most important
- * fact iHYPE publishes about itself, and translating a label does not move a
- * number — 70/20/10/0 is the promise and it is identical in every language.
+ * read "Artist · Venue" cannot read the single most important fact iHYPE
+ * publishes about itself, and translating a label does not move a number —
+ * 75/25/0 after Stripe's fee is the promise (since 2026-09-25; it was
+ * 70/20/10/0 before) and it is identical in every language.
  *
  * NOT TRANSLATED: the commitments themselves — the constraint paragraph, where
  * advertising revenue goes, the compensation ceiling, the board-approval rule.
@@ -121,14 +122,14 @@ export async function MmmCharter() {
       <section aria-labelledby="charter-split" className="mmm-charter-split">
         <p className="mmm-eyebrow" id="charter-split">{t('mmmLegal.everyTicket', 'Every ticket. Every time.')}</p>
         <div aria-hidden="true" className="mmm-charter-split-bar">
-          <span data-share="artist" /><span data-share="venue" /><span data-share="promoter" />
+          <span data-share="artist" /><span data-share="venue" />
         </div>
         <div className="mmm-charter-shares">
-          <div><strong>70%</strong><span>{t('mmmLegal.shareArtist', 'Artist')}</span></div>
-          <div><strong>20%</strong><span>{t('mmmLegal.shareVenue', 'Venue')}</span></div>
-          <div><strong>10%</strong><span>{t('mmmLegal.sharePromoters', 'Promoters')}</span></div>
+          <div><strong>75%</strong><span>{t('mmmLegal.shareArtist', 'Artist')}</span></div>
+          <div><strong>25%</strong><span>{t('mmmLegal.shareVenue', 'Venue')}</span></div>
           <div><strong>0%</strong><span>iHYPE</span></div>
         </div>
+        <p className="mmm-charter-split-note">{t('mmmLegal.shareAfterFee', 'Of the face value after Stripe’s card fee. The buyer pays the ticket price plus tax.')}</p>
         {/* i18n-exempt: a charter undertaking, not a label. English governs —
             see LegalLanguageNotice. */}
         <p className="mmm-charter-callout">This is not a pricing strategy. It is a constraint. We built the business model around it, not the other way around.</p>

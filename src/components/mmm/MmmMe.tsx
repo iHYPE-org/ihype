@@ -117,7 +117,7 @@ function isMeSectionId(value: string | null): value is MeSectionId {
  *     primary surface is the HYPE link card. Artist and Venue still get one —
  *     `FRONTEND_GOTCHAS.md` §7 is explicit that only the *fan* creator went.
  *   - **There is no Promoter role or role colour.** Promoting needs no account
- *     type at all; promoter earnings are a fan stat, and the copy says so.
+ *     type at all; a HYPE link records referrals, and the copy says so.
  *
  * `advertiser` is not in the switcher: an Advertiser account has no `Profile`
  * row and no dashboard of this shape — it has `/advertise/dashboard`, which the
@@ -428,18 +428,18 @@ export function MmmMe({ data }: { data: MmmMeData }) {
             <p className="mmm-hype-link-meta">
               {data.hypeLink.tickets ? (data.hypeLink.tickets === 1 ? t('mmmMe.hypeLink.oneTicket', '1 ticket') : t('mmmMe.hypeLink.nTickets', '{n} tickets').replace('{n}', String(data.hypeLink.tickets))) : null}
               {data.hypeLink.tickets && data.hypeLink.earnedCents ? ' · ' : null}
-              {data.hypeLink.earnedCents ? t('mmmMe.hypeLink.earned', '${amount} earned').replace('{amount}', (data.hypeLink.earnedCents / 100).toFixed(0)) : null}
+              {data.hypeLink.earnedCents ? t('mmmMe.hypeLink.pastEarned', '${amount} earned under the old split').replace('{amount}', (data.hypeLink.earnedCents / 100).toFixed(0)) : null}
             </p>
           )}
 
           <details className="mmm-hype-link-more">
-            <summary>{t('mmmMe.hypeLink.howThisEarns', 'How this earns')}</summary>
+            <summary>{t('mmmMe.hypeLink.howThisWorks', 'How this works')}</summary>
             <div className="mmm-hype-link-body">
               {data.role === 'fan' && (
                 <p>{t('mmmMe.hypeLink.fanBody', 'Share it — friends see what you hype, and shows you can go to together.')}</p>
               )}
               <p>
-                {t('mmmMe.hypeLink.body', 'Share any show with this link. Every ticket it sells earns your proportional cut of the 10% promoter pool — never the artist’s 70%. Promoting needs no role and no signup.')}
+                {t('mmmMe.hypeLink.bodyTracks', 'Share any show with this link. Every ticket it helps sell is recorded as your referral; a HYPE link earns no share of the ticket. Sharing needs no role and no signup.')}
               </p>
             </div>
           </details>
@@ -568,7 +568,7 @@ export function MmmMe({ data }: { data: MmmMeData }) {
       </div>
 
       <p className="mmm-me-note">
-        {t('mmmMe.promotingNote', 'Promoting is not a profile. Every account can promote by sharing its HYPE Link, and earns from the 10% promoter pool when a ticket sells through it.')}
+        {t('mmmMe.promotingNoteTracks', 'Promoting is not a profile. Every account can share its HYPE Link, and every ticket sold through it is credited as its referral.')}
       </p>
       <AboutMeActivity data={data} />
       </section>

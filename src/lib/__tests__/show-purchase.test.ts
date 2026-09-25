@@ -6,27 +6,25 @@ import {
 } from '../ticketing';
 
 describe('show purchase: full order financials', () => {
-  it('calculates a $20 ticket with standard splits', () => {
+  it('calculates a $20 ticket under the 75/25 split', () => {
     const result = calculateTicketOrderFinancials({
       ticketPriceCents: 2000,
       quantity: 1,
-      venuePayoutPercent: 50,
-      artistPayoutPercent: 45,
-      promoterPayoutPercent: 5,
+      venuePayoutPercent: 25,
+      artistPayoutPercent: 75,
       buyerLocation: { country: 'US', postalCode: null, stateRegion: null },
       venueLocation: { country: 'US', postalCode: null, stateRegion: null }
     });
     expect(result.subtotalCents).toBe(2000);
-    expect(result.venuePayoutCents + result.artistPayoutCents + result.promoterPayoutCents).toBeLessThanOrEqual(result.subtotalCents);
+    expect(result.venuePayoutCents + result.artistPayoutCents + result.stripeFeeCents).toBe(result.subtotalCents);
   });
 
   it('calculates a multi-ticket order', () => {
     const result = calculateTicketOrderFinancials({
       ticketPriceCents: 1000,
       quantity: 3,
-      venuePayoutPercent: 50,
-      artistPayoutPercent: 45,
-      promoterPayoutPercent: 5,
+      venuePayoutPercent: 25,
+      artistPayoutPercent: 75,
       buyerLocation: { country: 'US', postalCode: null, stateRegion: null },
       venueLocation: { country: 'US', postalCode: null, stateRegion: null }
     });
@@ -35,7 +33,7 @@ describe('show purchase: full order financials', () => {
 
   it('rejects split that does not total 100%', () => {
     expect(() =>
-      validateTicketSplit({ venuePayoutPercent: 30, artistPayoutPercent: 30, promoterPayoutPercent: 5 })
+      validateTicketSplit({ venuePayoutPercent: 30, artistPayoutPercent: 30 })
     ).toThrow();
   });
 
@@ -44,9 +42,8 @@ describe('show purchase: full order financials', () => {
       calculateTicketOrderFinancials({
         ticketPriceCents: 0,
         quantity: 1,
-        venuePayoutPercent: 50,
-        artistPayoutPercent: 45,
-        promoterPayoutPercent: 5
+        venuePayoutPercent: 25,
+        artistPayoutPercent: 75
       })
     ).toThrow();
   });

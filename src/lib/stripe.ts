@@ -1,6 +1,6 @@
 import Stripe from 'stripe';
 import { readRuntimeEnv } from '@/lib/runtime-env';
-import { calculateDestinationChargeSplit, calculateDirectChargeApplicationFee } from '@/lib/ticketing';
+import { calculateDirectChargeApplicationFee } from '@/lib/ticketing';
 import { log } from '@/lib/logger';
 import { planAdSettlement, type AdSettlementPlan } from '@/lib/ad-settlement-plan';
 export { STRIPE_MINIMUM_CHARGE_CENTS } from '@/lib/ad-settlement-plan';
@@ -484,136 +484,6 @@ export async function createConnectOnboardingUrl({
 }
 
 /**
- * The ticket purchase — a DESTINATION CHARGE settled on behalf of the act when
- * one is settlement-ready, and a platform-settled charge when not.
- *
- * ## Why the act's share is routed by Stripe rather than paid out later
- *
- * On a destination charge Stripe moves the whole charge to the destination and
- * pulls `application_fee_amount` back to the platform. So the act's 70% never
- * passes through iHYPE's balance: it does not depend on a payout cron running,
- * on a later transfer succeeding, or on the platform being solvent in between.
- *
- * iHYPE remains the SETTLEMENT MERCHANT — `on_behalf_of` is deliberately not
- * set. The fan buys from iHYPE, sees iHYPE on their statement, and the act's
- * share is still routed atomically. Those are separate parameters; only the
- * second one is worth having. See `createStripeConnectAccount` for why the
- * first was tried and dropped.
- *
- * ## The warning that came with the old code, which still applies
- *
- * A destination charge supports exactly ONE connected account, and omitting
- * `transfer_data.amount` sends the ENTIRE charge to it — this codebase's
- * 2026-07-14 bug, which routed 100% of every sale to a single party. The fix is
- * not to route the whole charge but to claim the rest back as an application
- * fee, computed by `calculateDestinationChargeSplit` as `total - destination`:
- * that and `venue + promoter + tax + fee` are equal only while every component
- * is accounted for, and a subtraction cannot silently omit one. An addition
- * that forgot the tax would not fail — it would quietly overpay the act out of
- * money owed to a tax authority.
- *
- * ## What it does not do
- *
- * It does not move dispute liability, and nothing available in Stripe does
- * while the split is still routed: Stripe debits disputes from the PLATFORM
- * account on a destination charge "with or without on_behalf_of". iHYPE
- * carries chargebacks; recovery is a best-effort transfer reversal, and the
- * fund behind it starts empty. See docs/runbooks/money-path-rehearsal.md.
- *
- * ## The fallback is not an error path
- *
- * `destinationAccountId` is optional. With no settlement-ready account this
- * behaves exactly as it did before — platform-settled, split afterwards through
- * `AccountsPayableEntry` — which is why that machinery stays. A fan is never
- * blocked by the act's paperwork.
- */
-export async function createTicketCheckoutSession({
-  amountCents,
-  stripeCustomerId,
-  showId,
-  showSlug,
-  showTitle,
-  quantity,
-  ticketOrderConfirmationCode,
-  destinationAccountId,
-  destinationPayoutCents,
-}: {
-  amountCents: number;
-  stripeCustomerId: string;
-  showId: string;
-  showSlug: string;
-  showTitle: string;
-  quantity: number;
-  ticketOrderConfirmationCode: string;
-  /** The act's Connect account, when `isConnectPayoutReady` says so. */
-  destinationAccountId?: string | null;
-  /** What that account keeps, of FACE VALUE. Required with the account. */
-  destinationPayoutCents?: number;
-}): Promise<{ checkoutUrl: string; checkoutSessionId: string }> {
-  const stripe = getStripe();
-  const baseUrl = readRuntimeEnv('NEXT_PUBLIC_APP_URL') ?? 'http://localhost:3000';
-
-  /* Both or neither. An account with no amount would make Stripe transfer the
-     ENTIRE charge — the 2026-07-14 bug exactly — so this refuses rather than
-     defaulting, and refuses before the fan ever reaches a payment page. */
-  const routed = destinationAccountId
-    ? calculateDestinationChargeSplit({
-        totalChargeCents: amountCents,
-        destinationPayoutCents: destinationPayoutCents ?? -1,
-      })
-    : null;
-
-  const session = await stripe.checkout.sessions.create(
-    {
-      mode: 'payment',
-      customer: stripeCustomerId,
-      line_items: [{
-        quantity: 1,
-        price_data: {
-          currency: 'usd',
-          unit_amount: amountCents,
-          product_data: {
-            name: `${quantity} × ${showTitle}`,
-            metadata: { showId },
-          },
-        },
-      }],
-      payment_intent_data: {
-        /* `transfer_data` and `application_fee_amount`, and deliberately NOT
-           `on_behalf_of` — see the account-creation note above. The routing is
-           the part worth having; the settlement-merchant switch moved no risk,
-           put an unfamiliar legal name on the fan's statement, and made every
-           act complete heavier KYC. iHYPE stays the name on the purchase. */
-        ...(routed && destinationAccountId
-          ? {
-              transfer_data: { destination: destinationAccountId },
-              application_fee_amount: routed.applicationFeeCents,
-            }
-          : {}),
-        metadata: {
-          confirmationCode: ticketOrderConfirmationCode,
-          showId,
-          // Recorded on the intent so a reconciliation can tell a destination
-          // charge from a platform-settled one without re-deriving it.
-          settlementMode: routed ? 'destination' : 'platform',
-        },
-      },
-      metadata: {
-        purpose: 'ticket_purchase',
-        confirmationCode: ticketOrderConfirmationCode,
-        showId,
-      },
-      success_url: `${baseUrl}/shows/${showSlug}?checkout=success`,
-      cancel_url: `${baseUrl}/shows/${showSlug}?checkout=cancelled`,
-      expires_at: Math.floor(Date.now() / 1000) + 30 * 60,
-    },
-    { idempotencyKey: `ticket-checkout:${ticketOrderConfirmationCode}` },
-  );
-  if (!session.url) throw new Error('Stripe did not return a ticket checkout URL.');
-  return { checkoutUrl: session.url, checkoutSessionId: session.id };
-}
-
-/**
  * VENUE-DIRECT: the charge is created on the venue's own Stripe account, and
  * the venue is the merchant of record.
  *
@@ -629,31 +499,35 @@ export async function createTicketCheckoutSession({
  * a tax obligation it has nobody to file. A full ticketing platform takes the
  * merchant role and 11-17% with it, and cannot split three ways. A direct
  * charge is the only shape that moves the merchant role onto someone with a
- * bank account and an accountant while keeping the 70/20/10 enforced in code.
+ * bank account and an accountant while keeping the split enforced in code.
+ *
+ * Since 2026-09-25 it is the ONLY mode a new sale can take: the purchase route
+ * refuses a sale until the venue can be the merchant (owner: "No sales until
+ * onboarded"), and the destination-charge and platform-settled sessions are
+ * deleted. Orders taken under those modes still refund and pay out by their
+ * recorded `settlementMode`.
  *
  * ## The flow runs the opposite way to a destination charge
  *
  * `Stripe-Account` puts the charge on the venue. Stripe deducts its own fee AND
  * the application fee from that account; the venue keeps the remainder. So the
  * platform does not decide what the venue receives — it decides what it TAKES,
- * and `calculateDirectChargeApplicationFee` claims exactly the two onward
- * shares and nothing else. See that function for why it is a sum rather than
- * `total - venue`.
+ * and `calculateDirectChargeApplicationFee` claims exactly the artist's
+ * share and nothing else.
  *
  * ## What moves with the merchant role
  *
  * All of it, and this is the entire point:
  *   - DISPUTES. "Direct charges occur on a connected account, so negative
  *     transactions for direct charges affect the connected account's balance."
- *     iHYPE is not debited. There is no protection reserve on this mode, and
- *     `calculateTicketOrderFinancials({ platformBearsRisk: false })` is what
- *     stops one being charged — a fee with no cost behind it is the one thing
- *     the fee design refuses to do.
+ *     iHYPE is not debited, so the buyer pays no protection reserve.
  *   - TAX. The venue is the seller, so the venue remits. The application fee
  *     does not grow by a cent when tax is collected.
- *   - STRIPE'S REAL CUT, including the Amex gap `stripe-fees.ts` documents. An
- *     Amex order leaves the venue a few cents under 20%. Tell venues that
- *     rather than letting them find it in a reconciliation.
+ *   - STRIPE'S FEE. The split takes a standard-rate estimate of it off the
+ *     face value before dividing 75/25, so both parties bear it; Stripe's real
+ *     cut on an Amex or international card is higher, and that difference
+ *     stays on the venue's side. Tell venues rather than letting them find it
+ *     in a reconciliation.
  *
  * ## What does NOT move
  *
@@ -674,7 +548,6 @@ export async function createVenueDirectCheckoutSession({
   amountCents,
   venueAccountId,
   artistPayoutCents,
-  promoterPayoutCents,
   showId,
   showSlug,
   showTitle,
@@ -684,8 +557,8 @@ export async function createVenueDirectCheckoutSession({
   amountCents: number;
   /** The venue's Connect account. The charge is created ON this account. */
   venueAccountId: string;
+  /** The artist's 75% of the net face value, claimed as the application fee. */
   artistPayoutCents: number;
-  promoterPayoutCents: number;
   showId: string;
   showSlug: string;
   showTitle: string;
@@ -697,7 +570,6 @@ export async function createVenueDirectCheckoutSession({
 
   const { applicationFeeCents } = calculateDirectChargeApplicationFee({
     artistPayoutCents,
-    promoterPayoutCents,
     totalChargeCents: amountCents,
   });
 
@@ -898,8 +770,8 @@ export async function refundTicketPaymentIntent(
       ...(artistWasRouted ? { reverse_transfer: true, refund_application_fee: true } : {}),
       /* On a VENUE-DIRECT refund the refund is debited from the VENUE (they
        * are the merchant), so the platform returns its application fee — the
-       * artist's 70% and the promoter's 10% it was carrying — or the venue
-       * would be funding the fan's whole refund out of the 20% it kept.
+       * artist's 75% share it was carrying — or the venue would be funding
+       * the fan's whole refund out of the 25% it kept.
        * There is no transfer to reverse on a direct charge. */
       ...(venueIsMerchant ? { refund_application_fee: true } : {}),
     },

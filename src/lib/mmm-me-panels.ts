@@ -62,7 +62,7 @@ export const ME_PANEL_ROWS: Record<MePanelId, readonly MePanelRow[]> = {
        once, and this is the row someone opens Info to find when something has
        actually gone wrong. */
     { label: 'Support', detail: 'Get help, report a problem, or check a request you filed', href: '/app/me/support/tickets' },
-    { label: 'The charter', detail: '70% artist · 20% venue · 10% promoters · $0 iHYPE', href: '/app/me/info/charter' },
+    { label: 'The charter', detail: '75% artist · 25% venue after Stripe’s fee · $0 iHYPE', href: '/app/me/info/charter' },
     /* The roadmap board. `/api/feedback` and `CommunityVoteBoard` were both
        real and the board was mounted nowhere, so nothing in the product could
        reach it — the legacy `/community` route is a redirect into this panel's

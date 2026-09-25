@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
           </div>
           <div style={{ fontSize: 14, color: OG.ink3, letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{ width: 6, height: 6, borderRadius: '50%', background: OG.accent, display: 'flex' }} />
-            0% fees · 70/20/10 split
+            0% iHYPE fee · 75/25 artist and venue
           </div>
         </div>
       </div>

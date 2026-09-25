@@ -40,13 +40,16 @@
  *   DATABASE_URL=… STRIPE_SECRET_KEY=sk_test_… AUTH_SECRET=… CRON_SECRET=… \
  *     npm run rehearse:money
  *
+ * Required since 2026-09-25 (the venue is the merchant on every sale):
+ *   REHEARSAL_VENUE_ACCOUNT   a Connect account with card_payments ACTIVE.
+ *                             The show settles VENUE_DIRECT; without one the
+ *                             purchase route refuses the sale (409), so this
+ *                             script refuses to start.
+ *
  * Optional:
  *   REHEARSAL_BASE_URL        default http://localhost:3000
- *   REHEARSAL_VENUE_ACCOUNT   a Connect account with card_payments ACTIVE.
- *                             Present → the show settles VENUE_DIRECT.
- *   REHEARSAL_ARTIST_ACCOUNT  a Connect account with stripe_transfers ACTIVE.
- *                             Present without a venue → DESTINATION.
- *                             Neither → PLATFORM, the fallback.
+ *   REHEARSAL_ARTIST_ACCOUNT  a Connect account with stripe_transfers ACTIVE,
+ *                             so the artist's payable can be paid out.
  *   REHEARSAL_HEADFUL=1       watch the hosted checkout being filled in.
  */
 
@@ -61,6 +64,10 @@ const DATABASE_URL = process.env.DATABASE_URL ?? '';
 const STRIPE_KEY = process.env.STRIPE_SECRET_KEY ?? '';
 const CRON_SECRET = process.env.CRON_SECRET ?? '';
 const VENUE_ACCOUNT = process.env.REHEARSAL_VENUE_ACCOUNT ?? null;
+if (!VENUE_ACCOUNT) {
+  console.error('REHEARSAL_VENUE_ACCOUNT is required: a sale is made only on the venue\'s own Stripe account since 2026-09-25, and the route refuses one without it. Pass a test connected account with card_payments active.');
+  process.exit(2);
+}
 const ARTIST_ACCOUNT = process.env.REHEARSAL_ARTIST_ACCOUNT ?? null;
 
 /** Face value per ticket. Chosen so the 70/20/10 split does not divide evenly —
@@ -363,11 +370,6 @@ async function seedEverything(prisma: PrismaClient) {
 
   const stamp = Date.now().toString(36);
   const fan = await seedSessionCookie(`rehearsal-fan-${stamp}@example.com`);
-  /* The purchase route requires an adult attestation (`isEighteenOrOlder`)
-     before it will sell — the e2e fixture seeds a bare fan, so stamp it the
-     way Settings would. Deliberately NOT part of the fixture's defaults: specs
-     that assert the AGE_18_REQUIRED refusal need a fan without it. */
-  await prisma.user.update({ where: { id: fan.user.id }, data: { isEighteenOrOlder: true } });
   const promoter = await seedSessionCookie(`rehearsal-promoter-${stamp}@example.com`, {
     profiles: [{ type: 'ARTIST', name: 'Rehearsal Promoter' }],
   });
@@ -421,9 +423,9 @@ async function seedEverything(prisma: PrismaClient) {
          percents are NULLABLE with no default, so a show created without them
          looks complete and cannot sell a thing. */
       isTicketed: true,
-      venuePayoutPercent: 20,
-      artistPayoutPercent: 70,
-      promoterPayoutPercent: 10,
+      venuePayoutPercent: 25,
+      artistPayoutPercent: 75,
+      promoterPayoutPercent: 0,
     },
     select: { id: true, slug: true },
   });
@@ -599,9 +601,9 @@ async function main() {
         ticketPriceCents: TICKET_PRICE_CENTS,
         ticketCapacity: 50,
         isTicketed: true,
-        venuePayoutPercent: 20,
-        artistPayoutPercent: 70,
-        promoterPayoutPercent: 10,
+        venuePayoutPercent: 25,
+        artistPayoutPercent: 75,
+        promoterPayoutPercent: 0,
       },
       select: { id: true, slug: true },
     });

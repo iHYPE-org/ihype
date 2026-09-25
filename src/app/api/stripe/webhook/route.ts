@@ -406,7 +406,7 @@ export async function POST(request: NextRequest) {
         case 'account.updated': {
           /* `charges_enabled` is the wrong signal and this used to trust it.
              It asks whether the account can accept CARD PAYMENTS; iHYPE
-             captures every ticket to its own balance and pays the 70/20/10 out
+             captures every ticket to its own balance and pays the shares out
              as transfers, so a connected account never requests
              `card_payments` and reports `charges_enabled: false` no matter how
              completely it has onboarded. Writing that into
@@ -496,7 +496,7 @@ export async function POST(request: NextRequest) {
            * `DESTINATION` deliberately writes NO AccountsPayableEntry for the
            * act, because the transfer is supposed to be atomic with the charge.
            * So a skipped transfer leaves nobody owed anything in our database
-           * and the act's 70% sitting on the platform, with every row looking
+           * and the act's share sitting on the platform, with every row looking
            * correct. Nothing else would ever ask. */
           const charge = event.data.object;
           if (

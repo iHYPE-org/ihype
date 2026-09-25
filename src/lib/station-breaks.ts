@@ -13,7 +13,7 @@ import type { ShowAdClip } from '@/lib/show-composer';
  * holding real pre-authorised Stripe funds — with nowhere to run.
  *
  * **Ad revenue is the platform's only revenue.** The charter takes 0% of
- * ticket sales (70/20/10 to artist/venue/promoters), so this path is not a
+ * ticket sales (75/25 to artist/venue after Stripe's fee), so this path is not a
  * secondary line — it is the line. That is why breaks are measured in wall
  * time and air on every rotation, rather than being suppressed whenever the
  * catalogue is thin. An unmonetised station is not a safe default here.

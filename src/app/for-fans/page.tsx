@@ -5,7 +5,7 @@ import { getServerT } from '@/lib/i18n/server';
 
 export const metadata: Metadata = {
   title: 'For Fans · iHYPE',
-  description: 'Hype the artists you love, buy tickets at face value with zero platform fee, and earn a cut when you share.',
+  description: 'Hype the artists you love, buy tickets at face value with zero platform fee, and see every ticket your HYPE link helps sell.',
 };
 
 function buildConfig(t: Awaited<ReturnType<typeof getServerT>>): RecruitingKitConfig {
@@ -14,9 +14,9 @@ function buildConfig(t: Awaited<ReturnType<typeof getServerT>>): RecruitingKitCo
   tint: 'var(--role-fan)',
   glow: 'var(--role-fan)',
   eyebrow: t('forFansPage.eyebrow', 'For Fans'),
-  headline: <>{t('forFansPage.headlineLine1', 'Your taste.')}<br />{t('forFansPage.headlineLine2', 'Your voice.')}<br /><span style={{ color: 'var(--role-fan)' }}>{t('forFansPage.headlineLine3', 'Your cut.')}</span></>,
+  headline: <>{t('forFansPage.headlineLine1', 'Your taste.')}<br />{t('forFansPage.headlineLine2', 'Your voice.')}<br /><span style={{ color: 'var(--role-fan)' }}>{t('forFansPage.headlineLine3Scene', 'Your scene.')}</span></>,
   heroBody: (
-    <>{t('forFansPage.heroBodyLead', 'Hype the artists you love before anyone else catches on, buy tickets')} <strong>{t('forFansPage.heroBodyStrong', 'at face value with zero platform fee')}</strong>{t('forFansPage.heroBodyRest', ', and earn a real cut every time someone buys through your link.')}</>
+    <>{t('forFansPage.heroBodyLead', 'Hype the artists you love before anyone else catches on, buy tickets')} <strong>{t('forFansPage.heroBodyStrong', 'at face value with zero platform fee')}</strong>{t('forFansPage.heroBodyRestReferrals', ', and see every ticket your HYPE link helps sell.')}</>
   ),
   applyHeading: t('forFansPage.applyHeading', 'Join as a fan'),
   applySub: t('forFansPage.applySub', 'Free, always. Follow artists, hype shows, and get your first recommendations.'),
@@ -24,7 +24,7 @@ function buildConfig(t: Awaited<ReturnType<typeof getServerT>>): RecruitingKitCo
   applyFinePrint: t('forFansPage.applyFinePrint', 'No spam. iHYPE takes $0 — ever.'),
   stats: [
     { value: '$0', label: t('forFansPage.stat1Label', 'iHYPE fee, ever') },
-    { value: '10%', label: t('forFansPage.stat2Label', 'Max promoter share') },
+    { value: '75%', label: t('forFansPage.stat2ArtistShare', 'Of the price to the artist, after Stripe’s fee') },
     { value: 'Free', label: t('forFansPage.stat3Label', 'Radio, always') },
     { value: '1', label: t('forFansPage.stat4Label', 'Vote, one member') },
   ],
@@ -33,7 +33,7 @@ function buildConfig(t: Awaited<ReturnType<typeof getServerT>>): RecruitingKitCo
   checklist: [
     t('forFansPage.checklist1', 'Every hype is a real demand signal artists and venues see'),
     t('forFansPage.checklist2', 'Buy tickets direct — face value, no service fees'),
-    t('forFansPage.checklist3', 'Share a HYPE Link and earn from the 10% promoter pool'),
+    t('forFansPage.checklistHypeLinkTracks', 'Share a HYPE Link and every ticket it helps sell is credited to you'),
     t('forFansPage.checklistStation', 'A free station that plays the artists on here, no subscription'),
     t('forFansPage.checklist5', 'One member, one vote — spend never buys more influence'),
   ],
@@ -49,8 +49,8 @@ function buildConfig(t: Awaited<ReturnType<typeof getServerT>>): RecruitingKitCo
      member one vote. Keys renamed where the meaning changed. */
   features: [
     { title: t('forFansPage.feature1Title', 'HYPE mechanic'), body: t('forFansPage.featureHypeBodyWindow', 'Back an act and it counts as a real demand signal. One hype per act per day, so the loudest wallet never outvotes the room.') },
-    { title: t('forFansPage.feature2Title', 'Direct ticketing'), body: t('forFansPage.feature2Body', 'Face value, QR wallet, zero scalper markup — buy straight from the artist.') },
-    { title: t('forFansPage.feature3Title', 'Promoter earnings'), body: t('forFansPage.feature3Body', 'Share any show. Earn your proportional cut of the 10% promoter pool.') },
+    { title: t('forFansPage.feature2Title', 'Direct ticketing'), body: t('forFansPage.feature2BodyVenueSeller', 'Face value plus tax, QR wallet, zero scalper markup — sold by the venue, with 75% to the artist.') },
+    { title: t('forFansPage.featureReferralsTitle', 'HYPE Link referrals'), body: t('forFansPage.featureReferralsBody', 'Share any show. Every ticket your link helps sell is credited to you.') },
     { title: t('forFansPage.featureStationTitle', 'A station that never stops'), body: t('forFansPage.featureStationBody', 'Always-on audio drawn from the artists on here, free and with no paywall — ad breaks between songs, never cutting one short.') },
     { title: t('forFansPage.feature5Title', 'Seeds discovery'), body: t('forFansPage.feature5Body', 'A taste-matched swipe deck that surfaces artists before they blow up.') },
     { title: t('forFansPage.featureAskTitle', 'Ask a venue to book them'), body: t('forFansPage.featureAskBody', 'Name an act and a room near you. Enough asks and the venue sees it on their booking radar — and you get told if they book the show.') },

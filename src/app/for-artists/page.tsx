@@ -5,7 +5,7 @@ import { getServerT } from '@/lib/i18n/server';
 
 export const metadata: Metadata = {
   title: 'For Artists · iHYPE',
-  description: '70% of every ticket, your fans’ contact info, and tools to run your own shows.',
+  description: '75% of every ticket after Stripe’s card fee, your fans’ contact info, and tools to run your own shows.',
 };
 
 function buildConfig(t: Awaited<ReturnType<typeof getServerT>>): RecruitingKitConfig {
@@ -16,14 +16,14 @@ function buildConfig(t: Awaited<ReturnType<typeof getServerT>>): RecruitingKitCo
   eyebrow: t('forArtistsPage.eyebrow', 'For Artists'),
   headline: <>{t('forArtistsPage.headlineLine1', 'Your music.')}<br />{t('forArtistsPage.headlineLine2', 'Your gate.')}<br /><span style={{ color: 'var(--accent-text)' }}>{t('forArtistsPage.headlineLine3', 'Your fans.')}</span></>,
   heroBody: (
-    <>{t('forArtistsPage.heroBodyLead', 'iHYPE gives you')} <strong>{t('forArtistsPage.heroBodyStrong', '70% of every ticket')}</strong>{t('forArtistsPage.heroBodyRest', ', your fans’ contact info, and tools to run your own shows — no agent, no Ticketmaster, no platform that owns the relationship.')}</>
+    <>{t('forArtistsPage.heroBodyLead', 'iHYPE gives you')} <strong>{t('forArtistsPage.heroBodyStrongNet', '75% of every ticket after Stripe’s card fee')}</strong>{t('forArtistsPage.heroBodyRest', ', your fans’ contact info, and tools to run your own shows — no agent, no Ticketmaster, no platform that owns the relationship.')}</>
   ),
   applyHeading: t('forArtistsPage.applyHeading', 'Apply as an artist'),
   applySub: t('forArtistsPage.applySub', 'Set up your artist page and start selling tickets on your own terms.'),
   applyCta: t('forArtistsPage.applyCta', 'Get started as an artist →'),
   applyFinePrint: t('forArtistsPage.applyFinePrint', 'No spam. 0% platform fee, always.'),
   stats: [
-    { value: '70%', label: t('forArtistsPage.stat1Label', 'Your gate · locked') },
+    { value: '75%', label: t('forArtistsPage.stat1LabelNet', 'Your gate after Stripe’s fee · locked') },
     { value: '$0', label: t('forArtistsPage.stat2Label', 'Platform fee on tickets') },
     { value: '100%', label: t('forArtistsPage.stat3Label', 'Fan data ownership') },
     /* NOT "24h". `PAYOUT_HOLD_DAYS` is 10 and has been since 2026-08-27 —
@@ -43,7 +43,7 @@ function buildConfig(t: Awaited<ReturnType<typeof getServerT>>): RecruitingKitCo
   checklist: [
     t('forArtistsPage.checklist1', 'Set your price and split before publish'),
     t('forArtistsPage.checklist2', 'Once a ticket sells, the split is sealed'),
-    t('forArtistsPage.checklistPayoutHold', 'Your 70% transfers ten days after the show, straight to your own account'),
+    t('forArtistsPage.checklistPayoutHoldNet', 'Your 75% transfers ten days after the show, straight to your own account'),
     t('forArtistsPage.checklistCalendar', 'Tour dates and open nights on your profile'),
     t('forArtistsPage.checklist5', 'No agent or manager needed to list'),
   ],

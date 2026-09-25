@@ -59,6 +59,7 @@ const getShowPage = cache((slug: string) =>
         select: {
           id: true, slug: true, name: true, ownerId: true,
           addressLine1: true, city: true, stateRegion: true, postalCode: true, country: true,
+          stripeConnectOnboarded: true,
         },
       },
       headlinerProfile: { select: { id: true, slug: true, name: true, ownerId: true } },
@@ -350,6 +351,9 @@ export default async function ShowDetailPage({
   const viewerReminded = Boolean(viewerReminder);
 
   const recentTicketOrders = await recentTicketOrdersP;
+  /* Orders sold before 2026-09-25 carried a 10% referral share; later ones
+     carry none, so the column appears only when an order on the page has one. */
+  const showReferralColumn = recentTicketOrders.some((order) => order.promoterPayoutCents > 0);
 
   const userShowHype = await userShowHypeP;
 
@@ -513,7 +517,7 @@ export default async function ShowDetailPage({
               <HypeButton entityLabel="show" initialCount={show.hypeCount} lastHypedAt={userShowHype?.createdAt.toISOString() ?? null} targetId={show.id} targetType="show" />
             </div>
           ) : (
-            <p className="meta">{t('showsSlugPage.draftPreviewNotice', 'Draft previews stay private until the promoter broadcasts the show live.')}</p>
+            <p className="meta">{t('showsSlugPage.draftPreviewNoticeOrganiser', 'Draft previews stay private until the organiser publishes the show.')}</p>
           )}
 
           {/* THE SAME ARITHMETIC THE SHELL COPY AND THE PAYOUT ENTRIES USE.
@@ -527,20 +531,20 @@ export default async function ShowDetailPage({
               was the most-read wrong number in the product. */}
           {ticketSplits && faceSplit && (
             <div style={{ display: 'flex', gap: 0, borderRadius: 10, overflow: 'hidden', marginTop: 24 }}>
+              {/* Stripe's card fee first, because it comes off the top: the
+                  artist's and venue's cells are shares of what is left. */}
+              <div style={{ flex: Math.max(Math.round((faceSplit.fee / Math.max(show.ticketPriceCents, 1)) * 100), 1), padding: 16, textAlign: 'center', background: 'var(--bg-3)' }}>
+                <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--ink-2)' }}>{formatCurrencyFromCents(faceSplit.fee, locale)}</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '.14em', marginTop: 4, color: 'var(--ink-3)' }}>{t('showsSlugPage.cardFeeSplitLabel', 'Card fee')}</div>
+              </div>
               <div style={{ flex: Math.max(ticketSplits.artist, 1), padding: 16, textAlign: 'center', background: 'rgba(var(--accent-rgb),.15)' }}>
                 <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--accent-text)' }}>{formatCurrencyFromCents(faceSplit.artist, locale)}</div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '.14em', marginTop: 4, color: 'var(--accent-text)' }}>{t('showsSlugPage.artistSplitLabel', 'Artist')} · {show.artistPayoutPercent}%</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '.14em', marginTop: 4, color: 'var(--accent-text)' }}>{t('showsSlugPage.artistSplitLabel', 'Artist')} · {ticketSplits.artist}%</div>
               </div>
               <div style={{ flex: Math.max(ticketSplits.venue, 1), padding: 16, textAlign: 'center', background: 'rgba(var(--role-venue-rgb),.15)' }}>
                 <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--role-venue)' }}>{formatCurrencyFromCents(faceSplit.venue, locale)}</div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '.14em', marginTop: 4, color: 'var(--role-venue)' }}>{t('showsSlugPage.venueSplitLabel', 'Venue')} · {show.venuePayoutPercent}%</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '.14em', marginTop: 4, color: 'var(--role-venue)' }}>{t('showsSlugPage.venueSplitLabel', 'Venue')} · {ticketSplits.venue}%</div>
               </div>
-              {ticketSplits.promoter > 0 && (
-                <div style={{ flex: Math.max(ticketSplits.promoter, 1), padding: 16, textAlign: 'center', background: 'rgba(var(--accent-2-rgb),.15)' }}>
-                  <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--accent-2)' }}>{formatCurrencyFromCents(faceSplit.promoter, locale)}</div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '.14em', marginTop: 4, color: 'var(--accent-2)' }}>{t('showsSlugPage.promotersSplitLabel', 'Promoters')} · {show.promoterPayoutPercent}%</div>
-                </div>
-              )}
             </div>
           )}
         </div>
@@ -634,8 +638,6 @@ export default async function ShowDetailPage({
               <div>
                 <p className="showpage-eyebrow">{t('showsSlugPage.headlinerLabel', 'Headliner')}</p>
                 <p style={{ fontSize: '1.375rem', fontFamily: 'var(--font-display)', fontWeight: 800, letterSpacing: '-.02em', marginBottom: 16 }}>{show.headlinerProfile?.name ?? t('showsSlugPage.tba', 'TBA')}</p>
-                <p className="showpage-eyebrow">{t('showsSlugPage.promoterLabel', 'Promoter')}</p>
-                <p style={{ fontSize: '0.9375rem' }}>{show.promoterProfile?.name ?? t('showsSlugPage.promoterPoolUnassigned', 'Promoter pool unassigned')}</p>
               </div>
             }
           >
@@ -662,7 +664,6 @@ export default async function ShowDetailPage({
                   <tr><th>{t('showsSlugPage.statusLabel', 'Status')}</th><td>{show.status}</td></tr>
                   <tr><th>{t('showsSlugPage.venueTableLabel', 'Venue')}</th><td>{show.venueProfile?.name ?? t('showsSlugPage.tba', 'TBA')}</td></tr>
                   <tr><th>{t('showsSlugPage.headlinerTableLabel', 'Headliner')}</th><td>{show.headlinerProfile?.name ?? t('showsSlugPage.tba', 'TBA')}</td></tr>
-                  <tr><th>{t('showsSlugPage.promoterTableLabel', 'Promoter')}</th><td>{show.promoterProfile?.name ?? t('showsSlugPage.promoterPoolUnassigned', 'Promoter pool unassigned')}</td></tr>
                   <tr><th>{t('showsSlugPage.ticketingLabel', 'Ticketing')}</th><td>{show.isTicketed ? t('showsSlugPage.enabled', 'Enabled') : t('showsSlugPage.notEnabled', 'Not enabled')}</td></tr>
                   {show.isTicketed ? (
                     <>
@@ -670,9 +671,8 @@ export default async function ShowDetailPage({
                       <tr><th>{t('showsSlugPage.ticketsSoldLabel', 'Tickets sold')}</th><td>{show.ticketsSoldCount}</td></tr>
                       <tr><th>{t('showsSlugPage.capacityTableLabel', 'Capacity')}</th><td>{show.ticketCapacity ?? t('showsSlugPage.openCapacity', 'Open')}</td></tr>
                       <tr><th>{t('showsSlugPage.grossSalesLabel', 'Gross sales')}</th><td>{formatCurrencyFromCents(show.ticketPriceCents * show.ticketsSoldCount, locale)}</td></tr>
-                      <tr><th>{t('showsSlugPage.artistSplitLabel2', 'Artist split')}</th><td>{show.artistPayoutPercent ?? 0}%</td></tr>
-                      <tr><th>{t('showsSlugPage.venueSplitLabel2', 'Venue split')}</th><td>{show.venuePayoutPercent ?? 0}%</td></tr>
-                      <tr><th>{t('showsSlugPage.promoterPoolLabel', 'Promoter pool')}</th><td>{show.promoterPayoutPercent}%</td></tr>
+                      <tr><th>{t('showsSlugPage.artistSplitLabelNet', 'Artist split (after card fee)')}</th><td>{ticketSplits?.artist ?? 0}%</td></tr>
+                      <tr><th>{t('showsSlugPage.venueSplitLabelNet', 'Venue split (after card fee)')}</th><td>{ticketSplits?.venue ?? 0}%</td></tr>
                       <tr><th>{t('showsSlugPage.eventOpensLabel', 'Event officially opens')}</th><td>{show.ticketingOpensAt ? formatShowTime(show.ticketingOpensAt, locale, show.timeZone) : t('showsSlugPage.venueControlled', 'Venue-controlled')}</td></tr>
                     </>
                   ) : null}
@@ -820,7 +820,7 @@ export default async function ShowDetailPage({
                   <table className="table">
                     <thead>
                       <tr>
-                        <th>{t('showsSlugPage.orderStatusCol', 'Status')}</th><th>{t('showsSlugPage.orderTaxCol', 'Tax')}</th><th>{t('showsSlugPage.orderQtyCol', 'Qty')}</th><th>{t('showsSlugPage.orderTotalCol', 'Total')}</th><th>{t('showsSlugPage.orderVenueCol', 'Venue')}</th><th>{t('showsSlugPage.orderArtistCol', 'Artist')}</th><th>{t('showsSlugPage.orderPromoterCol', 'Promoter')}</th>
+                        <th>{t('showsSlugPage.orderStatusCol', 'Status')}</th><th>{t('showsSlugPage.orderTaxCol', 'Tax')}</th><th>{t('showsSlugPage.orderQtyCol', 'Qty')}</th><th>{t('showsSlugPage.orderTotalCol', 'Total')}</th><th>{t('showsSlugPage.orderVenueCol', 'Venue')}</th><th>{t('showsSlugPage.orderArtistCol', 'Artist')}</th>{showReferralColumn ? <th>{t('showsSlugPage.orderReferralCol', 'Referral share (before 2026-09-25)')}</th> : null}
                         <th title={t('showsSlugPage.passedColTitle', 'Total reassignments across all tickets in this order')}>{t('showsSlugPage.passedCol', 'Passed')}</th>
                       </tr>
                     </thead>
@@ -835,7 +835,7 @@ export default async function ShowDetailPage({
                             <td>{formatCurrencyFromCents(order.totalChargeCents || order.subtotalCents, locale)}</td>
                             <td>{formatCurrencyFromCents(order.venuePayoutCents, locale)}</td>
                             <td>{formatCurrencyFromCents(order.artistPayoutCents, locale)}</td>
-                            <td>{formatCurrencyFromCents(order.promoterPayoutCents, locale)}</td>
+                            {showReferralColumn ? <td>{formatCurrencyFromCents(order.promoterPayoutCents, locale)}</td> : null}
                             <td style={totalPassed > 0 ? { color: 'var(--accent-text)', fontWeight: 600 } : { color: 'var(--muted)' }}>
                               {totalPassed > 0 ? `${totalPassed}×` : '—'}
                             </td>
@@ -970,15 +970,13 @@ export default async function ShowDetailPage({
                     {t('showsSlugPage.paidTicketsComingSoon', 'Paid tickets · Coming soon')}
                   </div>
                   <p style={{ fontSize: '0.9375rem', lineHeight: 1.6, color: 'var(--ink-a80)', margin: 0 }}>
-                    {t('showsSlugPage.ticketSalesNotOpenNotice', "Ticket sales haven't opened on iHYPE yet. RSVP free above to hold your spot — we'll remind you before the show, and face-value pricing with the locked 70/20/10 split kicks in the moment sales open.")}
+                    {t('showsSlugPage.ticketSalesNotOpenNoticeNet', "Ticket sales haven't opened on iHYPE yet. RSVP free above to hold your spot — we'll remind you before the show. When sales open you pay the face value and its tax, nothing more.")}
                   </p>
                 </div>
               ) : (
               <TicketSaleCard
-                affiliatePromoterName={affiliatePromoter?.name ?? null}
                 affiliatePromoterProfileId={affiliatePromoter?.id ?? null}
                 artistName={show.headlinerProfile.name}
-                artistPayoutPercent={show.artistPayoutPercent}
                 showSlug={slug}
                 currentFan={
                   currentFan?.role === 'FAN'
@@ -991,12 +989,11 @@ export default async function ShowDetailPage({
                       }
                     : null
                 }
-                promoterName={show.promoterProfile?.name ?? null}
-                promoterPayoutPercent={show.promoterPayoutPercent}
                 showId={show.id}
                 ticketCapacity={show.ticketCapacity}
                 ticketPriceCents={show.ticketPriceCents}
                 ticketingOpen={isTicketingOpen(show)}
+                venuePaymentReady={Boolean(show.venueProfile.stripeConnectOnboarded)}
                 ticketingOpensAtLabel={show.ticketingOpensAt ? formatShowTime(show.ticketingOpensAt, locale, show.timeZone) : null}
                 ticketsSoldCount={show.ticketsSoldCount}
                 title={show.title}
@@ -1006,7 +1003,6 @@ export default async function ShowDetailPage({
                   stateRegion: show.venueProfile.stateRegion,
                   country: show.venueProfile.country
                 }}
-                venuePayoutPercent={show.venuePayoutPercent}
                 viewerLocation={{
                   city: viewerLocation?.city,
                   stateRegion: viewerLocation?.stateRegion,

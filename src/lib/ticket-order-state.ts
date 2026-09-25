@@ -117,8 +117,9 @@ export function buildPayableEntries(
    *
    *   VENUE_DIRECT  the charge was on the venue's own account. Their share and
    *                 the tax never left it — they are the merchant and they
-   *                 remit. iHYPE holds only the artist's and promoter's shares
-   *                 as an application fee, so only those two get payables.
+   *                 remit. iHYPE holds only the artist's share (and, on orders
+   *                 sold before 2026-09-25, the promoter's) as an application
+   *                 fee, so only those get payables.
    *   DESTINATION   Stripe routed the ARTIST's share with the charge; the rest
    *                 came back to iHYPE as the application fee.
    *   PLATFORM      everything captured to iHYPE; every share is a payable.

@@ -6,6 +6,7 @@ import { FollowButton } from '@/components/FollowButton';
 import { PageEditor } from '@/components/PageEditor';
 import { PageRoleModules } from '@/components/PageRoleModules';
 import { PullToRefresh } from '@/components/PullToRefresh';
+import { MoneyTermsDisclosure } from '@/components/MoneyTermsDisclosure';
 import { useI18n } from '@/components/I18nProvider';
 import { useRegisterStations } from '@/components/mmm/MmmStations';
 import { createCardDesc, createCardName, netFilterLabel, pagesTabLabel, profileTypeLabel } from '@/lib/i18n-enum-labels';
@@ -60,7 +61,7 @@ const NET_FILTERS = [
 const CREATE_CARDS: { type: string; color: string; bg: string; name: string; desc: string; icon: React.ReactNode }[] = [
   {
     type: 'ARTIST', color: 'var(--accent-text)', bg: 'rgba(var(--accent-rgb),.12)', name: 'Artist Page',
-    desc: 'Upload tracks, list shows, sell tickets. Keep 70%.',
+    desc: 'Upload tracks, list shows, sell tickets. Keep 75% after Stripe’s fee.',
     icon: (
       <svg fill="none" height="20" stroke="var(--accent)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="20">
         <path d="M9 18V5l12-2v13" />
@@ -71,7 +72,7 @@ const CREATE_CARDS: { type: string; color: string; bg: string; name: string; des
   },
   {
     type: 'VENUE', color: 'var(--role-venue)', bg: 'rgba(var(--role-venue-rgb),.1)', name: 'Venue Page',
-    desc: 'Book from the demand radar. Keep 20% of every room.',
+    desc: 'Book from the demand radar. Sell the tickets and keep 25% after Stripe’s fee.',
     icon: (
       <svg fill="none" height="20" stroke="var(--role-venue)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="20">
         <path d="M3 21h18" />
@@ -710,6 +711,9 @@ export function PagesHome({
                   <div key={card.type} style={{
                     border: `1px solid ${hexA(card.color, 0.35)}`, borderRadius: 14, padding: 20,
                     background: hexA(card.color, 0.06), display: 'flex', flexDirection: 'column', gap: 12,
+                    /* An artist or venue page reads the money terms before it
+                       exists, so the card takes the whole row to hold them. */
+                    ...(card.type === 'ARTIST' || card.type === 'VENUE' ? { gridColumn: '1 / -1' } : {}),
                   }}>
                     <div style={{ width: 40, height: 40, borderRadius: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', background: card.bg }}>
                       {card.icon}
@@ -739,6 +743,7 @@ export function PagesHome({
                         <span>{t('pagesHome.uploadPolicyAttestation', 'I confirm I am authorized to upload or use the music/media I add to iHYPE.')}</span>
                       </label>
                     )}
+                    {(card.type === 'ARTIST' || card.type === 'VENUE') && <MoneyTermsDisclosure role={card.type} />}
                     {createError && <div style={{ fontSize: '0.9375rem', color: 'var(--accent-text)' }}>{createError}</div>}
                     <div style={{ display: 'flex', gap: 8 }}>
                       <button

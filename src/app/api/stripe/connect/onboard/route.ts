@@ -4,6 +4,8 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { log } from '@/lib/logger';
 import { getProfilePathForType } from '@/lib/profile-paths';
+import { recordAuditEvent } from '@/lib/audit';
+import { MONEY_TERMS_VERSION, isMoneyTermsRole } from '@/lib/money-terms';
 import {
   createConnectOnboardingUrl,
   createStripeConnectAccount,
@@ -19,7 +21,9 @@ const schema = z.object({
      is not a security boundary here: the findUnique below misses unknown ids
      and the ownership check is what actually gates the action. Validate that
      it is a sane opaque id, no more. */
-  profileId: z.string().min(1).max(64).regex(/^[A-Za-z0-9_-]+$/)
+  profileId: z.string().min(1).max(64).regex(/^[A-Za-z0-9_-]+$/),
+  /** The MONEY_TERMS_VERSION the member acknowledged beside this control. */
+  acceptedMoneyTermsVersion: z.string().max(32).optional(),
 });
 
 /**
@@ -71,10 +75,41 @@ export async function POST(request: Request) {
   }
 
   /* Any owned profile may connect payouts (owner, 2026-08-24: "payout method
-     (for promotion of shows using your HYPE link)"). The 10% promoter share
-     lands on `affiliatePromoterProfileId` — a plain fan's LISTENER profile —
-     and the old ARTIST/VENUE gate meant a fan whose link sold tickets had
-     earnings with no account to pay them into. */
+     (for promotion of shows using your HYPE link)"). Until 2026-09-25 the 10%
+     promoter share landed on `affiliatePromoterProfileId` — a plain fan's
+     LISTENER profile — and the old ARTIST/VENUE gate meant a fan whose link
+     sold tickets had earnings with no account to pay them into. The promoter
+     share is gone now (a HYPE link only records the referral), but payables
+     from orders sold under the old split can still be pending on a fan's
+     profile, so the gate stays open. */
+
+  /* NO ARTIST OR VENUE CONNECTS PAYOUTS WITHOUT HAVING READ THE MONEY TERMS
+     (owner, 2026-09-25: "no one should be blindsided"). Connecting Stripe is
+     the moment an account becomes able to sell or be paid, so it is the one
+     place the acknowledgement can be enforced rather than merely shown: every
+     control that calls this route renders `MoneyTermsDisclosure` with its
+     checkbox and sends the version it showed. A stale version is refused the
+     same way, so changing the terms asks everyone again. A fan profile holding
+     a payable from the old split is not asked — it sells nothing. */
+  if (isMoneyTermsRole(profile.type) && body.acceptedMoneyTermsVersion !== MONEY_TERMS_VERSION) {
+    return NextResponse.json(
+      {
+        error: 'Read and accept the money terms before setting up payouts.',
+        code: 'MONEY_TERMS_REQUIRED',
+        version: MONEY_TERMS_VERSION,
+      },
+      { status: 400 },
+    );
+  }
+  if (isMoneyTermsRole(profile.type)) {
+    await recordAuditEvent({
+      actorUserId: session.user.id,
+      action: 'money_terms_accepted',
+      entityType: 'Profile',
+      entityId: profile.id,
+      metadata: { version: MONEY_TERMS_VERSION, profileType: profile.type },
+    }).catch(() => undefined);
+  }
 
   let connectAccountId = profile.stripeConnectAccountId;
 

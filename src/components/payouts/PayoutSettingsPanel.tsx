@@ -22,7 +22,7 @@ export async function PayoutSettingsPanel({ profiles, stripeReady }: { profiles:
   const t = await getServerT();
   return (
     <div className="pset-panel">
-      <p className="pset-sub">{t('payoutSettingsPanel.autoPayoutNote', 'Your share is paid out automatically after each show, split 70% artist / 20% venue / 10% promoters per the charter.')}</p>
+      <p className="pset-sub">{t('payoutSettingsPanel.autoPayoutNoteNet', 'Your share is paid out automatically after each show. Stripe’s card fee comes off the face value first; the rest splits 75% artist / 25% venue per the charter.')}</p>
 
       {!stripeReady && (
         <div className="pset-warn">{t('payoutSettingsPanel.paymentsNotConfigured', 'Payments are not configured on this server right now — connecting accounts is temporarily unavailable.')}</div>
@@ -64,6 +64,7 @@ export async function PayoutSettingsPanel({ profiles, stripeReady }: { profiles:
                 {stripeReady && (
                   <PayoutConnectButton
                     profileId={p.id}
+                    profileType={p.type}
                     state={p.stripeConnectOnboarded ? 'reconnect' : p.stripeConnectAccountId ? 'finish-setup' : 'connect'}
                   />
                 )}
@@ -85,10 +86,7 @@ export async function PayoutSettingsPanel({ profiles, stripeReady }: { profiles:
                   read what it agreed to. */}
               {p.type === 'VENUE' && (
                 <p className="pset-merchant-note">
-                  {t(
-                    'payoutSettingsPanel.venueMerchantNote',
-                    'Connecting makes your venue the seller of record for your own shows. Ticket money is charged to your Stripe account first, so you receive it directly — and refunds, card disputes and sales tax are yours to handle, the same as tickets you sell at the door. If a buyer disputes a charge, Stripe takes the ticket price and its own $15 dispute fee from your account, not from iHYPE. iHYPE takes 0% and passes on no fee for this; we transfer the artist’s 70% and any promoter’s 10% out of your ticket revenue automatically.',
-                  )}
+                  {t('payoutSettingsPanel.venueMerchantNoteNet', 'Connecting makes your venue the seller of record for every ticket to your shows, and tickets cannot go on sale until it is done. Ticket money is charged to your Stripe account first, so you receive it directly — and refunds, card disputes and sales tax are yours to handle, the same as tickets you sell at the door. If a buyer disputes a charge, Stripe takes the ticket price and its own $15 dispute fee from your account, not from iHYPE. iHYPE takes 0%. Stripe’s card fee comes off the face value first; the artist’s 75% of what is left is carried out of your ticket revenue automatically, and your 25% stays with you.')}
                 </p>
               )}
             </div>
@@ -116,7 +114,7 @@ export async function PayoutSettingsPanel({ profiles, stripeReady }: { profiles:
         .pset-pill { flex-shrink: 0; font-family: var(--font-mono); font-size: 0.9375rem; text-transform: uppercase; letter-spacing: .1em; padding: 5px 10px; border-radius: var(--radius-pill); }
         .pset-pill-on { background: rgba(var(--role-venue-rgb),.15); color: var(--role-venue); }
         .pset-pill-off { background: var(--ink-a10, rgba(120,120,120,.15)); color: var(--ink-a65); }
-        .pset-account-row { display: flex; align-items: center; gap: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+        .pset-account-row { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
         .pset-account-icon { width: 40px; height: 40px; border-radius: 10px; background: rgba(var(--role-venue-rgb),.12); color: var(--role-venue); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .pset-account-info { flex: 1; min-width: 0; }
         .pset-account-label { font-size: 0.9375rem; font-weight: 500; color: var(--ink); }

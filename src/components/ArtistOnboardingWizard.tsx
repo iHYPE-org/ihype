@@ -6,11 +6,13 @@ import { useI18n } from '@/components/I18nProvider';
 import { useMarkOnboarded } from '@/lib/use-mark-onboarded';
 import { useRouter } from 'next/navigation';
 import { openExternalUrl } from '@/lib/open-external';
+import { MoneyTermsDisclosure } from '@/components/MoneyTermsDisclosure';
+import { MONEY_TERMS_VERSION } from '@/lib/money-terms';
 
 // Step 2 is verification. Artists previously had no such step at all, while
 // the DJ and venue wizards both did — an artist claimed a stage name and the
 // account was live against it, which for a platform whose whole proposition
-// is paying the right person 70% is the wrong asymmetry.
+// is paying the right person their share is the wrong asymmetry.
 type Step = 0 | 1 | 2 | 3 | 4;
 
 const PROGRESS: Record<Step, number> = { 0: 20, 1: 40, 2: 60, 3: 80, 4: 100 };
@@ -48,6 +50,7 @@ export function ArtistOnboardingWizard({
 
   const [payoutBusy, setPayoutBusy] = useState(false);
   const [payoutError, setPayoutError] = useState<string | null>(null);
+  const [moneyTermsAck, setMoneyTermsAck] = useState(false);
 
   // Step 4 is the done screen, reached either by connecting payouts or by the
   // explicit Skip. Both count: skipping an optional step is still finishing.
@@ -128,7 +131,7 @@ export function ArtistOnboardingWizard({
       const res = await fetch('/api/stripe/connect/onboard', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ profileId }),
+        body: JSON.stringify({ profileId, acceptedMoneyTermsVersion: MONEY_TERMS_VERSION }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -215,7 +218,7 @@ export function ArtistOnboardingWizard({
             <div className="aow-reminder-card">
               <div className="aow-reminder-label">{t('artistOnboardingWizard.reminderLabel', 'Reminder')}</div>
               <div className="aow-reminder-text">
-                {t('artistOnboardingWizard.reminderText', 'Every ticket splits 70% to you, 20% venue, 10% promoters. iHYPE takes $0 — locked in our charter.')}
+                {t('artistOnboardingWizard.reminderTextNet', 'Stripe’s card fee comes off each ticket first; the rest splits 75% to you and 25% to the venue. iHYPE takes $0 — locked in our charter.')}
               </div>
             </div>
 
@@ -233,7 +236,7 @@ export function ArtistOnboardingWizard({
             <div className="aow-eyebrow">{t('artistOnboardingWizard.step3Eyebrow', 'Step 3 of 4')}</div>
             <h1 className="aow-title">{t('artistOnboardingWizard.verifyTitle', 'Verify your identity.')}</h1>
             <p className="aow-sub">
-              {t('artistOnboardingWizard.verifySub', 'Artist accounts are verified before payouts are released — 70% of a ticket has to reach the person who actually played. Reviewed within 48 hours.')}
+              {t('artistOnboardingWizard.verifySubNet', 'Artist accounts are verified before payouts are released — 75% of a ticket has to reach the person who actually played. Reviewed within 48 hours.')}
             </p>
 
             <div className="aow-reminder-card" style={{ marginBottom: 18 }}>
@@ -301,14 +304,18 @@ export function ArtistOnboardingWizard({
             <div className="aow-eyebrow">{t('artistOnboardingWizard.step4Eyebrow', 'Step 4 of 4')}</div>
             <h1 className="aow-title">{t('artistOnboardingWizard.step3Title', 'Connect payouts.')}</h1>
             <p className="aow-sub">
-              {t('artistOnboardingWizard.step3Sub', 'Your 70% share pays out automatically after each show, via Stripe Connect.')}
+              {t('artistOnboardingWizard.step3SubNet', 'Your 75% share pays out automatically after each show, via Stripe Connect.')}
             </p>
+
+            {/* Every fee and money duty, read and acknowledged before Stripe
+                (row 521); the route refuses setup without the acknowledgement. */}
+            <MoneyTermsDisclosure acknowledged={moneyTermsAck} onAcknowledgeChange={setMoneyTermsAck} role="ARTIST" />
 
             {payoutError && <div className="aow-error">{payoutError}</div>}
 
             <button
               className="aow-btn aow-btn-solid"
-              disabled={payoutBusy}
+              disabled={payoutBusy || !moneyTermsAck}
               onClick={connectStripe}
               type="button"
             >

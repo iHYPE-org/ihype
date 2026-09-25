@@ -11,8 +11,8 @@ import { useI18n } from '@/components/I18nProvider';
 const DEMO_QR = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="white"/><g fill="#07101f"><path d="M8 8h36v36H8zm8 8v20h20V16zM76 8h36v36H76zm8 8v20h20V16zM8 76h36v36H8zm8 8v20h20V84zM54 8h12v12H54zm0 22h12v24H54zm22 24h12v12H76zm22 0h14v14H98zM54 76h12v36H54zm22 0h12v12H76zm12 12h24v24H88zM76 100h12v12H76z"/></g></svg>')}`;
 
 const DEMO_TICKETS: MmmMeTicket[] = [
-  { serializedId: 'DEMO-7F3A-2026', title: 'Harbor Lights', where: 'Signal Hall · Portland', startsAt: '2026-10-09T19:30:00-04:00', timeZone: 'America/New_York', faceValue: '$18', processingFee: '$0.82', scannedAt: null, qrDataUrl: DEMO_QR },
-  { serializedId: 'DEMO-2C91-2026', title: 'Static Bloom', where: 'The Foundry · Biddeford', startsAt: '2026-06-14T20:00:00-04:00', timeZone: 'America/New_York', faceValue: '$14', processingFee: '$0.70', scannedAt: '2026-06-14T19:42:00-04:00', qrDataUrl: DEMO_QR },
+  { serializedId: 'DEMO-7F3A-2026', title: 'Harbor Lights', where: 'Signal Hall · Portland', startsAt: '2026-10-09T19:30:00-04:00', timeZone: 'America/New_York', faceValue: '$18', processingFee: null, scannedAt: null, qrDataUrl: DEMO_QR },
+  { serializedId: 'DEMO-2C91-2026', title: 'Static Bloom', where: 'The Foundry · Biddeford', startsAt: '2026-06-14T20:00:00-04:00', timeZone: 'America/New_York', faceValue: '$14', processingFee: null, scannedAt: '2026-06-14T19:42:00-04:00', qrDataUrl: DEMO_QR },
 ];
 
 /**
@@ -211,13 +211,14 @@ function TicketSheet({ demo, onClose, ticket }: { demo?: boolean; onClose: () =>
             <span>{t('mmmTickets.faceValue', 'Face value')}</span>
             <strong>{ticket.faceValue ?? '—'}</strong>
           </div>
-          {/* Stripe's cost of moving the money, paid by the buyer. iHYPE is a
-              nonprofit and absorbs no fee, so it is named and shown rather than
-              folded into the price. Absent on orders placed before the fee
-              existed — a $0.00 there would read as a fee that was waived. */}
+          {/* A card-processing line exists only on orders placed while the
+              buyer paid Stripe's fee on top (before 2026-09-25). Since then the
+              fee comes off the face value before the artist/venue split and
+              the buyer pays the price plus tax, so a new order has no such
+              line — a $0.00 there would read as a fee that was waived. */}
           {ticket.processingFee && (
             <div className="mmm-ticket-money-row">
-              <span>{t('mmmTickets.processing', 'Stripe processing, paid by the buyer')}</span>
+              <span>{t('mmmTickets.processingPastOrder', 'Card processing on this order')}</span>
               <strong>{ticket.processingFee}</strong>
             </div>
           )}

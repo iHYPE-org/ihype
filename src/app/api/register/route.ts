@@ -84,7 +84,6 @@ const schema = z.object({
   // cannot be used to mint a privileged account.
   role: z.literal('FAN').catch('FAN').default('FAN'),
   isThirteenOrOlder: z.boolean().optional().default(false),
-  isEighteenOrOlder: z.boolean().optional().default(false),
   acceptedArtistUploadPolicy: z.boolean().optional().default(false),
   contactInfo: z.string().trim().max(200).optional(),
   hometown: z.string().trim().max(160).optional(),
@@ -347,7 +346,6 @@ export async function POST(request: Request) {
           phone: normalizedPhone ?? undefined,
           username: normalizedUsername,
           isThirteenOrOlder: body.isThirteenOrOlder,
-          isEighteenOrOlder: body.isEighteenOrOlder,
           // The Terms are what the account is created under, so the moment of
           // creation IS the moment of acceptance — the submit button now says
           // so explicitly (AuthRegister's trust row used to be three bare

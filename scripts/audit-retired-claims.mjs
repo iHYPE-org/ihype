@@ -144,7 +144,35 @@ const RETIRED = [
     pattern: /promoter (?:account|role|signup|sign-up|profile type)|\bpromoter (?:profiles?|pages?)\b|\b(?:be|become) an? promoter\b|promoters? and DJs|DJs and promoters/i,
     what: 'promoter as an account type',
     retired: 'never a ProfileType; restated by the owner 2026-09-11',
-    instead: 'Anyone promotes with a HYPE Link. The 10% promoter POOL is charter and stays — only the ROLE is the error.',
+    instead: 'Anyone promotes with a HYPE Link, which records who referred a sale. There is no promoter role, and since 2026-09-25 no promoter share either.',
+  },
+  {
+    /* THE SPLIT CHANGED (owner, 2026-09-25). Stripe's card fee now comes off
+       the face value first, and what is left splits 75% to the artist and
+       25% to the venue, 0% to iHYPE. The 10% promoter pool is GONE — a HYPE
+       link still records who referred a sale, and earns nothing — and the
+       buyer pays the ticket price plus tax and nothing else, so the separate
+       "Stripe processing, paid by the buyer" line and the "refund & dispute
+       protection" reserve are gone too. The venue is the seller of record on
+       every sale. The old split was stated on ~40 member-facing surfaces;
+       this entry is what keeps the next one from coming back. `\d+%` carries
+       no trailing `\b` for the reason the payout-timing entry records. A bare
+       `70%` is NOT matched: it is a CSS width in half the files this scans. */
+    pattern: /\b70\s?\/\s?20\s?\/\s?10\b|\b70\s?%\s(?:to\b|of\b|artist|share|goes|keeps|payout)|\bartists?'?s?\s?(?:·|:|share|payout|gets|keeps)?\s?70\s?%|\b20\s?%\s(?:(?:to )?(?:the |your )?venue|of every|you\b)|\b10\s?%\s(?:(?:to )?(?:the )?promot|you\b)|\bpromoter pool\b|\bpromoters?'?s? (?:share|cut|earnings)\b|\bpaid by the buyer\b|\bdispute protection\b/i,
+    what: 'the 70/20/10 split, the promoter share and the buyer-paid processing fee',
+    retired: '2026-09-25 — owner decision: Stripe fee off the top, then 75% artist / 25% venue, no promoter share',
+    instead: 'Stripe\'s card fee comes off the face value; the rest is 75% to the artist and 25% to the venue; iHYPE takes 0%. The buyer pays the ticket price plus tax. A HYPE link tracks referrals and earns nothing.',
+  },
+  {
+    /* THE 18+ REQUIREMENT IS GONE (owner, 2026-09-25: "since we no longer
+       require financial info for fans, remove the 18+ requirement from the
+       entire site"). A fan pays the venue through Stripe's hosted checkout
+       and iHYPE stores no card, so the attestation guarded nothing. A show's
+       own "18+" door policy is the venue's and is NOT matched here. */
+    pattern: /\b18 (?:years )?(?:or older|and over|of age or older)\b|\bconfirm your age\b|\b18\+ (?:confirmed|to buy|required)\b/i,
+    what: 'an 18+ requirement to buy tickets or share a HYPE link',
+    retired: '2026-09-25 — owner decision; the column drop is parked',
+    instead: 'The only age rule is the 13+ attestation at signup. A venue may still mark its own show 18+ or 21+ at the door.',
   },
   {
     pattern: /\bspots? per day\b|\beffective CPM\b|\bcost per 1,?000\b/i,

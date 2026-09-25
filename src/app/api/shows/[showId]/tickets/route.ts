@@ -17,13 +17,12 @@ import { getPaymentProcessingReadiness } from '@/lib/payments';
 import { reserveShowInventory } from '@/lib/ticket-inventory';
 import { detectLocationFromHeaders } from '@/lib/request-location';
 import {
-  createTicketCheckoutSession,
   createVenueDirectCheckoutSession,
   isConnectMerchantReady,
-  isConnectPayoutReady,
-  getOrCreateStripeCustomer,
 } from '@/lib/stripe';
 import {
+  ARTIST_SHARE_PERCENT,
+  VENUE_SHARE_PERCENT,
   calculateTicketOrderFinancials,
 } from '@/lib/ticketing';
 import { readClientAddress } from '@/lib/request-meta';
@@ -116,7 +115,6 @@ export async function POST(
           name: true,
           role: true,
           emailVerified: true,
-          isEighteenOrOlder: true,
           createdAt: true,
           storedPaymentTokenRef: true,
           stripeCustomerId: true,
@@ -145,11 +143,6 @@ export async function POST(
             },
           },
           promoterProfile: { select: { id: true, name: true } },
-          // Counted in the query that already runs rather than asked for
-          // separately: the settlement decision below needs it, and a second
-          // round trip on the purchase path is both slower and one more thing
-          // that can fail between reserving inventory and taking payment.
-          _count: { select: { lineupSlots: { where: { status: 'ACCEPTED' } } } },
         },
       }),
     ]);
@@ -181,15 +174,12 @@ export async function POST(
         { status: 403 },
       );
     }
-    if (!user.isEighteenOrOlder) {
-      return NextResponse.json(
-        {
-          error: 'Ticket purchases require you to be 18 or older. Confirm your age in Settings to buy tickets.',
-          code: 'AGE_18_REQUIRED',
-        },
-        { status: 403 },
-      );
-    }
+    /* There is no 18+ gate (owner, 2026-09-25: "since we no longer require
+       financial info for fans, remove the 18+ requirement from the entire
+       site"). A buyer pays the venue through Stripe's hosted checkout and
+       iHYPE stores no card, so the attestation guarded nothing here; the 13+
+       attestation at signup is the product's one age rule. A venue's own
+       door policy is the show's age restriction, printed on the page. */
     if (!show) return NextResponse.json({ error: 'Show not found' }, { status: 404 });
 
     if (
@@ -252,92 +242,51 @@ export async function POST(
       }
     }
 
-    /* WHO IS THE MERCHANT ON THIS SALE.
+    /* THE VENUE IS THE MERCHANT ON EVERY SALE, OR THERE IS NO SALE
+     * (owner, 2026-09-25: "No sales until onboarded").
      *
-     * Three modes, tried in order, and the first two are both better for
-     * everyone than the third:
+     * The charge is created on the venue's own Stripe account: their name is
+     * on the buyer's statement, disputes and refunds are debited from them,
+     * and they collect and remit the tax. iHYPE claims only the artist's 75%
+     * as an application fee and pays it onward, and holds nothing else.
      *
-     * 1. VENUE-DIRECT. The charge is created on the venue's own Stripe
-     *    account, so the VENUE is the merchant of record: disputes are debited
-     *    from them, the tax obligation is theirs to remit, and the buyer pays
-     *    no protection reserve because iHYPE is carrying nothing to protect
-     *    against. iHYPE claims only the artist's and promoter's shares as an
-     *    application fee and pays them onward. This is the mode the product
-     *    wants — a venue is a business with a bank account and an accountant,
-     *    which is what a merchant of record needs to be.
+     * Until this date two fallbacks let a sale proceed without that — a
+     * destination charge to the headliner, and a platform-settled charge with
+     * iHYPE as merchant — so that a fan was never stopped by a venue's
+     * paperwork. Both made iHYPE the merchant of record, carrying disputes it
+     * cannot fund and a tax obligation it has nobody to file, and both are
+     * gone. The refusal comes BEFORE any inventory is reserved or any Stripe
+     * customer is created, so a refused buyer holds nothing.
      *
-     * 2. HEADLINER-DESTINATION. No venue account, but the act has one: a
-     *    destination charge routes their 70% atomically with the charge so it
-     *    never passes through iHYPE's balance. iHYPE remains the merchant and
-     *    carries the disputes, so the reserve applies.
-     *
-     * 3. PLATFORM-SETTLED. Nobody is onboarded. Everything captures to iHYPE
-     *    and is split afterwards through AccountsPayableEntry, exactly as
-     *    before any of this.
-     *
-     * Falling through is never an error and never blocks a sale. A fan must
-     * not be stopped by a venue's or an act's paperwork, and a sale that pays
-     * out a day later is a far better outcome than one that does not happen.
-     *
-     * A LINEUP is excluded from mode 2 only. A destination charge has one
-     * destination, so routing the headliner's slice while the other acts wait
-     * on payables would pay one act on a different schedule from the rest of
-     * the same bill. Mode 1 is unaffected — the venue is the merchant whatever
-     * the bill looks like, and every act is paid the same way from the
-     * application fee.
-     *
-     * `.catch(() => null)` on each readiness call: Stripe being briefly
-     * unreachable should step down a mode, not fail a purchase whose inventory
-     * is already reserved. */
-    const lineupSlotCount = show._count?.lineupSlots ?? 0;
+     * MERCHANT-ready, not payout-ready: `card_payments` is what lets a charge
+     * be created ON the account; `stripe_transfers` only lets money be sent to
+     * it (row 155). A Stripe outage during the check is a 503, not a silent
+     * step down to a mode that no longer exists. */
     const venueConnectId = show.venueProfile?.stripeConnectAccountId ?? null;
-    const headlinerConnectId = show.headlinerProfile?.stripeConnectAccountId ?? null;
-
-    /* MERCHANT-ready, not PAYOUT-ready, and the distinction is the whole
-       correctness of this branch. `card_payments` is what lets a charge be
-       created ON the venue's account; `stripe_transfers` only lets money be
-       sent TO it. This asked the payout question until 2026-08-28, which meant
-       a venue that had completed recipient onboarding alone was selected as
-       merchant and then rejected by Stripe for the missing capability —
-       failing the purchase at the last step, after inventory was reserved, for
-       paperwork the fan has nothing to do with. */
-    /* The merchant check, the payout check and the buyer's location are three
-       independent reads — two live Stripe retrievals and one geolocation —
-       and ran one after another ahead of the charge (row 513). They run
-       together now; the payout answer is used only when the venue cannot be
-       the merchant, exactly as before, so asking for it early can cost one
-       unused read and never changes which account is chosen. */
-    const [venueDirectAccountId, headlinerPayoutAccountId, buyerLocation] = await Promise.all([
+    const [venueDirectAccountId, buyerLocation] = await Promise.all([
       venueConnectId
-        ? isConnectMerchantReady(venueConnectId)
-            .then((ready: boolean) => (ready ? venueConnectId : null))
-            .catch(() => null)
-        : Promise.resolve(null),
-      lineupSlotCount === 0 && headlinerConnectId
-        ? isConnectPayoutReady(headlinerConnectId)
-            .then((ready: boolean) => (ready ? headlinerConnectId : null))
-            .catch(() => null)
+        ? isConnectMerchantReady(venueConnectId).then((ready: boolean) => (ready ? venueConnectId : null))
         : Promise.resolve(null),
       detectLocationFromHeaders(request.headers),
     ]);
+    if (!venueDirectAccountId) {
+      return NextResponse.json(
+        {
+          error: 'Tickets for this show go on sale once the venue finishes setting up payments.',
+          code: 'VENUE_NOT_PAYMENT_READY',
+        },
+        { status: 409 },
+      );
+    }
 
-    const settlementAccountId = !venueDirectAccountId ? headlinerPayoutAccountId : null;
+    /* The charter split, not the show's stored percentages: a show created
+       under the old 70/20/10 carries 20/70 on its row, and a sale today is
+       made under today's terms. */
     const financials = calculateTicketOrderFinancials({
       ticketPriceCents: show.ticketPriceCents,
       quantity: body.quantity,
-      venuePayoutPercent: show.venuePayoutPercent,
-      artistPayoutPercent: show.artistPayoutPercent,
-      promoterPayoutPercent: show.promoterPayoutPercent,
-      // "(if applicable)" — the 10% is only withheld when a promoter is
-      // actually being credited on this order. Resolved just above from the
-      // referral cookie / ?ref=; when nobody referred the sale, the share
-      // redistributes to the artist and venue instead of being parked in a
-      // payable nobody can be paid from.
-      hasAffiliatePromoter: Boolean(affiliatePromoterProfile),
-      // No reserve on a venue-direct sale: the venue is the merchant, so iHYPE
-      // is carrying no dispute risk to fund and charging for one would be a
-      // fee with no cost behind it.
-      platformBearsRisk: !venueDirectAccountId,
+      venuePayoutPercent: VENUE_SHARE_PERCENT,
+      artistPayoutPercent: ARTIST_SHARE_PERCENT,
       buyerLocation,
       venueLocation: {
         postalCode: show.venueProfile?.postalCode,
@@ -345,19 +294,6 @@ export async function POST(
         country: show.venueProfile?.country,
       },
     });
-
-    const customerId = await getOrCreateStripeCustomer({
-      userId: user.id,
-      email: user.email ?? '',
-      name: user.name,
-      existingCustomerId: user.stripeCustomerId,
-    });
-    if (!user.stripeCustomerId) {
-      await db.user.update({
-        where: { id: user.id },
-        data: { stripeCustomerId: customerId },
-      });
-    }
 
     // Advisory only — never blocks. Refusing a fan who signed up minutes ago
     // because their favourite band just announced a date would punish the most
@@ -434,10 +370,8 @@ export async function POST(
           // What Stripe routed with the charge. buildPayableEntries reads this
           // at capture so it does not write a payable for a share the act has
           // already been paid.
-          settlementMode: venueDirectAccountId
-            ? 'VENUE_DIRECT'
-            : settlementAccountId ? 'DESTINATION' : 'PLATFORM',
-          settlementAccountId: venueDirectAccountId ?? settlementAccountId,
+          settlementMode: 'VENUE_DIRECT',
+          settlementAccountId: venueDirectAccountId,
           subtotalCents: financials.subtotalCents,
           taxLocalCents: financials.localCents,
           taxStateCents: financials.stateCents,
@@ -459,35 +393,19 @@ export async function POST(
     });
     reservedOrderId = order.id;
 
-    /* Mode 1 takes a different Stripe call entirely, not a different argument:
-       a direct charge is created ON the venue's account via `Stripe-Account`,
-       so it cannot be expressed as a flag on the platform-charge helper. The
-       venue-direct session also takes no `stripeCustomerId` — a customer saved
+    /* The venue-direct session takes no `stripeCustomerId` — a customer saved
        on the platform does not exist on the venue's account, and passing one
        would be rejected. */
-    const checkout = venueDirectAccountId
-      ? await createVenueDirectCheckoutSession({
-          amountCents: financials.totalChargeCents,
-          venueAccountId: venueDirectAccountId,
-          artistPayoutCents: financials.artistPayoutCents,
-          promoterPayoutCents: financials.promoterPayoutCents,
-          showId: show.id,
-          showSlug: show.slug,
-          showTitle: show.title,
-          quantity: body.quantity,
-          ticketOrderConfirmationCode: order.confirmationCode,
-        })
-      : await createTicketCheckoutSession({
-          amountCents: financials.totalChargeCents,
-          stripeCustomerId: customerId,
-          showId: show.id,
-          showSlug: show.slug,
-          showTitle: show.title,
-          quantity: body.quantity,
-          ticketOrderConfirmationCode: order.confirmationCode,
-          destinationAccountId: settlementAccountId,
-          ...(settlementAccountId ? { destinationPayoutCents: financials.artistPayoutCents } : {}),
-        });
+    const checkout = await createVenueDirectCheckoutSession({
+      amountCents: financials.totalChargeCents,
+      venueAccountId: venueDirectAccountId,
+      artistPayoutCents: financials.artistPayoutCents,
+      showId: show.id,
+      showSlug: show.slug,
+      showTitle: show.title,
+      quantity: body.quantity,
+      ticketOrderConfirmationCode: order.confirmationCode,
+    });
     return NextResponse.json(
       {
         order: { id: order.id, confirmationCode: order.confirmationCode, status: order.status },

@@ -20,7 +20,7 @@ export async function PayoutShowsPanel({ shows }: { shows: ShowRow[] }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <p className="meta" style={{ marginBottom: 8 }}>{t('payoutShowsPanel.pickShowPrompt', 'Pick a show to see its full 70/20/10 payout breakdown.')}</p>
+      <p className="meta" style={{ marginBottom: 8 }}>{t('payoutShowsPanel.pickShowPromptNet', 'Pick a show to see its full payout breakdown.')}</p>
       {shows.map((s) => (
         <Link
           className="panel"

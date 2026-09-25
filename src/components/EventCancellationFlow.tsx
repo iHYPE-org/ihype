@@ -95,8 +95,8 @@ export function EventCancellationFlow({
                 also breaks gender agreement, since the predicate has to agree
                 with a noun the translator cannot see. */}
             {(result.ordersRefunded === 1
-              ? t('eventCancellationFlow.refundedSummaryOne', "{count} order refunded in full — face value plus Stripe's processing fee.")
-              : t('eventCancellationFlow.refundedSummaryOther', "{count} orders refunded in full — face value plus Stripe's processing fee.")
+              ? t('eventCancellationFlow.refundedSummaryOneAll', '{count} order refunded in full — everything the buyer paid.')
+              : t('eventCancellationFlow.refundedSummaryOtherAll', '{count} orders refunded in full — everything the buyers paid.')
             ).replace('{count}', formatNumber(locale, result.ordersRefunded))}
             {result.ordersSkippedAlreadyScanned > 0 && ` ${(result.ordersSkippedAlreadyScanned === 1
               ? t('eventCancellationFlow.skippedSummaryOne', '{count} order was already scanned in and was left untouched.')
@@ -168,8 +168,8 @@ export function EventCancellationFlow({
               non-English locale and cannot express Slavic, CJK or Arabic number
               agreement at all. */}
           {(ticketsSoldCount === 1
-            ? t('eventCancellationFlow.warningBodyOne', 'All {count} ticket is refunded in full automatically — face value and Stripe\'s processing fee both. Fans are notified immediately.')
-            : t('eventCancellationFlow.warningBodyOther', 'All {count} tickets are refunded in full automatically — face value and Stripe\'s processing fee both. Fans are notified immediately.')
+            ? t('eventCancellationFlow.warningBodyOneAll', 'All {count} ticket is refunded in full automatically — everything the buyer paid. Fans are notified immediately.')
+            : t('eventCancellationFlow.warningBodyOtherAll', 'All {count} tickets are refunded in full automatically — everything the buyers paid. Fans are notified immediately.')
           ).replace('{count}', formatNumber(locale, ticketsSoldCount))}
         </p>
       </div>

@@ -2,7 +2,8 @@ import { cookies } from 'next/headers';
 import { db } from '@/lib/db';
 
 /**
- * Who gets credited from the 10% promoter pool for a ticket, and how that
+ * Who gets credited with the referral for a ticket (a record only since
+ * 2026-09-25 — it carried a share of a 10% promoter pool before), and how that
  * survives the trip from a HYPE link to a purchase.
  *
  * ## The gap this closes

@@ -314,7 +314,7 @@ export default async function FanProfilePage({
                 <div className="fan-ref-url">{`${baseUrl}/h/${promoterDashboard.refHexId}`}</div>
                 <PromoteShareButton link={`${baseUrl}/h/${promoterDashboard.refHexId}`} slug="referral" title="iHYPE" />
                 <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', marginTop: 12 }}>
-                  {t('fansSlugPage.referralExplainer', 'Earn a proportional share of the 10% promoter pool for every ticket your link drives.')}
+                  {t('fansSlugPage.referralExplainerTracks', 'Every ticket your link drives is recorded as your referral. A HYPE link tracks referrals; it does not earn a share of the ticket.')}
                 </p>
               </div>
             )}

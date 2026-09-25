@@ -19,7 +19,7 @@ export const SHOW_PAYOUTS_LAST_KEY = 'show-payouts:last';
 
 /**
  * Real payout release — pays out every still-PENDING AccountsPayableEntry
- * (the actual 70/20/10-split rows computed at order-capture time, see
+ * (the actual split rows computed at order-capture time, see
  * src/lib/ticket-order-state.ts) for shows that have ended, via a real
  * per-entry Stripe transfer. Replaces a previous version that only ever
  * computed a rough gross-revenue estimate and emailed a promise — no money

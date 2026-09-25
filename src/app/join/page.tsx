@@ -19,8 +19,8 @@ export const metadata: Metadata = {
 // token through --jc-color, so shape and colour both separate them.
 const ROLES = [
   { label: 'Fan', color: 'var(--role-fan-text)', icon: '\u25CF', href: '/for-fans', help: 'Discover, hype, and buy tickets fee-free.' },
-  { label: 'Artist', color: 'var(--accent-text)', icon: '\u25B2', href: '/for-artists', help: '70% of every ticket, your own page and shows.' },
-  { label: 'Venue', color: 'var(--role-venue-text)', icon: '\u25C6', href: '/for-venues', help: '20% of every gate and real demand data.' },
+  { label: 'Artist', color: 'var(--accent-text)', icon: '\u25B2', href: '/for-artists', help: '75% of every ticket after Stripe’s fee, your own page and shows.' },
+  { label: 'Venue', color: 'var(--role-venue-text)', icon: '\u25C6', href: '/for-venues', help: '25% of every gate after Stripe’s fee, and real demand data.' },
   { label: 'Advertiser', color: 'var(--role-advertiser-text)', icon: '\u25A0', href: '/advertise/register', help: 'Music-only campaigns with no access to personal user data.' },
 ];
 
