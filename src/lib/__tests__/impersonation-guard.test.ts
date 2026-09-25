@@ -1,45 +1,41 @@
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { describe, expect, it } from 'vitest';
-import { refuseCredentialChangeWhileImpersonating } from '@/lib/impersonation-guard';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**
  * A credential made while impersonating outlives the impersonation: a passkey
  * the operator registers on a member's account keeps working after "stop
  * impersonating", and syncs to the member's devices. So every credential write
- * refuses an impersonated session.
+ * refuses an impersonated session, and the refusal is written under the
+ * operator's id. The route-level proofs are in impersonation-credential-routes.test.ts.
  */
+const recordAuditEvent = vi.fn(async () => {});
+vi.mock('@/lib/audit', () => ({ recordAuditEvent: (...args: unknown[]) => recordAuditEvent(...(args as [])) }));
+
+beforeEach(() => recordAuditEvent.mockClear());
+
 describe('refuseCredentialChangeWhileImpersonating', () => {
-  it('refuses an impersonated session with 403 IMPERSONATING', async () => {
-    const res = refuseCredentialChangeWhileImpersonating({ user: { impersonatorId: 'admin-1' } });
+  it('refuses an impersonated session with 403 IMPERSONATING and records the operator', async () => {
+    const { refuseCredentialChangeWhileImpersonating } = await import('@/lib/impersonation-guard');
+    const res = await refuseCredentialChangeWhileImpersonating(
+      { user: { id: 'member-1', impersonatorId: 'admin-1' } },
+      'passkey.register',
+    );
     expect(res?.status).toBe(403);
     expect(await res?.json()).toMatchObject({ code: 'IMPERSONATING' });
+    expect(recordAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actorUserId: 'admin-1',
+        action: 'credential_change_refused_impersonating',
+        entityId: 'member-1',
+        metadata: { attempted: 'passkey.register' },
+      }),
+    );
   });
 
-  it('lets an ordinary session through', () => {
-    expect(refuseCredentialChangeWhileImpersonating({ user: { impersonatorId: null } })).toBeNull();
-    expect(refuseCredentialChangeWhileImpersonating({ user: {} })).toBeNull();
-    expect(refuseCredentialChangeWhileImpersonating({ user: { impersonatorId: '' } })).toBeNull();
-    expect(refuseCredentialChangeWhileImpersonating(null)).toBeNull();
-  });
-
-  it.each([
-    ['src/app/api/auth/passkey/register/route.ts', ['GET', 'POST']],
-    ['src/app/api/auth/passkey/[id]/route.ts', ['DELETE']],
-    ['src/app/api/me/email/route.ts', ['POST']],
-  ])('%s refuses before it writes', (file, methods) => {
-    const source = readFileSync(join(process.cwd(), file), 'utf8');
-    for (const method of methods) {
-      const start = source.indexOf(`export async function ${method}(`);
-      expect(start, `${method} in ${file}`).toBeGreaterThan(-1);
-      const next = source.indexOf('export async function ', start + 1);
-      const body = source.slice(start, next === -1 ? undefined : next);
-      const guard = body.indexOf('refuseCredentialChangeWhileImpersonating(session)');
-      expect(guard, `${method} in ${file} calls the guard`).toBeGreaterThan(-1);
-      for (const write of ['db.', 'verifyPasskeyRegistration(', 'getPasskeyRegistrationOptions(']) {
-        const at = body.indexOf(write);
-        if (at !== -1) expect(guard, `${method} guards before ${write}`).toBeLessThan(at);
-      }
+  it('lets an ordinary session through and records nothing', async () => {
+    const { refuseCredentialChangeWhileImpersonating } = await import('@/lib/impersonation-guard');
+    for (const session of [{ user: { impersonatorId: null } }, { user: {} }, { user: { impersonatorId: '' } }, null]) {
+      expect(await refuseCredentialChangeWhileImpersonating(session, 'passkey.delete')).toBeNull();
     }
+    expect(recordAuditEvent).not.toHaveBeenCalled();
   });
 });

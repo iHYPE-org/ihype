@@ -6,18 +6,26 @@ import { isAllowedAdminEmail } from '@/lib/admin-allowlist';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
 import { useSecureAuthCookies } from '@/lib/auth-cookie';
-import { magicLinkPendingCookie } from '@/lib/magic-link-pending';
+import { appendPending, decoyDigest, magicLinkPendingCookie, readPendingCookie } from '@/lib/magic-link-pending';
 
-/* Every 200 marks this browser as the one that asked, whether or not an account
-   exists (magic-link-pending.ts) — so the marker reveals nothing an `ok:true`
-   does not. The confirm page auto-submits only where it is present. */
+/* Every 200 adds a digest to this browser's pending list: the sent token's when
+   a link went out, a random decoy when nothing did (unknown address, admin,
+   rate limit), so the marker reveals nothing an `ok:true` does not. The confirm
+   page auto-submits only the link whose digest is on the list
+   (magic-link-pending.ts). */
 export async function POST(request: Request) {
-  const response = await requestMagicLink(request);
-  if (response.status === 200) response.cookies.set(magicLinkPendingCookie(useSecureAuthCookies()));
+  let sentDigest: string | null = null;
+  const response = await requestMagicLink(request, (digest) => {
+    sentDigest = digest;
+  });
+  if (response.status === 200) {
+    const value = appendPending(readPendingCookie(request), sentDigest ?? decoyDigest());
+    response.cookies.set(magicLinkPendingCookie(value, useSecureAuthCookies()));
+  }
   return response;
 }
 
-async function requestMagicLink(request: Request) {
+async function requestMagicLink(request: Request, onSent: (digest: string) => void) {
   try {
     const clientAddress = readClientAddress(request);
     // Longer DO deadline than the default. This bucket is keyed per client
@@ -73,7 +81,7 @@ async function requestMagicLink(request: Request) {
       return NextResponse.json({ ok: true });
     }
 
-    await sendMagicLinkEmail(user.id, email);
+    onSent(await sendMagicLinkEmail(user.id, email));
 
     return NextResponse.json({ ok: true });
   } catch (error) {

@@ -50,7 +50,7 @@ export async function POST(request: Request) {
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Login required.' }, { status: 401 });
   }
-  const impersonating = refuseCredentialChangeWhileImpersonating(session);
+  const impersonating = await refuseCredentialChangeWhileImpersonating(session, 'recovery_email.add');
   if (impersonating) return impersonating;
   const userId = session.user.id;
 

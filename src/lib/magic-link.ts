@@ -1,6 +1,7 @@
 import { db } from '@/lib/db';
 import { createMagicLinkToken } from '@/lib/magic-link-token';
 import { sendGenericEmail } from '@/lib/mailer';
+import { pendingDigest } from '@/lib/magic-link-pending';
 
 /**
  * Creates a magic-link token for a user and emails it — the same sign-in
@@ -9,8 +10,12 @@ import { sendGenericEmail } from '@/lib/mailer';
  * (existing-user sign-in) and /api/advertise/register (new advertiser
  * accounts, which skip the rest of /register's music-industry-specific
  * signup flow entirely).
+ *
+ * Returns the pending-marker digest of the token it sent (never the token), so
+ * the requesting route can let THIS browser's confirm page submit THIS link
+ * by itself (src/lib/magic-link-pending.ts).
  */
-export async function sendMagicLinkEmail(userId: string, email: string) {
+export async function sendMagicLinkEmail(userId: string, email: string): Promise<string> {
   const { token, tokenHash } = createMagicLinkToken();
   const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
@@ -35,4 +40,5 @@ export async function sendMagicLinkEmail(userId: string, email: string) {
     await db.magicLinkToken.delete({ where: { token: tokenHash } }).catch(() => {});
     throw error;
   }
+  return pendingDigest(token);
 }

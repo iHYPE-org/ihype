@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { MagicLinkConfirm } from '@/components/MagicLinkConfirm';
-import { MAGIC_LINK_PENDING_COOKIE } from '@/lib/magic-link-pending';
+import { MAGIC_LINK_PENDING_COOKIE, wasRequestedHere } from '@/lib/magic-link-pending';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,8 +17,8 @@ export const metadata = { robots: { index: false, follow: false } };
  * because the fetch that renders it is as likely to be a mail scanner's as a
  * member's.
  *
- * It presses Continue by itself only in the browser that asked for the link
- * (magic-link-pending.ts). Anywhere else — another device, or somebody else's
+ * It presses Continue by itself only in the browser that asked for THIS link
+ * (a digest of its token is on the pending list, magic-link-pending.ts). Anywhere else — another device, or somebody else's
  * link — it waits for the member, because an automatic submit there is a
  * login-CSRF: it signs this browser in to whoever's inbox the token came from.
  */
@@ -30,7 +30,7 @@ export default async function MagicLinkConfirmPage({
   const { token, callbackUrl } = await searchParams;
   if (!token) redirect('/login?error=invalid_magic_link');
 
-  const requestedHere = (await cookies()).get(MAGIC_LINK_PENDING_COOKIE)?.value === '1';
+  const requestedHere = wasRequestedHere((await cookies()).get(MAGIC_LINK_PENDING_COOKIE)?.value, token);
 
   return <MagicLinkConfirm token={token} callbackUrl={callbackUrl} autoSubmit={requestedHere} />;
 }

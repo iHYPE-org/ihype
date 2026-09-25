@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
-import { MAGIC_LINK_PENDING_COOKIE } from '@/lib/magic-link-pending';
+import { useSecureAuthCookies } from '@/lib/auth-cookie';
+import { MAGIC_LINK_PENDING_COOKIE, magicLinkPendingCookie, removePending } from '@/lib/magic-link-pending';
 import { db } from '@/lib/db';
 import { buildAuthSessionCookie } from '@/lib/auth-session';
 import { checkAndRecordLogin } from '@/lib/login-security';
@@ -211,9 +212,14 @@ export async function POST(request: NextRequest) {
      A 307 would re-post the token to the page we are sending them to. */
   const response = NextResponse.redirect(new URL(dest, request.url), 303);
   response.cookies.set(sessionCookie);
-  /* Spent: the next link this browser opens was not asked for by this
-     request (magic-link-pending.ts). */
-  response.cookies.set(MAGIC_LINK_PENDING_COOKIE, '', { path: '/', maxAge: 0 });
+  /* Spent: this link's digest leaves the pending list, any other link this
+     browser asked for stays on it (magic-link-pending.ts). */
+  response.cookies.set(
+    magicLinkPendingCookie(
+      removePending(request.cookies.get(MAGIC_LINK_PENDING_COOKIE)?.value, token),
+      useSecureAuthCookies(),
+    ),
+  );
   return response;
 }
 
