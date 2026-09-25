@@ -132,8 +132,7 @@ export function infoTabLabel(t: Translate, english: string): string {
   switch (english) {
     case 'Trust & Safety': return t('infoTabs.trust', 'Trust & Safety');
     case 'Transparency': return t('infoTabs.transparency', 'Transparency');
-    case 'Privacy Policy': return t('infoTabs.privacy', 'Privacy Policy');
-    case 'Terms of Service': return t('infoTabs.terms', 'Terms of Service');
+    case 'Terms and privacy': return t('infoTabs.legal', 'Terms and privacy');
     case 'The Charter': return t('infoTabs.charter', 'The Charter');
     case 'DMCA': return t('infoTabs.dmca', 'DMCA');
     default: return english;

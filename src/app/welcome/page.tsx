@@ -109,7 +109,7 @@ export default async function WelcomePage() {
       cta: t('welcomePage.ctaArtist', 'Set up your page →'), ctaHref: onboardingPath ?? '/app/me/profiles',
       steps: [
         { title: t('welcomePage.artistStep1Title', 'Complete verification'), desc: t('welcomePage.artistStep1DescNet', 'Link your catalog and confirm identity — your 75% share activates the moment you’re verified.') },
-        { title: t('welcomePage.artistStep2Title', 'Upload your first track'), desc: t('welcomePage.artistStep2Desc', 'Choose all-rights or free-use licensing per track; free-use tracks can air on the station.') },
+        { title: t('welcomePage.artistStep2Title', 'Upload your first track'), desc: t('welcomePage.artistStep2DescStation', 'Choose all-rights or free-use licensing per track; free-use tracks can air on the station.') },
         { title: t('welcomePage.artistStep3Title', 'Publish a show'), desc: t('welcomePage.artistStep3DescNet', 'Set face-value pricing; the venue sells the tickets and your 75% after Stripe’s fee is locked. $0 platform fees.') },
       ],
     },
