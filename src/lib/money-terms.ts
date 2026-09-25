@@ -21,7 +21,7 @@ import { PAYOUT_HOLD_DAYS } from '@/lib/payout-release';
 import { STRIPE_FIXED_CENTS, STRIPE_PERCENT } from '@/lib/stripe-fees';
 
 /** Bump when any sentence the disclosure states changes meaning. */
-export const MONEY_TERMS_VERSION = '2026-09-25';
+export const MONEY_TERMS_VERSION = '2026-09-25.2';
 
 export type MoneyTermsRole = 'ARTIST' | 'VENUE';
 

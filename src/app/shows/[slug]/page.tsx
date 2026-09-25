@@ -58,6 +58,7 @@ const getShowPage = cache((slug: string) =>
         select: {
           id: true, slug: true, name: true, ownerId: true,
           addressLine1: true, city: true, stateRegion: true, postalCode: true, country: true,
+          ticketTaxRatePpm: true,
           stripeConnectOnboarded: true,
         },
       },
@@ -1001,6 +1002,7 @@ export default async function ShowDetailPage({
                   stateRegion: show.venueProfile.stateRegion,
                   country: show.venueProfile.country
                 }}
+                venueTaxRatePpm={show.venueProfile.ticketTaxRatePpm}
               />
               )}
 

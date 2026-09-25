@@ -48,6 +48,8 @@ type TicketSaleCardProps = {
     country?: string | null;
     postalCode?: string | null;
   } | null;
+  /** The venue's own rate (`Profile.ticketTaxRatePpm`); replaces the table. */
+  venueTaxRatePpm?: number | null;
 };
 
 type IssuedTicket = {
@@ -74,7 +76,8 @@ export function TicketSaleCard({
   venuePaymentReady,
   affiliatePromoterProfileId,
   currentFan,
-  venueLocation
+  venueLocation,
+  venueTaxRatePpm
 }: TicketSaleCardProps) {
   const { locale, t } = useI18n();
   const router = useRouter();
@@ -107,9 +110,10 @@ export function TicketSaleCard({
            70/20/10 still carries. */
         venuePayoutPercent: VENUE_SHARE_PERCENT,
         artistPayoutPercent: ARTIST_SHARE_PERCENT,
-        venueLocation
+        venueLocation,
+        venueTaxRatePpm
       }),
-    [quantityForPreview, ticketPriceCents, venueLocation]
+    [quantityForPreview, ticketPriceCents, venueLocation, venueTaxRatePpm]
   );
 
   /* One share per row, each percentage read back off the amount the SAME
@@ -337,7 +341,9 @@ export function TicketSaleCard({
                 <div className="signal-card">
                   <strong>{t('ticketSaleCard.venueTaxRegionLabel', 'Venue tax region')}</strong>
                   <span>{venueTaxRegion}</span>
-                  <span>{t('ticketSaleCard.venueTaxRegionNoteVenueRate', 'Tax is estimated at the venue’s state rate plus that state’s average local rate. The venue confirms the final rate.')}</span>
+                  <span>{venueTaxRatePpm != null
+                    ? t('ticketSaleCard.venueTaxRegionNoteOwnRate', 'Tax is charged at the rate this venue set for its tickets.')
+                    : t('ticketSaleCard.venueTaxRegionNoteVenueRate', 'Tax is estimated at the venue’s state rate plus that state’s average local rate. The venue confirms the final rate.')}</span>
                 </div>
               ) : null}
             </div>
@@ -405,8 +411,12 @@ export function TicketSaleCard({
               <div style={{ border: '1px solid var(--line)', borderRadius: 'var(--radius-panel)', padding: 14, background: 'var(--bg-raised)', display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {[
                   { label: t('ticketSaleCard.subtotalLabel', 'Subtotal'), cents: preview.subtotalCents },
-                  { label: t('ticketSaleCard.stateTaxLabelUs', 'State sales tax'), cents: preview.stateCents },
-                  { label: t('ticketSaleCard.localTaxLabelAverage', 'Local sales tax (state average)'), cents: preview.localCents },
+                  ...(preview.rateSource === 'venue'
+                    ? [{ label: t('ticketSaleCard.venueRateTaxLabel', 'Sales tax (the venue’s rate)'), cents: preview.stateCents }]
+                    : [
+                        { label: t('ticketSaleCard.stateTaxLabelUs', 'State sales tax'), cents: preview.stateCents },
+                        { label: t('ticketSaleCard.localTaxLabelAverage', 'Local sales tax (state average)'), cents: preview.localCents },
+                      ]),
                   { label: t('ticketSaleCard.totalTaxLabel', 'Total tax'), cents: preview.totalTaxCents },
                   { label: t('ticketSaleCard.ihypeFeeLabel', 'iHYPE fee'), cents: 0, zero: true },
                 ].map((line) => (
