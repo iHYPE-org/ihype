@@ -82,8 +82,9 @@ const BASE = arg('base', 'https://ihype.org');
 // eyebrow rule does not cover; they are worth a look, not a blocker.
 //
 // Measured the same way as the figures they replace: a LOCAL production build
-// with an empty database. The slack on tinyBodyText is for /this-weekend and
-// /community, which render live rows.
+// with an empty database. The slack on tinyBodyText was for /this-weekend and
+// /community, which rendered live rows then; both are redirects now and are out
+// of the list (see PAGES).
 // RE-BASELINED 2026-09-10 after the visual audit (DESIGN_SYNC row 375). This
 // had read 45 against 39 — OVER — on every production deploy since the budget
 // was set, under `continue-on-error`, because the public pages' floors lived
@@ -98,10 +99,20 @@ const BUDGET = {
   overflowingPages: 0,
 };
 
+// Every entry must RENDER itself signed out. A page that redirects measures a
+// different page, and three of them did: `/community` and `/this-weekend` are
+// `redirects()` entries into `/app/*` (behind auth, so they measured /login),
+// and `/status` redirects a non-admin from inside a page, which under the root
+// loading boundary answers a 200 carrying a one-second <meta refresh> to
+// /login. That refresh raced the 1.2s settle below: it destroyed the context
+// mid-probe and interrupted the next two navigations, so production deploy
+// run 1014 (2026-09-24) failed this step on a docs-only commit. The loop now
+// refuses a page that lands elsewhere or carries a refresh, and
+// `audit-mobile-pages.test.ts` refuses a `redirects()` source here.
 const PAGES = [
   '/', '/info', '/login', '/register', '/join',
-  '/for-artists', '/for-venues', '/advertise', '/walkthrough', '/community',
-  '/journal', '/status', '/launch', '/this-weekend',
+  '/for-artists', '/for-venues', '/advertise', '/walkthrough',
+  '/journal', '/launch',
 ];
 
 // iPhone 15-class logical viewport. Chosen because it is the narrowest of the
@@ -211,6 +222,15 @@ for (const path of PAGES) {
     // A 404 or a 500 renders a page whose boxes are real and whose CONTENT is
     // not the page under test, so it must not quietly contribute measurements.
     if (resp && !resp.ok()) throw new Error(`HTTP ${resp.status()}`);
+    // A redirect measures another page. Refuse it by name, before the settle,
+    // so a server redirect or an in-page refresh fails the same way every run
+    // instead of racing the probe.
+    const landed = new URL(page.url()).pathname;
+    if (landed !== path) throw new Error(`redirects to ${landed}; remove it from PAGES`);
+    const refresh = await page.evaluate(() =>
+      document.querySelector('meta[http-equiv="refresh" i]')?.getAttribute('content') ?? null,
+    );
+    if (refresh) throw new Error(`meta refresh (${refresh}); remove it from PAGES`);
     await page.waitForTimeout(1200);
     const r = await page.evaluate(probe, [TAP_MIN, TEXT_MIN, EYEBROW_MIN]);
     results.push({ path, ...r });
