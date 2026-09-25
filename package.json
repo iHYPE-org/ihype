@@ -42,6 +42,7 @@
     "store:screenshots": "tsx scripts/store-screenshots.mts",
     "store:icon32": "tsx scripts/store-icon-32bit.mts",
     "brand:assets": "tsx scripts/build-brand-assets.mts",
+    "tax:import": "node scripts/import-sales-tax-rates.mjs",
     "check:alpha": "node --import dotenv/config scripts/beta-launch-check.mjs",
     "verify:acrcloud": "tsx --env-file-if-exists=.env scripts/verify-acrcloud.ts",
     "verify:restore": "node --import dotenv/config scripts/verify-restored-backup.mjs",

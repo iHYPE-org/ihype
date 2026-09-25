@@ -44,53 +44,18 @@ describe('ticket scan: payout integrity checks', () => {
 describe('ticket scan: tax verification by venue location', () => {
   const venueLocation = { stateRegion: 'WA', country: 'US', postalCode: '98101' };
 
-  it('no taxes for buyer with no location data', () => {
-    const result = calculateTicketTaxes({
-      ticketPriceCents: 3000,
-      quantity: 1,
-      venueLocation
-    });
-    expect(result.totalTaxCents).toBe(0);
-    expect(result.localCents).toBe(0);
-    expect(result.stateCents).toBe(0);
+  it('taxes a Washington venue at 6.5% state plus the 3.0133% average local rate', () => {
+    const result = calculateTicketTaxes({ ticketPriceCents: 5000, quantity: 1, venueLocation });
+    expect(result.stateCents).toBe(325);
+    expect(result.localCents).toBe(151);
     expect(result.countryCents).toBe(0);
     expect(result.internationalCents).toBe(0);
-  });
-
-  it('international buyer incurs international tax only', () => {
-    const result = calculateTicketTaxes({
-      ticketPriceCents: 5000,
-      quantity: 1,
-      buyerLocation: { country: 'AU', stateRegion: null, postalCode: null },
-      venueLocation
-    });
-    expect(result.internationalCents).toBeGreaterThan(0);
-    expect(result.countryCents).toBe(0);
-    expect(result.stateCents).toBe(0);
-    expect(result.localCents).toBe(0);
-  });
-
-  it('local buyer (same postal code) gets all tax tiers applied', () => {
-    const result = calculateTicketTaxes({
-      ticketPriceCents: 5000,
-      quantity: 1,
-      buyerLocation: venueLocation,
-      venueLocation
-    });
-    // local + state + country tiers, no international
-    expect(result.localCents).toBeGreaterThan(0);
-    expect(result.stateCents).toBeGreaterThan(0);
-    expect(result.countryCents).toBeGreaterThan(0);
-    expect(result.internationalCents).toBe(0);
-    // total adds up
-    expect(result.totalTaxCents).toBe(
-      result.localCents + result.stateCents + result.countryCents + result.internationalCents
-    );
+    expect(result.totalTaxCents).toBe(476);
   });
 
   it('tax breakdown is proportional to ticket price', () => {
-    const base = calculateTicketTaxes({ ticketPriceCents: 1000, quantity: 1, buyerLocation: venueLocation, venueLocation });
-    const double = calculateTicketTaxes({ ticketPriceCents: 2000, quantity: 1, buyerLocation: venueLocation, venueLocation });
+    const base = calculateTicketTaxes({ ticketPriceCents: 1000, quantity: 1, venueLocation });
+    const double = calculateTicketTaxes({ ticketPriceCents: 2000, quantity: 1, venueLocation });
     expect(double.totalTaxCents).toBe(base.totalTaxCents * 2);
   });
 });

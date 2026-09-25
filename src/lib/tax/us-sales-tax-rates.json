@@ -1,0 +1,215 @@
+{
+  "source": {
+    "publisher": "Tax Foundation",
+    "title": "State and Local Sales Tax Rates, 2026",
+    "asOf": "2026-01-01",
+    "url": "https://taxfoundation.org/data/all/state/sales-tax-rates/",
+    "workbook": "https://taxfoundation.org/wp-content/uploads/2026/01/2026-Sales-Tax-Data.xlsx"
+  },
+  "rates": {
+    "ak": {
+      "stateRatePpm": 0,
+      "avgLocalRatePpm": 18211
+    },
+    "al": {
+      "stateRatePpm": 40000,
+      "avgLocalRatePpm": 54570
+    },
+    "ar": {
+      "stateRatePpm": 65000,
+      "avgLocalRatePpm": 29626
+    },
+    "az": {
+      "stateRatePpm": 56000,
+      "avgLocalRatePpm": 29194
+    },
+    "ca": {
+      "stateRatePpm": 72500,
+      "avgLocalRatePpm": 17370
+    },
+    "co": {
+      "stateRatePpm": 29000,
+      "avgLocalRatePpm": 49941
+    },
+    "ct": {
+      "stateRatePpm": 63500,
+      "avgLocalRatePpm": 0
+    },
+    "dc": {
+      "stateRatePpm": 60000,
+      "avgLocalRatePpm": 0
+    },
+    "de": {
+      "stateRatePpm": 0,
+      "avgLocalRatePpm": 0
+    },
+    "fl": {
+      "stateRatePpm": 60000,
+      "avgLocalRatePpm": 9787
+    },
+    "ga": {
+      "stateRatePpm": 40000,
+      "avgLocalRatePpm": 34912
+    },
+    "hi": {
+      "stateRatePpm": 40000,
+      "avgLocalRatePpm": 5000
+    },
+    "ia": {
+      "stateRatePpm": 60000,
+      "avgLocalRatePpm": 9427
+    },
+    "id": {
+      "stateRatePpm": 60000,
+      "avgLocalRatePpm": 266
+    },
+    "il": {
+      "stateRatePpm": 62500,
+      "avgLocalRatePpm": 27145
+    },
+    "in": {
+      "stateRatePpm": 70000,
+      "avgLocalRatePpm": 0
+    },
+    "ks": {
+      "stateRatePpm": 65000,
+      "avgLocalRatePpm": 21897
+    },
+    "ky": {
+      "stateRatePpm": 60000,
+      "avgLocalRatePpm": 0
+    },
+    "la": {
+      "stateRatePpm": 50000,
+      "avgLocalRatePpm": 51134
+    },
+    "ma": {
+      "stateRatePpm": 62500,
+      "avgLocalRatePpm": 0
+    },
+    "md": {
+      "stateRatePpm": 60000,
+      "avgLocalRatePpm": 0
+    },
+    "me": {
+      "stateRatePpm": 55000,
+      "avgLocalRatePpm": 0
+    },
+    "mi": {
+      "stateRatePpm": 60000,
+      "avgLocalRatePpm": 0
+    },
+    "mn": {
+      "stateRatePpm": 68750,
+      "avgLocalRatePpm": 12600
+    },
+    "mo": {
+      "stateRatePpm": 42250,
+      "avgLocalRatePpm": 42164
+    },
+    "ms": {
+      "stateRatePpm": 70000,
+      "avgLocalRatePpm": 618
+    },
+    "mt": {
+      "stateRatePpm": 0,
+      "avgLocalRatePpm": 0
+    },
+    "nc": {
+      "stateRatePpm": 47500,
+      "avgLocalRatePpm": 22461
+    },
+    "nd": {
+      "stateRatePpm": 50000,
+      "avgLocalRatePpm": 20913
+    },
+    "ne": {
+      "stateRatePpm": 55000,
+      "avgLocalRatePpm": 14820
+    },
+    "nh": {
+      "stateRatePpm": 0,
+      "avgLocalRatePpm": 0
+    },
+    "nj": {
+      "stateRatePpm": 66250,
+      "avgLocalRatePpm": 0
+    },
+    "nm": {
+      "stateRatePpm": 48750,
+      "avgLocalRatePpm": 27920
+    },
+    "nv": {
+      "stateRatePpm": 68500,
+      "avgLocalRatePpm": 13855
+    },
+    "ny": {
+      "stateRatePpm": 40000,
+      "avgLocalRatePpm": 45416
+    },
+    "oh": {
+      "stateRatePpm": 57500,
+      "avgLocalRatePpm": 15449
+    },
+    "ok": {
+      "stateRatePpm": 45000,
+      "avgLocalRatePpm": 45592
+    },
+    "or": {
+      "stateRatePpm": 0,
+      "avgLocalRatePpm": 0
+    },
+    "pa": {
+      "stateRatePpm": 60000,
+      "avgLocalRatePpm": 3408
+    },
+    "ri": {
+      "stateRatePpm": 70000,
+      "avgLocalRatePpm": 0
+    },
+    "sc": {
+      "stateRatePpm": 60000,
+      "avgLocalRatePpm": 14863
+    },
+    "sd": {
+      "stateRatePpm": 42000,
+      "avgLocalRatePpm": 19138
+    },
+    "tn": {
+      "stateRatePpm": 70000,
+      "avgLocalRatePpm": 26097
+    },
+    "tx": {
+      "stateRatePpm": 62500,
+      "avgLocalRatePpm": 19508
+    },
+    "ut": {
+      "stateRatePpm": 61000,
+      "avgLocalRatePpm": 13169
+    },
+    "va": {
+      "stateRatePpm": 53000,
+      "avgLocalRatePpm": 4715
+    },
+    "vt": {
+      "stateRatePpm": 60000,
+      "avgLocalRatePpm": 3898
+    },
+    "wa": {
+      "stateRatePpm": 65000,
+      "avgLocalRatePpm": 30133
+    },
+    "wi": {
+      "stateRatePpm": 50000,
+      "avgLocalRatePpm": 7200
+    },
+    "wv": {
+      "stateRatePpm": 60000,
+      "avgLocalRatePpm": 5872
+    },
+    "wy": {
+      "stateRatePpm": 40000,
+      "avgLocalRatePpm": 15598
+    }
+  }
+}

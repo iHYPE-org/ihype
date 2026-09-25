@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { detectRequestLocation } from '@/lib/request-location';
 import { resolveAffiliatePromoter } from '@/lib/referral-attribution';
 import { MmmMissing } from '@/components/mmm/MmmMissing';
 import { getServerI18n } from '@/lib/i18n/server';
@@ -68,7 +67,7 @@ export default async function MmmShowPage({
    * the same three ways the legacy page does, plus the HYPE-link cookie, so a
    * friend's link still pays them after a signup and a week of browsing.
    */
-  const [show, viewerLocation, currentFan, affiliatePromoter] = await Promise.all([
+  const [show, currentFan, affiliatePromoter] = await Promise.all([
     db.show.findUnique({
       where: { slug },
       select: {
@@ -101,7 +100,6 @@ export default async function MmmShowPage({
         },
       },
     }),
-    detectRequestLocation(),
     db.user
       .findUnique({
         where: { id: session.user.id },
@@ -309,12 +307,6 @@ export default async function MmmShowPage({
               country: venue.country,
             }}
             venueName={venue.name}
-            viewerLocation={{
-              city: viewerLocation?.city,
-              stateRegion: viewerLocation?.stateRegion,
-              country: viewerLocation?.country,
-              postalCode: viewerLocation?.postalCode,
-            }}
           />
         </div>
       ) : (
