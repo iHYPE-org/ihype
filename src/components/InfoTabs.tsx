@@ -298,6 +298,9 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
            prose, and a 560px box would collapse their three- and four-column
            layouts. */
         .legal-doc-prose { max-width: 35rem; }
+        /* The two parts of the one legal text; the scroll margin keeps a ?tab=privacy
+           landing clear of the sticky site header. */
+        .legal-part { margin: 2rem 0 0.75rem; scroll-margin-top: 96px; }
         .legal-doc h2 { font-family: var(--f-d, 'Bricolage Grotesque', sans-serif); font-weight: 800; font-size: 1.15rem; letter-spacing: -.02em; margin: 2.5rem 0 .6rem; color: var(--ink); }
         .legal-doc h3 { font-weight: 700; font-size: 1rem; margin: 1.5rem 0 .4rem; color: var(--ink); }
         .legal-doc p { font-size: 0.9375rem; color: var(--ink-2); line-height: 1.75; margin-bottom: .85rem; }
