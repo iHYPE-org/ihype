@@ -78,7 +78,7 @@ export function MoneyTermsDisclosure({
       <h4 className="money-terms-subtitle">{t('moneyTerms.taxTitle', 'Taxes')}</h4>
       <ul className="money-terms-list">
         <li>{t('moneyTerms.taxVenue', 'The venue is the seller of record. It collects the sales or admission tax on each ticket and is responsible for filing and paying it to its tax authority.')}</li>
-        <li>{t('moneyTerms.taxEstimateVenueState', 'The tax iHYPE adds at checkout is an estimate: your venue’s state sales tax rate plus that state’s average local rate, from the Tax Foundation’s published 2026 table. Many places tax admissions differently, so the venue is responsible for confirming the correct rate for its area.')}</li>
+        <li>{t('moneyTerms.taxEstimateVenueRate', 'The tax iHYPE adds at checkout uses the rate the venue sets in its profile. Until the venue sets one, it is an estimate: the venue’s state sales tax rate plus that state’s average local rate, from the Tax Foundation’s published 2026 table. Many places tax admissions differently, so the venue is responsible for setting the correct rate for its area.')}</li>
         <li>{t('moneyTerms.taxIncome', 'Artists and venues each report their own earnings and pay their own income tax. Stripe may send you a tax form, depending on your account and country. iHYPE does not file taxes for anyone.')}</li>
       </ul>
 

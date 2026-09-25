@@ -13,6 +13,7 @@ import {
   getProfileBackdropTone,
 } from '@/lib/profile-design';
 import { parsePressKit, serializePressKit } from '@/lib/press-kit';
+import { isValidVenueTaxRatePpm, salesTaxRatesForVenue } from '@/lib/ticketing';
 import { statOptionsForRole, type StatKey } from '@/lib/profile-stats-catalog';
 import { MUSIC_GENRES } from '@/lib/genres';
 import { useI18n } from '@/components/I18nProvider';
@@ -71,6 +72,7 @@ type EditorProfile = {
   members: string | null;
   contactInfo: string | null;
   capacity: number | null;
+  ticketTaxRatePpm: number | null;
   hoursText: string | null;
   parkingDetails: string | null;
   stayRecommendations: string | null;
@@ -155,6 +157,39 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
 
 function TextField({ value, onChange, placeholder, maxLength }: { value: string; onChange: (v: string) => void; placeholder?: string; maxLength?: number }) {
   return <input maxLength={maxLength} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} style={inputStyle} type="text" value={value} />;
+}
+
+/* A venue's own ticket tax rate. The member types a percentage ("8.875");
+   the column holds parts per million (88750), so the text the member is
+   typing is kept locally — "8." is a legal thing to be halfway through — and
+   only a complete, in-range number reaches the saved value. Empty is null:
+   "use the published estimate for my state". */
+function TaxRateField({ ppm, onChange, invalidMessage }: { ppm: number | null; onChange: (ppm: number | null) => void; invalidMessage: string }) {
+  const [text, setText] = useState(() => (ppm == null ? '' : String(ppm / 10_000)));
+  const [invalid, setInvalid] = useState(false);
+  return (
+    <>
+      <input
+        inputMode="decimal"
+        maxLength={8}
+        onChange={(e) => {
+          const next = e.target.value.replace(/[^0-9.]/g, '');
+          setText(next);
+          if (next === '') { setInvalid(false); onChange(null); return; }
+          const percent = Number(next);
+          const value = Math.round(percent * 10_000);
+          const ok = /^\d{1,2}(\.\d{0,4})?$/.test(next) && Number.isFinite(percent) && isValidVenueTaxRatePpm(value);
+          setInvalid(!ok);
+          if (ok) onChange(value);
+        }}
+        placeholder="8.875"
+        style={inputStyle}
+        type="text"
+        value={text}
+      />
+      {invalid ? <p role="alert" style={{ color: 'var(--danger-text, var(--accent-text))', fontSize: '0.9375rem', margin: '8px 0 0' }}>{invalidMessage}</p> : null}
+    </>
+  );
 }
 
 function TextAreaField({ value, onChange, placeholder, rows = 4, maxLength }: { value: string; onChange: (v: string) => void; placeholder?: string; rows?: number; maxLength?: number }) {
@@ -1150,6 +1185,25 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
             <Field label={t('pageEditor.postalCodeLabel', 'Postal code')}><TextField maxLength={40} onChange={(v) => set('postalCode', v)} value={data.postalCode ?? ''} /></Field>
             <Field label={t('pageEditor.countryLabel', 'Country')}><TextField maxLength={80} onChange={(v) => set('country', v)} value={data.country ?? ''} /></Field>
           </div>
+          {/* The venue is the merchant and remits the tax, so its figure beats
+              the published table. The hint names the estimate a blank field
+              falls back to, computed from the address typed above. */}
+          <Field
+            hint={(() => {
+              const table = salesTaxRatesForVenue({ stateRegion: data.stateRegion, country: data.country });
+              const estimate = table ? formatNumber(locale, (table.stateRatePpm + table.avgLocalRatePpm) / 10_000) : null;
+              return estimate
+                ? `${t('pageEditor.ticketTaxRateHintEstimate', 'Your combined sales or admissions tax rate, as a percentage. Leave blank to use the published estimate for your state:')} ${estimate}%. ${t('pageEditor.ticketTaxRateHintExempt', 'Enter 0 if your tickets are exempt.')}`
+                : `${t('pageEditor.ticketTaxRateHintNoState', 'Your combined sales or admissions tax rate, as a percentage. Leave blank and no tax is added until your address names a US state.')} ${t('pageEditor.ticketTaxRateHintExempt', 'Enter 0 if your tickets are exempt.')}`;
+            })()}
+            label={t('pageEditor.ticketTaxRateLabel', 'Ticket tax rate (%)')}
+          >
+            <TaxRateField
+              invalidMessage={t('pageEditor.ticketTaxRateInvalid', 'Enter a percentage between 0 and 25, with up to four decimal places.')}
+              onChange={(v) => set('ticketTaxRatePpm', v)}
+              ppm={data.ticketTaxRatePpm}
+            />
+          </Field>
           <Field label={t('pageEditor.hoursLabel', 'Hours')}><TextAreaField maxLength={500} onChange={(v) => set('hoursText', v)} rows={3} value={data.hoursText ?? ''} /></Field>
           <Field label={t('pageEditor.parkingDetailsLabel', 'Parking details')}><TextAreaField maxLength={1000} onChange={(v) => set('parkingDetails', v)} rows={3} value={data.parkingDetails ?? ''} /></Field>
           <Field label={t('pageEditor.stayRecommendationsLabel', 'Stay recommendations')}><TextAreaField maxLength={1000} onChange={(v) => set('stayRecommendations', v)} rows={3} value={data.stayRecommendations ?? ''} /></Field>

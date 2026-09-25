@@ -293,6 +293,12 @@ model Profile {
   // ticketCapacity (a venue's max room size vs. one event's cap for that night).
   capacity                      Int?
   roomType                      String?
+  // A venue's own combined admissions tax rate, in parts per million
+  // (8.875% = 88750). Null means "use the published estimate for the venue's
+  // state" (src/lib/tax/us-sales-tax-rates.json); 0 means the venue has
+  // confirmed its tickets are exempt. The venue is the seller of record and
+  // remits the tax, so its figure wins over the table.
+  ticketTaxRatePpm              Int?
   ownerId                       String
   owner                         User                        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   createdAt                     DateTime                    @default(now())

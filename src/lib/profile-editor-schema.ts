@@ -58,6 +58,11 @@ export const editorSchema = z.object({
      states; this was the one field that did not follow it. */
   capacity: z.number().int().min(0).max(200000).nullable().optional(),
   roomType: text(40),
+  /* A venue's own combined admissions tax rate, in parts per million. Null
+     is "use the published estimate for my state" and is what every other
+     profile type sends back, so it must stay nullable for the same reason
+     `capacity` must. Bounded at 25% here and by a CHECK constraint. */
+  ticketTaxRatePpm: z.number().int().min(0).max(250_000).nullable().optional(),
   pinnedStats: z.array(z.string()).max(4).optional()
 });
 
@@ -111,5 +116,6 @@ export const EDITOR_SELECT_FIELDS = {
   discoverable: true,
   capacity: true,
   roomType: true,
+  ticketTaxRatePpm: true,
   pinnedStats: true,
 } as const;

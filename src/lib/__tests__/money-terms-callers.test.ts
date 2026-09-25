@@ -35,6 +35,7 @@ describe('money terms', () => {
     expect(example.faceValueCents).toBe(MONEY_TERMS_EXAMPLE_CENTS);
     expect(example.fee + example.artist + example.venue).toBe(MONEY_TERMS_EXAMPLE_CENTS);
     expect(example.fee).toBeGreaterThan(0);
-    expect(MONEY_TERMS_VERSION).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    // A date, with a .N suffix for a second change on the same day.
+    expect(MONEY_TERMS_VERSION).toMatch(/^\d{4}-\d{2}-\d{2}(\.\d+)?$/);
   });
 });

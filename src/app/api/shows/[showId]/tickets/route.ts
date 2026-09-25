@@ -130,6 +130,7 @@ export async function POST(
               postalCode: true,
               stateRegion: true,
               country: true,
+              ticketTaxRatePpm: true,
               stripeConnectAccountId: true,
               ownerId: true,
             },
@@ -295,6 +296,7 @@ export async function POST(
         stateRegion: show.venueProfile?.stateRegion,
         country: show.venueProfile?.country,
       },
+      venueTaxRatePpm: show.venueProfile?.ticketTaxRatePpm ?? null,
     });
 
     // Advisory only — never blocks. Refusing a fan who signed up minutes ago

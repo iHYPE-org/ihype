@@ -20,7 +20,7 @@ const SAMPLES: Array<[keyof typeof labels, string[]]> = [
   ['joinRoleHelp', ['Discover, hype, and buy tickets fee-free.', '70% of every ticket, your own page and shows.']],
   ['launchCohortTitle', ['Artists', 'Venues', 'Partners & media']],
   ['launchSprintDay', ['Day 1', 'Day 7']],
-  ['infoTabLabel', ['Trust & Safety', 'Transparency', 'Privacy Policy', 'Terms of Service', 'The Charter', 'DMCA']],
+  ['infoTabLabel', ['Trust & Safety', 'Transparency', 'Terms and privacy', 'The Charter', 'DMCA']],
   ['payoutTabLabel', ['History', 'Settings', 'This show']],
   ['showTrailLabel', ['On stage now', 'On sale', 'Tickets soon']],
   ['ticketPriceLabel', ['Free']],

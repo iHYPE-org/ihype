@@ -12,6 +12,8 @@ import {
   VENUE_SHARE_PERCENT,
   PLATFORM_COMMISSION_PERCENT,
   SALES_TAX_SOURCE,
+  MAX_VENUE_TAX_RATE_PPM,
+  isValidVenueTaxRatePpm,
 } from '../ticketing';
 
 const CHARTER = { venuePayoutPercent: VENUE_SHARE_PERCENT, artistPayoutPercent: ARTIST_SHARE_PERCENT };
@@ -149,8 +151,57 @@ describe('calculateTicketTaxes — the venue\'s state, from the Tax Foundation t
     expect(result.status).toBe(0);
   });
 
+  it('reports where the rate came from', () => {
+    expect(calculateTicketTaxes({ ...base, venueLocation: { country: 'US', stateRegion: 'NY' } }).rateSource).toBe('table');
+    expect(calculateTicketTaxes({ ...base, venueLocation: { country: 'Germany' } }).rateSource).toBe('none');
+  });
+
   it('rejects invalid ticket price', () => {
     expect(() => calculateTicketTaxes({ ticketPriceCents: -100, quantity: 1 })).toThrow();
+  });
+});
+
+describe('calculateTicketTaxes — the venue\'s own rate', () => {
+  const base = { ticketPriceCents: 1000, quantity: 2, venueLocation: { country: 'US', stateRegion: 'NY' } };
+
+  it('replaces the table entirely when the venue has set a rate', () => {
+    // New York City's combined 8.875%, which the state-average table cannot know.
+    const result = calculateTicketTaxes({ ...base, venueTaxRatePpm: 88_750 });
+    expect(result.rateSource).toBe('venue');
+    expect(result.totalTaxCents).toBe(Math.round(2000 * 0.08875));
+    expect(result.stateCents).toBe(result.totalTaxCents);
+    expect(result.localCents).toBe(0);
+  });
+
+  it('treats 0 as a confirmed exemption, not as "unset"', () => {
+    const result = calculateTicketTaxes({ ...base, venueTaxRatePpm: 0 });
+    expect(result.rateSource).toBe('venue');
+    expect(result.totalTaxCents).toBe(0);
+  });
+
+  it('applies outside the US too, where the table has nothing', () => {
+    const result = calculateTicketTaxes({ ticketPriceCents: 1000, quantity: 1, venueLocation: { country: 'Germany' }, venueTaxRatePpm: 70_000 });
+    expect(result.totalTaxCents).toBe(70);
+  });
+
+  it('falls back to the table on null, and ignores an out-of-range value rather than trusting it', () => {
+    const table = calculateTicketTaxes(base);
+    expect(calculateTicketTaxes({ ...base, venueTaxRatePpm: null })).toEqual(table);
+    expect(calculateTicketTaxes({ ...base, venueTaxRatePpm: 300_000 })).toEqual(table);
+    expect(calculateTicketTaxes({ ...base, venueTaxRatePpm: -1 })).toEqual(table);
+    expect(calculateTicketTaxes({ ...base, venueTaxRatePpm: 1.5 })).toEqual(table);
+  });
+
+  it('keeps every cent accounted for in the order', () => {
+    const f = calculateTicketOrderFinancials({ ...CHARTER, ticketPriceCents: 1800, quantity: 3, venueLocation: base.venueLocation, venueTaxRatePpm: 88_750 });
+    expect(f.totalChargeCents).toBe(5400 + f.totalTaxCents);
+    expect(f.stripeFeeCents + f.artistPayoutCents + f.venuePayoutCents + f.totalTaxCents).toBe(f.totalChargeCents);
+  });
+
+  it('bounds the rate at 25%', () => {
+    expect(isValidVenueTaxRatePpm(MAX_VENUE_TAX_RATE_PPM)).toBe(true);
+    expect(isValidVenueTaxRatePpm(MAX_VENUE_TAX_RATE_PPM + 1)).toBe(false);
+    expect(MAX_VENUE_TAX_RATE_PPM).toBe(250_000);
   });
 });
 

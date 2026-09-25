@@ -243,6 +243,17 @@ describe('POST /api/shows/[showId]/tickets', () => {
       expect(input.venuePayoutPercent).toBe(25);
     });
 
+    it("prices the tax at the venue's own rate when the venue has set one", async () => {
+      const { calculateTicketOrderFinancials } = await import('@/lib/ticketing');
+      dbShowFindUnique.mockResolvedValueOnce(baseShow({
+        venueProfile: { ...baseShow().venueProfile, stateRegion: 'NY', country: 'US', ticketTaxRatePpm: 88_750 },
+      }));
+      await POST(makeRequest({ quantity: 1 }), params);
+      const [input] = vi.mocked(calculateTicketOrderFinancials).mock.calls.at(-1) as [Record<string, unknown>];
+      expect(input.venueTaxRatePpm).toBe(88_750);
+      expect(input.venueLocation).toMatchObject({ stateRegion: 'NY', country: 'US' });
+    });
+
     it('refuses a sale, holding nothing, when the venue is not ready to be the merchant', async () => {
       /* A venue that finished recipient onboarding alone is payout-ready and
          still cannot take a charge; the old fallbacks (a destination charge to

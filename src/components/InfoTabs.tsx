@@ -7,14 +7,20 @@ import { useI18n } from '@/components/I18nProvider';
 
 import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from 'react';
 import { infoTabLabel } from '@/lib/i18n-enum-labels';
+import { formatDate } from '@/lib/format-locale';
+import { LEGAL_LAST_UPDATED, PRIVACY, TERMS } from '@/lib/legal-document';
 
-type TabId = 'trust' | 'transparency' | 'privacy' | 'terms' | 'charter' | 'dmca';
+type TabId = 'trust' | 'transparency' | 'terms' | 'charter' | 'dmca';
 
+/* ONE legal tab (2026-09-25). The terms and the privacy policy are one
+   agreement, written once in `src/lib/legal-document.ts` and rendered here and
+   in the signed-in shell. `?tab=privacy` is still a live URL — it is in the
+   signup consent copy, the cookie banner and sent email — so it resolves to
+   this tab and scrolls to the privacy part. */
 const TABS: { id: TabId; label: string }[] = [
   { id: 'trust', label: 'Trust & Safety' },
   { id: 'transparency', label: 'Transparency' },
-  { id: 'privacy', label: 'Privacy Policy' },
-  { id: 'terms', label: 'Terms of Service' },
+  { id: 'terms', label: 'Terms and privacy' },
   { id: 'charter', label: 'The Charter' },
   { id: 'dmca', label: 'DMCA' },
 ];
@@ -29,7 +35,9 @@ type InfoTabsProps = { trustPanel: ReactNode; transparencyPanel: ReactNode };
 
 function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
   const searchParams = useSearchParams();
-  const paramTab = searchParams.get('tab');
+  const rawTab = searchParams.get('tab');
+  const wantsPrivacy = rawTab === 'privacy';
+  const paramTab = wantsPrivacy ? 'terms' : rawTab;
   const initialTab = TABS.some((tb) => tb.id === paramTab) ? (paramTab as TabId) : 'trust';
   const [tab, setTab] = useState<TabId>(initialTab);
   const { t, locale } = useI18n();
@@ -42,6 +50,13 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
   useEffect(() => {
     if (TABS.some((tb) => tb.id === paramTab)) setTab(paramTab as TabId);
   }, [paramTab]);
+
+  // `?tab=privacy` lands on the privacy part of the one legal document. The
+  // panel is in the DOM from the first render (hidden tabs are only styled
+  // away), so the heading exists by the time this effect runs.
+  useEffect(() => {
+    if (wantsPrivacy) document.getElementById('legal-privacy')?.scrollIntoView({ block: 'start' });
+  }, [wantsPrivacy]);
 
   const activeIndex = TABS.findIndex((tb) => tb.id === tab);
   const tabLabel = (i: number) => infoTabLabel(t, TABS[i].label);
@@ -99,7 +114,7 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
       {/* The policies are translated into 12 locales and only one of them is
           the text that binds. Specified by `templates/legal/` (`lgTransNotice`)
           and rendered by nothing until now. */}
-      {locale !== 'en' && (
+      {locale !== 'en' && tab !== 'terms' && (
         <div className="legal-trans-notice">
           <p>{t('infoPage.translationNotice', 'This translation is provided for convenience. The English version of these policies is the legally binding text.')}</p>
         </div>
@@ -113,50 +128,33 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
         {transparencyPanel}
       </div>
 
-      <div className={`legal-doc legal-doc-prose${tab === 'privacy' ? ' active' : ''}`} role="tabpanel" id="legal-panel-privacy" aria-labelledby="legal-tab-privacy">
-        <h2>{t('legalPage.privacy.collectTitle', 'What we collect')}</h2>
-        <p>{t('legalPage.privacy.collectBody', 'iHYPE collects the minimum data necessary to operate: your email address, display name, account role, city, genre preferences, and ticket purchase history. We do not sell this data. We do not share it with advertisers. We do not use it to train AI models.')}</p>
-        <h2>{t('legalPage.privacy.paymentTitle', 'Payment data')}</h2>
-        <p>{t('legalPage.privacy.paymentBody', 'Payments are processed by Apple Pay and Stripe. iHYPE never stores card numbers or bank account details. Payout routing information for artists and venues is encrypted at rest and visible only to you and our payments processor.')}</p>
-        <h2>{t('legalPage.privacy.analyticsTitle', 'Analytics')}</h2>
-        <p>{t('legalPage.privacy.analyticsBody', 'We collect anonymous, aggregated usage data to understand how the app is used and improve it. This data cannot be used to identify you. You can opt out in Settings → Privacy.')}</p>
-        <h2>{t('legalPage.privacy.referralTitle', 'Referral links')}</h2>
-        <p>{t('legalPage.privacy.referralBodyTracks', 'When you share a referral link, we track click-throughs and purchases associated with that link so the referral is credited to you. A referral link earns no share of the ticket. This data is visible to you in Settings.')}</p>
-        <h2>{t('legalPage.privacy.rightsTitle', 'Data rights (GDPR & CCPA)')}</h2>
-        <p>
-          {t('legalPage.privacy.rightsBodyIntro', "If you're in the EU/EEA/UK, you have rights under GDPR: access, rectification, erasure, portability, restriction, and objection to processing. California residents have equivalent rights under CCPA, including opting out of data sales (we don't sell data, but the right still applies). Our lawful basis for processing is contract performance (running your account, tickets, and payouts) and legitimate interest (product analytics, fraud prevention). Exercise any of these rights instantly in")} <Link href="/support">{t('legalPage.privacy.supportPrivacyLink', 'Support → Privacy')}</Link> {t('legalPage.privacy.rightsBodyOutro', '(report a concern, request deletion, detach identity early, download your data) or email')} <a href="mailto:admin@ihype.org">admin@ihype.org</a>. {t('legalPage.privacy.rightsBodyClose', 'We respond within 30 days.')}
-        </p>
-        <h2>{t('legalPage.privacy.cookiesTitle', 'Cookies')}</h2>
-        <p>{t('legalPage.privacy.cookiesBody', "Essential cookies keep you signed in and remember your preferences — these can't be turned off without breaking the app. Optional analytics cookies help us understand usage in aggregate; you can decline these from the consent banner or reset your choice by clearing site data. We do not use third-party advertising or tracking cookies.")}</p>
-        <h2>{t('legalPage.privacy.securityTitle', 'Security')}</h2>
-        <p>{t('legalPage.privacy.securityBody', 'Data in transit is encrypted (TLS). Data at rest, including payout routing details, is encrypted. Access to user data is limited to the systems and staff that need it to operate the platform. We do not use your data to train AI models.')}</p>
-        <h2>{t('legalPage.privacy.subprocessorsTitle', 'Subprocessors')}</h2>
-        <p>{t('legalPage.privacy.subprocessorsIntro', 'We use a small number of vendors to run iHYPE, each bound by its own data protection terms:')} <strong>Stripe</strong> {t('legalPage.privacy.subprocessorsStripe', '(payment processing and artist/venue payouts — holds card and bank details, iHYPE never does)')}, <strong>Supabase</strong> {t('legalPage.privacy.subprocessorsSupabase', '(database hosting)')}, <strong>Cloudflare</strong> {t('legalPage.privacy.subprocessorsCloudflare', '(application hosting, media storage, and bot protection)')}, <strong>Resend</strong> {t('legalPage.privacy.subprocessorsResend', '(delivering account and notification emails)')}, {t('legalPage.privacy.subprocessorsAnd', 'and')} <strong>Sentry</strong> {t('legalPage.privacy.subprocessorsSentry', '(error monitoring, configured to exclude personal data from reports)')}. {t('legalPage.privacy.subprocessorsOutro', 'None of these vendors may use your data for their own purposes.')}</p>
-        <h2>{t('legalPage.privacy.contactTitle', 'Contact')}</h2>
-        <p>{t('legalPage.privacy.contactBody', 'Privacy questions:')} <a href="mailto:admin@ihype.org">admin@ihype.org</a></p>
-      </div>
-
       <div className={`legal-doc legal-doc-prose${tab === 'terms' ? ' active' : ''}`} role="tabpanel" id="legal-panel-terms" aria-labelledby="legal-tab-terms">
-        <h2>{t('legalPage.terms.whoTitle', 'Who can use iHYPE')}</h2>
-        <p>{t('legalPage.terms.whoBody', 'You must be 13 or older to use iHYPE. To purchase tickets, you must be 18 or the age of majority in your jurisdiction. By creating an account you agree to these terms.')}</p>
-        <h2>{t('legalPage.terms.ticketsTitle', 'Tickets')}</h2>
-        <p>{t('legalPage.terms.ticketsBody', 'All tickets are sold at face value. iHYPE charges $0 in platform fees — this is locked in our charter and cannot be changed. Ticket purchases are final. Refunds are issued only if an event is cancelled by the organizer.')}</p>
-        <h2>{t('legalPage.terms.splitTitleNet', 'The ticket split')}</h2>
-        <p>{t('legalPage.terms.splitBodyNet', 'Stripe’s card fee is taken off each ticket’s face value first; what is left splits 75% to the artist and 25% to the venue. iHYPE receives 0%. The venue is the seller of record on every sale. iHYPE’s 0% is a founding constraint, not a policy — it cannot be altered by management, the board, or investors.')}</p>
-        <h2>{t('legalPage.terms.hypeLinkReferralsTitle', 'HYPE Link referrals')}</h2>
-        <p>{t('legalPage.terms.hypeLinkReferralsBodyTracks', 'Any member may share a HYPE Link to any event. A ticket purchased through your link is recorded as your referral; a HYPE Link earns no share of the ticket. Manipulating referral tracking (e.g. purchasing through your own link) is prohibited and will result in account termination.')}</p>
-        <h2>{t('legalPage.terms.contentTitle', 'Content')}</h2>
-        <p>{t('legalPage.terms.contentOwnershipBody', 'You are responsible for content you post (artist pages, tracks, event listings). You grant iHYPE a non-exclusive license to display this content within the platform. iHYPE does not claim ownership of your music, images, or likeness.')}</p>
-        <h2>{t('legalPage.terms.refundsTitle', 'Refunds')}</h2>
-        <p>{t('legalPage.terms.refundsBody', 'Ticket prices are final. Refunds are issued only if a show is cancelled by the organizer; refund requests for cancelled shows must be made within 14 days. There are no refunds for personal reasons.')}</p>
-        <h2>{t('legalPage.terms.liabilityTitle', 'Limitation of liability')}</h2>
-        <p>{t('legalPage.terms.liabilityBody', 'iHYPE provides the platform "as is." We are not liable for lost data, service interruptions, or shows cancelled or altered by venues or artists.')}</p>
-        <h2>{t('legalPage.terms.changesTitle', 'Changes to these terms')}</h2>
-        <p>{t('legalPage.terms.changesBody', 'We may update these terms. Material changes will be announced at least 30 days in advance. Continued use after a change means you accept it.')}</p>
-        <h2>{t('legalPage.terms.terminationTitle', 'Termination')}</h2>
-        <p>{t('legalPage.terms.terminationBody', 'We may suspend or delete your account if you violate these terms. You can delete your account at any time from Settings.')}</p>
-        <h2>{t('legalPage.terms.contactTitle', 'Contact')}</h2>
-        <p>{t('legalPage.terms.contactBody', 'Legal questions:')} <a href="mailto:admin@ihype.org">admin@ihype.org</a></p>
+        {/* The clauses are English on every locale; the notice about that is
+            the translated part. Same text and same reasoning as the signed-in
+            copy's `LegalLanguageNotice`. */}
+        {locale !== 'en' && (
+          <div className="legal-trans-notice" role="note">
+            <p>{t('legalLanguageNotice.body', 'This document is published in English, and the English text is the version that governs.')}</p>
+            <p>{t('legalLanguageNotice.help', 'If you would like help understanding it in your language, write to')} <a href="mailto:admin@ihype.org">admin@ihype.org</a>.</p>
+          </div>
+        )}
+        <p className="legal-updated">{t('mmmLegal.lastUpdatedLabel', 'Last updated')} {formatDate(locale, new Date(`${LEGAL_LAST_UPDATED}T12:00:00Z`), { dateStyle: 'long', timeZone: 'UTC' })}</p>
+        <h2 className="legal-part" id="legal-terms">{t('mmmLegal.partTerms', 'Terms of service')}</h2>
+        {TERMS.map((clause, index) => (
+          <section key={clause.heading}>
+            <h3>{String(index + 1).padStart(2, '0')} · {clause.heading}</h3>
+            <p>{clause.body}</p>
+          </section>
+        ))}
+        <h2 className="legal-part" id="legal-privacy">{t('mmmLegal.partPrivacy', 'Privacy policy')}</h2>
+        {PRIVACY.map((clause, index) => (
+          <section key={clause.heading}>
+            <h3>{String(TERMS.length + index + 1).padStart(2, '0')} · {clause.heading}</h3>
+            <p>{clause.body}</p>
+          </section>
+        ))}
+        <h2>{t('mmmLegal.contactAndRequests', 'Contact and requests')}</h2>
+        <p><a href="mailto:admin@ihype.org">admin@ihype.org</a></p>
       </div>
 
       <div className={`legal-doc legal-doc-prose${tab === 'charter' ? ' active' : ''}`} role="tabpanel" id="legal-panel-charter" aria-labelledby="legal-tab-charter">
@@ -300,7 +298,11 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
            prose, and a 560px box would collapse their three- and four-column
            layouts. */
         .legal-doc-prose { max-width: 35rem; }
+        /* The two parts of the one legal text; the scroll margin keeps a ?tab=privacy
+           landing clear of the sticky site header. */
+        .legal-part { margin: 2rem 0 0.75rem; scroll-margin-top: 96px; }
         .legal-doc h2 { font-family: var(--f-d, 'Bricolage Grotesque', sans-serif); font-weight: 800; font-size: 1.15rem; letter-spacing: -.02em; margin: 2.5rem 0 .6rem; color: var(--ink); }
+        .legal-doc h3 { font-weight: 700; font-size: 1rem; margin: 1.5rem 0 .4rem; color: var(--ink); }
         .legal-doc p { font-size: 0.9375rem; color: var(--ink-2); line-height: 1.75; margin-bottom: .85rem; }
         .legal-doc ol { color: var(--ink-2); font-size: 0.9375rem; line-height: 1.75; padding-left: 1.25rem; }
         .legal-doc li + li { margin-top: .65rem; }

@@ -96,7 +96,7 @@ export default async function MmmShowPage({
         headlinerProfile: { select: { name: true, slug: true } },
         promoterProfile: { select: { name: true } },
         venueProfile: {
-          select: { name: true, city: true, stateRegion: true, postalCode: true, country: true, stripeConnectOnboarded: true },
+          select: { name: true, city: true, stateRegion: true, postalCode: true, country: true, ticketTaxRatePpm: true, stripeConnectOnboarded: true },
         },
       },
     }),
@@ -306,6 +306,7 @@ export default async function MmmShowPage({
               stateRegion: venue.stateRegion,
               country: venue.country,
             }}
+            venueTaxRatePpm={venue.ticketTaxRatePpm}
             venueName={venue.name}
           />
         </div>

@@ -57,6 +57,9 @@ type TicketTaxInput = {
   quantity: number;
   /** The venue's address. Admission is taxed where the event takes place. */
   venueLocation?: TaxLocation | null;
+  /** The venue's own combined rate in parts per million (`Profile.ticketTaxRatePpm`).
+   *  When set — including 0, a confirmed exemption — it replaces the table. */
+  venueTaxRatePpm?: number | null;
 };
 
 export type TicketTaxBreakdown = {
@@ -65,7 +68,21 @@ export type TicketTaxBreakdown = {
   countryCents: number;
   internationalCents: number;
   totalTaxCents: number;
+  /** Where the rate came from: the venue's own figure, the published state
+   *  table, or nowhere (no US state on file, so no tax is added). */
+  rateSource: TaxRateSource;
 };
+
+export type TaxRateSource = 'venue' | 'table' | 'none';
+
+/** The highest rate a venue may state: 25%. Real combined admissions rates
+ *  are well under this; the ceiling exists so a typo cannot charge a buyer
+ *  double. The database carries the same bound as a CHECK constraint. */
+export const MAX_VENUE_TAX_RATE_PPM = 250_000;
+
+export function isValidVenueTaxRatePpm(value: unknown): value is number {
+  return typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= MAX_VENUE_TAX_RATE_PPM;
+}
 
 export function validateTicketSplit({ venuePayoutPercent, artistPayoutPercent }: SplitInput) {
   if (!Number.isInteger(venuePayoutPercent) || !Number.isInteger(artistPayoutPercent)) {
@@ -225,10 +242,12 @@ export function normalizeStateRegion(value?: string | null): string | null {
  * order columns and payable categories they fill predate this table. A venue
  * outside the US, or with no recognisable state, is charged no tax here.
  *
- * WHAT THIS DOES NOT KNOW, stated because the tax line is on a receipt: many
- * states exempt admissions from sales tax or tax them under a separate
+ * WHAT THE TABLE DOES NOT KNOW, stated because the tax line is on a receipt:
+ * many states exempt admissions from sales tax or tax them under a separate
  * amusement tax at a different rate, and some cities add an admissions tax of
- * their own. The venue is the merchant of record and confirms the rate.
+ * their own. So a venue may state its own rate (`Profile.ticketTaxRatePpm`,
+ * set in the profile editor), and when it has, that figure replaces the table
+ * entirely — see `venueTaxRatePpm` below.
  */
 export const SALES_TAX_SOURCE = US_SALES_TAX.source;
 
@@ -245,7 +264,8 @@ const applyPpm = (cents: number, ppm: number) => Math.round((cents * ppm) / 1_00
 export function calculateTicketTaxes({
   ticketPriceCents,
   quantity,
-  venueLocation
+  venueLocation,
+  venueTaxRatePpm
 }: TicketTaxInput): TicketTaxBreakdown {
   if (!Number.isInteger(ticketPriceCents) || ticketPriceCents <= 0) {
     throw new Error('Ticket price must be a positive whole number of cents.');
@@ -256,6 +276,26 @@ export function calculateTicketTaxes({
   }
 
   const subtotalCents = ticketPriceCents * quantity;
+
+  /* THE VENUE'S OWN RATE WINS. It is the merchant, it remits the tax, and it
+     knows what the table cannot: an admissions exemption, a separate
+     amusement tax, a city's own ticket tax. The whole figure is carried on
+     `stateCents` (the order columns predate the override) and `rateSource`
+     tells a reader not to label it "state". An out-of-range value — which the
+     editor and the CHECK constraint both refuse — is ignored rather than
+     trusted. */
+  if (venueTaxRatePpm != null && isValidVenueTaxRatePpm(venueTaxRatePpm)) {
+    const venueCents = applyPpm(subtotalCents, venueTaxRatePpm);
+    return {
+      localCents: 0,
+      stateCents: venueCents,
+      countryCents: 0,
+      internationalCents: 0,
+      totalTaxCents: venueCents,
+      rateSource: 'venue',
+    };
+  }
+
   const rates = salesTaxRatesForVenue(venueLocation);
   const stateCents = rates ? applyPpm(subtotalCents, rates.stateRatePpm) : 0;
   const localCents = rates ? applyPpm(subtotalCents, rates.avgLocalRatePpm) : 0;
@@ -265,7 +305,8 @@ export function calculateTicketTaxes({
     stateCents,
     countryCents: 0,
     internationalCents: 0,
-    totalTaxCents: localCents + stateCents
+    totalTaxCents: localCents + stateCents,
+    rateSource: rates ? 'table' : 'none',
   };
 }
 

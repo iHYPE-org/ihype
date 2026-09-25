@@ -139,6 +139,9 @@ export async function PATCH(request: Request) {
     discoverable: body.discoverable,
     capacity: body.capacity,
     roomType: emptyToNull(body.roomType),
+    // Only a venue sells tickets as the merchant, so only a venue's rate is
+    // ever read; anything else sending one is ignored rather than stored.
+    ticketTaxRatePpm: profile.type === 'VENUE' ? body.ticketTaxRatePpm : undefined,
     // Re-validated against the profile's actual type here (not just the
     // catalog) so a stale client can't pin a stat that doesn't apply to
     // this role — e.g. a Venue can't pin "Tickets Bought" (a fan-only stat).
