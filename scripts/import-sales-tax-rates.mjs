@@ -74,7 +74,10 @@ function unzip(entry) {
   throw new Error(`${entry} is not in the workbook.`);
 }
 
-const decode = (s) => s.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'");
+// One pass, so an escaped entity (`&amp;lt;`) decodes to its literal text
+// (`&lt;`) rather than being unescaped twice.
+const ENTITIES = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'" };
+const decode = (s) => s.replace(/&(amp|lt|gt|quot|apos);/g, (_, name) => ENTITIES[name]);
 const shared = [...unzip('xl/sharedStrings.xml').matchAll(/<si>([\s\S]*?)<\/si>/g)]
   .map((m) => decode([...m[1].matchAll(/<t[^>]*>([\s\S]*?)<\/t>/g)].map((t) => t[1]).join('')));
 
