@@ -3947,6 +3947,23 @@ input.mmm-row-title { min-height: 44px; }
 .mmm-ad-eligibility li { padding: 13px 15px; border: 1px solid var(--hair-100); border-radius: var(--radius-md); background: var(--bg-2); font-size: 0.9375rem; }
 .mmm-ad-final { margin-top: 36px; padding: 32px; border: 1px solid rgba(var(--accent-rgb), 0.35); border-radius: var(--radius-xl); background: rgba(var(--accent-rgb), 0.06); }
 .mmm-ad-final p { max-width: 60ch; margin-bottom: 20px; }
+/* The sponsorship price list (row 514): the landing page, the dashboard's
+   empty state and the in-app "build it on the web" page all draw it, so it
+   is one block. Spacing reads the published scale. */
+.mmm-ad-pricing { display: grid; gap: var(--space-4); margin-top: var(--space-6); }
+.mmm-ad-pricing-table { width: 100%; border-collapse: separate; border-spacing: 0; border: 1px solid var(--hair-100); border-radius: var(--radius-lg); overflow: hidden; background: var(--bg-2); font-size: 0.9375rem; }
+.mmm-ad-pricing-table th, .mmm-ad-pricing-table td { padding: var(--space-3) var(--space-4); border-top: 1px solid var(--hair-100); text-align: left; }
+.mmm-ad-pricing-table thead th { border-top: 0; color: var(--ink-3); font-weight: 600; }
+.mmm-ad-pricing-table tbody th { color: var(--ink); font-weight: 700; }
+.mmm-ad-pricing-table td { color: var(--ink-2); }
+.mmm-ad-pricing-table .mmm-ad-pricing-price { color: var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
+.mmm-ad-pricing-table thead th:last-child { text-align: right; }
+.mmm-ad-pricing-notes { display: grid; gap: var(--space-2); margin: 0; padding-left: var(--space-5); color: var(--ink-2); font-size: 0.9375rem; line-height: 1.55; }
+.mmm-ad-in-app-note { margin: 0 0 var(--space-5); color: var(--ink); font-size: 0.9375rem; font-weight: 600; }
+.mmm-ad-web-only h1 { margin: var(--space-2) 0 0; }
+.mmm-ad-web-only-lede { max-width: 58ch; margin: var(--space-3) 0 0; color: var(--ink-2); line-height: 1.55; }
+.mmm-ad-web-only-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-5); }
+.mmm-ad-web-only-hint { margin: var(--space-3) 0 var(--space-8); color: var(--ink-3); font-size: 0.9375rem; }
 @media (max-width: 680px) {
   .mmm-ad-landing { padding-top: 32px; }
   .mmm-ad-hero { padding-bottom: 52px; }

@@ -261,8 +261,22 @@ export const WELCOME_PATH = '/welcome';
 
 export function isSafeLocalRedirect(path: string | null | undefined): path is string {
   if (!path) return false;
-  if (!path.startsWith('/') || path.startsWith('//') || path.startsWith('/\\')) return false;
-  if (path.includes('\n') || path.includes('\r')) return false;
+  if (!path.startsWith('/') || path.startsWith('//')) return false;
+  /* Any control character or backslash, ANYWHERE (DESIGN_SYNC row 514). This
+     used to refuse only CR and LF, and only a backslash in second place. The
+     WHATWG URL parser strips TAB (and CR/LF) from the whole input and reads a
+     backslash as a slash, so `/\t/evil.example` survived every check here and
+     resolved to `//evil.example` — an open redirect after sign-in, found by
+     the security review of the web handoff and reproduced before this fix. */
+  if (/[\u0000-\u001f\u007f\\]/.test(path)) return false;
+  /* And it must still resolve to our own origin, so the check is the parser's
+     own answer rather than a list of the tricks known today. */
+  try {
+    const base = 'https://local.invalid';
+    if (new URL(path, base).origin !== base) return false;
+  } catch {
+    return false;
+  }
   return true;
 }
 

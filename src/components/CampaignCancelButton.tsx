@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation';
 import { useI18n } from '@/components/I18nProvider';
 import { REFUND_WINDOW_BUSINESS_DAYS } from '@/lib/ad-settlement-plan';
 import { openExternalUrl } from '@/lib/open-external';
+import { openOnWeb } from '@/components/advertise/openOnWeb';
+import { useNativeApp } from '@/components/advertise/useNativeApp';
+import { WEB_ADVERTISING_PATH } from '@/lib/native-app';
 
 type Action = 'cancel' | 'pause' | 'resume' | 'retry-checkout';
 
@@ -28,9 +31,15 @@ export function CampaignCancelButton({
   charged = false,
   refundableCents = 0,
   pricingModel = 'METERED',
-}: { campaignId: string; status: string; charged?: boolean; refundableCents?: number; pricingModel?: string }) {
+  nativeApp = false,
+}: { campaignId: string; status: string; charged?: boolean; refundableCents?: number; pricingModel?: string; nativeApp?: boolean }) {
   const { t } = useI18n();
   const router = useRouter();
+  /* Inside the iOS or Android app a campaign is paid for on the web, never
+     here (row 514): "Pay now" becomes a trip to the dashboard in a browser tab,
+     where the same button starts the checkout. Pause, resume and cancel stay —
+     none of them sells anything, and cancel is how a sponsor gets money BACK. */
+  const inApp = useNativeApp(nativeApp);
   const [pending, setPending] = useState<Action | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -86,9 +95,21 @@ export function CampaignCancelButton({
   if (status === 'AWAITING_PAYMENT') {
     return (
       <div className="ad-campaign-actions">
-        <button className="button small" disabled={pending !== null} onClick={() => act('retry-checkout')} type="button">
-          {pending === 'retry-checkout' ? t('campaignCancelButton.redirecting', 'Redirecting…') : t('campaignCancelButton.payNow', 'Pay now →')}
-        </button>
+        {inApp ? (
+          <button
+            className="button small"
+            data-web-only="pay"
+            disabled={pending !== null}
+            onClick={() => void openOnWeb(WEB_ADVERTISING_PATH, { onReturn: () => router.refresh() })}
+            type="button"
+          >
+            {t('campaignCancelButton.payOnWeb', 'Pay on the web')}
+          </button>
+        ) : (
+          <button className="button small" disabled={pending !== null} onClick={() => act('retry-checkout')} type="button">
+            {pending === 'retry-checkout' ? t('campaignCancelButton.redirecting', 'Redirecting…') : t('campaignCancelButton.payNow', 'Pay now →')}
+          </button>
+        )}
         <button className="button small secondary" disabled={pending !== null} onClick={() => act('cancel')} type="button">
           {pending === 'cancel' ? t('campaignCancelButton.cancelling', 'Cancelling…') : t('campaignCancelButton.cancel', 'Cancel')}
         </button>

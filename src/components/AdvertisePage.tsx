@@ -11,6 +11,7 @@ import {
   type AdScope, type SponsorshipQuote, type SponsorshipTermMonths,
 } from '@/lib/ad-pricing';
 import { useI18n } from '@/components/I18nProvider';
+import { adScopeDescription, adScopeLabel } from '@/lib/i18n-enum-labels';
 import { useFormDraft } from '@/lib/use-form-draft';
 import { openExternalUrl } from '@/lib/open-external';
 
@@ -167,8 +168,8 @@ function CoverageBuilder() {
                     {[0, 6, 12].map(o => <span key={o} style={{ position: 'absolute', inset: o, borderRadius: '50%', border: `1.5px solid ${s === scope ? 'var(--accent)' : 'var(--ink-4)'}` }} />)}
                   </span>
                   <span className="adv-scope-label">
-                    <div className="adbuild-cardtitle">{AD_SCOPE_LABELS[s]}</div>
-                    <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem', color: 'var(--ink-2)', letterSpacing: '.04em', marginTop: 3 }}>{AD_SCOPE_DESCRIPTIONS[s]}</div>
+                    <div className="adbuild-cardtitle">{adScopeLabel(t, AD_SCOPE_LABELS[s])}</div>
+                    <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem', color: 'var(--ink-2)', letterSpacing: '.04em', marginTop: 3 }}>{adScopeDescription(t, AD_SCOPE_DESCRIPTIONS[s])}</div>
                   </span>
                   <span style={{ marginLeft: 'auto', textAlign: 'right', flexShrink: 0 }}>
                     <div style={{ fontFamily: "var(--f-d,'Bricolage Grotesque',sans-serif)", fontWeight: 700, fontSize: '1rem', letterSpacing: '-.01em', color: s === scope ? 'var(--accent-text)' : 'inherit' }}>{money(SPONSORSHIP_MONTHLY_USD[s], locale)}</div>
@@ -247,7 +248,7 @@ function CoverageBuilder() {
       {/* Reach + Receipt */}
       <div className="adbuild-card">
         <div className="adbuild-cardhead">
-          <span style={{ fontFamily: "var(--f-d,'Bricolage Grotesque',sans-serif)", fontWeight: 700, fontSize: '0.9375rem' }}>{AD_SCOPE_LABELS[scope]} {t('advertisePage.reach', 'reach')}</span>
+          <span style={{ fontFamily: "var(--f-d,'Bricolage Grotesque',sans-serif)", fontWeight: 700, fontSize: '0.9375rem' }}>{adScopeLabel(t, AD_SCOPE_LABELS[scope])} {t('advertisePage.reach', 'reach')}</span>
         </div>
         <div className="adbuild-cardbody">
           {/* Dot grid */}
@@ -293,7 +294,7 @@ function CoverageBuilder() {
 
           {/* Receipt */}
           <div style={{ marginTop: 20, borderTop: '1px dashed var(--line-2)', paddingTop: 18 }}>
-            {[{ k: `${AD_SCOPE_LABELS[scope]} ${t('advertisePage.sponsorship', 'sponsorship')}`, v: `${money(monthly, locale)} ${t('advertisePage.perMonth', '/ month')}` }, { k: `${quote.months} × ${money(monthly, locale)}`, v: money(total, locale) }].map(r => (
+            {[{ k: `${adScopeLabel(t, AD_SCOPE_LABELS[scope])} ${t('advertisePage.sponsorship', 'sponsorship')}`, v: `${money(monthly, locale)} ${t('advertisePage.perMonth', '/ month')}` }, { k: `${quote.months} × ${money(monthly, locale)}`, v: money(total, locale) }].map(r => (
               <div className="adv-receipt-row" key={r.k} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, padding: '7px 0', fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem' }}>
                 <span style={{ color: 'var(--ink-2)', letterSpacing: '.06em' }}>{r.k}</span>
                 <span>{r.v}</span>
