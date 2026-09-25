@@ -1,11 +1,13 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import { refuseCredentialChangeWhileImpersonating } from '@/lib/impersonation-guard';
 import { db } from '@/lib/db';
 import { getPasskeyRegistrationOptions, verifyPasskeyRegistration } from '@/lib/passkey';
 import { claimPasskeyChallenge } from '@/lib/passkey-challenge';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
 import { log } from '@/lib/logger';
+import { recordAuditEvent } from '@/lib/audit';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -13,6 +15,8 @@ const isProduction = process.env.NODE_ENV === 'production';
 export async function GET(request: Request) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const impersonating = await refuseCredentialChangeWhileImpersonating(session, 'passkey.register');
+  if (impersonating) return impersonating;
 
   const clientAddress = readClientAddress(request);
         // Longer DO deadline than the default. This bucket is keyed per client
@@ -45,6 +49,8 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const impersonating = await refuseCredentialChangeWhileImpersonating(session, 'passkey.register');
+  if (impersonating) return impersonating;
 
   const clientAddress = readClientAddress(request);
   const rl = await consumeRateLimit(`pk-register:${clientAddress}`, { limit: 5, windowMs: 5 * 60 * 1000, timeoutMs: 2500 });
@@ -76,6 +82,19 @@ export async function POST(request: Request) {
     const resp = NextResponse.json({ error: 'Passkey registration failed.' }, { status: 400 });
     resp.cookies.delete('pk_reg_challenge');
     return resp;
+  }
+
+  /* A new credential on an account is a security event: it is the one change
+     that outlives every session, so it is recorded, like the deletion. */
+  if (ok) {
+    await recordAuditEvent({
+      actorUserId: session.user.id,
+      action: 'passkey_registered',
+      entityType: 'user',
+      entityId: session.user.id,
+      ipAddress: clientAddress,
+      metadata: name ? { name } : null,
+    });
   }
 
   const resp = NextResponse.json({ ok });

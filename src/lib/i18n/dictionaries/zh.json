@@ -376,6 +376,7 @@
   "auth.confirm.action": "继续",
   "auth.confirm.eyebrow": "登录",
   "auth.confirm.subtitle": "还差一步即可完成登录。",
+  "auth.confirm.subtitleElsewhere": "仅当你本人请求了此登录链接时才继续。别人发给你的链接会让你登录到对方的账户。",
   "auth.confirm.title": "就快好了",
   "auth.confirm.working": "正在登录…",
   "authLogin.checkEmail": "请查收邮件",

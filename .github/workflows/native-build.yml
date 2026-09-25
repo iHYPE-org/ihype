@@ -24,6 +24,27 @@ on:
       # run for an unparseable file regardless of triggers, and even that
       # reported `event: push` on a workflow that has no push trigger.
       - '.github/workflows/native-build.yml'
+  # EVERY MERGE THAT CHANGES THE NATIVE SHELL PUBLISHES IT (2026-09-25, owner:
+  # "Always update iOS/Android/Web/Desktop versions to the latest whenever new
+  # iterations are enforced (I want all updates to push to the associated
+  # download path automatically)"). This used to be workflow_dispatch only,
+  # under a comment calling store publication "an explicit release action,
+  # never a side effect of merging" — the owner reversed that. A merge to main
+  # touching the shell builds, signs and uploads both binaries: iOS to
+  # TestFlight, Android to the Play track in the PLAY_RELEASE_TRACK repository
+  # variable (internal when unset). A merge that touches only web code ships
+  # through deploy-production.yml and reaches both apps with no rebuild,
+  # because the shell loads the live site — so the same path list decides.
+  push:
+    branches:
+      - main
+    paths:
+      - 'ios/**'
+      - 'android/**'
+      - 'capacitor.config.ts'
+      - 'capacitor-shell/**'
+      - 'package.json'
+      - '.github/workflows/native-build.yml'
   workflow_dispatch:
     inputs:
       publish:
@@ -34,6 +55,11 @@ on:
 
 permissions:
   contents: read
+
+# Two merges in quick succession must not race two uploads; the second waits.
+concurrency:
+  group: native-build-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   # Debug/simulator builds need no signing, so this runs unconditionally as
@@ -117,9 +143,9 @@ jobs:
   ios-release-build:
     name: iOS — signed release build
     runs-on: macos-26
-    # Store publication is an explicit release action, never a side effect of
-    # merging an otherwise routine native or dependency change.
-    if: github.event_name == 'workflow_dispatch'
+    # A merge to main publishes (see the push trigger); a manual run publishes
+    # only when its `publish` box is ticked. Pull requests build unsigned only.
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -144,7 +170,8 @@ jobs:
       - name: Check for signing secrets
         id: check
         env:
-          PUBLISH: ${{ inputs.publish }}
+          PUBLISH: ${{ github.event_name == 'push' || inputs.publish == true }}
+          EVENT: ${{ github.event_name }}
         run: |
           if [ -n "${{ secrets.IOS_DIST_CERTIFICATE_BASE64 }}" ] && \
              [ -n "${{ secrets.IOS_DIST_CERTIFICATE_PASSWORD }}" ] && \
@@ -158,6 +185,7 @@ jobs:
               exit 1
             fi
             echo "configured=true" >> "$GITHUB_OUTPUT"
+            echo "publish=$PUBLISH" >> "$GITHUB_OUTPUT"
           else
             echo "configured=false" >> "$GITHUB_OUTPUT"
             echo "::notice::iOS release signing secrets not fully configured yet — skipping signed build. Needs an Apple Developer Program account, a distribution certificate + provisioning profile for com.ihype.app, and an App Store Connect API key."
@@ -354,6 +382,12 @@ jobs:
         env:
           IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
         run: |
+          # MARKETING_VERSION ("Version x" on the App Store) is package.json's
+          # `version`, the same number Play shows as versionName — it used to be
+          # the committed 1.0 while Android read 1.1.0. Bump package.json once
+          # and both stores follow.
+          MARKETING_VERSION=$(node -p "require('../../package.json').version")
+          echo "MARKETING_VERSION $MARKETING_VERSION"
           xcodebuild -project App.xcodeproj -scheme App \
             -configuration Release \
             -destination 'generic/platform=iOS' \
@@ -363,6 +397,7 @@ jobs:
             PROVISIONING_PROFILE="$PROFILE_UUID" \
             DEVELOPMENT_TEAM="$IOS_TEAM_ID" \
             CURRENT_PROJECT_VERSION=${{ github.run_number }}.${{ github.run_attempt }} \
+            MARKETING_VERSION="$MARKETING_VERSION" \
             archive
 
       - name: Export .ipa
@@ -413,7 +448,7 @@ jobs:
             || { echo "::error::the .ipa is not signed with an Apple Distribution identity"; exit 1; }
 
       - name: Upload to TestFlight
-        if: steps.check.outputs.configured == 'true' && inputs.publish == true
+        if: steps.check.outputs.configured == 'true' && steps.check.outputs.publish == 'true'
         env:
           APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
@@ -447,9 +482,9 @@ jobs:
   android-release-build:
     name: Android — signed release build
     runs-on: ubuntu-latest
-    # Store publication is an explicit release action, never a side effect of
-    # merging an otherwise routine native or dependency change.
-    if: github.event_name == 'workflow_dispatch'
+    # A merge to main publishes (see the push trigger); a manual run publishes
+    # only when its `publish` box is ticked. Pull requests build unsigned only.
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -483,7 +518,8 @@ jobs:
       - name: Check for signing secrets
         id: check
         env:
-          PUBLISH: ${{ inputs.publish }}
+          PUBLISH: ${{ github.event_name == 'push' || inputs.publish == true }}
+          EVENT: ${{ github.event_name }}
         run: |
           if [ -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ] && \
              [ -n "${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" ] && \
@@ -491,10 +527,11 @@ jobs:
              [ -n "${{ secrets.ANDROID_KEY_PASSWORD }}" ]; then
             if [ "$PUBLISH" = "true" ] && [ -z "${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}" ]; then
               echo "configured=false" >> "$GITHUB_OUTPUT"
-              echo "::error::Publication was requested but GOOGLE_PLAY_SERVICE_ACCOUNT_JSON is missing."
+              echo "::error::Publication is on for this run (a merge to main, or the publish box) but GOOGLE_PLAY_SERVICE_ACCOUNT_JSON is missing, so the bundle cannot reach Play. Add the secret (docs/store-submission.md, \"Play API access\") or upload the .aab by hand."
               exit 1
             fi
             echo "configured=true" >> "$GITHUB_OUTPUT"
+            echo "publish=$PUBLISH" >> "$GITHUB_OUTPUT"
           else
             echo "configured=false" >> "$GITHUB_OUTPUT"
             echo "::notice::Android release signing secrets not fully configured yet — skipping signed build. Needs a Google Play Console account, an upload keystore for com.ihype.app, and a Play Console API service account."
@@ -693,25 +730,26 @@ jobs:
               ;;
           esac
 
-      # Uploads to the Play *internal testing* track and releases it to your
-      # internal testers immediately (status: completed) — that's the one-click
-      # payoff. Internal testing only reaches the testers you explicitly list
-      # in Play Console, so a bad build never reaches the public. Promoting
-      # internal → production is a separate, deliberate click in the Play
-      # Console UI.
+      # Uploads to the Play track named by the PLAY_RELEASE_TRACK repository
+      # variable — `internal` when unset — and releases it there immediately
+      # (status: completed). Internal testing reaches only the testers listed in
+      # Play Console; set the variable to `production` and every merge that
+      # changes the shell goes to the public listing (Play still reviews it).
       # First-time caveat: the very first upload for a brand-new app usually
       # has to be done through the Play Console UI (to complete the store
       # listing, content rating, and data-safety form) before the API will
       # accept uploads. After that first manual upload, this button works for
       # every subsequent release.
       - name: Upload to Play Console
-        if: steps.check.outputs.configured == 'true' && inputs.publish == true
+        if: steps.check.outputs.configured == 'true' && steps.check.outputs.publish == 'true'
         uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5 # v1.1.5
         with:
           serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: com.ihype.app
           releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
-          track: internal
+          # internal unless the repository variable names another track
+          # (production, beta); set it in Settings → Variables, no code change.
+          track: ${{ vars.PLAY_RELEASE_TRACK || 'internal' }}
           status: completed
 
       - name: Retain signed Android artifact

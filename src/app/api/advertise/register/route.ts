@@ -4,6 +4,8 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { log } from '@/lib/logger';
 import { sendMagicLinkEmail } from '@/lib/magic-link';
+import { useSecureAuthCookies } from '@/lib/auth-cookie';
+import { appendPending, magicLinkPendingCookie, readPendingCookie } from '@/lib/magic-link-pending';
 import { normalizeUsername, isValidUsername } from '@/lib/usernames';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
@@ -105,9 +107,15 @@ export async function POST(request: Request) {
       log.error('[advertise/register]', error instanceof Error ? error : null, 'Audit event failed');
     });
 
-    await sendMagicLinkEmail(user.id, email);
+    const sentDigest = await sendMagicLinkEmail(user.id, email);
 
-    return NextResponse.json({ ok: true });
+    /* The browser that signed up is the one that asked for this link, so the
+       confirm page may press Continue for it (magic-link-pending.ts). */
+    const response = NextResponse.json({ ok: true });
+    response.cookies.set(
+      magicLinkPendingCookie(appendPending(readPendingCookie(request), sentDigest), useSecureAuthCookies()),
+    );
+    return response;
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(

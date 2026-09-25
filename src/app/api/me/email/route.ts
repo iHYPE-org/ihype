@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
+import { refuseCredentialChangeWhileImpersonating } from '@/lib/impersonation-guard';
 import { db } from '@/lib/db';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
@@ -49,6 +50,8 @@ export async function POST(request: Request) {
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Login required.' }, { status: 401 });
   }
+  const impersonating = await refuseCredentialChangeWhileImpersonating(session, 'recovery_email.add');
+  if (impersonating) return impersonating;
   const userId = session.user.id;
 
   // Per-IP and per-account, so neither a single account nor a spread of

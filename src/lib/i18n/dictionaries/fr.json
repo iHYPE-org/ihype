@@ -376,6 +376,7 @@
   "auth.confirm.action": "Continuer",
   "auth.confirm.eyebrow": "Connexion",
   "auth.confirm.subtitle": "Une dernière étape pour terminer la connexion.",
+  "auth.confirm.subtitleElsewhere": "Continuez uniquement si vous avez demandé ce lien de connexion. Un lien envoyé par quelqu'un d'autre vous connecte à son compte.",
   "auth.confirm.title": "Presque terminé",
   "auth.confirm.working": "Connexion en cours…",
   "authLogin.checkEmail": "Vérifiez votre e-mail",

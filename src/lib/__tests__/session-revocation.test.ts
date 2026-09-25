@@ -56,3 +56,31 @@ describe('session revocation', () => {
     expect(await isSessionRevoked('')).toBe(false);
   });
 });
+
+describe('sessionRevocationId', () => {
+  it('prefers the stable sid over the jti Auth.js replaces on every re-encode', async () => {
+    const { sessionRevocationId } = await import('@/lib/session-revocation');
+    expect(sessionRevocationId({ sid: 's1', jti: 'j1' })).toBe('s1');
+    expect(sessionRevocationId({ jti: 'j1' })).toBe('j1');
+    expect(sessionRevocationId({ sid: '', jti: 'j1' })).toBe('j1');
+    expect(sessionRevocationId({})).toBeNull();
+    expect(sessionRevocationId(null)).toBeNull();
+  });
+
+  it('revokes a copy taken before a refresh, because the refresh keeps the sid', async () => {
+    const { encode, decode } = await import('@auth/core/jwt');
+    const { revokeSessionJti, isSessionRevoked, sessionRevocationId } = await import('@/lib/session-revocation');
+    const secret = 'test-secret-for-sid-refresh-0123456789';
+    const salt = 'authjs.session-token';
+    const sid = `sid-${Date.now()}-${counter++}`;
+    const original = await encode({ token: { sub: 'u1', sid }, secret, salt });
+    const copied = await decode({ token: original, secret, salt });
+    // Auth.js re-encodes the cookie on a session read; the jti changes, the sid does not.
+    const refreshed = await decode({ token: await encode({ token: copied!, secret, salt }), secret, salt });
+    expect(refreshed!.jti).not.toBe(copied!.jti);
+    expect(sessionRevocationId(refreshed)).toBe(sid);
+
+    await revokeSessionJti(sessionRevocationId(refreshed), Math.floor(Date.now() / 1000) + 3600);
+    expect(await isSessionRevoked(sessionRevocationId(copied))).toBe(true);
+  });
+});

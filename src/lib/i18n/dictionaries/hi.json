@@ -376,6 +376,7 @@
   "auth.confirm.action": "जारी रखें",
   "auth.confirm.eyebrow": "साइन इन",
   "auth.confirm.subtitle": "साइन इन पूरा करने के लिए एक आखिरी कदम।",
+  "auth.confirm.subtitleElsewhere": "केवल तभी जारी रखें जब आपने यह साइन-इन लिंक खुद मांगा हो। किसी और का भेजा लिंक आपको उसके खाते में साइन इन कर देता है।",
   "auth.confirm.title": "बस थोड़ा और",
   "auth.confirm.working": "साइन इन किया जा रहा है…",
   "authLogin.checkEmail": "अपना ईमेल जांचें",

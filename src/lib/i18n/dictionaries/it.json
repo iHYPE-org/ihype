@@ -376,6 +376,7 @@
   "auth.confirm.action": "Continua",
   "auth.confirm.eyebrow": "Accedi",
   "auth.confirm.subtitle": "Un ultimo passaggio per completare l'accesso.",
+  "auth.confirm.subtitleElsewhere": "Continua solo se hai richiesto questo link di accesso. Un link inviato da qualcun altro ti fa accedere al suo account.",
   "auth.confirm.title": "Ci siamo quasi",
   "auth.confirm.working": "Accesso in corso…",
   "authLogin.checkEmail": "Controlla la tua email",

@@ -376,6 +376,7 @@
   "auth.confirm.action": "続ける",
   "auth.confirm.eyebrow": "サインイン",
   "auth.confirm.subtitle": "サインインを完了するには、あと 1 ステップです。",
+  "auth.confirm.subtitleElsewhere": "このログインリンクをご自身でリクエストした場合のみ続行してください。他の人から送られたリンクでは、その人のアカウントにログインします。",
   "auth.confirm.title": "あと少しです",
   "auth.confirm.working": "サインインしています…",
   "authLogin.checkEmail": "メールを確認してください",
