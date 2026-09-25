@@ -7,7 +7,8 @@ export const dynamic = 'force-dynamic';
 
 /**
  * Short HYPE Link — `https://ihype.org/h/{code}`, where `{code}` is a member's
- * hexId. Following one is how a promoter earns from the 10% pool.
+ * hexId. Following one is how a ticket sale is credited as that member's
+ * referral (a record only since 2026-09-25, when the 10% pool was retired).
  *
  * ## This is a ROUTE HANDLER, and that is not a style choice
  *

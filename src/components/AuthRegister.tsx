@@ -325,7 +325,7 @@ export function RegisterScreen({
           ? t('authRegister.subtitlePasskey', 'Retry the device prompt or finish with a magic link. Your account is not stranded.')
           : step === 'magic-link-sent'
           ? t('authRegister.subtitleMagicLinkSent', 'Check your inbox for a one-tap link to finish signing in. You can add a passkey later from Settings.')
-          : t('authRegister.subtitleDefault', 'A free fan account for discovering, supporting, and strengthening local music.')
+          : t('authRegister.subtitleFanAccount', 'A free fan account for discovering, supporting, and strengthening local music.')
       }
       title={t('authRegister.title', 'Join your local scene.')}
     >

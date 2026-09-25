@@ -81,7 +81,7 @@ export default async function WelcomePage() {
       steps: [
         { title: t('welcomePage.fanStep1Title', 'Hype your first artist'), desc: t('welcomePage.fanStep1Desc', 'Listen to a track all the way through or tap the flame — every hype is a demand signal venues can see.') },
         { title: t('welcomePage.fanStep2Title', 'Follow your scene'), desc: t('welcomePage.fanStep2Desc', 'Pick your city and genres so Local shows and For You surface the right nights out.') },
-        { title: t('welcomePage.fanStep3Title', 'Share a referral link'), desc: t('welcomePage.fanStep3Desc', 'Promote any show you love and earn from the dedicated 10% promoter pool.') },
+        { title: t('welcomePage.fanStep3Title', 'Share a referral link'), desc: t('welcomePage.fanStep3DescTracks', 'Share any show you love. Your HYPE link records every ticket it helps sell.') },
       ],
     },
     // No wizard and no profile: an administrator's next steps are the queues
@@ -105,22 +105,22 @@ export default async function WelcomePage() {
     },
     ARTIST: {
       roleLabel: t('welcomePage.roleArtist', 'Artist'), tint: 'var(--accent)',
-      sub: t('welcomePage.subArtist', 'Welcome to the platform where 70% of every ticket is yours — locked by charter, before a single ticket sells.'),
+      sub: t('welcomePage.subArtistNet', 'Welcome to the platform where 75% of every ticket is yours after Stripe’s card fee — locked by charter, before a single ticket sells.'),
       cta: t('welcomePage.ctaArtist', 'Set up your page →'), ctaHref: onboardingPath ?? '/app/me/profiles',
       steps: [
-        { title: t('welcomePage.artistStep1Title', 'Complete verification'), desc: t('welcomePage.artistStep1Desc', 'Link your catalog and confirm identity — the 70% split activates the moment you’re verified.') },
+        { title: t('welcomePage.artistStep1Title', 'Complete verification'), desc: t('welcomePage.artistStep1DescNet', 'Link your catalog and confirm identity — your 75% share activates the moment you’re verified.') },
         { title: t('welcomePage.artistStep2Title', 'Upload your first track'), desc: t('welcomePage.artistStep2Desc', 'Choose all-rights or free-use licensing per track; free-use tracks can air on the station.') },
-        { title: t('welcomePage.artistStep3Title', 'Publish a show'), desc: t('welcomePage.artistStep3Desc', 'Set face-value pricing and lock your 70/20 charter. Fans buy direct — $0 platform fees.') },
+        { title: t('welcomePage.artistStep3Title', 'Publish a show'), desc: t('welcomePage.artistStep3DescNet', 'Set face-value pricing; the venue sells the tickets and your 75% after Stripe’s fee is locked. $0 platform fees.') },
       ],
     },
     VENUE: {
       roleLabel: t('welcomePage.roleVenue', 'Venue'), tint: 'var(--role-venue)',
-      sub: t('welcomePage.subVenue', 'A guaranteed 20% of every gate, by charter — plus real demand data on who fans actually want to see.'),
+      sub: t('welcomePage.subVenueNet', 'A guaranteed 25% of every gate after Stripe’s card fee, by charter — plus real demand data on who fans actually want to see.'),
       cta: t('welcomePage.ctaVenue', 'List your room →'), ctaHref: onboardingPath ?? '/app/me/profiles',
       steps: [
         { title: t('welcomePage.venueStep1Title', 'Verify your room'), desc: t('welcomePage.venueStep1Desc', 'Confirm capacity and address so events can go live with serialized, QR-verified tickets.') },
         { title: t('welcomePage.venueStep2Title', 'Check the demand radar'), desc: t('welcomePage.venueStep2Desc', 'See which artists your city is hyping before you book — no promoter guesswork.') },
-        { title: t('welcomePage.venueStep3Title', 'Publish your first event'), desc: t('welcomePage.venueStep3Desc', 'Your 20% is locked in the charter at publish. Settlement goes direct after the show.') },
+        { title: t('welcomePage.venueStep3Title', 'Publish your first event'), desc: t('welcomePage.venueStep3DescSeller', 'You sell every ticket as the seller of record, once your Stripe payment setup is done. Your 25% is locked at publish.') },
       ],
     },
   };
@@ -172,7 +172,7 @@ export default async function WelcomePage() {
         </div>
 
         <Link className="welcome-cta" href={c.ctaHref}>{c.cta}</Link>
-        <div className="welcome-split">{t('welcomePage.splitFooter', '70% artist · 20% venue · 10% promoters · 0% iHYPE')}</div>
+        <div className="welcome-split">{t('welcomePage.splitFooterNet', 'After Stripe’s card fee: 75% artist · 25% venue · 0% iHYPE')}</div>
       </div>
 
       <style>{`

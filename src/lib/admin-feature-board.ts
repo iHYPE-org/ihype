@@ -238,7 +238,7 @@ export const FEATURE_CATALOGUE: readonly FeatureDefinition[] = [
   {
     id: 'payouts',
     label: 'Payouts',
-    member: 'Get paid the 70/20/10 after the show',
+    member: 'Artist and venue get their 75/25 after the show',
     tier: 'core',
     flags: ['payments_enabled'],
     needs: ['stripe'],

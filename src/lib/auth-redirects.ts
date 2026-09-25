@@ -105,7 +105,7 @@ export const SESSION_EXEMPT_PATHS = ['/admin/setup', '/admin/device-register'] a
  *
  *   1. The funnel. `/` and the kit pages are how strangers arrive; `/h` and
  *      `/invite` are the referral and invite entry points, and gating those is
- *      a deadlock — the charter's 10% promoter share is attributed by a link a
+ *      a deadlock — a ticket's referral is attributed by a link a
  *      stranger clicks. `/shows` is where a shared ticket link lands, and it
  *      is already proven safe anonymous: the Workerd smoke asserts on every
  *      deploy that an anonymous ticketed show response carries no protected

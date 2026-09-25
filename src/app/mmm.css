@@ -3976,17 +3976,17 @@ input.mmm-row-title { min-height: 44px; }
 .mmm-charter-lead { margin: 0; color: var(--ink-2); font-size: 1rem; }
 .mmm-charter-updated { margin: 13px 0 0; color: var(--ink-3); font: 0.9375rem var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; }
 .mmm-charter-split { padding: 22px; border: 1px solid rgba(var(--accent-rgb), 0.38); border-radius: var(--radius-card); background: rgba(var(--accent-rgb), 0.07); }
-/* The same recessed brass meter as the public charter panel, and the same fix:
-   the promoter slice was painted --role-fan, the PURPLE, in both copies. There
-   is a --role-promoter token and colouring this 10% is the only thing it is
-   for. Two copies of one graphic drifting the same way is why show-detail.ts
-   exists; this pair is small enough to keep as two, but not to leave wrong. */
+/* The same recessed brass meter as the public charter panel. Two segments
+   since 2026-09-25: 75% artist, 25% venue of the face value after Stripe's
+   fee; the promoter slice is gone with the promoter share. Two copies of one
+   graphic drifting the same way is why show-detail.ts exists; this pair is
+   small enough to keep as two, but not to leave wrong. */
 .mmm-charter-split-bar { display: flex; gap: 3px; height: 18px; margin-top: 16px; padding: 3px; border-radius: 3px; background: var(--walnut-3); box-shadow: 0 0 0 1px var(--brass-deep), 0 0 0 3px var(--brass), inset 0 2px 5px rgba(0,0,0,.55); }
 .mmm-charter-split-bar span { border-radius: 1px; }
-.mmm-charter-split-bar [data-share='artist'] { flex: 70; background: var(--accent); }
-.mmm-charter-split-bar [data-share='venue'] { flex: 20; background: var(--role-venue); }
-.mmm-charter-split-bar [data-share='promoter'] { flex: 10; background: var(--role-promoter); }
-.mmm-charter-shares { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 18px; }
+.mmm-charter-split-bar [data-share='artist'] { flex: 75; background: var(--accent); }
+.mmm-charter-split-bar [data-share='venue'] { flex: 25; background: var(--role-venue); }
+.mmm-charter-shares { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 18px; }
+.mmm-charter-split-note { margin: 12px 0 0; color: var(--ink-3); line-height: 1.6; }
 .mmm-charter-shares div { display: flex; flex-direction: column; gap: 4px; }
 .mmm-charter-shares strong { color: var(--ink); font: 800 clamp(1.45rem, 4vw, 2.2rem) var(--font-display); }
 .mmm-charter-shares span { color: var(--ink-3); font: 0.9375rem var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; }
@@ -4008,7 +4008,6 @@ input.mmm-row-title { min-height: 44px; }
 @media (max-width: 620px) {
   .mmm-charter-grid { grid-template-columns: 1fr; }
   .mmm-charter-split { padding: 18px; }
-  .mmm-charter-shares { grid-template-columns: repeat(2, 1fr); }
 }
 
 /* ── ME · Info reports and legal documents ───────────────────────────── */

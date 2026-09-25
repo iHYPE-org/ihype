@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
 
   /* REVENUE IN, AND WHETHER ANY OF IT CAN GO OUT. This report named the
      money arriving and stopped, on a product whose charter promise is that
-     70% of it reaches the act — so the one figure an operator most needs
+     the artist's share of it reaches the act — so the one figure an operator most needs
      beside revenue was absent, and at an alpha where no venue has finished
      Connect onboarding the honest answer has been "none of it, for everyone"
      the whole time. Reported, never a gate; see `unpayable-balance.ts`. */

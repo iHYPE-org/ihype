@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
       /* Ask whether Stripe will accept a TRANSFER, not whether the account can
          take card payments. `charges_enabled` was the old test and it is the
          wrong question: iHYPE captures every ticket to its own balance and pays
-         the 70/20/10 out as transfers, so a recipient never requests
+         the shares out as transfers, so a recipient never requests
          `card_payments` and reports `charges_enabled: false` however completely
          it has onboarded. The flag could therefore never become true. */
       const payoutReady = await isConnectPayoutReady(profile.stripeConnectAccountId);

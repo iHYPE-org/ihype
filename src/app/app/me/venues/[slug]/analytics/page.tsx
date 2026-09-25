@@ -146,7 +146,7 @@ export default async function VenueAnalyticsPage({
           <div className="vaa-card-sub">{data.upcomingShowsCount} {t('venuesSlugAnalyticsPage.upcomingSuffix', 'upcoming')}</div>
         </div>
         <div className="vaa-card">
-          <div className="vaa-card-label">{t('venuesSlugAnalyticsPage.grossShare', 'Gross (20% share)')}</div>
+          <div className="vaa-card-label">{t('venuesSlugAnalyticsPage.grossYourShare', 'Gross (your share)')}</div>
           <div className="vaa-card-val vaa-card-val-accent">{formatCurrencyFromCents(data.grossCents, locale)}</div>
           <div className="vaa-card-sub">{t('venuesSlugAnalyticsPage.zeroFee', '$0 iHYPE fee')}</div>
         </div>

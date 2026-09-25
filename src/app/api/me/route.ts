@@ -56,8 +56,9 @@ export async function GET() {
     /* Money methods for Settings (owner, 2026-08-24: "Settings needs payment
        method AND payout method"). Payment method = a Stripe customer with a
        saved card exists (the setup Checkout writes it); payout method = the
-       first profile's Connect state — any account can earn the 10% promoter
-       share through its HYPE link, so this is not gated on role. The raw
+       first profile's Connect state — not gated on role, because payables
+       from the retired promoter share (orders before 2026-09-25) can still
+       sit on a fan's profile. The raw
        Stripe ids stay server-side. */
     payment: { saved: Boolean(stripeCustomerId) },
     payout: inviteProfile

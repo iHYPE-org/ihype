@@ -121,7 +121,7 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
         <h2>{t('legalPage.privacy.analyticsTitle', 'Analytics')}</h2>
         <p>{t('legalPage.privacy.analyticsBody', 'We collect anonymous, aggregated usage data to understand how the app is used and improve it. This data cannot be used to identify you. You can opt out in Settings → Privacy.')}</p>
         <h2>{t('legalPage.privacy.referralTitle', 'Referral links')}</h2>
-        <p>{t('legalPage.privacy.referralBody', 'When you share a referral link, we track click-throughs and purchases associated with that link to calculate your promoter pool share. This data is visible to you in your Pages dashboard.')}</p>
+        <p>{t('legalPage.privacy.referralBodyTracks', 'When you share a referral link, we track click-throughs and purchases associated with that link so the referral is credited to you. A referral link earns no share of the ticket. This data is visible to you in Settings.')}</p>
         <h2>{t('legalPage.privacy.rightsTitle', 'Data rights (GDPR & CCPA)')}</h2>
         <p>
           {t('legalPage.privacy.rightsBodyIntro', "If you're in the EU/EEA/UK, you have rights under GDPR: access, rectification, erasure, portability, restriction, and objection to processing. California residents have equivalent rights under CCPA, including opting out of data sales (we don't sell data, but the right still applies). Our lawful basis for processing is contract performance (running your account, tickets, and payouts) and legitimate interest (product analytics, fraud prevention). Exercise any of these rights instantly in")} <Link href="/support">{t('legalPage.privacy.supportPrivacyLink', 'Support → Privacy')}</Link> {t('legalPage.privacy.rightsBodyOutro', '(report a concern, request deletion, detach identity early, download your data) or email')} <a href="mailto:admin@ihype.org">admin@ihype.org</a>. {t('legalPage.privacy.rightsBodyClose', 'We respond within 30 days.')}
@@ -141,10 +141,10 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
         <p>{t('legalPage.terms.whoBody', 'You must be 13 or older to use iHYPE. To purchase tickets, you must be 18 or the age of majority in your jurisdiction. By creating an account you agree to these terms.')}</p>
         <h2>{t('legalPage.terms.ticketsTitle', 'Tickets')}</h2>
         <p>{t('legalPage.terms.ticketsBody', 'All tickets are sold at face value. iHYPE charges $0 in platform fees — this is locked in our charter and cannot be changed. Ticket purchases are final. Refunds are issued only if an event is cancelled by the organizer.')}</p>
-        <h2>{t('legalPage.terms.splitTitle', 'The 70/20/10 split')}</h2>
-        <p>{t('legalPage.terms.splitBody', 'Every ticket sold through iHYPE splits as follows: 70% to the artist, 20% to the venue, 10% to the promoter pool (distributed proportionally among referrers). iHYPE receives 0%. This is a founding constraint, not a policy — it cannot be altered by management, the board, or investors.')}</p>
+        <h2>{t('legalPage.terms.splitTitleNet', 'The ticket split')}</h2>
+        <p>{t('legalPage.terms.splitBodyNet', 'Stripe’s card fee is taken off each ticket’s face value first; what is left splits 75% to the artist and 25% to the venue. iHYPE receives 0%. The venue is the seller of record on every sale. iHYPE’s 0% is a founding constraint, not a policy — it cannot be altered by management, the board, or investors.')}</p>
         <h2>{t('legalPage.terms.hypeLinkReferralsTitle', 'HYPE Link referrals')}</h2>
-        <p>{t('legalPage.terms.hypeLinkReferralsBody', 'Any member may share a HYPE Link to any event. If a ticket is purchased through your link, you receive your proportional share of the 10% promoter pool. Manipulating referral tracking (e.g. purchasing through your own link) is prohibited and will result in account termination.')}</p>
+        <p>{t('legalPage.terms.hypeLinkReferralsBodyTracks', 'Any member may share a HYPE Link to any event. A ticket purchased through your link is recorded as your referral; a HYPE Link earns no share of the ticket. Manipulating referral tracking (e.g. purchasing through your own link) is prohibited and will result in account termination.')}</p>
         <h2>{t('legalPage.terms.contentTitle', 'Content')}</h2>
         <p>{t('legalPage.terms.contentOwnershipBody', 'You are responsible for content you post (artist pages, tracks, event listings). You grant iHYPE a non-exclusive license to display this content within the platform. iHYPE does not claim ownership of your music, images, or likeness.')}</p>
         <h2>{t('legalPage.terms.refundsTitle', 'Refunds')}</h2>
@@ -169,24 +169,23 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
             page this was folded in from. That version counted up from 0 when an
             IntersectionObserver fired — inside a tab panel that starts hidden,
             a missed observer would leave the platform's defining number reading
-            "0% artist · 0% venue · 0% promoters". Not a trade worth an
+            "0% artist · 0% venue". Not a trade worth an
             animation. */}
         <div className="charter-split-bar" aria-hidden="true">
-          <div style={{ flex: 70, background: 'var(--accent)' }} />
-          <div style={{ flex: 20, background: 'var(--role-venue)' }} />
-          <div style={{ flex: 10, background: 'var(--role-promoter)' }} />
+          <div style={{ flex: 75, background: 'var(--accent)' }} />
+          <div style={{ flex: 25, background: 'var(--role-venue)' }} />
         </div>
-        <p className="legal-split-display">{t('legalPage.charter.splitDisplay', '70% artist · 20% venue · 10% promoters · 0% iHYPE.')}</p>
+        <p className="legal-split-display">{t('legalPage.charter.splitDisplayNet', '75% artist · 25% venue after Stripe’s card fee · 0% iHYPE.')}</p>
         <div className="charter-callout">
-          <p>{t('legalPage.charter.splitBody', 'This is not a pricing strategy. It is a constraint. We built the business model around it, not the other way around. Anyone can get paid to promote a show through their own referral link — real word-of-mouth income, not payola.')}</p>
+          <p>{t('legalPage.charter.splitBodyConstraint', 'This is not a pricing strategy. It is a constraint. We built the business model around it, not the other way around.')}</p>
         </div>
-        <h2>{t('charterPage.promotersHead', 'Promoters and the 10%')}</h2>
-        {/* retired-claim-exempt: the charter DENYING the role, which is the
+        <h2>{t('charterPage.hypeLinksHead', 'HYPE Links and referrals')}</h2>
+        {/* retired-claim-exempt: the charter DENYING the role and the pool, which is the
             one place the phrase belongs — the scanner cannot tell a claim
             from its refutation, and this sentence is why there is nothing
             else to find. */}
-        <p>{t('charterPage.promotersBody', "The 10% promoter pool is distributed among everyone whose HYPE Links contributed to ticket sales for an event. There is no promoter role and no promoter account: promoting is something every account can do.")}</p>
-        <p><Link href="/app/me/settings" className="charter-inline-link">{t('charterPage.hypeLinkSettingsLink', 'See your HYPE link and what it has earned →')}</Link></p>
+        <p>{t('charterPage.hypeLinksBody', 'A HYPE Link records who referred a sale, and earns no share of the ticket: there is no promoter pool. There is no promoter role and no promoter account either — sharing a link is something every account can do.')}</p>
+        <p><Link href="/app/me/settings" className="charter-inline-link">{t('charterPage.hypeLinkSettingsLinkReferrals', 'See your HYPE link and the sales it has referred →')}</Link></p>
         <h2>{t('legalPage.charter.openTitle', 'Open by design')}</h2>
         <p>{t('legalPage.charter.openBody', 'Our code and our moderation heuristics are published for public audit. Nothing about how the split is calculated, how uploads are screened, or how the platform ranks anything is a secret — anyone can check that it does exactly what we say.')}</p>
         <h2>{t('legalPage.charter.dataTitle', 'Your data is never for sale')}</h2>
@@ -210,16 +209,16 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
         {/* Only the part /charter said that this tab did not. Its full
             paragraph opened with the same sentence as fundedBody above, so
             folding it in verbatim would have printed that sentence twice. */}
-        <p>{t('legalPage.charter.processingFeeBody', 'None of it touches the ticket split. Tickets are processed directly through Stripe; the card-processing fee (2.9% + $0.30; AMEX 3.5% + $0.30) is the only charge above face value, passed through at cost.')}</p>
+        <p>{t('legalPage.charter.processingFeeBodyNet', 'None of it touches the ticket split. Tickets are sold by the venue through Stripe. Stripe’s card fee (2.9% + $0.30 on a standard US card; more on AMEX and international cards) comes off the face value before the split, and the buyer pays the ticket price plus tax and nothing else.')}</p>
         <p><Link href="/advertise" className="charter-inline-link">{t('charterPage.advertisingLink', 'See how advertising works →')}</Link></p>
         <h2>{t('legalPage.charter.leanTitle', 'Why so few people run this')}</h2>
         <p>{t('legalPage.charter.leanBody', "iHYPE is run by two people, leaning on AI automation to keep operating costs at the absolute minimum. That's deliberate: a lean operation is a sustainable operation, and there's no boardroom of investors around to talk us into breaking any of the above.")}</p>
         <h2>{t('legalPage.charter.whyLockTitle', 'Why lock it in?')}</h2>
         <p>{t('legalPage.charter.whyLockBody', 'Because every platform that started with good intentions eventually faced a board meeting where fees made sense. We wanted to make that conversation impossible. The charter is the answer to "what if the company needs revenue?" — the answer is: find another way. Not this.')}</p>
         <h2>{t('legalPage.charter.lockedMeansTitle', 'What "locked in" means')}</h2>
-        <p>{t('legalPage.charter.lockedMeansBody', 'The 70/20/10 split is a condition of incorporation. Changing it would require dissolving the company and re-incorporating under a different structure. No board vote, no shareholder approval, no acquisition clause overrides it.')}</p>
+        <p>{t('legalPage.charter.lockedMeansBodyZero', 'iHYPE’s 0% of ticket sales is a condition of incorporation. Changing it would require dissolving the company and re-incorporating under a different structure. No board vote, no shareholder approval, no acquisition clause overrides it.')}</p>
         <h2>{t('charterPage.makesRealHead', 'What actually makes this real')}</h2>
-        <p>{t('charterPage.makesRealBody', 'A charter is just a promise on paper until a fan buys a ticket. Every dollar that hits this split exists because someone hyped an artist, showed up, and paid face value instead of going through a scalper. Artists write the songs, venues open the doors — but fans are the ones who make the 70/20/10 mean anything at all.')}</p>
+        <p>{t('charterPage.makesRealBodyNet', 'A charter is just a promise on paper until a fan buys a ticket. Every dollar that hits this split exists because someone hyped an artist, showed up, and paid face value instead of going through a scalper. Artists write the songs, venues open the doors — but fans are the ones who make the split mean anything at all.')}</p>
         <p><Link href="/info?tab=transparency" className="charter-inline-link">{t('charterPage.transparencyLink', 'See it in the live numbers →')}</Link></p>
         <h2>{t('legalPage.terms.contactTitle', 'Contact')}</h2>
         <p>

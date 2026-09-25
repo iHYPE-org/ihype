@@ -393,10 +393,7 @@ export function MmmSettings() {
   /* One sentence, used by the OS share sheet and by the three channel links
      below it, so a member's link never arrives bare with no idea what it is. */
   const hypeLinkShareText = inviteHexId
-    ? t(
-        'settingsPage.hypeLinkShareText',
-        'Come find live music with me on iHYPE — artists keep 70% of every ticket: https://ihype.org/invite/{code}',
-      ).replace('{code}', inviteHexId)
+    ? t('settingsPage.hypeLinkShareTextNet', 'Come find live music with me on iHYPE — artists keep 75% of every ticket after the card fee: https://ihype.org/invite/{code}').replace('{code}', inviteHexId)
     : '';
 
   async function shareInviteLink() {
@@ -531,8 +528,9 @@ export function MmmSettings() {
           )}
           {/* The HYPE link, first (owner, 2026-08-24: "put HYPE link at top —
               it does a lot"). One link, four jobs: shares liked playlists,
-              shares events, invites new members past the alpha gate, and earns
-              the 10% promoter share on shows it sells. The scoreboard below is
+              shares events, invites new members past the alpha gate, and records
+              the tickets it helps sell (a referral, not a share, since
+              2026-09-25). The scoreboard below is
               /api/me/hype-link-stats — every figure a real table, an em dash
               where one could not be read. */}
           {inviteHexId && (
@@ -575,14 +573,14 @@ export function MmmSettings() {
                   </a>
                 </div>
                 <p className="settings-invite-note">
-                  {t('settingsPage.hypeLinkNote', 'Your HYPE link shares liked playlists and events, invites new members past the alpha gate, and earns you the 10% promoter share on any show it sells.')}
+                  {t('settingsPage.hypeLinkNoteTracks', 'Your HYPE link shares liked playlists and events, invites new members past the alpha gate, and records every ticket it helps sell as your referral.')}
                 </p>
                 <div className="settings-hype-stats">
                   {([
                     [t('settingsPage.hypesEarned', 'HYPEs earned'), hypeStats?.hypesEarned],
                     [t('settingsPage.hypesGiven', 'HYPEs given'), hypeStats?.hypesGiven],
                     [t('settingsPage.ticketReferrals', 'Ticket referrals'), hypeStats?.ticketReferrals],
-                    [t('settingsPage.dollarsEarned', '$ earned'), typeof hypeStats?.dollarsEarnedCents === 'number' ? `$${(hypeStats.dollarsEarnedCents / 100).toFixed(2)}` : null],
+                    [t('settingsPage.dollarsEarnedPast', '$ earned (old split)'), typeof hypeStats?.dollarsEarnedCents === 'number' ? `$${(hypeStats.dollarsEarnedCents / 100).toFixed(2)}` : null],
                     [t('settingsPage.newUsers', 'New members from your link'), hypeStats?.newUsers],
                     [t('settingsPage.artistsHyped', 'Artists HYPEd'), hypeStats?.artistsHyped],
                     [t('settingsPage.venuesHyped', 'Venues HYPEd'), hypeStats?.venuesHyped],
@@ -600,10 +598,10 @@ export function MmmSettings() {
 
           {/* Money methods — BOTH, for every role (owner, 2026-08-24:
               "Settings needs payment method AND payout method"). A payment
-              method buys tickets; a payout method receives what your HYPE
-              link earns — the 10% promoter share lands on any account whose
-              link sold the ticket, so neither card is gated on role. Both run
-              through Stripe's hosted pages. */}
+              method buys tickets; a payout method receives an artist's or a
+              venue's share. A HYPE link earns nothing since 2026-09-25, so the
+              payout card tells a member with no creator page that they do not
+              need one. Both run through Stripe's hosted pages. */}
           <div className="settings-section">
             <div className="settings-section-title">{t('settingsPage.moneyMethods', 'Payment & payouts')}</div>
             <div className="settings-group">
@@ -649,7 +647,7 @@ export function MmmSettings() {
                       edited, so every locale falls back to correct English. */}
                   <div className="settings-row-detail">
                     {!isCreator
-                      ? t('settingsPage.payoutPromoterDetail', 'Receives the 10% promoter share your HYPE link earns')
+                      ? t('settingsPage.payoutNonCreatorDetail', 'Only needed if you run an artist or venue page — a HYPE link earns no share of a ticket')
                       : payout?.connected
                         ? t('settingsPage.payoutsLandHold', 'Released about {days} days after a show ends, once the dispute window closes')
                             .replace('{days}', String(PAYOUT_HOLD_DAYS))
@@ -657,12 +655,11 @@ export function MmmSettings() {
                   </div>
                   <div className="settings-split-mini">
                     {isCreator ? (
-                      <span style={{ color: roleColor }}>{role === 'VENUE' ? t('settingsPage.splitVenueYou', '20% you') : t('settingsPage.splitArtistYou', '70% you')}</span>
-                    ) : (
-                      <span style={{ color: 'var(--role-promoter)' }}>{t('settingsPage.splitPromoterYou', '10% you')}</span>
-                    )}
-                    <span style={{ color: 'var(--ink-a65)' }}>{t('settingsPage.splitArtist', '70% artist')}</span>
-                    <span style={{ color: 'var(--ink-a65)' }}>{t('settingsPage.splitVenue', '20% venue')}</span>
+                      <span style={{ color: roleColor }}>{role === 'VENUE' ? t('settingsPage.splitVenueYouNet', '25% you') : t('settingsPage.splitArtistYouNet', '75% you')}</span>
+                    ) : null}
+                    <span style={{ color: 'var(--ink-a65)' }}>{t('settingsPage.splitArtistNet', '75% artist')}</span>
+                    <span style={{ color: 'var(--ink-a65)' }}>{t('settingsPage.splitVenueNet', '25% venue')}</span>
+                    <span style={{ color: 'var(--ink-a65)' }}>{t('settingsPage.splitAfterFee', 'after Stripe’s fee')}</span>
                   </div>
                 </div>
                 {payout && (
@@ -673,7 +670,7 @@ export function MmmSettings() {
               </div>
 
               {isCreator && (
-                <Row action={<Link className="settings-btn settings-btn-ghost" href="/app/me/payouts?tab=history">{t('settingsPage.view', 'View')}</Link>} detail={t('settingsPage.payoutHistoryDetail', 'Every payout receipt, itemized 70/20/10')} label={t('settingsPage.payoutHistory', 'Payout history')} />
+                <Row action={<Link className="settings-btn settings-btn-ghost" href="/app/me/payouts?tab=history">{t('settingsPage.view', 'View')}</Link>} detail={t('settingsPage.payoutHistoryDetailNet', 'Every payout receipt, itemized by share')} label={t('settingsPage.payoutHistory', 'Payout history')} />
               )}
             </div>
           </div>

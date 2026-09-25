@@ -273,7 +273,7 @@ export default async function MmmShowPage({
       {show.isTicketed && venue && show.headlinerProfile && splits && !paymentsReady ? (
         <div className="mmm-empty">
           <strong style={{ display: 'block', marginBottom: 6 }}>{t('mmmShowPane.paidComingSoon', 'Paid tickets · Coming soon')}</strong>
-          {t('mmmShowPane.paidComingSoonBody', 'Ticket sales have not opened on iHYPE yet. Face-value pricing with the locked 70/20/10 split starts the moment they do.')}
+          {t('mmmShowPane.paidComingSoonBodyNet', 'Ticket sales have not opened on iHYPE yet. When they do, you pay the face value and its tax, nothing more.')}
         </div>
       ) : null}
 

@@ -13,8 +13,9 @@
  *     holds it and it cannot be removed, so `fan` is always in the role list and
  *     is always first.
  *   - **Promoting is role-independent** (§3). There is no promoter role and one
- *     must never be added: any account earns from the 10% pool by sharing its
- *     HYPE link. So promoter earnings are a *fan* stat, not a separate role.
+ *     must never be added: any account shares its HYPE link, which records the
+ *     referral. It earns nothing since 2026-09-25; past referral earnings from
+ *     the old split are a *fan* stat, not a separate role.
  */
 
 import { formatDate, formatDoorTime, formatNumber, formatUsd } from '@/lib/format-locale';
@@ -358,8 +359,12 @@ async function loadFan(userId: string, linkProfile: { id: string; hexId: string 
   const stats: MmmStat[] = [];
   if (hypesCast !== null) stats.push({ value: count(locale, hypesCast), label: 'Hypes cast' });
   if (showsAttended !== null) stats.push({ value: count(locale, showsAttended), label: 'Shows attended' });
-  if (hypeLink?.earnedCents !== null && hypeLink?.earnedCents !== undefined) {
-    stats.push({ value: money(locale, hypeLink.earnedCents), label: 'Promoter earnings' });
+  /* Past referral earnings only: since 2026-09-25 a HYPE link earns no share
+     of a ticket, so this figure can only be PROMOTER_AFFILIATE payables from
+     orders sold under the old split. Zero is the normal state and draws no
+     tile; a null read draws none either. */
+  if (hypeLink?.earnedCents) {
+    stats.push({ value: money(locale, hypeLink.earnedCents), label: 'Past referral earnings' });
   }
   if (following !== null) stats.push({ value: count(locale, following), label: 'Following' });
 

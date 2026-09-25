@@ -18,9 +18,13 @@ import { db } from '@/lib/db';
  *                    show-level HypeEvent rows, both unique per target.
  *  - ticketReferrals — captured ticket orders that carried this account's
  *                    profile as the affiliate promoter.
- *  - dollarsEarnedCents — the promoter's 10%: PROMOTER_AFFILIATE payable
+ *  - dollarsEarnedCents — PAST referral earnings: PROMOTER_AFFILIATE payable
  *                    entries on this account's profiles, PENDING + RELEASED
  *                    (accrued and paid; VOID means the order was refunded).
+ *                    Only orders sold before 2026-09-25 carry one — the
+ *                    promoter share was retired that day and a HYPE link now
+ *                    records the referral and earns nothing. Settings labels
+ *                    the figure "(old split)".
  *  - newUsers      — signups attributed to the link: FAN_REFERRED ledger
  *                    awards, one per referred user by idempotency key.
  *  - artistsHyped / venuesHyped — distinct profiles hyped, by type (the

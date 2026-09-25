@@ -118,7 +118,7 @@ export default async function VerifyPage() {
       <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--ink-a65)', marginBottom: 12 }}>{t('verifyPage.label', 'Verification')}</p>
       <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.7rem', fontWeight: 800, marginBottom: 8 }}>{t('verifyPage.verifyYourPagePrefix', 'Verify your')} {TYPE_LABEL[profile.type]} {t('verifyPage.verifyYourPageSuffix', 'page.')}</h1>
       <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', marginBottom: 24, lineHeight: 1.6 }}>
-        {t('verifyPage.instantVsVerification', 'Fan accounts are instant. Artist and Venue accounts require verification — it protects everyone in the 70/20/10 ecosystem.')}
+        {t('verifyPage.instantVsVerificationPayouts', 'Fan accounts are instant. Artist and Venue accounts require verification — it makes sure every ticket’s money reaches the people who earned it.')}
       </p>
       <VerifyForm
         profileId={profile.id}

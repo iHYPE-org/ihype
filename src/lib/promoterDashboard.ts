@@ -34,8 +34,8 @@ const EMPTY: PromoterDashboard = {
 
 /**
  * Builds the fan-facing share-to-earn dashboard: the user's promo ref, their
- * attributed promotion performance (clicks → orders → earned promoter pool
- * share), and the list of upcoming ticketed shows they can promote.
+ * attributed promotion performance (clicks → orders → any promoter pool
+ * share earned on orders sold before 2026-09-25, when that pool was retired), and the list of upcoming ticketed shows they can promote.
  *
  * The attribution + payout math already runs at checkout
  * (TicketOrder.affiliatePromoterProfileId / promoterPayoutCents); this just

@@ -11,6 +11,8 @@ import { PayoutActions } from '@/components/PayoutActions';
 import { getServerI18n } from '@/lib/i18n/server';
 import { isShowOrganizer } from '@/lib/show-organizer';
 import { PAYOUT_HOLD_DAYS } from '@/lib/payout-release';
+import { stripeCutOf } from '@/lib/stripe-fees';
+import { VENUE_SHARE_PERCENT } from '@/lib/ticketing';
 
 export const dynamic = 'force-dynamic';
 
@@ -69,12 +71,12 @@ export default async function PayoutPage({ params }: { params: Promise<{ id: str
    *   * `ticketsSoldCount` increments at RESERVATION, inside the transaction
    *     that creates a RESERVED order, and only comes back down when one is
    *     voided. Seats held by a checkout nobody completed read as money.
-   *   * The three cells applied the show's 70/20/10 to that figure. The real
-   *     split is on the ORDER, computed at purchase — and when no HYPE link
-   *     was used, `promoterPayoutCents` is ZERO and the tenth is redistributed
-   *     (see `ticketing.ts`: artist 77.78%, venue 22.22%). So on the common
-   *     case this page under-stated the act's share by about eleven points and
-   *     showed a dollar figure for a promoter payment that does not exist.
+   *   * The three cells applied the show's configured percentages to that
+   *     figure. The real split is on the ORDER, computed at purchase, and it
+   *     is not what the percentages multiply out to — at the time, a missing
+   *     HYPE link redistributed the promoter share; since 2026-09-25 Stripe's
+   *     fee comes off the face value before the 75/25, so no percentage of
+   *     the face value is anyone's share.
    *   * Past tense over a show that had not happened and money nothing had
    *     collected.
    *
@@ -113,31 +115,34 @@ export default async function PayoutPage({ params }: { params: Promise<{ id: str
   const releasedCents = payablesByStatus.find((row) => row.status === 'RELEASED')?._sum.amountCents ?? 0;
   const heldPayableCents = payablesByStatus.find((row) => row.status === 'PENDING')?._sum.amountCents ?? 0;
 
-  const configuredArtistPct = show.artistPayoutPercent ?? 70;
-  const configuredVenuePct = show.venuePayoutPercent ?? 20;
-  const configuredPromoterPct = show.promoterPayoutPercent ?? 10;
-
   /* With money collected, the shares are the SUM of what each order recorded
-     and the percentages are derived from them — never the other way round, or
-     a redistributed promoter share reads as a payment nobody received. With
-     nothing collected this is openly a projection at the configured split, and
-     the copy below says so. */
+     and the percentages are derived from them — never the other way round.
+     Stripe's fee is what the face value left over after the shares: since
+     2026-09-25 it comes off the top before the 75/25, and on an order sold
+     under the old terms (buyer paid the fee on top, 70/20/10) it is zero. A
+     promoter share can only exist on those older orders and is drawn only
+     when one does. With nothing collected this is openly a projection of one
+     ticket at the current terms, and the copy below says so. */
+  const projectedFeeCents = priceCents > 0 ? stripeCutOf(priceCents) : 0;
+  const projectedNetCents = Math.max(0, priceCents - projectedFeeCents);
+  const projectedVenueCents = Math.round(projectedNetCents * (VENUE_SHARE_PERCENT / 100));
   const artistCents = hasMoney
     ? (capturedOrders._sum.artistPayoutCents ?? 0)
-    : Math.round(priceCents * configuredArtistPct / 100);
+    : projectedNetCents - projectedVenueCents;
   const venueCents = hasMoney
     ? (capturedOrders._sum.venuePayoutCents ?? 0)
-    : Math.round(priceCents * configuredVenuePct / 100);
-  const promoterCents = hasMoney
-    ? (capturedOrders._sum.promoterPayoutCents ?? 0)
-    : Math.round(priceCents * configuredPromoterPct / 100);
+    : projectedVenueCents;
+  const promoterCents = hasMoney ? (capturedOrders._sum.promoterPayoutCents ?? 0) : 0;
+  const feeCents = hasMoney
+    ? Math.max(0, collectedCents - artistCents - venueCents - promoterCents)
+    : projectedFeeCents;
 
   const shareBase = hasMoney ? collectedCents : priceCents;
   const pctOf = (cents: number) => (shareBase > 0 ? Math.round((cents / shareBase) * 1000) / 10 : 0);
-  const artistPct = hasMoney ? pctOf(artistCents) : configuredArtistPct;
-  const venuePct = hasMoney ? pctOf(venueCents) : configuredVenuePct;
-  const promoterPct = hasMoney ? pctOf(promoterCents) : configuredPromoterPct;
-  const grossCents = hasMoney ? collectedCents : 0;
+  const artistPct = pctOf(artistCents);
+  const venuePct = pctOf(venueCents);
+  const promoterPct = pctOf(promoterCents);
+  const feePct = pctOf(feeCents);
 
   const dateStr = formatDoorTime(locale, new Date(show.startsAt), show.timeZone, {
     weekday: 'short', month: 'short', day: 'numeric', year: 'numeric',
@@ -147,24 +152,29 @@ export default async function PayoutPage({ params }: { params: Promise<{ id: str
     { label: t('payoutIdPage.artist', 'Artist'), pct: artistPct, cents: artistCents, color: 'var(--accent-text)', name: show.headlinerProfile?.name, href: show.headlinerProfile ? `/app/artists/${show.headlinerProfile.slug}` : null },
     { label: t('payoutIdPage.venue', 'Venue'), pct: venuePct, cents: venueCents, color: 'var(--role-venue)', name: show.venueProfile?.name, href: show.venueProfile ? `/app/venues/${show.venueProfile.slug}` : null },
     {
-      label: t('payoutIdPage.promoters', 'Promoters'),
+      label: t('payoutIdPage.stripeFee', 'Stripe card fee'),
+      pct: feePct,
+      cents: feeCents,
+      color: 'var(--ink-3)',
+      name: 'Stripe',
+      href: null,
+      note: hasMoney
+        ? t('payoutIdPage.stripeFeeNote', 'Taken off the face value before the split. Orders sold before 25 September 2026 carried the fee on top, so it reads zero for those.')
+        : t('payoutIdPage.stripeFeeEstimate', 'Estimated at the standard US card rate. It comes off the face value before the split.'),
+    },
+    /* Historical only. The promoter share was retired on 2026-09-25; it can
+       exist only on orders sold under the old split, and a cell reading $0.00
+       for a payment nobody can receive any more would be a claim, not a
+       figure. */
+    ...(promoterCents > 0 ? [{
+      label: t('payoutIdPage.pastReferrers', 'HYPE link referrers'),
       pct: promoterPct,
       cents: promoterCents,
-      color: 'var(--role-promoter)',
-      name: show.promoterProfile?.name ?? t('payoutIdPage.referrersSharedPool', 'Referrers (shared pool)'),
+      color: 'var(--ink-2)',
+      name: show.promoterProfile?.name ?? t('payoutIdPage.referrersSharedPoolPast', 'Referrers under the old split'),
       href: show.promoterProfile ? `/app/artists/${show.promoterProfile.slug}` : null,
-      /* THE ZERO NEEDS ITS REASON. The 10% is the charter's "(if applicable)":
-         with no HYPE link on an order there is no promoter share, and the
-         tenth is redistributed to the artist and venue in the same 7:2 ratio
-         (`ticketing.ts`). Without this line a reader sees $0.00 beside the
-         other two reading more than 70/20 and has no way to tell a correct
-         redistribution from a missing payment. */
-      note: hasMoney && promoterCents === 0
-        ? t('payoutIdPage.noPromoterUsed', 'No HYPE link was used, so this share went to the artist and venue instead.')
-        : !hasMoney
-          ? t('payoutIdPage.promoterIfUsed', 'Only if a HYPE link is used. Otherwise it goes to the artist and venue.')
-          : null,
-    },
+      note: t('payoutIdPage.pastReferrersNote', 'Paid on orders sold before 25 September 2026, when a HYPE link earned a share.'),
+    }] : []),
   ];
 
   return (
@@ -239,21 +249,21 @@ export default async function PayoutPage({ params }: { params: Promise<{ id: str
             </>
           ) : (
             /* NOT "every dollar accounted for" over no dollars. A projection is
-               a different claim from a statement, and the split it projects is
-               the charter's only if a HYPE link is used — see the promoter note
-               below, which is why the sentence points at it. */
+               a different claim from a statement: this projects one ticket at
+               the current terms, with Stripe's fee estimated. */
             t('payoutIdPage.projectionIntro', 'Nothing has been charged yet. This is how one {price} ticket would split.')
               .replace('{price}', fmtCents(priceCents, locale))
           )}
         </p>
         <div style={{ display: 'flex', height: 10, borderRadius: 999, overflow: 'hidden', gap: 2, marginBottom: 20 }}>
-          {/* The real proportions. These three were hardcoded 70/20/10, so the
-              bar disagreed with the cells beneath it on any show with its own
-              split, and on every show where no promoter link was used. A zero
-              share draws nothing rather than a hairline claiming a payment. */}
+          {/* The real proportions of the face value, read off the cells beneath
+              it — never hardcoded. Stripe's fee is a neutral segment because it
+              is nobody's share; a zero share draws nothing rather than a
+              hairline claiming a payment. */}
           <div style={{ flex: artistPct, background: 'var(--accent)', borderRadius: '999px 0 0 999px' }} />
           <div style={{ flex: venuePct, background: 'var(--role-venue)' }} />
-          {promoterPct > 0 ? <div style={{ flex: promoterPct, background: 'var(--role-promoter)', borderRadius: '0 999px 999px 0' }} /> : null}
+          {promoterPct > 0 ? <div style={{ flex: promoterPct, background: 'var(--ink-3)' }} /> : null}
+          {feePct > 0 ? <div style={{ flex: feePct, background: 'var(--line-2)', borderRadius: '0 999px 999px 0' }} /> : null}
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.75rem' }}>
           {CELLS.map((c) => (
@@ -305,7 +315,7 @@ export default async function PayoutPage({ params }: { params: Promise<{ id: str
       ) : null}
 
       {show.isTicketed && priceCents > 0 && (
-        <PayoutFanView artistPct={artistPct} priceCents={priceCents} promoterPct={promoterPct} venuePct={venuePct} />
+        <PayoutFanView priceCents={priceCents} />
       )}
 
       {/* Footer */}

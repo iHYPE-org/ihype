@@ -36,8 +36,8 @@ export function joinRoleLabel(t: Translate, english: string): string {
 export function joinRoleHelp(t: Translate, english: string): string {
   switch (english) {
     case 'Discover, hype, and buy tickets fee-free.': return t('joinPage.roleHelp.fan', 'Discover, hype, and buy tickets fee-free.');
-    case '70% of every ticket, your own page and shows.': return t('joinPage.roleHelp.artist', '70% of every ticket, your own page and shows.');
-    case '20% of every gate and real demand data.': return t('joinPage.roleHelp.venue', '20% of every gate and real demand data.');
+    case '75% of every ticket after Stripe’s fee, your own page and shows.': return t('joinPage.roleHelp.artistNet', '75% of every ticket after Stripe’s fee, your own page and shows.');
+    case '25% of every gate after Stripe’s fee, and real demand data.': return t('joinPage.roleHelp.venueNet', '25% of every gate after Stripe’s fee, and real demand data.');
     case 'Music-only campaigns with no access to personal user data.': return t('joinPage.roleHelp.advertiser', 'Music-only campaigns with no access to personal user data.');
     default: return english;
   }
@@ -264,8 +264,8 @@ export function createCardName(t: Translate, english: string): string {
 
 export function createCardDesc(t: Translate, english: string): string {
   switch (english) {
-    case 'Upload tracks, list shows, sell tickets. Keep 70%.': return t('pagesHome.createCard.artist.desc', 'Upload tracks, list shows, sell tickets. Keep 70%.');
-    case 'Book from the demand radar. Keep 20% of every room.': return t('pagesHome.createCard.venue.desc', 'Book from the demand radar. Keep 20% of every room.');
+    case 'Upload tracks, list shows, sell tickets. Keep 75% after Stripe’s fee.': return t('pagesHome.createCard.artist.descNet', 'Upload tracks, list shows, sell tickets. Keep 75% after Stripe’s fee.');
+    case 'Book from the demand radar. Sell the tickets and keep 25% after Stripe’s fee.': return t('pagesHome.createCard.venue.descNet', 'Book from the demand radar. Sell the tickets and keep 25% after Stripe’s fee.');
     default: return english;
   }
 }

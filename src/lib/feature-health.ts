@@ -154,7 +154,7 @@ export const JOURNEYS: Journey[] = [
   },
   {
     id: 'payouts',
-    name: 'The 70/20/10 reaches real accounts',
+    name: 'The artist and venue shares reach real accounts',
     tier: 'core',
     /* The sale and the replay are here as well as under ticketing: the payable
        rows are written by the sale, and "one event twice pays once" is a

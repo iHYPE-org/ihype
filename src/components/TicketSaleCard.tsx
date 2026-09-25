@@ -461,10 +461,7 @@ export function TicketSaleCard({
                     sentence that justifies a fee is precisely the wrong thing
                     to shrink — caught by `npm run lint`, not by review. */}
                 <p style={{ margin: 0, fontSize: '0.9375rem', lineHeight: 1.55, color: 'var(--ink-2)' }}>
-                  {t(
-                    'ticketSaleCard.feeExplainerNet',
-                    'You pay the ticket price and its tax, and nothing more. Stripe’s card fee comes out of the ticket price, and what is left is split {artist}% to the artist and {venue}% to the venue, who is the seller on this sale. iHYPE takes nothing.',
-                  )
+                  {t('ticketSaleCard.feeExplainerNet', 'You pay the ticket price and its tax, and nothing more. Stripe’s card fee comes out of the ticket price, and what is left is split {artist}% to the artist and {venue}% to the venue, who is the seller on this sale. iHYPE takes nothing.')
                     .replace('{artist}', String(ARTIST_SHARE_PERCENT))
                     .replace('{venue}', String(VENUE_SHARE_PERCENT))}
                 </p>

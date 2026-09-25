@@ -109,13 +109,13 @@ export const PERMISSION_PRIMERS: Record<PermissionId, PermissionPrimer> = {
   share: {
     id: 'share',
     prompts: false,
-    title: 'Share it, earn from it',
-    body: 'Your HYPE Link carries your code. Anyone who buys through it puts you in the 10% promoter pool for that show. Any account can do this — there is nothing to sign up for.',
+    title: 'Share it, get the credit',
+    body: 'Your HYPE Link carries your code. Anyone who buys through it is recorded as your referral for that show. Any account can do this — there is nothing to sign up for.',
     acceptLabel: 'Share this show',
     declineLabel: 'Copy link',
     moment: 'No OS prompt · falls back to clipboard',
     deniedTitle: 'Copy, with proof it happened',
-    deniedBody: 'The link goes to the clipboard and the button becomes “Copied” for two seconds. The code in the link is identical, so the promoter share still tracks.',
+    deniedBody: 'The link goes to the clipboard and the button becomes “Copied” for two seconds. The code in the link is identical, so the referral still tracks.',
   },
   offlineTickets: {
     id: 'offlineTickets',

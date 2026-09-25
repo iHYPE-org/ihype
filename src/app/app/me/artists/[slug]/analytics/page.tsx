@@ -285,7 +285,7 @@ export default async function ArtistAnalyticsPage({
           </div>
         </div>
         <div className="aa-stat-card">
-          <div className="aa-stat-label">{t('artistsSlugAnalyticsPage.grossLabel', 'Gross (70% share)')}</div>
+          <div className="aa-stat-label">{t('artistsSlugAnalyticsPage.grossYourShare', 'Gross (your share)')}</div>
           <div className="aa-stat-val" style={{ color: 'var(--accent-text)' }}>{formatCurrencyFromCents(grossArtistShareCents, locale)}</div>
           <div className="aa-stat-sub">{t('artistsSlugAnalyticsPage.zeroFee', '$0 iHYPE fee')}</div>
         </div>

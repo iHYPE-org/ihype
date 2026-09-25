@@ -114,12 +114,16 @@ describe('i18n invariants', () => {
     expect(defects).toEqual([]);
   });
 
-  it('never restates the revenue split as anything but 70/20/10', () => {
+  it('never restates a three-way revenue split — the split is 75/25 of the net since 2026-09-25', () => {
     const defects: string[] = [];
     for (const locale of locales) {
       for (const [key, value] of Object.entries(dict(locale))) {
-        const m = value.match(/\b\d{2}\/\d{2}\/\d{2}\b/);
-        if (m && m[0] !== '70/20/10') defects.push(`${locale}/${key}: ${m[0]}`);
+        const three = value.match(/\b\d{2}\s?\/\s?\d{2}\s?\/\s?\d{2}\b/);
+        if (three) defects.push(`${locale}/${key}: ${three[0]}`);
+        const two = value.match(/\b(\d{2})\s?\/\s?(\d{2})\b/);
+        if (two && Number(two[1]) + Number(two[2]) === 100 && two[0].replace(/\s/g, '') !== '75/25') {
+          defects.push(`${locale}/${key}: ${two[0]}`);
+        }
       }
     }
     expect(defects).toEqual([]);

@@ -71,10 +71,13 @@ export async function POST(request: Request) {
   }
 
   /* Any owned profile may connect payouts (owner, 2026-08-24: "payout method
-     (for promotion of shows using your HYPE link)"). The 10% promoter share
-     lands on `affiliatePromoterProfileId` — a plain fan's LISTENER profile —
-     and the old ARTIST/VENUE gate meant a fan whose link sold tickets had
-     earnings with no account to pay them into. */
+     (for promotion of shows using your HYPE link)"). Until 2026-09-25 the 10%
+     promoter share landed on `affiliatePromoterProfileId` — a plain fan's
+     LISTENER profile — and the old ARTIST/VENUE gate meant a fan whose link
+     sold tickets had earnings with no account to pay them into. The promoter
+     share is gone now (a HYPE link only records the referral), but payables
+     from orders sold under the old split can still be pending on a fan's
+     profile, so the gate stays open. */
 
   let connectAccountId = profile.stripeConnectAccountId;
 

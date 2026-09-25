@@ -22,7 +22,7 @@ export async function PayoutSettingsPanel({ profiles, stripeReady }: { profiles:
   const t = await getServerT();
   return (
     <div className="pset-panel">
-      <p className="pset-sub">{t('payoutSettingsPanel.autoPayoutNote', 'Your share is paid out automatically after each show, split 70% artist / 20% venue / 10% promoters per the charter.')}</p>
+      <p className="pset-sub">{t('payoutSettingsPanel.autoPayoutNoteNet', 'Your share is paid out automatically after each show. Stripe’s card fee comes off the face value first; the rest splits 75% artist / 25% venue per the charter.')}</p>
 
       {!stripeReady && (
         <div className="pset-warn">{t('payoutSettingsPanel.paymentsNotConfigured', 'Payments are not configured on this server right now — connecting accounts is temporarily unavailable.')}</div>
@@ -85,10 +85,7 @@ export async function PayoutSettingsPanel({ profiles, stripeReady }: { profiles:
                   read what it agreed to. */}
               {p.type === 'VENUE' && (
                 <p className="pset-merchant-note">
-                  {t(
-                    'payoutSettingsPanel.venueMerchantNote',
-                    'Connecting makes your venue the seller of record for your own shows. Ticket money is charged to your Stripe account first, so you receive it directly — and refunds, card disputes and sales tax are yours to handle, the same as tickets you sell at the door. If a buyer disputes a charge, Stripe takes the ticket price and its own $15 dispute fee from your account, not from iHYPE. iHYPE takes 0% and passes on no fee for this; we transfer the artist’s 70% and any promoter’s 10% out of your ticket revenue automatically.',
-                  )}
+                  {t('payoutSettingsPanel.venueMerchantNoteNet', 'Connecting makes your venue the seller of record for every ticket to your shows, and tickets cannot go on sale until it is done. Ticket money is charged to your Stripe account first, so you receive it directly — and refunds, card disputes and sales tax are yours to handle, the same as tickets you sell at the door. If a buyer disputes a charge, Stripe takes the ticket price and its own $15 dispute fee from your account, not from iHYPE. iHYPE takes 0%. Stripe’s card fee comes off the face value first; the artist’s 75% of what is left is carried out of your ticket revenue automatically, and your 25% stays with you.')}
                 </p>
               )}
             </div>

@@ -7,8 +7,8 @@ import { CONNECT_PAYOUT_CATEGORIES } from '@/lib/payout-release';
  *
  * The daily ops mail reported "Revenue (24h)" and stopped there, and the alpha
  * readiness gate had no payout condition at all — not a blocking one, not a
- * reported one, nothing. On a product whose charter promise is 70/20/10, the
- * one figure an operator most needs beside revenue is whether the 70 can
+ * reported one, nothing. On a product whose charter promise is the artist's
+ * share, the one figure an operator most needs beside revenue is whether it can
  * actually reach the act, and until this module nothing anywhere computed it.
  *
  * TWO NUMBERS, BECAUSE THEY ARE DIFFERENT PROBLEMS WITH DIFFERENT OWNERS.

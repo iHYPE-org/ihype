@@ -5,7 +5,7 @@ import { getServerT } from '@/lib/i18n/server';
 
 export const metadata: Metadata = {
   title: 'For Venues · iHYPE',
-  description: '20% of every gate, real demand data on who your city wants to see, and one booking inbox.',
+  description: '25% of every gate after Stripe’s card fee, real demand data on who your city wants to see, and one booking inbox.',
 };
 
 function buildConfig(t: Awaited<ReturnType<typeof getServerT>>): RecruitingKitConfig {
@@ -16,14 +16,14 @@ function buildConfig(t: Awaited<ReturnType<typeof getServerT>>): RecruitingKitCo
   eyebrow: t('forVenuesPage.eyebrow', 'For Venues'),
   headline: <>{t('forVenuesPage.headlineLine1', 'Your room.')}<br />{t('forVenuesPage.headlineLine2', 'Your booking.')}<br /><span style={{ color: 'var(--role-venue)' }}>{t('forVenuesPage.headlineLine3', 'Your data.')}</span></>,
   heroBody: (
-    <>{t('forVenuesPage.heroBodyLead', 'iHYPE guarantees you')} <strong>{t('forVenuesPage.heroBodyStrong', '20% of every gate')}</strong>{t('forVenuesPage.heroBodyRest', ', real demand data on who your city wants to see, and a booking inbox that keeps every offer in one place.')}</>
+    <>{t('forVenuesPage.heroBodyLead', 'iHYPE guarantees you')} <strong>{t('forVenuesPage.heroBodyStrongNet', '25% of every gate after Stripe’s card fee')}</strong>{t('forVenuesPage.heroBodyRest', ', real demand data on who your city wants to see, and a booking inbox that keeps every offer in one place.')}</>
   ),
   applyHeading: t('forVenuesPage.applyHeading', 'Apply as a venue'),
   applySub: t('forVenuesPage.applySub', 'Set up your venue page and start booking shows on your own terms.'),
   applyCta: t('forVenuesPage.applyCta', 'Get started as a venue →'),
   applyFinePrint: t('forVenuesPage.applyFinePrint', 'No spam. 0% platform fee, always.'),
   stats: [
-    { value: '20%', label: t('forVenuesPage.stat1Label', 'Your gate · guaranteed') },
+    { value: '25%', label: t('forVenuesPage.stat1LabelNet', 'Your gate after Stripe’s fee · guaranteed') },
     { value: '$0', label: t('forVenuesPage.stat2Label', 'Platform fee to list') },
     { value: 'Live', label: t('forVenuesPage.stat3Label', 'Demand radar by city') },
     /* See the same tile on /for-artists: the hold is `PAYOUT_HOLD_DAYS` = 10
@@ -35,7 +35,7 @@ function buildConfig(t: Awaited<ReturnType<typeof getServerT>>): RecruitingKitCo
   checklist: [
     t('forVenuesPage.checklist1', 'See real hype and streaming demand before you book'),
     t('forVenuesPage.checklist2', 'Manage every booking offer in one inbox'),
-    t('forVenuesPage.checklist3', 'Your 20% locks the moment the show publishes'),
+    t('forVenuesPage.checklistSellerOfRecord', 'You are the seller on every ticket, and your 25% locks the moment the show publishes'),
     t('forVenuesPage.checklist4', 'QR check-in at the door — no separate scanner app'),
     t('forVenuesPage.checklist5', 'No booking agent required to list a room'),
   ],
@@ -43,7 +43,7 @@ function buildConfig(t: Awaited<ReturnType<typeof getServerT>>): RecruitingKitCo
   featuresHeadline: t('forVenuesPage.featuresHeadline', 'Tools built for booking rooms.'),
   features: [
     { title: t('forVenuesPage.feature1Title', 'Demand radar'), body: t('forVenuesPage.feature1Body', 'See which artists your city is hyping before you commit a date.') },
-    { title: t('forVenuesPage.feature2Title', 'Booking inbox'), body: t('forVenuesPage.feature2Body', 'Every artist and promoter request lands in one Pending/Accepted/Declined view.') },
+    { title: t('forVenuesPage.feature2Title', 'Booking inbox'), body: t('forVenuesPage.feature2BodyNoPromoter', 'Every booking request lands in one Pending/Accepted/Declined view.') },
     /* The door line undersold a capability that had since been built, and the
        last two overstated ones that had not (2026-09-11). "AI page, built for
        you — the AI Page Creator drafts your venue page in one pass" names a

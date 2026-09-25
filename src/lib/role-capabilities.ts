@@ -1,10 +1,11 @@
 /**
  * Who can promote with a HYPE Link — everyone with an account.
  *
- * The 10% promoter slice is MONEY, not an account type. There is no promoter
- * role and no DJ role; every member shares their own link (to social, to a
- * group chat, anywhere outside the app) and earns a proportional share of the
- * pool for the ticket sales it drove. Nothing to sign up for, nothing to
+ * Promoting is an ACTION, not an account type. There is no promoter role and
+ * no DJ role; every member shares their own link (to social, to a group chat,
+ * anywhere outside the app) and is credited with the ticket sales it drove.
+ * Until 2026-09-25 that credit carried a share of a 10% promoter pool; the
+ * pool is gone and a HYPE link now earns nothing. Nothing to sign up for, nothing to
  * switch to. Design System 8 states it directly: "Promoters are Fans, Artists,
  * or Venues who share a referral link."
  *
