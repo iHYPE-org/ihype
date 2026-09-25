@@ -287,7 +287,9 @@ export async function POST(
       quantity: body.quantity,
       venuePayoutPercent: VENUE_SHARE_PERCENT,
       artistPayoutPercent: ARTIST_SHARE_PERCENT,
-      buyerLocation,
+      /* Tax follows the VENUE: admission is taxed where the show happens,
+         and the venue remits it. The buyer's location is recorded on the
+         order below for reporting, never used to price it. */
       venueLocation: {
         postalCode: show.venueProfile?.postalCode,
         stateRegion: show.venueProfile?.stateRegion,

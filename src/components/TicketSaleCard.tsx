@@ -43,12 +43,6 @@ type TicketSaleCardProps = {
     storedPaymentTokenBrand?: string | null;
     storedPaymentTokenLast4?: string | null;
   } | null;
-  viewerLocation?: {
-    city?: string | null;
-    stateRegion?: string | null;
-    country?: string | null;
-    postalCode?: string | null;
-  } | null;
   venueLocation?: {
     stateRegion?: string | null;
     country?: string | null;
@@ -80,7 +74,6 @@ export function TicketSaleCard({
   venuePaymentReady,
   affiliatePromoterProfileId,
   currentFan,
-  viewerLocation,
   venueLocation
 }: TicketSaleCardProps) {
   const { locale, t } = useI18n();
@@ -114,10 +107,9 @@ export function TicketSaleCard({
            70/20/10 still carries. */
         venuePayoutPercent: VENUE_SHARE_PERCENT,
         artistPayoutPercent: ARTIST_SHARE_PERCENT,
-        buyerLocation: viewerLocation,
         venueLocation
       }),
-    [quantityForPreview, ticketPriceCents, venueLocation, viewerLocation]
+    [quantityForPreview, ticketPriceCents, venueLocation]
   );
 
   /* One share per row, each percentage read back off the amount the SAME
@@ -142,14 +134,6 @@ export function TicketSaleCard({
       : currentFan?.hasStoredPaymentToken
         ? t('ticketSaleCard.storedPaymentTokenLabel', 'Stored payment token')
         : null;
-  const viewerTaxRegion =
-    [
-      viewerLocation?.postalCode,
-      viewerLocation?.city,
-      viewerLocation?.stateRegion ?? viewerLocation?.country
-    ]
-      .filter(Boolean)
-      .join(' | ') || null;
   const venueTaxRegion =
     [venueLocation?.postalCode, venueLocation?.stateRegion ?? venueLocation?.country].filter(Boolean).join(' | ') || null;
 
@@ -340,7 +324,7 @@ export function TicketSaleCard({
         </div>
       ) : (
         <form className="form" onSubmit={handleSubmit}>
-          {currentFan || viewerTaxRegion || venueTaxRegion ? (
+          {currentFan || venueTaxRegion ? (
             <div className="ticketing-context-grid">
               {currentFan ? (
                 <div className="signal-card">
@@ -349,18 +333,11 @@ export function TicketSaleCard({
                   <span>{fanPaymentLabel ?? t('ticketSaleCard.secureStripeCheckout', 'Payment collected securely by Stripe Checkout.')}</span>
                 </div>
               ) : null}
-              {viewerTaxRegion ? (
-                <div className="signal-card">
-                  <strong>{t('ticketSaleCard.buyerTaxRegionLabel', 'Buyer tax region')}</strong>
-                  <span>{viewerTaxRegion}</span>
-                  <span>{t('ticketSaleCard.buyerTaxRegionNote', 'Tax is calculated from request location at purchase time.')}</span>
-                </div>
-              ) : null}
               {venueTaxRegion ? (
                 <div className="signal-card">
                   <strong>{t('ticketSaleCard.venueTaxRegionLabel', 'Venue tax region')}</strong>
                   <span>{venueTaxRegion}</span>
-                  <span>{t('ticketSaleCard.venueTaxRegionNote', 'Used for payout and payable reconciliation.')}</span>
+                  <span>{t('ticketSaleCard.venueTaxRegionNoteVenueRate', 'Tax is estimated at the venue’s state rate plus that state’s average local rate. The venue confirms the final rate.')}</span>
                 </div>
               ) : null}
             </div>
@@ -421,17 +398,15 @@ export function TicketSaleCard({
               <div className="meta">{t('ticketSaleCard.orderPreviewLabel', 'Order preview')}</div>
               {/* S4's order ledger. Every line the old summary carried
                   survives — the reference shows four rows because its sample
-                  order has one implicit tax line; a real order can have five,
+                  order has one implicit tax line; a real order has two (state and local),
                   and hiding any re-opens the unexplained-money gap the ledger
                   exists to close. iHYPE's $0 is the accent-text line, exactly
                   as the reference draws it. */}
               <div style={{ border: '1px solid var(--line)', borderRadius: 'var(--radius-panel)', padding: 14, background: 'var(--bg-raised)', display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {[
                   { label: t('ticketSaleCard.subtotalLabel', 'Subtotal'), cents: preview.subtotalCents },
-                  { label: t('ticketSaleCard.localTaxLabel', 'Local tax'), cents: preview.localCents },
-                  { label: t('ticketSaleCard.stateTaxLabel', 'State / province tax'), cents: preview.stateCents },
-                  { label: t('ticketSaleCard.countryTaxLabel', 'Country tax'), cents: preview.countryCents },
-                  { label: t('ticketSaleCard.internationalTaxLabel', 'International tax'), cents: preview.internationalCents },
+                  { label: t('ticketSaleCard.stateTaxLabelUs', 'State sales tax'), cents: preview.stateCents },
+                  { label: t('ticketSaleCard.localTaxLabelAverage', 'Local sales tax (state average)'), cents: preview.localCents },
                   { label: t('ticketSaleCard.totalTaxLabel', 'Total tax'), cents: preview.totalTaxCents },
                   { label: t('ticketSaleCard.ihypeFeeLabel', 'iHYPE fee'), cents: 0, zero: true },
                 ].map((line) => (

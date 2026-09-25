@@ -1,4 +1,6 @@
+import { spawnSync } from 'node:child_process';
 import { stripeCutOf } from '@/lib/stripe-fees';
+import US_SALES_TAX from '@/lib/tax/us-sales-tax-rates.json';
 import { describe, it, expect } from 'vitest';
 import {
   validateTicketSplit,
@@ -9,6 +11,7 @@ import {
   ARTIST_SHARE_PERCENT,
   VENUE_SHARE_PERCENT,
   PLATFORM_COMMISSION_PERCENT,
+  SALES_TAX_SOURCE,
 } from '../ticketing';
 
 const CHARTER = { venuePayoutPercent: VENUE_SHARE_PERCENT, artistPayoutPercent: ARTIST_SHARE_PERCENT };
@@ -76,112 +79,78 @@ describe('calculateTicketOrderPayouts', () => {
   });
 });
 
-describe('calculateTicketTaxes', () => {
+describe('calculateTicketTaxes — the venue\'s state, from the Tax Foundation table', () => {
   const base = { ticketPriceCents: 1000, quantity: 2 };
-  const nyLocation = { stateRegion: 'NY', country: 'US', postalCode: '10001' };
 
-  it('returns zero tax when no location provided', () => {
-    const result = calculateTicketTaxes(base);
-    expect(result.totalTaxCents).toBe(0);
+  it('charges no tax when the venue has no address', () => {
+    expect(calculateTicketTaxes(base).totalTaxCents).toBe(0);
   });
 
-  it('applies only international tax for cross-country purchase', () => {
-    const result = calculateTicketTaxes({
-      ...base,
-      buyerLocation: { country: 'GB', stateRegion: null, postalCode: null },
-      venueLocation: { country: 'US', stateRegion: 'NY', postalCode: '10001' }
-    });
-    expect(result.internationalCents).toBeGreaterThan(0);
+  it('charges the published state rate plus the state\'s average local rate', () => {
+    // New York, 2026-01-01: 4% state, 4.5416% population-weighted local.
+    const result = calculateTicketTaxes({ ...base, venueLocation: { country: 'US', stateRegion: 'NY' } });
+    expect(result.stateCents).toBe(80);
+    expect(result.localCents).toBe(91);
+    expect(result.totalTaxCents).toBe(171);
+  });
+
+  it('reads the table at its own precision: Minnesota\'s 6.875%', () => {
+    const result = calculateTicketTaxes({ ticketPriceCents: 10000, quantity: 1, venueLocation: { country: 'US', stateRegion: 'MN' } });
+    expect(result.stateCents).toBe(688);
+    expect(result.localCents).toBe(126);
+  });
+
+  it('charges nothing in a state with no sales tax', () => {
+    for (const stateRegion of ['OR', 'NH', 'MT', 'DE']) {
+      expect(calculateTicketTaxes({ ...base, venueLocation: { country: 'US', stateRegion } }).totalTaxCents, stateRegion).toBe(0);
+    }
+  });
+
+  it('never adds a negative local line (New Jersey\'s average local rate is below zero in the source)', () => {
+    const result = calculateTicketTaxes({ ...base, venueLocation: { country: 'US', stateRegion: 'NJ' } });
+    expect(result.localCents).toBe(0);
+    expect(result.stateCents).toBe(Math.round(2000 * 0.06625));
+  });
+
+  it('has no federal or cross-border line: the US has no federal sales tax', () => {
+    const result = calculateTicketTaxes({ ...base, venueLocation: { country: 'US', stateRegion: 'CA' } });
     expect(result.countryCents).toBe(0);
-    expect(result.stateCents).toBe(0);
-    expect(result.localCents).toBe(0);
-  });
-
-  it('applies country + state + local tax for same postal code', () => {
-    const result = calculateTicketTaxes({
-      ...base,
-      buyerLocation: nyLocation,
-      venueLocation: nyLocation
-    });
-    expect(result.localCents).toBeGreaterThan(0);
-    expect(result.stateCents).toBeGreaterThan(0);
-    expect(result.countryCents).toBeGreaterThan(0);
     expect(result.internationalCents).toBe(0);
+    expect(result.totalTaxCents).toBe(result.stateCents + result.localCents);
   });
 
-  it('applies only country + state tax when same state but different postal', () => {
-    const result = calculateTicketTaxes({
-      ...base,
-      buyerLocation: { stateRegion: 'NY', country: 'US', postalCode: '10002' },
-      venueLocation: nyLocation
-    });
-    expect(result.localCents).toBe(0);
-    expect(result.stateCents).toBeGreaterThan(0);
-    expect(result.countryCents).toBeGreaterThan(0);
-    expect(result.internationalCents).toBe(0);
+  it('reads a spelled-out state and country, and the ISO form', () => {
+    const expected = calculateTicketTaxes({ ...base, venueLocation: { country: 'US', stateRegion: 'ME' } });
+    expect(expected.stateCents).toBe(110);
+    for (const venueLocation of [
+      { country: 'USA', stateRegion: 'Maine' },
+      { country: 'United States', stateRegion: 'US-ME' },
+      { country: 'u.s.a.', stateRegion: 'maine' },
+    ]) {
+      expect(calculateTicketTaxes({ ...base, venueLocation }), JSON.stringify(venueLocation)).toEqual(expected);
+    }
   });
 
-  it('applies only country tax when same country but different state', () => {
-    const result = calculateTicketTaxes({
-      ...base,
-      buyerLocation: { stateRegion: 'CA', country: 'US', postalCode: '90001' },
-      venueLocation: nyLocation
-    });
-    expect(result.stateCents).toBe(0);
-    expect(result.localCents).toBe(0);
-    expect(result.countryCents).toBeGreaterThan(0);
-    expect(result.internationalCents).toBe(0);
+  it('charges no tax for a venue outside the US or with an unrecognised state', () => {
+    expect(calculateTicketTaxes({ ...base, venueLocation: { country: 'Germany', stateRegion: null } }).totalTaxCents).toBe(0);
+    expect(calculateTicketTaxes({ ...base, venueLocation: { country: 'US', stateRegion: 'Atlantis' } }).totalTaxCents).toBe(0);
+    expect(calculateTicketTaxes({ ...base, venueLocation: { country: null, stateRegion: 'NY' } }).totalTaxCents).toBe(0);
   });
 
-  it('total equals sum of components', () => {
-    const result = calculateTicketTaxes({
-      ...base,
-      buyerLocation: nyLocation,
-      venueLocation: nyLocation
-    });
-    expect(result.totalTaxCents).toBe(
-      result.localCents + result.stateCents + result.countryCents + result.internationalCents
-    );
+  it('covers all fifty states and DC, and names its source', () => {
+    expect(Object.keys(US_SALES_TAX.rates)).toHaveLength(51);
+    expect(SALES_TAX_SOURCE.asOf).toBe('2026-01-01');
+    expect(SALES_TAX_SOURCE.publisher).toBe('Tax Foundation');
+  });
+
+  it('matches the committed workbook it was derived from', () => {
+    const result = spawnSync(process.execPath, ['scripts/import-sales-tax-rates.mjs', '--check'], { encoding: 'utf8' });
+    expect(result.stderr).toBe('');
+    expect(result.status).toBe(0);
   });
 
   it('rejects invalid ticket price', () => {
     expect(() => calculateTicketTaxes({ ticketPriceCents: -100, quantity: 1 })).toThrow();
-  });
-
-  /* Row 513: the buyer's country is Cloudflare's ISO code and the venue's is
-     free text. "US" against "USA" used to read as a cross-border sale. */
-  it('treats a spelled-out venue country as the same country as the edge code', () => {
-    for (const venueCountry of ['USA', 'United States', 'united states of america', 'U.S.A.']) {
-      const result = calculateTicketTaxes({
-        ...base,
-        buyerLocation: { stateRegion: 'ME', country: 'US', postalCode: '04101' },
-        venueLocation: { stateRegion: 'Maine', country: venueCountry, postalCode: '04101' }
-      });
-      expect(result.internationalCents, venueCountry).toBe(0);
-      expect(result.countryCents, venueCountry).toBeGreaterThan(0);
-      expect(result.stateCents, venueCountry).toBeGreaterThan(0);
-      expect(result.localCents, venueCountry).toBeGreaterThan(0);
-    }
-  });
-
-  it('still charges the cross-border rate between two different countries, however spelled', () => {
-    const result = calculateTicketTaxes({
-      ...base,
-      buyerLocation: { country: 'DE', stateRegion: null, postalCode: null },
-      venueLocation: { country: 'USA', stateRegion: 'ME', postalCode: '04101' }
-    });
-    expect(result.internationalCents).toBeGreaterThan(0);
-    expect(result.countryCents).toBe(0);
-  });
-
-  it('reads Germany and DE as one country', () => {
-    const result = calculateTicketTaxes({
-      ...base,
-      buyerLocation: { country: 'DE', stateRegion: null, postalCode: null },
-      venueLocation: { country: 'Germany', stateRegion: null, postalCode: null }
-    });
-    expect(result.internationalCents).toBe(0);
-    expect(result.countryCents).toBeGreaterThan(0);
   });
 });
 
@@ -207,7 +176,6 @@ describe('calculateTicketOrderFinancials — the fee comes off the top', () => {
   it('charges the fee on tax too, and takes it from the face value, never from the tax', () => {
     const f = calculateTicketOrderFinancials({
       ...base,
-      buyerLocation: { country: 'US', stateRegion: 'ME', postalCode: '04101' },
       venueLocation: { country: 'US', stateRegion: 'ME', postalCode: '04101' },
     });
     expect(f.totalTaxCents).toBeGreaterThan(0);

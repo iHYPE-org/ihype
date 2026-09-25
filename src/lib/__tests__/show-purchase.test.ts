@@ -12,7 +12,6 @@ describe('show purchase: full order financials', () => {
       quantity: 1,
       venuePayoutPercent: 25,
       artistPayoutPercent: 75,
-      buyerLocation: { country: 'US', postalCode: null, stateRegion: null },
       venueLocation: { country: 'US', postalCode: null, stateRegion: null }
     });
     expect(result.subtotalCents).toBe(2000);
@@ -25,7 +24,6 @@ describe('show purchase: full order financials', () => {
       quantity: 3,
       venuePayoutPercent: 25,
       artistPayoutPercent: 75,
-      buyerLocation: { country: 'US', postalCode: null, stateRegion: null },
       venueLocation: { country: 'US', postalCode: null, stateRegion: null }
     });
     expect(result.subtotalCents).toBe(3000);

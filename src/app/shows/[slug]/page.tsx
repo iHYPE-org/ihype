@@ -22,7 +22,6 @@ import { getShowVisibilitySignals } from '@/lib/integrity';
 import { toSafeJsonLdString } from '@/lib/safe-json-ld';
 import { isAdminSession } from '@/lib/permissions';
 import { isShowOrganizer } from '@/lib/show-organizer';
-import { detectRequestLocation } from '@/lib/request-location';
 import { parseShowProductionPlan } from '@/lib/show-composer';
 import { canViewerAccessShowMedia, protectShowProductionPlan } from '@/lib/show-media-access';
 import { isPaymentProcessingConfigured } from '@/lib/payments';
@@ -161,8 +160,7 @@ export default async function ShowDetailPage({
     return notFound();
   }
 
-  const [viewerLocation, currentFan, affiliatePromoter] = await Promise.all([
-    detectRequestLocation(),
+  const [currentFan, affiliatePromoter] = await Promise.all([
     session?.user?.id
       ? db.user.findUnique({
           where: { id: session.user.id },
@@ -1002,12 +1000,6 @@ export default async function ShowDetailPage({
                   postalCode: show.venueProfile.postalCode,
                   stateRegion: show.venueProfile.stateRegion,
                   country: show.venueProfile.country
-                }}
-                viewerLocation={{
-                  city: viewerLocation?.city,
-                  stateRegion: viewerLocation?.stateRegion,
-                  country: viewerLocation?.country,
-                  postalCode: viewerLocation?.postalCode
                 }}
               />
               )}

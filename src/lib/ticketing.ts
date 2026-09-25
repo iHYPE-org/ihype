@@ -1,6 +1,7 @@
 import { formatUsd } from '@/lib/format-locale';
 import type { Locale } from '@/lib/i18n/locales';
 import { stripeCutOf } from '@/lib/stripe-fees';
+import US_SALES_TAX from '@/lib/tax/us-sales-tax-rates.json';
 export const PLATFORM_COMMISSION_PERCENT = 0;
 
 /**
@@ -54,7 +55,7 @@ type TaxLocation = {
 type TicketTaxInput = {
   ticketPriceCents: number;
   quantity: number;
-  buyerLocation?: TaxLocation | null;
+  /** The venue's address. Admission is taxed where the event takes place. */
   venueLocation?: TaxLocation | null;
 };
 
@@ -203,32 +204,47 @@ export function normalizeStateRegion(value?: string | null): string | null {
   return US_STATE_CODES[raw] ?? raw;
 }
 
-function hasSamePostalCode(buyerLocation?: TaxLocation | null, venueLocation?: TaxLocation | null) {
-  return Boolean(
-    normalizeLocationValue(buyerLocation?.postalCode) &&
-      normalizeLocationValue(buyerLocation?.postalCode) === normalizeLocationValue(venueLocation?.postalCode)
-  );
+/**
+ * TICKET TAX IS THE VENUE'S JURISDICTION, READ FROM A PUBLISHED TABLE.
+ *
+ * Admission is taxed where the event takes place, not where the buyer happens
+ * to be, and the venue is the merchant that remits it — so the only location
+ * that decides the rate is the venue's. The rates are the Tax Foundation's
+ * "State and Local Sales Tax Rates" as of 2026-01-01 (`us-sales-tax-rates.json`,
+ * derived from the workbook committed at `data/tax/` by
+ * `scripts/import-sales-tax-rates.mjs`):
+ *
+ *   state  the statewide rate (CA, UT and VA include their mandatory
+ *          statewide local add-ons, as the source does)
+ *   local  the POPULATION-WEIGHTED AVERAGE of local rates in that state —
+ *          an estimate, because a venue's own city or county rate is not in
+ *          any statewide table
+ *
+ * There is no federal sales tax in the United States, so `countryCents` and
+ * `internationalCents` are always 0; they stay on the breakdown because the
+ * order columns and payable categories they fill predate this table. A venue
+ * outside the US, or with no recognisable state, is charged no tax here.
+ *
+ * WHAT THIS DOES NOT KNOW, stated because the tax line is on a receipt: many
+ * states exempt admissions from sales tax or tax them under a separate
+ * amusement tax at a different rate, and some cities add an admissions tax of
+ * their own. The venue is the merchant of record and confirms the rate.
+ */
+export const SALES_TAX_SOURCE = US_SALES_TAX.source;
+
+export function salesTaxRatesForVenue(venueLocation?: TaxLocation | null): { stateRatePpm: number; avgLocalRatePpm: number } | null {
+  const country = normalizeCountry(venueLocation?.country);
+  if (country !== 'us') return null;
+  const state = normalizeStateRegion(venueLocation?.stateRegion);
+  if (!state) return null;
+  return (US_SALES_TAX.rates as Record<string, { stateRatePpm: number; avgLocalRatePpm: number }>)[state] ?? null;
 }
 
-function hasSameStateRegion(buyerLocation?: TaxLocation | null, venueLocation?: TaxLocation | null) {
-  return Boolean(
-    normalizeStateRegion(buyerLocation?.stateRegion) &&
-      normalizeStateRegion(buyerLocation?.stateRegion) === normalizeStateRegion(venueLocation?.stateRegion) &&
-      hasSameCountry(buyerLocation, venueLocation)
-  );
-}
-
-function hasSameCountry(buyerLocation?: TaxLocation | null, venueLocation?: TaxLocation | null) {
-  return Boolean(
-    normalizeCountry(buyerLocation?.country) &&
-      normalizeCountry(buyerLocation?.country) === normalizeCountry(venueLocation?.country)
-  );
-}
+const applyPpm = (cents: number, ppm: number) => Math.round((cents * ppm) / 1_000_000);
 
 export function calculateTicketTaxes({
   ticketPriceCents,
   quantity,
-  buyerLocation,
   venueLocation
 }: TicketTaxInput): TicketTaxBreakdown {
   if (!Number.isInteger(ticketPriceCents) || ticketPriceCents <= 0) {
@@ -240,35 +256,16 @@ export function calculateTicketTaxes({
   }
 
   const subtotalCents = ticketPriceCents * quantity;
-  const buyerCountry = normalizeCountry(buyerLocation?.country);
-  const venueCountry = normalizeCountry(venueLocation?.country);
-
-  if (!buyerCountry && !venueCountry) {
-    return {
-      localCents: 0,
-      stateCents: 0,
-      countryCents: 0,
-      internationalCents: 0,
-      totalTaxCents: 0
-    };
-  }
-
-  const isSameCountry = hasSameCountry(buyerLocation, venueLocation);
-  const isSameStateRegion = hasSameStateRegion(buyerLocation, venueLocation);
-  const isSamePostalCode = hasSamePostalCode(buyerLocation, venueLocation);
-
-  const localCents = isSamePostalCode ? Math.round(subtotalCents * 0.02) : 0;
-  const stateCents = isSameStateRegion ? Math.round(subtotalCents * 0.03) : 0;
-  const countryCents = isSameCountry ? Math.round(subtotalCents * 0.025) : 0;
-  const internationalCents = buyerCountry && venueCountry && !isSameCountry ? Math.round(subtotalCents * 0.07) : 0;
-  const totalTaxCents = localCents + stateCents + countryCents + internationalCents;
+  const rates = salesTaxRatesForVenue(venueLocation);
+  const stateCents = rates ? applyPpm(subtotalCents, rates.stateRatePpm) : 0;
+  const localCents = rates ? applyPpm(subtotalCents, rates.avgLocalRatePpm) : 0;
 
   return {
     localCents,
     stateCents,
-    countryCents,
-    internationalCents,
-    totalTaxCents
+    countryCents: 0,
+    internationalCents: 0,
+    totalTaxCents: localCents + stateCents
   };
 }
 
