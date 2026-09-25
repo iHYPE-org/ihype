@@ -54,6 +54,27 @@ describe('auth redirects', () => {
     expect(isSafeLocalRedirect('/\\example.com')).toBe(false);
     expect(isSafeLocalRedirect('/home\nx')).toBe(false);
   });
+
+  it('refuses a path the URL parser would turn into another origin (row 514)', () => {
+    // The parser strips TAB/CR/LF anywhere and reads a backslash as a slash, so
+    // each of these resolves to evil.example while starting with a single "/".
+    for (const path of ['/\t/evil.example/phish', '/\t\\evil.example', '/x/../\t/evil.example', '/\\/evil.example', '/app\\..\\..\\/evil.example']) {
+      expect(new URL(path, 'https://ihype.org').origin === 'https://ihype.org' && !/[\t\\]/.test(path), path).toBe(false);
+      expect(isSafeLocalRedirect(path), JSON.stringify(path)).toBe(false);
+      expect(resolvePostAuthRedirect(path), JSON.stringify(path)).toBe('/app/map');
+    }
+    // Any control character is refused, and a percent-encoded tab is just text.
+    expect(isSafeLocalRedirect('/app\u0000/me')).toBe(false);
+    expect(isSafeLocalRedirect('/app\u007f')).toBe(false);
+    expect(isSafeLocalRedirect('/%09/evil')).toBe(true);
+    expect(new URL('/%09/evil', 'https://ihype.org').origin).toBe('https://ihype.org');
+  });
+
+  it('keeps every ordinary in-app destination', () => {
+    for (const path of ['/app/me/advertising/new', '/app/me?section=profiles', '/shows/my-show#tickets', '/app/music/radio']) {
+      expect(isSafeLocalRedirect(path), path).toBe(true);
+    }
+  });
 });
 
 describe('isProtectedPath', () => {
