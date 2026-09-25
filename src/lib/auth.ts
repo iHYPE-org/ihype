@@ -8,7 +8,7 @@
 // buildAuthSessionCookie (src/lib/auth-session.ts) so `auth()` below still
 // works. NextAuth itself is used only for session reading/JWT handling, so
 // `providers` is intentionally empty.
-import NextAuth from 'next-auth';
+import NextAuth, { type NextAuthConfig } from 'next-auth';
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import { db } from '@/lib/db';
 import { authConfig } from '@/lib/auth.config';
@@ -56,10 +56,13 @@ function clampAdminRole(role: string | undefined, email: string | null | undefin
   return 'FAN';
 }
 
-export const { handlers, signIn, signOut, auth } = NextAuth({
-  ...authConfig,
-  adapter: PrismaAdapter(db),
-  callbacks: {
+/**
+ * Exported so the revocation rule can be tested through the callback that
+ * enforces it (`session-revocation-reencode.test.ts`), not only through the
+ * helper it calls. Typed off NextAuth's own config so nothing here drifts from
+ * the shape the wrapper passes in.
+ */
+export const authCallbacks: NonNullable<NextAuthConfig['callbacks']> = {
     async jwt({ token, user }) {
       if (user) {
         /* A sign-in through Auth.js's own flow: give it the stable id a
@@ -138,6 +141,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
       return session;
     }
-  },
+};
+
+export const { handlers, signIn, signOut, auth } = NextAuth({
+  ...authConfig,
+  adapter: PrismaAdapter(db),
+  callbacks: authCallbacks,
   providers: []
 });
