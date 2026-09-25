@@ -79,7 +79,7 @@ const SECTIONS = [
   },
   {
     title: 'What “locked in” means',
-    body: 'iHYPE\u2019s 0% of ticket sales is a condition of incorporation. Changing it would require dissolving the company and re-incorporating under a different structure. No board vote, no shareholder approval, no acquisition clause overrides it.',
+    body: 'iHYPE will never take anything from ticket sales — no percentage, no fee, no cut of any ticket. That promise is a condition of incorporation: changing it would require dissolving the company and re-incorporating under a different structure. No board vote, no shareholder approval, no acquisition clause overrides it.',
   },
   {
     title: 'What actually makes this real',
