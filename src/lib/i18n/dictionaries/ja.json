@@ -1096,7 +1096,7 @@
   "legalPage.charter.fundedTitle": "巨大テックではなく、ラジオのように賄う",
   "legalPage.charter.leanBody": "iHYPEは二人で運営し、運営コストを極限まで抑えるためにAIによる自動化に頼っています。これは意図的です。小さく保つことが続けられることであり、上に挙げた約束を破らせようとする投資家の取締役会も存在しません。",
   "legalPage.charter.leanTitle": "なぜこれほど少人数で運営するのか",
-  "legalPage.charter.lockedMeansBodyZero": "チケット販売に対するiHYPEの0%は、設立の条件です。変更するには会社を解散し、別の形態で設立し直す必要があります。取締役会の決議も、株主の承認も、買収条項も、これを覆すことはできません。",
+  "legalPage.charter.lockedMeansBodyNever": "iHYPEはチケット販売から一切何も受け取りません。割合も手数料も、どのチケットからの取り分もありません。この約束は会社設立の条件です。変更するには会社を解散し、別の形態で設立し直す必要があります。取締役会の決議、株主の承認、買収条項のいずれもこれを覆すことはできません。",
   "legalPage.charter.lockedMeansTitle": "「固定」の意味",
   "legalPage.charter.nonprofitBody": "iHYPEは認定された501(c)(3)の慈善プラットフォームです。リターンを待つ外部オーナーはおらず、ミッションの陰に隠れた投資家への分配もありません。収益はインフラの維持、少人数のチームへの公正な報酬、そしてローカル音楽ミッションの推進のために存在します。",
   "legalPage.charter.nonprofitTitle": "シーンが運営する501(c)(3)",

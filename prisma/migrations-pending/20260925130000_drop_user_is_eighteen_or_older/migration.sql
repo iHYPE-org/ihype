@@ -1,4 +1,3 @@
--- @gated
 -- Drops User.isEighteenOrOlder, the 18+ attestation (owner, 2026-09-25:
 -- "since we no longer require financial info for fans, remove the 18+
 -- requirement from the entire site"). Nothing reads or writes it any more:
@@ -6,16 +5,23 @@
 -- ask, signup and Settings no longer offer it, and the column is out of
 -- schema.prisma. The 13+ attestation (isThirteenOrOlder) is kept.
 --
--- The attestation history is also in AuditLog (action age_attested_eighteen)
--- for every member who confirmed in Settings, so dropping the column loses
--- no record of who attested and when; it loses the signup-time ticks, which
--- nothing ever audited.
---
 -- Before applying, run against production and record the numbers here:
 --   SELECT count(*) FILTER (WHERE "isEighteenOrOlder") AS is_eighteen_or_older_true,
 --          count(*) AS users
 --   FROM "User";
 -- Any count is acceptable — the value gates nothing — the point is that the
 -- number is written down before the data goes.
+--
+-- RUN 2026-09-25 against production (bjkabtzvgfshsrmjhrkx), read through the
+-- Supabase connector, which is pinned read-only. The query above, verbatim:
+--
+--   User.isEighteenOrOlder true on 6 of 21 users
+--
+-- A companion read, SELECT count(*) FROM "AuditLog" WHERE action =
+-- 'age_attested_eighteen', returned 1 row. So the audit log does NOT hold
+-- every attestation: the other ticks were made at signup, which never wrote
+-- an audit row. Dropping the column loses those six flags; nothing reads them
+-- and the requirement they recorded no longer exists. The deploy takes an
+-- encrypted backup immediately before any pending migration.
 
-ALTER TABLE "User" DROP COLUMN "isEighteenOrOlder";
+ALTER TABLE "User" DROP COLUMN IF EXISTS "isEighteenOrOlder";
