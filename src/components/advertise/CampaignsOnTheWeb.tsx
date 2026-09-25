@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useI18n } from '@/components/I18nProvider';
@@ -34,11 +33,13 @@ export function CampaignsOnTheWeb() {
 
   return (
     <div className="mmm-advertiser mmm-ad-web-only" data-web-only="campaigns">
-      <Link className="mmm-charter-back" href="/app/me/advertising">‹ {t('campaignsOnTheWeb.back', 'Your campaigns')}</Link>
+      {/* No back link of its own: the ME layout's backstop (MmmMeRouteBack)
+          already draws one on this route, and two stacked back links is the
+          defect row 397 fixed on the notifications page. */}
       <p className="mmm-eyebrow mmm-eyebrow-accent">{t('advertisePage.heroEyebrow', 'Advertise on iHYPE')}</p>
       <h1>{t('campaignsOnTheWeb.title', 'Build your campaign on the web')}</h1>
       <p className="mmm-ad-web-only-lede">
-        {t('campaignsOnTheWeb.lede', 'Campaigns are built and paid for on the iHYPE website, not in the app. Open it in your browser and sign in with this same account — your campaign shows up here as soon as it is set up.')}
+        {t('campaignsOnTheWeb.lede', 'Campaigns are built and paid for on the iHYPE website, not in the app. The button below opens it in your browser; if it asks you to sign in, use this same account. Your campaign shows up here as soon as it is set up.')}
       </p>
       <div className="mmm-ad-web-only-actions">
         <button className="mmm-btn-primary" disabled={opening} onClick={() => void open()} type="button">

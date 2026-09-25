@@ -62,5 +62,8 @@ export function isCapacitorNative(): boolean {
 export const WEB_CAMPAIGN_PATH = '/app/me/advertising/new';
 export const WEB_ADVERTISING_PATH = '/app/me/advertising';
 
+/** The only destinations `POST /api/auth/web-handoff` will sign a browser tab into. */
+export const WEB_HANDOFF_PATHS = [WEB_CAMPAIGN_PATH, WEB_ADVERTISING_PATH] as const;
+
 /** The refusal the campaign API returns to the app. Stable, so a client can branch on it. */
 export const CAMPAIGNS_WEB_ONLY = 'CAMPAIGNS_WEB_ONLY';

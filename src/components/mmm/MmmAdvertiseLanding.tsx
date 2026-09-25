@@ -75,7 +75,7 @@ export async function MmmAdvertiseLanding() {
 
       <section className="mmm-ad-final">
         <h2>{t('mmmAdvertiseLanding.finalTitle', 'Ready to build your first campaign?')}</h2>
-        <p>{t('mmmAdvertiseLanding.finalBody', 'No sales call and no contract. Create an account, verify the business and review pricing in the builder.')}</p>
+        <p>{t('mmmAdvertiseLanding.finalBodyBuild', 'No sales call and no contract. Create an account, then build your campaign and see the full price before you pay.')}</p>
         <AdvertiseInAppNote initialNative={nativeApp} />
         <Link className="mmm-btn-primary" href="/advertise/register">{t('mmmAdvertiseLanding.getStarted', 'Get started')}</Link>
       </section>

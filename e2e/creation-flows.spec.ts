@@ -248,7 +248,7 @@ async function signInAdvertiser(context: BrowserContext, email: string) {
 test.describe('advertising inside the app (user-agent token)', () => {
   test.use({ userAgent: APP_UA });
 
-  test('the app shows pricing and sends building and paying to the web', async ({ context, page }) => {
+  test('the app shows pricing and sends building and paying to the web', async ({ browser, context, page }) => {
     await signInAdvertiser(context, `e2e-adweb-app-${RUN}@ihype.org`);
 
     await page.goto('/app/me/advertising/new');
@@ -273,14 +273,48 @@ test.describe('advertising inside the app (user-agent token)', () => {
     await page.goto('/advertise');
     await settled(page, '[data-web-only="landing-note"]');
     await expect(page.locator('.mmm-ad-pricing-table:visible tbody tr')).toHaveCount(4);
+
+    /* The trip to the web signs the browser tab in. The tab keeps its own
+       cookies (SFSafariViewController / a Custom Tab), so it is driven here as
+       a FRESH context with a browser's user agent and no session: it follows
+       the one-time link and lands signed in on the builder, where the checkout
+       is allowed. A second use of the same link is refused. */
+    const handoff = await page.request.post('/api/auth/web-handoff', {
+      data: { next: '/app/me/advertising/new' },
+      headers: { 'user-agent': APP_UA },
+    });
+    expect(handoff.status()).toBe(200);
+    const { url, signedIn } = (await handoff.json()) as { url: string; signedIn: boolean };
+    expect(signedIn).toBe(true);
+    const base = test.info().project.use.baseURL ?? 'http://localhost:3000';
+
+    const tab = await browser.newContext({ baseURL: base });
+    const tabPage = await tab.newPage();
+    await tabPage.goto(url);
+    await expect(tabPage).toHaveURL(/\/app\/me\/advertising\/new(\?|$)/, { timeout: 15_000 });
+    await settled(tabPage, '.adv-compact');
+    await tab.close();
+
+    const replay = await browser.newContext({ baseURL: base });
+    const replayPage = await replay.newPage();
+    await replayPage.goto(url);
+    await expect(replayPage).toHaveURL(/\/login\?error=expired_magic_link/, { timeout: 15_000 });
+    await replay.close();
   });
 });
 
 test.describe('advertising inside an app build that predates the token', () => {
-  test('window.Capacitor alone still swaps the builder for the web page', async ({ context, page }) => {
+  test('the native bridge alone, with no user-agent token, still swaps the builder for the web page', async ({ context, page }) => {
     await signInAdvertiser(context, `e2e-adweb-oldapp-${RUN}@ihype.org`);
-    // What the native bridge injects at document start on both platforms.
+    /* What the iOS native bridge provides at document start: its own
+       `window.Capacitor`, and the message handler behind it. The first alone
+       is not enough: @capacitor/core, loaded by the
+       root layout, rebuilds that object and decides "native" from the BRIDGE
+       it can see (`webkit.messageHandlers.bridge` on iOS, `androidBridge` on
+       Android), which is exactly what a real older build has. The no-op
+       postMessage means a plugin call never resolves, which is harmless here. */
     await context.addInitScript(() => {
+      (window as unknown as { webkit: unknown }).webkit = { messageHandlers: { bridge: { postMessage: () => undefined } } };
       (window as unknown as { Capacitor: unknown }).Capacitor = { isNativePlatform: () => true, getPlatform: () => 'ios' };
     });
 

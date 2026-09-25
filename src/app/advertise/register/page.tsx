@@ -13,8 +13,13 @@ export const metadata: Metadata = {
 
 export default async function AdvertiserRegisterPage() {
   const session = await auth();
+  /* A signed-in member adds the advertiser profile to the account they already
+     have, through the in-shell form — which itself forwards to the dashboard
+     when the profile exists. Sending them to the dashboard directly created
+     nothing: a member who tapped "Create advertiser account" landed on a
+     dashboard for an account that did not exist (row 514). */
   if (session?.user?.id) {
-    redirect('/app/me/advertising');
+    redirect('/app/me/advertising/start');
   }
 
   return <AdvertiserRegisterForm />;

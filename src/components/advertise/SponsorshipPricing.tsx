@@ -3,14 +3,14 @@
 import { useI18n } from '@/components/I18nProvider';
 import {
   AD_SCOPES,
-  AD_SCOPE_DESCRIPTIONS,
   AD_SCOPE_LABELS,
   SPONSORSHIP_MONTHLY_USD,
   SPONSORSHIP_TERMS_MONTHS,
 } from '@/lib/ad-pricing';
 import { REFUND_WINDOW_BUSINESS_DAYS } from '@/lib/ad-settlement-plan';
 import { formatUsd, intlTag } from '@/lib/format-locale';
-import { adScopeDescription, adScopeLabel } from '@/lib/i18n-enum-labels';
+import { adScopeLabel } from '@/lib/i18n-enum-labels';
+import { SCOPE_WEIGHTS } from '@/lib/ad-scope-mix';
 
 /**
  * The price list, read straight from `ad-pricing.ts` so it can never quote a
@@ -35,7 +35,6 @@ export function SponsorshipPricing() {
         <thead>
           <tr>
             <th scope="col">{t('sponsorshipPricing.reachColumn', 'Reach')}</th>
-            <th scope="col">{t('sponsorshipPricing.audienceColumn', 'Who hears it')}</th>
             <th scope="col">{t('sponsorshipPricing.priceColumn', 'Per month')}</th>
           </tr>
         </thead>
@@ -43,7 +42,6 @@ export function SponsorshipPricing() {
           {AD_SCOPES.map((scope) => (
             <tr key={scope}>
               <th scope="row">{adScopeLabel(t, AD_SCOPE_LABELS[scope])}</th>
-              <td>{adScopeDescription(t, AD_SCOPE_DESCRIPTIONS[scope])}</td>
               <td className="mmm-ad-pricing-price">{formatUsd(locale, SPONSORSHIP_MONTHLY_USD[scope] * 100, 0)}</td>
             </tr>
           ))}
@@ -51,7 +49,13 @@ export function SponsorshipPricing() {
       </table>
       <ul className="mmm-ad-pricing-notes">
         <li>{t('sponsorshipPricing.terms', 'Terms of {terms} months, paid in full at checkout.').replace('{terms}', terms)}</li>
-        <li>{t('sponsorshipPricing.shareOfBreaks', 'Every sponsor gets an equal share of the station’s ad breaks. You are never billed per play, so a spot never goes dark part-way through its term.')}</li>
+        {/* What the station really does (src/lib/ad-scope-mix.ts): every break
+            mixes the four reaches, weighted local-most, and sponsors in one
+            reach share its slots. Nothing targets a listener by place — every
+            listener hears the same station — so this list names no audience.
+            The ratio is read from the weights, so the sentence cannot drift. */}
+        <li>{t('sponsorshipPricing.breakMix', 'Every ad break mixes all four reaches, weighted toward local: about {ratio} local slots for every global one. Sponsors in the same reach share its slots equally.').replace('{ratio}', String(SCOPE_WEIGHTS.local / SCOPE_WEIGHTS.global))}</li>
+        <li>{t('sponsorshipPricing.neverDark', 'You are never billed per play, so a spot never goes dark part-way through its term.')}</li>
         <li>{t('sponsorshipPricing.refund', 'Cancel early and the days you have not used are refunded to your card, usually within {days} business days.').replace('{days}', String(REFUND_WINDOW_BUSINESS_DAYS))}</li>
         <li>{t('sponsorshipPricing.screening', 'Nothing is charged until your spot passes screening. iHYPE absorbs the card-processing fee.')}</li>
       </ul>

@@ -3951,7 +3951,7 @@ input.mmm-row-title { min-height: 44px; }
    empty state and the in-app "build it on the web" page all draw it, so it
    is one block. Spacing reads the published scale. */
 .mmm-ad-pricing { display: grid; gap: var(--space-4); margin-top: var(--space-6); }
-.mmm-ad-pricing-table { width: 100%; border-collapse: collapse; border: 1px solid var(--hair-100); border-radius: var(--radius-lg); overflow: hidden; background: var(--bg-2); font-size: 0.9375rem; }
+.mmm-ad-pricing-table { width: 100%; border-collapse: separate; border-spacing: 0; border: 1px solid var(--hair-100); border-radius: var(--radius-lg); overflow: hidden; background: var(--bg-2); font-size: 0.9375rem; }
 .mmm-ad-pricing-table th, .mmm-ad-pricing-table td { padding: var(--space-3) var(--space-4); border-top: 1px solid var(--hair-100); text-align: left; }
 .mmm-ad-pricing-table thead th { border-top: 0; color: var(--ink-3); font-weight: 600; }
 .mmm-ad-pricing-table tbody th { color: var(--ink); font-weight: 700; }

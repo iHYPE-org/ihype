@@ -78,21 +78,29 @@ describe('every way to start an ad checkout is closed inside the app', () => {
       .filter((file) => /\bMmmCampaignBuilderPage\b/.test(strip(readFileSync(file, 'utf8'))));
     expect(renderers).toEqual([join('src', 'components', 'advertise', 'CampaignBuilderGate.tsx')]);
 
-    const page = readFileSync('src/app/app/me/advertising/new/page.tsx', 'utf8');
+    const page = strip(readFileSync('src/app/app/me/advertising/new/page.tsx', 'utf8'));
     expect(page).toMatch(/<CampaignBuilderGate initialNative=\{await isNativeAppRequest\(\)\} \/>/);
   });
 
   it('"Pay now" on an unpaid campaign is the web trip inside the app', () => {
     const source = strip(readFileSync('src/components/CampaignCancelButton.tsx', 'utf8'));
     const gate = source.indexOf('{inApp ? (');
-    const retry = source.indexOf("act('retry-checkout')");
+    const otherwise = source.indexOf(') : (', gate);
     expect(gate).toBeGreaterThan(-1);
-    expect(retry).toBeGreaterThan(gate);
+    expect(otherwise).toBeGreaterThan(gate);
+    // The app branch opens the web and cannot start a checkout; the browser
+    // branch is the only one that can. Inverting the two fails here.
+    const appBranch = source.slice(gate, otherwise);
+    const browserBranch = source.slice(otherwise, otherwise + 600);
+    expect(appBranch).toContain('openOnWeb(WEB_ADVERTISING_PATH');
+    expect(appBranch).not.toContain('retry-checkout');
+    expect(browserBranch).toContain("act('retry-checkout')");
     expect(source).toMatch(/useNativeApp\(nativeApp\)/);
   });
 
   it('the dashboard hands both controls the server reading of the user agent', () => {
-    const page = readFileSync('src/app/app/me/advertising/page.tsx', 'utf8');
+    // Stripped, so a comment restating the wiring cannot satisfy the guard.
+    const page = strip(readFileSync('src/app/app/me/advertising/page.tsx', 'utf8'));
     expect(page).toMatch(/const nativeApp = await isNativeAppRequest\(\);/);
     expect(page).toMatch(/<NewCampaignAction initialNative=\{nativeApp\} \/>/);
     expect(page).toMatch(/nativeApp=\{nativeApp\}/);
