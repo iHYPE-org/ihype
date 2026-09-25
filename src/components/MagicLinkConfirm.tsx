@@ -25,7 +25,17 @@ import { useI18n } from '@/components/I18nProvider';
  * two submissions of a single-use token would race: the first spends it and
  * the second lands on "expired".
  */
-export function MagicLinkConfirm({ token, callbackUrl }: { token: string; callbackUrl?: string }) {
+export function MagicLinkConfirm({
+  token,
+  callbackUrl,
+  autoSubmit,
+}: {
+  token: string;
+  callbackUrl?: string;
+  /* Only in the browser that asked for this link — see magic-link-pending.ts
+     for the login-CSRF an unconditional submit made of this page. */
+  autoSubmit: boolean;
+}) {
   const { t } = useI18n();
   const formRef = useRef<HTMLFormElement>(null);
   const submitted = useRef(false);
@@ -35,18 +45,20 @@ export function MagicLinkConfirm({ token, callbackUrl }: { token: string; callba
   const [autoSubmitting, setAutoSubmitting] = useState(false);
 
   useEffect(() => {
-    if (submitted.current) return;
+    if (!autoSubmit || submitted.current) return;
     submitted.current = true;
     setAutoSubmitting(true);
     formRef.current?.requestSubmit();
-  }, []);
+  }, [autoSubmit]);
 
   return (
     <AuthCardShell
       mode="signin"
       eyebrow={t('auth.confirm.eyebrow', 'Sign in')}
       title={t('auth.confirm.title', 'Almost there')}
-      subtitle={t('auth.confirm.subtitle', 'One last step to finish signing in.')}
+      subtitle={autoSubmit
+        ? t('auth.confirm.subtitle', 'One last step to finish signing in.')
+        : t('auth.confirm.subtitleElsewhere', 'Continue only if you asked for this sign-in link. A link someone else sent you signs you in to their account.')}
     >
       <form ref={formRef} method="POST" action="/api/auth/magic" onSubmit={() => setAutoSubmitting(true)}>
         <input type="hidden" name="token" value={token} />

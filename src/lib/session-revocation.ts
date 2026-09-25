@@ -24,8 +24,22 @@ import { log } from '@/lib/logger';
  * behaviour for "sign out everywhere" and the wrong behaviour for "sign out",
  * and the two should not be the same button.
  *
- * Every token already carries a `jti` (`buildAuthSessionCookie` mints one), so
- * a tombstone under that id revokes exactly one device. The record expires
+ * Every session carries a `sid` (`buildAuthSessionCookie` mints one), so a
+ * tombstone under that id revokes exactly one device.
+ *
+ * ## Why `sid` and not `jti` (2026-09-25)
+ *
+ * This used to tombstone the token's `jti`, and that revoked almost nothing:
+ * `@auth/core`'s `encode()` calls `setJti(crypto.randomUUID())` EVERY time it
+ * writes the cookie, and it rewrites the cookie on every session read
+ * (`/api/auth/session`, and each refresh after it). So the browser that pressed
+ * sign-out presented the newest `jti`, the copy somebody took an hour earlier
+ * carried an older one, and the tombstone matched only the cookie that was
+ * being deleted anyway. `sid` is an ordinary payload claim, which `encode()`
+ * carries through a re-encode untouched, so every refresh of one sign-in keeps
+ * it — the original and any copy of it included. A token minted before `sid`
+ * existed falls back to its `jti`, which is the old behaviour and expires on its
+ * own within twelve hours. The record expires
  * when the token it revokes would have expired anyway: nothing accumulates.
  *
  * ## Direction of failure
@@ -40,6 +54,19 @@ import { log } from '@/lib/logger';
  */
 
 const TOMBSTONE_PREFIX = 'revoked_session:';
+
+/**
+ * The id a sign-out revokes and a request is checked against: the stable
+ * `sid`, else (a token from before `sid`) the `jti`. Both sides MUST read it
+ * through here, or sign-out writes one name and `auth()` checks another.
+ */
+export function sessionRevocationId(claims: unknown): string | null {
+  if (!claims || typeof claims !== 'object') return null;
+  const { sid, jti } = claims as { sid?: unknown; jti?: unknown };
+  if (typeof sid === 'string' && sid) return sid;
+  if (typeof jti === 'string' && jti) return jti;
+  return null;
+}
 
 /** Guard against a caller handing us something that is not a jti. */
 function tombstoneKey(jti: string) {

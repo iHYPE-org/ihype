@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import { refuseCredentialChangeWhileImpersonating } from '@/lib/impersonation-guard';
 import { db } from '@/lib/db';
 import { getPasskeyRegistrationOptions, verifyPasskeyRegistration } from '@/lib/passkey';
 import { claimPasskeyChallenge } from '@/lib/passkey-challenge';
@@ -13,6 +14,8 @@ const isProduction = process.env.NODE_ENV === 'production';
 export async function GET(request: Request) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const impersonating = refuseCredentialChangeWhileImpersonating(session);
+  if (impersonating) return impersonating;
 
   const clientAddress = readClientAddress(request);
         // Longer DO deadline than the default. This bucket is keyed per client
@@ -45,6 +48,8 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const impersonating = refuseCredentialChangeWhileImpersonating(session);
+  if (impersonating) return impersonating;
 
   const clientAddress = readClientAddress(request);
   const rl = await consumeRateLimit(`pk-register:${clientAddress}`, { limit: 5, windowMs: 5 * 60 * 1000, timeoutMs: 2500 });

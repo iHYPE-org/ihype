@@ -376,6 +376,7 @@
   "auth.confirm.action": "Continuar",
   "auth.confirm.eyebrow": "Entrar",
   "auth.confirm.subtitle": "Um último passo para concluir o login.",
+  "auth.confirm.subtitleElsewhere": "Continue apenas se você pediu este link de acesso. Um link enviado por outra pessoa faz você entrar na conta dela.",
   "auth.confirm.title": "Quase lá",
   "auth.confirm.working": "Entrando…",
   "authLogin.checkEmail": "Verifique seu e-mail",

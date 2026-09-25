@@ -5,8 +5,19 @@ import { sendMagicLinkEmail } from '@/lib/magic-link';
 import { isAllowedAdminEmail } from '@/lib/admin-allowlist';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
+import { useSecureAuthCookies } from '@/lib/auth-cookie';
+import { magicLinkPendingCookie } from '@/lib/magic-link-pending';
 
+/* Every 200 marks this browser as the one that asked, whether or not an account
+   exists (magic-link-pending.ts) — so the marker reveals nothing an `ok:true`
+   does not. The confirm page auto-submits only where it is present. */
 export async function POST(request: Request) {
+  const response = await requestMagicLink(request);
+  if (response.status === 200) response.cookies.set(magicLinkPendingCookie(useSecureAuthCookies()));
+  return response;
+}
+
+async function requestMagicLink(request: Request) {
   try {
     const clientAddress = readClientAddress(request);
     // Longer DO deadline than the default. This bucket is keyed per client

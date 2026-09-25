@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { decode } from 'next-auth/jwt';
 import { getAuthSessionCookieName, useSecureAuthCookies } from '@/lib/auth-cookie';
 import { readSigningSecrets } from '@/lib/signing-secrets';
-import { revokeSessionJti } from '@/lib/session-revocation';
+import { revokeSessionJti, sessionRevocationId } from '@/lib/session-revocation';
 import { log } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
@@ -52,12 +52,12 @@ async function signOut(request: NextRequest) {
   /* Expiring the cookie only ends the session in THIS browser. The token is a
      self-contained signed JWT good for twelve hours, so a copy taken before
      the member pressed sign-out kept working — which matters most in exactly
-     the situation that makes someone press it. Revoking the token's own `jti`
-     ends this one device's session without touching the member's others.
+     the situation that makes someone press it. Revoking the sign-in's `sid` (stable
+     across Auth.js's re-encodes, unlike `jti`) ends this one device's session without touching the member's others.
      (Security sweep follow-up, 2026-09-02.) */
   const claims = await readSessionClaims(request, name);
   await revokeSessionJti(
-    typeof claims?.jti === 'string' ? claims.jti : null,
+    sessionRevocationId(claims),
     typeof claims?.exp === 'number' ? claims.exp : null,
   );
 

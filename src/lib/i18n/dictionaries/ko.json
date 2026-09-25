@@ -376,6 +376,7 @@
   "auth.confirm.action": "계속",
   "auth.confirm.eyebrow": "로그인",
   "auth.confirm.subtitle": "로그인을 완료하려면 한 단계만 남았습니다.",
+  "auth.confirm.subtitleElsewhere": "이 로그인 링크를 직접 요청한 경우에만 계속하세요. 다른 사람이 보낸 링크는 그 사람의 계정으로 로그인됩니다.",
   "auth.confirm.title": "거의 다 됐어요",
   "auth.confirm.working": "로그인 중…",
   "authLogin.checkEmail": "이메일을 확인하세요",

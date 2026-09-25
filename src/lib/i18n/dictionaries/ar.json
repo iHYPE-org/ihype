@@ -376,6 +376,7 @@
   "auth.confirm.action": "متابعة",
   "auth.confirm.eyebrow": "تسجيل الدخول",
   "auth.confirm.subtitle": "خطوة أخيرة لإكمال تسجيل الدخول.",
+  "auth.confirm.subtitleElsewhere": "تابع فقط إذا طلبت رابط تسجيل الدخول هذا بنفسك. الرابط الذي يرسله لك شخص آخر يسجّل دخولك إلى حسابه.",
   "auth.confirm.title": "أوشكت على الانتهاء",
   "auth.confirm.working": "جارٍ تسجيل الدخول…",
   "authLogin.checkEmail": "تحقق من بريدك الإلكتروني",

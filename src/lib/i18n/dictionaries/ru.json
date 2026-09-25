@@ -376,6 +376,7 @@
   "auth.confirm.action": "Продолжить",
   "auth.confirm.eyebrow": "Вход",
   "auth.confirm.subtitle": "Ещё один шаг, чтобы завершить вход.",
+  "auth.confirm.subtitleElsewhere": "Продолжайте, только если вы сами запросили эту ссылку для входа. Ссылка, присланная кем-то другим, выполнит вход в его аккаунт.",
   "auth.confirm.title": "Почти готово",
   "auth.confirm.working": "Выполняется вход…",
   "authLogin.checkEmail": "Проверьте почту",

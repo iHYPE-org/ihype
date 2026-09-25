@@ -376,6 +376,7 @@
   "auth.confirm.action": "Weiter",
   "auth.confirm.eyebrow": "Anmelden",
   "auth.confirm.subtitle": "Ein letzter Schritt, um die Anmeldung abzuschließen.",
+  "auth.confirm.subtitleElsewhere": "Fahre nur fort, wenn du diesen Anmeldelink angefordert hast. Ein Link, den dir jemand anderes geschickt hat, meldet dich in dessen Konto an.",
   "auth.confirm.title": "Fast geschafft",
   "auth.confirm.working": "Sie werden angemeldet…",
   "authLogin.checkEmail": "Überprüfe deine E-Mail",

@@ -376,6 +376,7 @@
   "auth.confirm.action": "Continuar",
   "auth.confirm.eyebrow": "Iniciar sesión",
   "auth.confirm.subtitle": "Un último paso para completar el inicio de sesión.",
+  "auth.confirm.subtitleElsewhere": "Continúa solo si pediste este enlace de inicio de sesión. Un enlace que te envió otra persona te conecta a su cuenta.",
   "auth.confirm.title": "Ya casi está",
   "auth.confirm.working": "Iniciando sesión…",
   "authLogin.checkEmail": "Revisa tu correo",

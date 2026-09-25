@@ -16,7 +16,7 @@ import { log } from '@/lib/logger';
 import { readImpersonatorId } from '@/lib/impersonation';
 import { isAllowedAdminEmail } from '@/lib/admin-allowlist';
 import { readRuntimeEnv } from '@/lib/runtime-env';
-import { isSessionRevoked } from '@/lib/session-revocation';
+import { isSessionRevoked, sessionRevocationId } from '@/lib/session-revocation';
 import { readSessionUser } from '@/lib/session-user-cache';
 
 /** The Cloudflare request context, the same object `db.ts` keys its per-request
@@ -62,6 +62,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
+        /* A sign-in through Auth.js's own flow: give it the stable id a
+           hand-built session carries (session-revocation.ts). */
+        (token as { sid?: string }).sid ??= crypto.randomUUID();
         token.role = (user as { role?: string }).role;
         token.emailVerified = (user as { emailVerified?: Date | null }).emailVerified ?? null;
         try {
@@ -84,7 +87,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
            questions asked of it. Unreadable KV answers "not revoked" — see
            src/lib/session-revocation.ts for why this one control fails open
            where the version check below fails closed. */
-        if (await isSessionRevoked((token as { jti?: unknown }).jti)) return null;
+        if (await isSessionRevoked(sessionRevocationId(token))) return null;
+        /* A token from before `sid` existed: pin its current `jti` as the sid,
+           so the refreshes after this one keep a name sign-out can revoke
+           (Auth.js replaces `jti` on every re-encode). */
+        if (typeof (token as { sid?: unknown }).sid !== 'string') {
+          const pinned = sessionRevocationId(token);
+          if (pinned) (token as { sid?: string }).sid = pinned;
+        }
 
         // Check security version on every full auth() call so suspensions take
         // effect. Not checked in middleware (no DB there). Memoised per isolate

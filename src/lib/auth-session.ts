@@ -71,6 +71,10 @@ export async function buildAuthSessionCookie(user: AuthSessionUser, impersonator
       iat: now,
       exp: now + AUTH_SESSION_MAX_AGE_SECONDS,
       jti: crypto.randomUUID(),
+      /* Stable across every re-encode of this sign-in, unlike `jti`, which
+         Auth.js replaces each time it rewrites the cookie. Sign-out revokes
+         this (src/lib/session-revocation.ts). */
+      sid: crypto.randomUUID(),
       ...(impersonatorId ? { [IMPERSONATOR_CLAIM]: impersonatorId } : {}),
     },
     secret,

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import { refuseCredentialChangeWhileImpersonating } from '@/lib/impersonation-guard';
 import { db } from '@/lib/db';
 import { log } from '@/lib/logger';
 
@@ -9,6 +10,8 @@ export async function DELETE(_request: Request, { params }: Ctx) {
   try {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const impersonating = refuseCredentialChangeWhileImpersonating(session);
+    if (impersonating) return impersonating;
 
     const { id } = await params;
     const passkey = await db.passkey.findUnique({ where: { id }, select: { userId: true } });
