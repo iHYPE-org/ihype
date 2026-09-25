@@ -1378,7 +1378,7 @@ test.describe('ME with a real profile', () => {
      Asserting ONE visible card first is both the settle and a real check: a
      genuine double render is two cards and fails here, so the `.first()` below
      can no longer absorb one. */
-  test('the HYPE link card renders and states that promoting needs no role', async ({ page }) => {
+  test('the HYPE link card renders and states that sharing needs no role', async ({ page }) => {
     await page.goto('/app/me');
     await expect(page.locator('.mmm-me-section:visible')).toHaveCount(1);
     /* Same streaming anchor. The count assertion is also the genuine-double
@@ -1390,8 +1390,8 @@ test.describe('ME with a real profile', () => {
        tax on all of them. The LINK stays visible; only the explanation folds.
        Asserting it after opening keeps the claim pinned without pinning the
        340px card back into place. */
-    await page.getByRole('group').filter({ hasText: 'How this earns' }).locator('summary').first().click();
-    await expect(page.getByText(/Promoting needs no role and no signup/i).first()).toBeVisible();
+    await page.getByRole('group').filter({ hasText: 'How this works' }).locator('summary').first().click();
+    await expect(page.getByText(/Sharing needs no role and no signup/i).first()).toBeVisible();
   });
 
   // The fan page creator was removed; Artist and Venue keep theirs. The role
