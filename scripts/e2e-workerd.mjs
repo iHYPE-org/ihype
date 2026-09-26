@@ -112,6 +112,8 @@ const DEFAULT_TEST_SHARDS = [
   ['e2e/mmm-shell.spec.ts'],
   ['e2e/ticket-transfer.spec.ts', 'e2e/offline-ticket.spec.ts'],
   ['e2e/mmm-panes.spec.ts'],
+  // The quick-start guide (row 526): the one dialog a new member sees first.
+  ['e2e/getting-started.spec.ts'],
   ['e2e/responsive.spec.ts'],
   ['e2e/public-smoke.spec.ts'],
   // ADDED 2026-09-15. These six existed and ran NOWHERE — not here, not in
