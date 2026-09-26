@@ -7,6 +7,7 @@ import { MmmFullPlayer } from '@/components/mmm/MmmFullPlayer';
 import { MmmSectionStrip } from '@/components/mmm/MmmSectionStrip';
 import { MmmMap, type MapLayer, type MapSheetTarget } from '@/components/mmm/MmmMap';
 import { MmmSheet } from '@/components/mmm/MmmSheet';
+import { MmmGettingStarted } from '@/components/mmm/MmmGettingStarted';
 import { MmmPlayIntentProvider } from '@/components/mmm/MmmPlayIntent';
 import { MmmStationsProvider } from '@/components/mmm/MmmStations';
 import { useMediaPlayer, useMediaPlayerClock } from '@/components/GlobalMediaPlayer';
@@ -473,6 +474,10 @@ export function MmmShell({
         )}
 
         {sheet && mapActive && <MmmSheet onClose={() => setSheet(null)} target={sheet} />}
+
+        {/* The quick-start guide: once per browser session until the member
+            ticks "Don't show this again"; `?guide=1` reopens it. */}
+        <MmmGettingStarted />
 
         {/* Every control the retired pill and mini-player carried — seek,
             volume, the heart, HYPE, the queue and the played list — lives here,

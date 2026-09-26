@@ -62,6 +62,10 @@ export const ME_PANEL_ROWS: Record<MePanelId, readonly MePanelRow[]> = {
        once, and this is the row someone opens Info to find when something has
        actually gone wrong. */
     { label: 'Support', detail: 'Get help, report a problem, or check a request you filed', href: '/app/me/support/tickets' },
+    /* The quick-start guide (`MmmGettingStarted`). It opens by itself once
+       per browser session until the member ticks "Don't show this again";
+       this row is the way back to it afterwards. */
+    { label: 'How to use iHYPE', detail: 'The quick-start steps for your account', href: '/app/me?guide=1' },
     { label: 'The charter', detail: '75% artist · 25% venue after Stripe’s fee · $0 iHYPE', href: '/app/me/info/charter' },
     /* The roadmap board. `/api/feedback` and `CommunityVoteBoard` were both
        real and the board was mounted nowhere, so nothing in the product could
