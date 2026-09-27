@@ -65,7 +65,7 @@ export function MoneyTermsDisclosure({
 
       <h4 className="money-terms-subtitle">{t('moneyTerms.agreementTitle', 'The split agreement')}</h4>
       <ul className="money-terms-list">
-        <li>{t('moneyTerms.agreementOffer', 'For each ticketed show the venue sends every act a lineup offer: a percentage of the ticket receipts, and optionally a guarantee and capped deductions. Sending it is the venue’s signature; accepting it is the act’s. Tickets go on sale only when every act has signed.')}</li>
+        <li>{t('moneyTerms.agreementOfferPerTicket', 'For each ticketed show the venue sends every act a lineup offer: the ticket price, the act’s percentage and the exact amount of each ticket the act receives, and optionally a guarantee and capped deductions. Sending it is the venue’s signature; accepting it is the act’s. No ticket is sold until every act has signed.')}</li>
         <li>{t('moneyTerms.agreementNet', 'The act’s share is its percentage of the ticket receipts after sales tax, refunds and chargebacks the venue lost — and after nothing else unless the offer lists it with a cap. Tickets sold at the door count too.')}</li>
         <li>{t('moneyTerms.agreementTrust', 'The act’s share is held by the venue in trust for the act, and the venue cannot subtract other amounts it says the act owes it.')}</li>
         <li>{t('moneyTerms.agreementPdf', 'Both sides get the signed agreement as a PDF by email and can download it again at any time.')}</li>
@@ -81,8 +81,9 @@ export function MoneyTermsDisclosure({
       <h4 className="money-terms-subtitle">{t('moneyTerms.refundsTitle', 'Refunds, cancellations and chargebacks')}</h4>
       <ul className="money-terms-list">
         <li>{t('moneyTerms.refundFinal', 'Ticket sales are final. A buyer is refunded only if the show is cancelled.')}</li>
-        <li>{t('moneyTerms.refundCancelVenue', 'Cancelling a show refunds every buyer in full, except tickets already scanned at the door, from the venue’s Stripe account. Stripe does not return its card fee on a refund.')}</li>
-        <li>{t('moneyTerms.refundCancelArtistOwed', 'If the venue cancels for a reason within its control, it still owes each act the greater of any guarantee and half the share the tickets sold so far would have earned. If the act cancels, nothing is owed either way.')}</li>
+        <li>{t('moneyTerms.refundCancelFees', 'Cancelling a show refunds every buyer in full, except tickets already scanned at the door, from the venue’s Stripe account. Stripe keeps its card fee on each refunded charge.')}</li>
+        <li>{t('moneyTerms.refundCancelVenuePays', 'If the venue cancels, the venue pays those Stripe fees and still owes each act the greater of any guarantee and half the share the tickets sold so far would have earned.')}</li>
+        <li>{t('moneyTerms.refundCancelActPays', 'If an act cancels or does not show up, that act is owed nothing and pays the venue back the Stripe fees on the refunded tickets, within 30 days of the venue asking with the Stripe record.')}</li>
         <li>{t('moneyTerms.refundChargebackVenue', 'If a buyer disputes a charge with their bank, Stripe takes the disputed amount plus its dispute fee from the venue’s Stripe account. The venue answers the dispute in its own Stripe dashboard.')}</li>
       </ul>
 

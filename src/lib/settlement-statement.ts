@@ -13,8 +13,10 @@ import {
   PAYMENT_AUTO_CONFIRM_DAYS,
   cancellationAmount,
   computeArtistShare,
+  refundFeesLostCents,
   settlementDateFor,
 } from '@/lib/split-agreement';
+import { stripeCutOf } from '@/lib/stripe-fees';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -34,6 +36,9 @@ export function summarizeOrders(orders: StatementOrder[]) {
   let grossCents = 0;
   let taxCents = 0;
   let refundsCents = 0;
+  /* Each refunded CHARGE (face value plus tax), so the fee Stripe kept on it
+     can be estimated (Agreement 7.3 and 7.4). */
+  const refundedChargesCents: number[] = [];
   for (const o of orders) {
     const wasPaid = o.status === 'CAPTURED' || Boolean(o.refundedAt) || (o.status === 'VOID' && Boolean(o.chargedAt));
     if (!wasPaid) continue;
@@ -46,9 +51,10 @@ export function summarizeOrders(orders: StatementOrder[]) {
          a refunded ticket is already in the tax line, so it is not taken
          twice. */
       refundsCents += o.subtotalCents;
+      refundedChargesCents.push(o.subtotalCents + o.totalTaxCents);
     }
   }
-  return { ticketsSold, ticketsRefunded, grossCents, taxCents, refundsCents };
+  return { ticketsSold, ticketsRefunded, grossCents, taxCents, refundsCents, refundedChargesCents };
 }
 
 export type PaymentState =
@@ -97,29 +103,41 @@ export type StatementLine = {
   deductionsAppliedCents: number;
   bySplitCents: number;
   artistShareCents: number;
-  /** Section 7.3 — owed only if the VENUE cancelled for a reason outside 7.5. */
+  /** Section 7.3 — what the venue owes this act on a cancelled show; 0 when this act caused it; null when not cancelled. */
   venueCancellationCents: number | null;
+  /** Section 7.4 — the refund fees this act reimburses the venue, when this act cancelled or did not appear; null otherwise. */
+  artistOwesRefundFeesCents: number | null;
 };
+
+/**
+ * Who a cancelled show's refund fees fall on. Section 7.3: the venue, when it
+ * cancelled. Section 7.4: the act that cancelled or did not appear.
+ */
+export type CancellationCause = { cancelled: false } | { cancelled: true; byActProfileId: string | null };
 
 export function buildStatementLines(input: {
   orders: ReturnType<typeof summarizeOrders>;
   offPlatformCents: number;
   chargebacksLostCents: number;
-  cancelled: boolean;
+  cancellation: CancellationCause;
   agreements: {
     id: string;
+    artistProfileId: string;
     artistName: string;
     splitPercent: number;
     guaranteeCents: number | null;
     deductionCapCents: number;
     deductionsAppliedCents: number;
   }[];
-}): { netCents: number; grossCents: number; lines: StatementLine[] } {
+}): { netCents: number; grossCents: number; refundFeesCents: number; lines: StatementLine[] } {
   const grossCents = input.orders.grossCents + input.offPlatformCents;
   /* The show-level Net Ticket Receipts, before any one act's approved
      deductions (those are per agreement, so each line applies its own). */
   const netCents = Math.max(0, grossCents - input.orders.taxCents - input.orders.refundsCents - input.chargebacksLostCents);
+  const { cancellation } = input;
+  const refundFeesCents = cancellation.cancelled ? refundFeesLostCents(input.orders.refundedChargesCents, stripeCutOf) : 0;
   const lines = input.agreements.map((a) => {
+    const causedByThisAct = cancellation.cancelled && cancellation.byActProfileId === a.artistProfileId;
     // Approved deductions are the venue's to apply, never above the cap the act signed.
     const applied = Math.min(Math.max(0, a.deductionsAppliedCents), a.deductionCapCents);
     const share = computeArtistShare({
@@ -141,15 +159,18 @@ export function buildStatementLines(input: {
       deductionsAppliedCents: applied,
       bySplitCents: share.bySplitCents,
       artistShareCents: share.artistShareCents,
-      venueCancellationCents: input.cancelled
-        ? cancellationAmount({
-          grossAtCancellationCents: input.orders.grossCents + input.offPlatformCents,
-          taxCents: input.orders.taxCents,
-          splitPercent: a.splitPercent,
-          guaranteeCents: a.guaranteeCents,
-        })
-        : null,
+      venueCancellationCents: !cancellation.cancelled
+        ? null
+        : causedByThisAct
+          ? 0
+          : cancellationAmount({
+            grossAtCancellationCents: input.orders.grossCents + input.offPlatformCents,
+            taxCents: input.orders.taxCents,
+            splitPercent: a.splitPercent,
+            guaranteeCents: a.guaranteeCents,
+          }),
+      artistOwesRefundFeesCents: causedByThisAct ? refundFeesCents : null,
     };
   });
-  return { netCents, grossCents, lines };
+  return { netCents, grossCents, refundFeesCents, lines };
 }

@@ -70,7 +70,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ sh
     where: { id: showId },
     select: {
       id: true, slug: true, title: true, status: true, startsAt: true, timeZone: true,
-      isTicketed: true, ticketingOpensAt: true,
+      isTicketed: true, ticketPriceCents: true, ticketingOpensAt: true,
       venueProfile: { select: { id: true, ownerId: true, name: true, addressLine1: true, city: true, stateRegion: true, postalCode: true } },
     },
   });
@@ -102,7 +102,16 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ sh
   const { version, text, hash } = await renderAndHashAgreement(termsFor({
     show, venue, artistName: myLineupSlot.profile.name, slot: myLineupSlot,
   }));
-  if (hash !== myLineupSlot.agreementHash || hash !== body.agreementHash) {
+  /* The venue signed a DIFFERENT text: the offer predates the current
+     agreement version (or its terms were rendered differently). Reloading
+     cannot fix that — only the venue sending the offer again can, so say so. */
+  if (hash !== myLineupSlot.agreementHash) {
+    return NextResponse.json(
+      { error: 'The split agreement was updated after the venue sent this offer. The venue needs to send the offer again before you can sign it.', code: 'OFFER_OUTDATED' },
+      { status: 409 },
+    );
+  }
+  if (hash !== body.agreementHash) {
     return NextResponse.json(
       { error: 'The agreement text changed after you read it. Reload the page and read it again before signing.', code: 'AGREEMENT_CHANGED' },
       { status: 409 },

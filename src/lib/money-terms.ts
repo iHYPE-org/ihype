@@ -26,8 +26,11 @@ import {
 /** Bump when any sentence the disclosure states changes meaning.
  *  2026-09-27.1: the venue keeps every sale and pays each act under a signed
  *  Show Revenue Split Agreement (DESIGN_SYNC row 528); nothing passes through
- *  iHYPE. */
-export const MONEY_TERMS_VERSION = '2026-09-27.1';
+ *  iHYPE.
+ *  2026-09-27.2: the lineup offer states the exact amount per ticket, and the
+ *  Stripe fees on a cancellation's refunds fall on whoever cancelled — the
+ *  venue (7.3), or an act that cancels or does not show up (7.4). */
+export const MONEY_TERMS_VERSION = '2026-09-27.2';
 
 export type MoneyTermsRole = 'ARTIST' | 'VENUE';
 

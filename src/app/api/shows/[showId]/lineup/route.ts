@@ -73,6 +73,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ sho
     where: { id: showId },
     select: {
       id: true, slug: true, title: true, status: true, startsAt: true, timeZone: true,
+      isTicketed: true, ticketPriceCents: true,
       venueProfile: {
         select: {
           id: true, ownerId: true, name: true, paymentReportHoldAt: true,

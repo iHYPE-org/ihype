@@ -33,6 +33,7 @@ export default async function CancelEventPage({ params }: { params: Promise<{ sl
       id: true, slug: true, title: true, status: true, startsAt: true, timeZone: true, ticketsSoldCount: true, creatorId: true,
       venueProfile: { select: { slug: true, name: true, ownerId: true } },
       headlinerProfile: { select: { slug: true, ownerId: true, type: true } },
+      lineupSlots: { select: { profileId: true, profile: { select: { name: true } } }, orderBy: [{ isHeadliner: 'desc' }, { splitPercent: 'desc' }] },
     },
   });
   if (!show) return notFound();
@@ -54,6 +55,7 @@ export default async function CancelEventPage({ params }: { params: Promise<{ sl
 
   return (
     <EventCancellationFlow
+      acts={show.lineupSlots.map((s) => ({ profileId: s.profileId, name: s.profile.name }))}
       dashboardHref={dashboardHref}
       showId={show.id}
       showSlug={show.slug}

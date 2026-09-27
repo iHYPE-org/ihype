@@ -20,6 +20,17 @@
  * signed keep their stored text, and new ones carry the new version. The
  * wording is counsel-approved; do not edit it for style.
  *
+ * AMENDED 2026-09-27 (version .2, owner: "No tickets are to be sold without a
+ * completed agreement between venue and artist(s) with exact split per
+ * ticket, cancellation terms (venue is responsible for lost ticket sale fees
+ * to Stripe, Artist responsible if they don't show up)"): the Lineup Offer
+ * states the ticket price and the act's exact amount per ticket, 7.3 puts
+ * every fee Stripe keeps on a venue cancellation's refunds on the venue, and
+ * 7.4 makes an act that cancels or does not appear reimburse those fees. The
+ * medical carve-out 7.4 carried in version .1 is gone with it; 7.5 (events
+ * outside either party's control) still applies to both. These are the
+ * owner's terms, not counsel's; counsel has not reviewed version .2.
+ *
  * Section 12 of the drafting document (the acceptance record) is deliberately
  * NOT part of the signed text: it describes what the app stores, not a term
  * between the parties. `ShowSplitAgreement` is that record.
@@ -27,7 +38,7 @@
  * Pure: no database — imported by routes, the page and the tests.
  */
 
-export const SPLIT_AGREEMENT_VERSION = '2026-09-27.1';
+export const SPLIT_AGREEMENT_VERSION = '2026-09-27.2';
 
 /** The Settlement Date is this many days after the Show (Section 2). */
 export const SETTLEMENT_DAYS_AFTER_SHOW = 7;
@@ -52,6 +63,8 @@ export type SplitAgreementTerms = {
   venueName: string;
   venueAddress: string | null;
   artistName: string;
+  /** Face value of one ticket, in cents, before tax. Null when the Show sells no tickets through iHYPE. */
+  ticketPriceCents: number | null;
   splitPercent: number;
   guaranteeCents: number | null;
   approvedDeductions: ApprovedDeduction[];
@@ -115,6 +128,16 @@ function plainUsd(cents: number): string {
   return `$${whole}.${String(cents % 100).padStart(2, '0')}`;
 }
 
+/**
+ * What the Artist receives from each ticket sold at the stated price: the
+ * Split Percentage of the face value (tax is never shared), rounded to the
+ * nearest cent with a half cent going to the Artist (Section 4.3). This is
+ * the "exact split per ticket" the Lineup Offer states (owner, 2026-09-27).
+ */
+export function artistCentsPerTicket(ticketPriceCents: number, splitPercent: number): number {
+  return Math.round((ticketPriceCents * splitPercent) / 100 + 1e-9);
+}
+
 /** Refuses terms no signer could agree to, before any text is shown. */
 export function validateAgreementTerms(terms: SplitAgreementTerms): string | null {
   if (!Number.isInteger(terms.splitPercent) || terms.splitPercent < 1 || terms.splitPercent > 100) {
@@ -131,6 +154,9 @@ export function validateAgreementTerms(terms: SplitAgreementTerms): string | nul
     if (!Number.isInteger(d.capCents) || d.capCents <= 0) return 'Each approved deduction needs a fixed amount or cap.';
   }
   if (terms.guarantorName !== null && !terms.guarantorName.trim()) return 'Name the guarantor, or leave the guaranty off.';
+  if (terms.ticketPriceCents !== null && (!Number.isInteger(terms.ticketPriceCents) || terms.ticketPriceCents <= 0)) {
+    return 'The ticket price must be a positive amount.';
+  }
   return null;
 }
 
@@ -153,6 +179,12 @@ export function renderSplitAgreement(terms: SplitAgreementTerms): string {
     `Venue: ${terms.venueName}${terms.venueAddress ? `, ${terms.venueAddress}` : ''}`,
     `Artist: ${terms.artistName}`,
     `Split Percentage: ${terms.splitPercent}% of Net Ticket Receipts`,
+    ...(terms.ticketPriceCents !== null
+      ? [
+        `Ticket price: ${plainUsd(terms.ticketPriceCents)} per ticket, plus sales tax`,
+        `Artist Share of each ticket sold: ${plainUsd(artistCentsPerTicket(terms.ticketPriceCents, terms.splitPercent))} (${terms.splitPercent}% of ${plainUsd(terms.ticketPriceCents)}; sales tax is not shared, and Stripe's card fee is the Venue's cost and does not reduce this amount)`,
+      ]
+      : ['Ticket price: this Show sells no tickets through iHYPE']),
     `Guarantee: ${terms.guaranteeCents !== null ? plainUsd(terms.guaranteeCents) : 'None'}`,
     'Approved Deductions:',
     deductions,
@@ -241,7 +273,7 @@ export function renderSplitAgreement(terms: SplitAgreementTerms): string {
     '',
     '4.4 Card fees are the Venue\'s cost. Card-processing fees are charged to the Venue\'s Stripe account and are not deducted from Net Ticket Receipts, unless the Lineup Offer lists them as an Approved Deduction.',
     '',
-    '4.5 Changes need both parties. The Split Percentage, Guarantee and Approved Deductions can change only by a revised Lineup Offer accepted by the Artist in the iHYPE app before the Show. The Venue cannot change them on its own.',
+    '4.5 Changes need both parties. The ticket price, Split Percentage, Guarantee and Approved Deductions can change only by a revised Lineup Offer accepted by the Artist in the iHYPE app before the Show. The Venue cannot change them on its own.',
     '',
     '5. PAYMENT',
     '',
@@ -274,9 +306,9 @@ export function renderSplitAgreement(terms: SplitAgreementTerms): string {
     '',
     '7.2 Chargebacks. A chargeback reduces Net Ticket Receipts only if the Venue submitted available evidence (such as the ticket scan record) and still lost. If a chargeback is decided after the Artist has been paid, the Venue may deduct the Artist\'s percentage of it from a later payment to the Artist under a separate Agreement, only with the Artist\'s written approval. Otherwise the Artist repays it within 30 days of a written request with the chargeback record.',
     '',
-    '7.3 Cancelled by the Venue. If the Venue cancels the Show for any reason other than Section 7.5, the Venue refunds buyers at its own cost and pays the Artist the greater of the Guarantee, if any, and 50% of the Artist Share that Gross Ticket Receipts at the time of cancellation would have produced.',
+    '7.3 Cancelled by the Venue. If the Venue cancels the Show for any reason other than Section 7.4 or 7.5, the Venue refunds buyers at its own cost and pays the Artist the greater of the Guarantee, if any, and 50% of the Artist Share that Gross Ticket Receipts at the time of cancellation would have produced. The Venue bears every fee Stripe keeps on those refunds, including the card-processing fee Stripe does not return on a refunded charge, and none of it is charged to the Artist or deducted from any Artist Share.',
     '',
-    '7.4 Cancelled by the Artist. If the Artist cancels for any reason other than Section 7.5 or illness or injury certified by a medical provider, no Artist Share is owed. The Artist owes the Venue nothing further.',
+    '7.4 Cancelled by the Artist, or the Artist does not appear. If the Artist cancels, or does not appear and perform the Show, for any reason other than Section 7.5, (a) no Artist Share is owed, and (b) the Artist reimburses the Venue for the fees Stripe kept on the tickets refunded because of it, including the card-processing fee Stripe does not return on a refunded charge, within 30 days of the Venue\'s written request with the Stripe record of those fees. The Artist owes the Venue nothing else for the cancellation.',
     '',
     '7.5 Events outside either party\'s control. Neither party is liable for cancellation caused by events beyond its reasonable control, such as natural disaster, public-health orders, loss of power or venue damage it did not cause, or government action. Each party bears its own costs. Ticket sales and slow sales are not such events.',
     '',
@@ -393,6 +425,15 @@ export function computeArtistShare(input: {
   const bySplit = Math.round((net * input.splitPercent) / 100 + 1e-9);
   const share = Math.max(bySplit, input.guaranteeCents ?? 0);
   return { grossCents: gross, netCents: net, bySplitCents: bySplit, artistShareCents: share };
+}
+
+/**
+ * Sections 7.3 and 7.4: the fees Stripe keeps on the refunds a cancellation
+ * causes, estimated at Stripe's standard rate on each refunded charge. The
+ * Stripe record governs; this is what the statement shows before it is read.
+ */
+export function refundFeesLostCents(refundedChargesCents: number[], feeOf: (chargeCents: number) => number): number {
+  return refundedChargesCents.reduce((sum, charge) => sum + (charge > 0 ? feeOf(charge) : 0), 0);
 }
 
 /** Section 7.3: what a venue-cancelled Show owes the act. */

@@ -48,14 +48,17 @@ vi.mock('@/lib/ticket-order-state', () => ({
 }));
 
 const orderFindMany = vi.fn();
+const slotFindMany = vi.fn().mockResolvedValue([]);
+const showUpdate = vi.fn().mockResolvedValue({});
 vi.mock('@/lib/db', () => ({
   db: {
+    showLineupSlot: { findMany: (...a: unknown[]) => slotFindMany(...a) },
     show: {
       findUnique: vi.fn().mockResolvedValue({
         id: 'show_1', slug: 'the-night', title: 'The Night', status: 'SCHEDULED',
         creatorId: 'organiser', venueProfile: null, headlinerProfile: null,
       }),
-      update: vi.fn().mockResolvedValue({}),
+      update: (...a: unknown[]) => showUpdate(...a),
     },
     ticketOrder: {
       findMany: (...a: unknown[]) => orderFindMany(...a),
@@ -76,11 +79,11 @@ const CAPTURED_ORDER = {
   totalChargeCents: 1952, processingFeeCents: 87, buyerUserId: 'buyer_1', tickets: [{ status: 'VALID' }],
 };
 
-function cancel() {
+function cancel(body: Record<string, unknown> = { reason: 'venue' }) {
   return POST(
     new Request('https://ihype.org/api/shows/show_1/cancel', {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ reason: 'venue' }),
+      body: JSON.stringify(body),
     }),
     { params: Promise.resolve({ showId: 'show_1' }) },
   );
@@ -99,6 +102,31 @@ beforeEach(() => {
   orderFindMany.mockResolvedValue([CAPTURED_ORDER]);
   refundTicketPaymentIntent.mockResolvedValue('re_1');
   refundCapturedTicketOrder.mockResolvedValue(true);
+  slotFindMany.mockResolvedValue([]);
+});
+
+describe('who a cancellation is charged to (Split Agreement 7.3 and 7.4)', () => {
+  it('records the act that cancelled, so it reimburses the refund fees', async () => {
+    slotFindMany.mockResolvedValue([{ profileId: 'p_a' }]);
+    expect((await cancel({ reason: 'artist' })).status).toBe(200);
+    expect(showUpdate.mock.calls.at(-1)?.[0].data.cancelledByActProfileId).toBe('p_a');
+  });
+
+  it('refuses an act cancellation on a multi-act lineup that does not say which act, before refunding anything', async () => {
+    slotFindMany.mockResolvedValue([{ profileId: 'p_a' }, { profileId: 'p_b' }]);
+    const res = await cancel({ reason: 'artist' });
+    expect(res.status).toBe(400);
+    expect(await res.json()).toMatchObject({ code: 'ACT_REQUIRED' });
+    expect(refundTicketPaymentIntent).not.toHaveBeenCalled();
+    expect((await cancel({ reason: 'artist', actProfileId: 'p_x' })).status).toBe(400);
+    expect((await cancel({ reason: 'artist', actProfileId: 'p_b' })).status).toBe(200);
+    expect(showUpdate.mock.calls.at(-1)?.[0].data.cancelledByActProfileId).toBe('p_b');
+  });
+
+  it('leaves the fees on the venue for every other reason', async () => {
+    expect((await cancel({ reason: 'low-sales', actProfileId: 'p_a' })).status).toBe(200);
+    expect(showUpdate.mock.calls.at(-1)?.[0].data.cancelledByActProfileId).toBeNull();
+  });
 });
 
 describe('cancelling a show', () => {

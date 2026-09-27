@@ -32,7 +32,7 @@ export default async function SettlementPage({ params }: { params: Promise<{ slu
 
   const show = await db.show.findUnique({
     where: { slug },
-    select: { id: true, slug: true, title: true, startsAt: true, timeZone: true, status: true, venueProfile: { select: { ownerId: true, name: true } } },
+    select: { id: true, slug: true, title: true, startsAt: true, timeZone: true, status: true, cancelledByActProfileId: true, venueProfile: { select: { ownerId: true, name: true } } },
   });
   if (!show || !show.venueProfile) return notFound();
 
@@ -43,7 +43,13 @@ export default async function SettlementPage({ params }: { params: Promise<{ slu
   if (!isVenue && !isAdmin && mine.length === 0) return notFound();
 
   const cancelled = show.status === 'CANCELED';
-  const { netCents, grossCents, lines } = statementFor(loaded, cancelled);
+  const { netCents, grossCents, refundFeesCents, lines } = statementFor(
+    loaded,
+    cancelled ? { cancelled: true, byActProfileId: show.cancelledByActProfileId } : { cancelled: false },
+  );
+  const causingAct = cancelled && show.cancelledByActProfileId
+    ? loaded.agreements.find((a) => a.artistProfileId === show.cancelledByActProfileId)?.artistProfile.name ?? null
+    : null;
   const visible = isVenue || isAdmin ? loaded.agreements : mine;
   const now = new Date();
   const started = show.startsAt <= now;
@@ -69,7 +75,13 @@ export default async function SettlementPage({ params }: { params: Promise<{ slu
         {formatDate(locale, due, { month: 'long', day: 'numeric', year: 'numeric', ...(show.timeZone ? { timeZone: show.timeZone } : {}) })}
       </p>
       {!started && <p className="stl-note">{t('settlementPage.provisional', 'The show has not started. These figures are provisional until it ends.')}</p>}
-      {cancelled && <p className="stl-note">{t('settlementPage.cancelledNote', 'This show was cancelled. If the venue cancelled for a reason within its control, each act is owed the cancellation amount below (Section 7.3). If the act cancelled, nothing is owed (7.4). If neither could control it, each side bears its own costs (7.5).')}</p>}
+      {cancelled && (
+        <p className="stl-note">
+          {causingAct
+            ? t('settlementPage.cancelledByActNote', 'This show was cancelled because {act} cancelled or did not appear. {act} is owed nothing and reimburses the venue for the fees Stripe kept on the refunds (Section 7.4). Every other act is owed the cancellation amount below (7.3). If the cause was outside anyone\'s control, each side bears its own costs instead (7.5).').replaceAll('{act}', causingAct)
+            : t('settlementPage.cancelledByVenueNote', 'This show was cancelled by the venue. The venue bears the fees Stripe kept on the refunds and owes each act the cancellation amount below (Section 7.3). If the cause was outside anyone\'s control, each side bears its own costs instead (7.5).')}
+        </p>
+      )}
 
       <section className="stl-card" aria-labelledby="stl-totals">
         <h2 id="stl-totals" className="stl-h2">{t('settlementPage.totalsTitle', 'Ticket receipts')}</h2>
@@ -82,6 +94,16 @@ export default async function SettlementPage({ params }: { params: Promise<{ slu
           <div><dt>{t('settlementPage.lessRefunds', 'Less refunds')} ({loaded.summary.ticketsRefunded})</dt><dd>−{money(loaded.summary.refundsCents)}</dd></div>
           <div><dt>{t('settlementPage.lessChargebacks', 'Less chargebacks lost')}</dt><dd>−{money(loaded.chargebacksLostCents)}</dd></div>
           <div className="stl-total"><dt>{t('settlementPage.net', 'Net Ticket Receipts')}</dt><dd>{money(netCents)}</dd></div>
+          {cancelled && (
+            <div>
+              <dt>
+                {causingAct
+                  ? t('settlementPage.refundFeesByAct', 'Stripe fees kept on the refunds (estimate), owed by {act}').replace('{act}', causingAct)
+                  : t('settlementPage.refundFeesByVenue', 'Stripe fees kept on the refunds (estimate), borne by the venue')}
+              </dt>
+              <dd>{money(refundFeesCents)}</dd>
+            </div>
+          )}
         </dl>
         {loaded.statement?.offPlatformNote && <p className="stl-meta">{t('settlementPage.offPlatformNote', 'Outside iHYPE:')} {loaded.statement.offPlatformNote}</p>}
         {loaded.statement?.chargebacksNote && <p className="stl-meta">{t('settlementPage.chargebacksNote', 'Chargebacks:')} {loaded.statement.chargebacksNote}</p>}
@@ -119,7 +141,10 @@ export default async function SettlementPage({ params }: { params: Promise<{ slu
               )}
               <div><dt>{t('settlementPage.bySplit', 'Split × net')}</dt><dd>{money(line.bySplitCents)}</dd></div>
               {line.guaranteeCents ? <div><dt>{t('settlementPage.guarantee', 'Guarantee')}</dt><dd>{money(line.guaranteeCents)}</dd></div> : null}
-              <div className="stl-total"><dt>{cancelled ? t('settlementPage.cancellationOwed', 'Owed if the venue cancelled (7.3)') : t('settlementPage.artistShare', 'Artist Share')}</dt><dd>{money(owed)}</dd></div>
+              <div className="stl-total"><dt>{cancelled ? t('settlementPage.cancellationOwedToAct', 'Owed to this act on cancellation') : t('settlementPage.artistShare', 'Artist Share')}</dt><dd>{money(owed)}</dd></div>
+              {line.artistOwesRefundFeesCents !== null && (
+                <div><dt>{t('settlementPage.actOwesFees', 'This act reimburses the venue (7.4)')}</dt><dd>{money(line.artistOwesRefundFeesCents)}</dd></div>
+              )}
             </dl>
             {(isVenue || isAdmin) && (
               <p className="stl-meta">
