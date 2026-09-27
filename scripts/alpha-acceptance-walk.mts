@@ -1806,25 +1806,31 @@ async function main() {
        at all — the venue pays the act directly under the signed agreement, so
        the act's payout method is the one recorded with PUT
        /api/profile/payout-method (item 15 did that before signing). */
-    const unacknowledged = await api('/api/stripe/connect/onboard', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ profileId: artistProfile.id }),
-      cookie: creator.cookie,
-    });
-    assert(
-      unacknowledged.status === 400 && unacknowledged.body?.code === 'MONEY_TERMS_REQUIRED' && unacknowledged.body?.version,
-      `onboarding without the money terms answered ${unacknowledged.status} ${JSON.stringify(unacknowledged.body).slice(0, 160)}, expected 400 MONEY_TERMS_REQUIRED`,
-    );
-    const attempt = await api('/api/stripe/connect/onboard', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ profileId: artistProfile.id, acceptedMoneyTermsVersion: unacknowledged.body.version }),
-      cookie: creator.cookie,
-    });
-    const before = await prisma.profile.findUnique({ where: { id: artistProfile.id }, select: { stripeConnectAccountId: true } });
-    if (!before?.stripeConnectAccountId) {
-      assert(attempt.status === 400 && attempt.body?.code === 'ARTIST_PAID_BY_VENUE', `an artist Connect request answered ${attempt.status} ${JSON.stringify(attempt.body).slice(0, 160)}, expected 400 ARTIST_PAID_BY_VENUE`);
+    /* The Connect half needs Stripe configured (the route answers 503 before
+       any other check without it); the payout-method half does not. */
+    let connectNote = 'Connect checks skipped: STRIPE_SECRET_KEY not set';
+    if (stripe) {
+      const unacknowledged = await api('/api/stripe/connect/onboard', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ profileId: artistProfile.id }),
+        cookie: creator.cookie,
+      });
+      assert(
+        unacknowledged.status === 400 && unacknowledged.body?.code === 'MONEY_TERMS_REQUIRED' && unacknowledged.body?.version,
+        `onboarding without the money terms answered ${unacknowledged.status} ${JSON.stringify(unacknowledged.body).slice(0, 160)}, expected 400 MONEY_TERMS_REQUIRED`,
+      );
+      const attempt = await api('/api/stripe/connect/onboard', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ profileId: artistProfile.id, acceptedMoneyTermsVersion: unacknowledged.body.version }),
+        cookie: creator.cookie,
+      });
+      const before = await prisma.profile.findUnique({ where: { id: artistProfile.id }, select: { stripeConnectAccountId: true } });
+      if (!before?.stripeConnectAccountId) {
+        assert(attempt.status === 400 && attempt.body?.code === 'ARTIST_PAID_BY_VENUE', `an artist Connect request answered ${attempt.status} ${JSON.stringify(attempt.body).slice(0, 160)}, expected 400 ARTIST_PAID_BY_VENUE`);
+      }
+      connectNote = 'artist refused a Stripe account (paid by the venue)';
     }
     ok(await api('/api/profile/payout-method', {
       method: 'PUT',
@@ -1834,7 +1840,7 @@ async function main() {
     }), [200]);
     const profile = await prisma.profile.findUnique({ where: { id: artistProfile.id }, select: { payoutMethodKind: true, payoutMethodDetails: true } });
     assert(profile?.payoutMethodKind === 'CHECK' && profile.payoutMethodDetails, `the payout method did not update (${profile?.payoutMethodKind})`);
-    return `artist refused a Stripe account (paid by the venue) · payout method updated to ${profile.payoutMethodKind}`;
+    return `${connectNote} · payout method updated to ${profile.payoutMethodKind}`;
   });
 
   // ── 30. HYPE link referral ───────────────────────────────────────────────
