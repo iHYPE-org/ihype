@@ -212,6 +212,11 @@ test.describe('admin console — passkey only', () => {
 
     // 2. Signed out on a device the console has never seen: the passkey
     // sign-in is the only ceremony.
+    // Leave the console first: its live refresh and prefetches are in flight,
+    // and a response landing after clearCookies() re-sets the session cookie
+    // (the auth middleware refreshes it on every answer) — CI measured exactly
+    // that, a cookie-less /admin followed 40ms later by a signed-in /login.
+    await page.goto('about:blank');
     await context.clearCookies();
     const visited: string[] = [];
     page.on('framenavigated', (frame) => { if (frame === page.mainFrame()) visited.push(new URL(frame.url()).pathname); });
