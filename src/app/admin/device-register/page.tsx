@@ -11,7 +11,7 @@ function AdminDeviceRegisterInner() {
   const router = useRouter();
   const token = params.get('token') ?? '';
   const mode = params.get('mode') === 'change' ? 'change' : 'setup';
-  const [status, setStatus] = useState<'pending' | 'registering' | 'done' | 'error'>('pending');
+  const [status, setStatus] = useState<'pending' | 'unregistered' | 'registering' | 'done' | 'error'>('pending');
   const [errorMsg, setErrorMsg] = useState('');
   // Arriving here with no token is the LOCKOUT case, not a mistake: the admin
   // layout redirects any administrator whose device cookie is missing. Before
@@ -75,9 +75,11 @@ function AdminDeviceRegisterInner() {
   }
 
   useEffect(() => {
+    // No token is the ordinary case — an administrator on a device the
+    // console has not seen — not an error. It used to render in red as
+    // "Error: No token provided." above the one control that fixes it.
     if (!token) {
-      setStatus('error');
-      setErrorMsg(t('adminDeviceRegisterPage.noToken', 'No token provided.'));
+      setStatus('unregistered');
       return;
     }
     setStatus('registering');
@@ -112,17 +114,24 @@ function AdminDeviceRegisterInner() {
       {status === 'pending' && <p>{t('adminDeviceRegisterPage.checking', 'Checking this device…')}</p>}
       {status === 'registering' && <p>{t('adminDeviceRegisterPage.registering', 'Registering this device…')}</p>}
       {status === 'done' && <p style={{ color: 'var(--success)' }}>{t('adminDeviceRegisterPage.done', 'Device registered. Redirecting to admin…')}</p>}
-      {status === 'error' && (
+      {(status === 'error' || status === 'unregistered') && (
         <>
-          <p style={{ color: 'var(--danger)' }}>{t('adminDeviceRegisterPage.errorPrefix', 'Error:')} {errorMsg}</p>
-          {!token ? (
-            <p style={{ fontSize: '0.9375rem', color: 'var(--ink-3)', maxWidth: 460, textAlign: 'center', lineHeight: 1.55 }}>
-              {t('adminDeviceRegisterPage.noTokenExplainer', 'This device is not registered for admin access. If you are signed in as an administrator, send yourself a registration link and open it on this device.')}
-            </p>
+          {status === 'unregistered' ? (
+            <>
+              <h1 style={{ fontFamily: 'var(--f-d)', fontSize: '1.375rem', margin: 0 }}>
+                {t('adminDeviceRegisterPage.unregisteredTitle', 'Confirm it is you')}
+              </h1>
+              <p style={{ fontSize: '0.9375rem', color: 'var(--ink-3)', maxWidth: 460, textAlign: 'center', lineHeight: 1.55 }}>
+                {t('adminDeviceRegisterPage.unregisteredBody', 'Use your passkey once to open the admin console on this device. It will not ask again here.')}
+              </p>
+            </>
           ) : (
-            <p style={{ fontSize: '0.9375rem', color: 'var(--ink-3)' }}>
-              {t('adminDeviceRegisterPage.linkExpired', 'That link is expired or already used. Send yourself a new one below.')}
-            </p>
+            <>
+              <p style={{ color: 'var(--danger)' }}>{t('adminDeviceRegisterPage.errorPrefix', 'Error:')} {errorMsg}</p>
+              <p style={{ fontSize: '0.9375rem', color: 'var(--ink-3)' }}>
+                {t('adminDeviceRegisterPage.linkExpired', 'That link is expired or already used. Send yourself a new one below.')}
+              </p>
+            </>
           )}
 
           <button
@@ -138,7 +147,7 @@ function AdminDeviceRegisterInner() {
           >
             {passkeyBusy
               ? t('adminDeviceRegisterPage.passkeyChecking', 'Waiting for your passkey…')
-              : t('adminDeviceRegisterPage.passkeyRegister', 'Register this device with your passkey')}
+              : t('adminDeviceRegisterPage.passkeyContinue', 'Continue with passkey')}
           </button>
           {passkeyMsg && (
             <p style={{ fontSize: '0.9375rem', color: 'var(--danger)', marginTop: 10, maxWidth: 460, textAlign: 'center' }}>{passkeyMsg}</p>

@@ -5,8 +5,10 @@
 #      /api/analytics/track (scripts/cloudflare-edge-guards.mjs has the numbers
 #      and the reasoning: a flood backstop, deliberately above the app's own
 #      per-IP buckets so a venue's shared wifi is never locked out).
-#   2. Cloudflare Access in front of ihype.org/admin, allowing admin@ihype.org
-#      through a one-time PIN — a second gate ahead of the app's own admin check.
+#   2. Cloudflare Access in front of ihype.org/admin — REMOVED 2026-09-27
+#      (passkey-only admin; see the script's header). An apply now deletes
+#      the "iHYPE admin" application if it is still there, and reports it
+#      absent otherwise.
 #
 # workflow_dispatch only. The default is a DRY RUN that prints what would
 # change; set `apply` to true to make the changes. Idempotent: a second apply

@@ -89,7 +89,9 @@ export async function GET() {
            * the two security-sensitive surfaces that must always stay in
            * Safari even if a broader rule is added later:
            *
-           *   · `/admin` and `/admin/*` — Cloudflare Access owns this surface.
+           *   · `/admin` and `/admin/*` — Cloudflare Access owned this surface
+           *     until 2026-09-27 (row 527); a tapped admin link still opens
+           *     in Safari, and the app reaches the console by navigating.
            *   · `/cdn-cgi/access/*` — Cloudflare's one-use OAuth callbacks.
            *
            * The remaining exclusions are made by omission:
