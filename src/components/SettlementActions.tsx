@@ -167,7 +167,7 @@ export function StatementPaymentActions({ agreementId, role, deductionCapCents, 
       </button>
       {canReport && (
         <>
-          <label className="sa-wide">
+          <label>
             <span>{t('settlementActions.reportLabel', 'Not paid, or paid the wrong amount? Say what happened.')}</span>
             <textarea maxLength={1000} onChange={(e) => setNote(e.target.value)} value={note} />
           </label>
