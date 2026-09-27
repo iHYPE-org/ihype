@@ -6,9 +6,12 @@
 const ALLOWED_HOSTS = new Set(['ihype.org', 'www.ihype.org']);
 
 /**
- * These paths belong to Cloudflare Access and must stay in Safari. They carry
+ * These paths belonged to Cloudflare Access and stay in Safari. They carried
  * browser-bound, one-use authentication state; accepting them in the native
- * WebView produces "Invalid login session" after the OAuth redirect.
+ * WebView produced "Invalid login session" after the OAuth redirect. The
+ * Access application was removed on 2026-09-27 (DESIGN_SYNC row 527), so this
+ * now only decides where a TAPPED link to /admin opens; the console itself
+ * opens inside the app by navigating there.
  */
 const EXTERNAL_ONLY_PATHS = ['/admin', '/cdn-cgi/access'] as const;
 

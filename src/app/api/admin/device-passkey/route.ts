@@ -4,12 +4,13 @@ import { isAdminSession } from '@/lib/permissions';
 import { isAllowedAdminEmail } from '@/lib/admin-allowlist';
 import { getPasskeyAuthenticationOptions, verifyPasskeyAuthentication } from '@/lib/passkey';
 import { claimPasskeyChallenge } from '@/lib/passkey-challenge';
-import { generateDeviceToken, getDeviceCookieName, signDeviceCookieValue } from '@/lib/admin-device';
+import { generateDeviceToken, signDeviceCookieValue } from '@/lib/admin-device';
 import { registerAdminDevice } from '@/lib/admin-device-store';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
 import { recordAuditEvent } from '@/lib/audit';
 import { log } from '@/lib/logger';
+import { adminDeviceCookie, adminDeviceLabel } from '@/lib/admin-passkey-signin';
 import type { AuthenticationResponseJSON } from '@simplewebauthn/server';
 
 export const dynamic = 'force-dynamic';
@@ -105,14 +106,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Passkey verification failed.' }, { status: 400 });
   }
 
-  const ua = request.headers.get('user-agent') ?? '';
-  const label = /iPhone/i.test(ua) ? 'iPhone'
-    : /iPad/i.test(ua) ? 'iPad'
-    : /Android/i.test(ua) ? 'Android device'
-    : /Macintosh|Mac OS X/i.test(ua) ? 'Mac'
-    : /Windows/i.test(ua) ? 'Windows PC'
-    : /Linux/i.test(ua) ? 'Linux device'
-    : 'Unknown device';
+  const label = adminDeviceLabel(request.headers.get('user-agent') ?? '');
 
   const deviceToken = generateDeviceToken();
   await registerAdminDevice(session.user.id, deviceToken, `${label} (passkey)`);
@@ -124,13 +118,7 @@ export async function POST(request: NextRequest) {
   });
 
   const response = NextResponse.json({ ok: true });
-  response.cookies.set(getDeviceCookieName(), signDeviceCookieValue(deviceToken), {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'lax',
-    path: '/',
-    maxAge: 60 * 60 * 24 * 365,
-  });
+  response.cookies.set(adminDeviceCookie(signDeviceCookieValue(deviceToken)));
   response.cookies.set(CHALLENGE_COOKIE, '', { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: 0 });
   return response;
 }

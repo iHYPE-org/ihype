@@ -71,4 +71,12 @@ export function planAccessApp(
   desired: AccessApp,
 ): { action: 'create' | 'exists'; app: AccessApp | null };
 
+/** False since 2026-09-27: /admin is passkey-only and the edge carries no Access application. */
+export const ADMIN_ACCESS_ENABLED: boolean;
+
+export function planAccessRemoval(
+  existingApps: AccessApp[] | null | undefined,
+  desired: AccessApp,
+): { action: 'delete' | 'absent'; app: AccessApp | null };
+
 export function isAuthError(result: { status: number; json?: { errors?: Array<{ code?: number | string; message?: string }>; [key: string]: unknown } | null }): boolean;

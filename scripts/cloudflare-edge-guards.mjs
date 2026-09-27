@@ -6,9 +6,19 @@
  *      front of the auth and analytics endpoints — a first line AHEAD of the
  *      Durable Object limiter in `src/lib/rate-limit.ts`, which has had its own
  *      timeouts and degrades to a halved KV limit when it does.
- *   2. Cloudflare Access in front of `/admin` — a second gate ahead of the app's
- *      own `isAdminSession()` check, for the one account that can act on
- *      everything.
+ *   2. Cloudflare Access in front of `/admin` — REMOVED 2026-09-27 by owner
+ *      decision. It was a second gate ahead of the app's own admin checks,
+ *      and its only login is a PIN emailed to the administrator: it cannot
+ *      take a passkey, and inside the iOS app its redirect to
+ *      `ihype.cloudflareaccess.com` leaves the WebView for Safari, so the
+ *      console could not be opened from the app at all (owner: "it takes me
+ *      on a long run around to authenticate and ultimately doesn't let me
+ *      in. I want to be able to use a passkey"). The console's gates are now
+ *      the app's own: an administrator session, and a device bound by that
+ *      account's passkey (`src/lib/admin-passkey-signin.ts`). This half now
+ *      DELETES the application it created and nothing else — the Zero Trust
+ *      organization and the One-time PIN provider are left as they are, so
+ *      turning Access back on is `ADMIN_ACCESS_ENABLED = true` and an apply.
  *
  * Both are DASHBOARD configuration, which is exactly why they are a script:
  * CLAUDE.md's standing complaint is that a change made in a dashboard leaves
@@ -87,6 +97,25 @@ export const RATE_LIMIT_RULES = [
     },
   },
 ];
+
+/**
+ * Whether the edge should carry the Access application. `false` since
+ * 2026-09-27 — see the header. The application's shape below is kept so that
+ * flipping this back re-creates exactly what ran before.
+ */
+export const ADMIN_ACCESS_ENABLED = false;
+
+/**
+ * The application this script would delete: on the admin domain AND carrying
+ * the name it was created under. An application someone else put on the same
+ * path is never touched.
+ */
+export function planAccessRemoval(existingApps, desired) {
+  const found = (existingApps ?? []).find((app) =>
+    app.name === desired.name
+    && (app.domain === desired.domain || (app.self_hosted_domains ?? []).includes(desired.domain)));
+  return found ? { action: 'delete', app: found } : { action: 'absent', app: null };
+}
 
 /**
  * The Access application. `ihype.org/admin` covers `/admin` and everything
@@ -286,7 +315,30 @@ async function applyRateLimits({ token, zoneId, apply }) {
   }
 }
 
+async function removeAccess({ token, accountId, apply, zoneName, adminEmail }) {
+  console.log('\n## Cloudflare Access in front of /admin — should be ABSENT (passkey-only admin)');
+  const desired = adminAccessApp(zoneName, adminEmail);
+  const apps = await cf(token, 'GET', `/accounts/${accountId}/access/apps`);
+  if (!apps.ok) fail(`Could not list Access applications: ${describeErrors(apps)}`);
+  const plan = planAccessRemoval(apps.json.result, desired);
+  if (plan.action === 'absent') {
+    console.log(`  = no "${desired.name}" application on ${desired.domain}`);
+    const foreign = (apps.json.result ?? []).filter((app) =>
+      app.domain === desired.domain || (app.self_hosted_domains ?? []).includes(desired.domain));
+    if (foreign.length) console.log(`  · ${foreign.length} other application(s) on ${desired.domain}, left alone: ${foreign.map((a) => a.name || a.id).join(', ')}`);
+    return 0;
+  }
+  console.log(`  - delete application "${plan.app.name}" on ${desired.domain} (${plan.app.id})`);
+  if (apply) {
+    const res = await cf(token, 'DELETE', `/accounts/${accountId}/access/apps/${plan.app.id}`);
+    if (!res.ok) fail(`Deleting the Access application failed: ${describeErrors(res)}`);
+    console.log('  ✓ deleted — /admin now answers the app itself');
+  }
+  return 0;
+}
+
 async function applyAccess({ token, accountId, apply, zoneName, adminEmail }) {
+  if (!ADMIN_ACCESS_ENABLED) return removeAccess({ token, accountId, apply, zoneName, adminEmail });
   console.log('\n## Cloudflare Access in front of /admin');
   const org = await cf(token, 'GET', `/accounts/${accountId}/access/organizations`);
   if (!org.ok && (isAuthError(org) || org.status !== 404)) {

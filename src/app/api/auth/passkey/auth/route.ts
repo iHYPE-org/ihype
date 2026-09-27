@@ -8,6 +8,8 @@ import { claimPasskeyChallenge } from '@/lib/passkey-challenge';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
 import { log } from '@/lib/logger';
+import { bindAdminDeviceAfterPasskey } from '@/lib/admin-passkey-signin';
+import { ADMIN_DEVICE_COOKIE } from '@/lib/auth-redirects';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -106,8 +108,19 @@ export async function POST(request: Request) {
 
     void checkAndRecordLogin(user, request);
 
+    // An administrator's passkey sign-in also binds this device to the
+    // console, so /admin opens without a second passkey ceremony
+    // (src/lib/admin-passkey-signin.ts). Never fails the sign-in.
+    const deviceCookie = await bindAdminDeviceAfterPasskey({
+      user,
+      existingDeviceCookie: jar.get(ADMIN_DEVICE_COOKIE)?.value,
+      userAgent: request.headers.get('user-agent') ?? '',
+      ipAddress: clientAddress,
+    });
+
     const resp = NextResponse.json({ redirect: resolvePostAuthRedirect(callbackRedirect) });
     resp.cookies.set(sessionCookie);
+    if (deviceCookie) resp.cookies.set(deviceCookie);
     clearChallenge(resp);
     return resp;
   } catch (err) {

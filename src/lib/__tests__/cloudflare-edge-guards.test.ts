@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  ADMIN_ACCESS_ENABLED,
   ADMIN_EMAIL_DEFAULT,
   ADMIN_EMAILS_DEFAULT,
   adminEmailList,
@@ -7,6 +8,7 @@ import {
   adminAccessApp,
   isAuthError,
   planAccessApp,
+  planAccessRemoval,
   planAccessPolicy,
   planRateLimitRules,
   policyAllows,
@@ -152,5 +154,31 @@ describe('cloudflare edge guards — the allow policy', () => {
     const plan = planAccessPolicy([handWritten], desired);
     expect(plan.action).toBe('create');
     expect(plan.policy.precedence).toBe(5);
+  });
+});
+
+/**
+ * Passkey-only admin (2026-09-27). The Access application's only login is an
+ * emailed PIN, and inside the iOS app its redirect leaves the WebView, so the
+ * script now deletes the application it created — and nothing it did not.
+ */
+describe('cloudflare edge guards — Access removed from /admin', () => {
+  const desired = adminAccessApp();
+
+  it('is switched off', () => {
+    expect(ADMIN_ACCESS_ENABLED).toBe(false);
+  });
+
+  it('deletes only the application it owns, matched by name and domain', () => {
+    const owned = { id: 'app_1', name: 'iHYPE admin', domain: 'ihype.org/admin' };
+    expect(planAccessRemoval([owned], desired)).toEqual({ action: 'delete', app: owned });
+    const bySelfHosted = { id: 'app_2', name: 'iHYPE admin', domain: 'x', self_hosted_domains: ['ihype.org/admin'] };
+    expect(planAccessRemoval([bySelfHosted], desired).action).toBe('delete');
+  });
+
+  it('leaves a foreign application on the same path, and reports absence', () => {
+    expect(planAccessRemoval([{ id: 'x', name: 'Someone else', domain: 'ihype.org/admin' }], desired).action).toBe('absent');
+    expect(planAccessRemoval([], desired).action).toBe('absent');
+    expect(planAccessRemoval(undefined, desired).action).toBe('absent');
   });
 });
