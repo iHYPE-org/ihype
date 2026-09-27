@@ -597,8 +597,8 @@ export default async function MmmArtistPage({
         /* Contact is also the coordination sheet (owner, 2026-09-02: "paperwork
            legally bound and ready for event coordination"): the owner's own
            words first, then the facts a venue or promoter needs before a date
-           is agreed — where booking happens, the press kit, the split the
-           charter fixes, the ticket terms, and whether iHYPE has verified
+           is agreed — where booking happens, the press kit, the split
+           agreement every show is sold under, the ticket terms, and whether iHYPE has verified
            who this is. Every line points at something the product already
            holds; nothing here is a new document. */
         <ProfilePanel empty="" isEmpty={false} tabId="contact" title={t('mmmStrip.contact', 'Contact')}>
@@ -615,7 +615,7 @@ export default async function MmmArtistPage({
             <div><dt>{t('artistPane.factPress', 'Press')}</dt><dd><Link href="?tab=press">{t('mmmStrip.pressKitLower', 'Press kit')}</Link></dd></div>
             <div>
               <dt>{t('profilePane.factSplit', 'Split')}</dt>
-              <dd>{t('profilePane.factSplitBodyNet', 'After Stripe’s card fee, 75% artist · 25% venue, fixed by the')} <Link href="/info?tab=charter">{t('profilePane.charter', 'charter')}</Link>.</dd>
+              <dd>{t('profilePane.factSplitBodyAgreement', 'Set per show in a signed split agreement between the venue and each act; the venue pays acts directly. See the')} <Link href="/info?tab=charter">{t('profilePane.charter', 'charter')}</Link>.</dd>
             </div>
             <div>
               <dt>{t('profilePane.factTickets', 'Tickets')}</dt>

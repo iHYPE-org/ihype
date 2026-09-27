@@ -3,8 +3,7 @@
 import { IhypeMark } from '@/components/brand/IhypeMark';
 
 import { formatNumber } from '@/lib/format-locale';
-import { stripeCutOf } from '@/lib/stripe-fees';
-import { VENUE_SHARE_PERCENT } from '@/lib/ticketing';
+import { SETTLEMENT_DAYS_AFTER_SHOW } from '@/lib/split-agreement';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useI18n } from '@/components/I18nProvider';
 
@@ -118,47 +117,6 @@ function ListRow({ icon, iconTint = 'var(--accent)', title, subtitle }: {
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontFamily: 'var(--f-b)', fontWeight: 700, fontSize: '0.9375rem', color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</div>
         {subtitle && <div style={{ fontFamily: 'var(--f-m)', fontSize: '0.9375rem', color: 'var(--ink-3)', marginTop: 2 }}>{subtitle}</div>}
-      </div>
-    </div>
-  );
-}
-
-// ─── SplitBar ────────────────────────────────────────────────────────────────
-
-/* THE SPLIT SINCE 2026-09-25: Stripe's card fee comes off the face value
-   first, then 75% to the artist and 25% to the venue; iHYPE takes 0% and
-   there is no promoter share. The bar draws the fee as its own neutral
-   segment, because it is nobody's share. */
-function splitOf(totalDollars: number) {
-  const priceCents = Math.round(totalDollars * 100);
-  const feeCents = stripeCutOf(priceCents);
-  const netCents = priceCents - feeCents;
-  const venueCents = Math.round(netCents * (VENUE_SHARE_PERCENT / 100));
-  return [
-    { key: 'artist', cents: netCents - venueCents, color: 'var(--role-artist)', label: 'Artist' },
-    { key: 'venue', cents: venueCents, color: 'var(--role-venue)', label: 'Venue' },
-    { key: 'stripe', cents: feeCents, color: 'var(--line-2)', label: 'Stripe fee' },
-  ];
-}
-
-function SplitBar({ total }: { total: number }) {
-  const SPLIT = splitOf(total);
-  const whole = Math.round(total * 100);
-  return (
-    <div>
-      <div style={{ display: 'flex', width: '100%', height: 12, borderRadius: 999, overflow: 'hidden', gap: 2 }}>
-        {SPLIT.map(s => (
-          <div key={s.key} style={{ width: `${(s.cents / whole) * 100}%`, background: s.color, opacity: 0.92 }} />
-        ))}
-      </div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem 1.25rem', marginTop: 10 }}>
-        {SPLIT.map(s => (
-          <span key={s.key} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'var(--f-m)', fontSize: '0.9375rem', color: 'var(--ink-2)' }}>
-            <span style={{ width: 8, height: 8, borderRadius: 2, background: s.color, display: 'inline-block' }} />
-            {s.label}
-            <b style={{ color: 'var(--ink)', fontWeight: 700 }}>{`$${(s.cents / 100).toFixed(2)}`}</b>
-          </span>
-        ))}
       </div>
     </div>
   );
@@ -412,11 +370,14 @@ function Slide07Ticket() {
         <Num>{t('walkthroughDeck.slide07Num', '04 / 06 · FAN')}</Num>
         <H size={60} style={{ marginTop: 18 }}>{t('walkthroughDeck.slide07Title', 'A ticket, at face value.')}</H>
         <Body style={{ fontSize: '1.3125rem', maxWidth: '46ch', marginTop: 22 }}>
-          {t('walkthroughDeck.slide07BodyNet', '$18 is $18, plus tax. Zero service fees. And every buyer can see exactly where their money goes — Stripe’s card fee first, then 75% to the artist and 25% to the venue.')}
+          {t('walkthroughDeck.slide07BodyVenueSells', '$18 is $18, plus tax. Zero service fees. The venue sells the ticket, and pays every act under the split that act signed.')}
         </Body>
-        <div style={{ marginTop: 34, maxWidth: 420 }}>
-          <SplitBar total={18} />
-        </div>
+        {/* No split bar since 2026-09-27 (DESIGN_SYNC row 528): there is no
+            fixed split to draw — each act's percentage is its own signed
+            offer. */}
+        <Body style={{ fontSize: '1rem', maxWidth: '46ch', marginTop: 18 }}>
+          {t('walkthroughDeck.slide07SignedNote', 'Tickets go on sale only once every act on the bill has signed its split with the venue.')}
+        </Body>
       </div>
       <QRPass artist="Midnight Echo" detail="The Echo · Fri Jun 27" admits={1} serial="IH-S1-4F2A91" />
     </section>
@@ -433,7 +394,7 @@ function Slide08Referral() {
         {t('walkthroughDeck.slide08BodyTracks', 'Any fan can share a HYPE link. Every ticket it helps sell is credited to them — a referral record, not a cut. The money goes to the artist and the venue.')}
       </Body>
       <div style={{ marginTop: 40, display: 'flex', gap: 16 }}>
-        <StatTile value="75%" label={t('walkthroughDeck.slide08StatArtistNet', 'Of the net to the artist')} color="var(--role-fan)" />
+        <StatTile value={t('walkthroughDeck.slide08StatCreditedValue', 'Credited')} label={t('walkthroughDeck.slide08StatCredited', 'Every ticket your link helps sell')} color="var(--role-fan)" />
         <StatTile value="0%" label={t('walkthroughDeck.slide08Stat2', 'Skimmed by iHYPE')} color="var(--success)" />
       </div>
     </section>
@@ -447,11 +408,11 @@ function Slide09Payout() {
       <Num>{t('walkthroughDeck.slide09Num', '06 / 06 · EVERYONE')}</Num>
       <H size={60} style={{ marginTop: 18 }}>{t('walkthroughDeck.slide09Title', 'Paid out. Then the doors open.')}</H>
       <Body style={{ fontSize: '1.3125rem', maxWidth: '60ch', marginTop: 22 }}>
-        {t('walkthroughDeck.slide09Body', 'Payouts hit automatically — artist and fan see the same receipt. On the night, show-night mode checks fans in, counts live crowd hype, and surfaces the QR at the door.')}
+        {t('walkthroughDeck.slide09BodyAgreement', 'The venue pays each act directly under the split it signed, and both sides mark it on the show’s settlement statement. On the night, show-night mode checks fans in, counts live crowd hype, and surfaces the QR at the door.')}
       </Body>
       <div style={{ display: 'flex', gap: 16, marginTop: 40 }}>
-        <StatTile value="$2,978" label={t('walkthroughDeck.slide09Stat1Net', 'Artist 75%')} color="var(--role-artist)" />
-        <StatTile value="$993" label={t('walkthroughDeck.slide09Stat2Net', 'Venue 25%')} color="var(--role-venue)" />
+        <StatTile value={t('walkthroughDeck.slide09SignedValue', 'Signed')} label={t('walkthroughDeck.slide09SignedLabel', 'Every act’s split, before sales')} color="var(--role-artist)" />
+        <StatTile value={t('walkthroughDeck.slide09DaysValue', '{n} days').replace('{n}', String(SETTLEMENT_DAYS_AFTER_SHOW))} label={t('walkthroughDeck.slide09DaysLabel', 'For the venue to pay each act')} color="var(--role-venue)" />
         <StatTile value="$0" label={t('walkthroughDeck.slide09Stat3', 'iHYPE fee')} color="var(--success)" />
       </div>
     </section>
@@ -489,7 +450,7 @@ function Slide11Quote() {
   return (
     <section style={{ ...SLIDE_STYLE, background: 'var(--accent)', padding: 96, flexDirection: 'column', justifyContent: 'center' }}>
       <div style={{ fontFamily: 'var(--f-s)', fontSize: '3.875rem', lineHeight: 1.18, color: 'var(--ink-on-accent)', maxWidth: '24ch' }}>
-        &ldquo;{t('walkthroughDeck.slide11QuoteNet', 'After Stripe’s card fee, 75% to the artist and 25% to the venue. iHYPE takes nothing.')}&rdquo;
+        &ldquo;{t('walkthroughDeck.slide11QuoteAgreement', 'The venue sells the ticket. Every act signs its split. iHYPE takes nothing.')}&rdquo;
       </div>
       <div style={{ fontFamily: 'var(--f-m)', fontSize: '1.125rem', letterSpacing: '.14em', textTransform: 'uppercase', color: 'rgba(var(--ink-on-media-rgb),.8)', marginTop: 40 }}>
         {t('walkthroughDeck.slide11Caption', 'Locked in the charter')}

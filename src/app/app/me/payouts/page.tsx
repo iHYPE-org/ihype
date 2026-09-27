@@ -52,7 +52,7 @@ export default async function PayoutsHubPage({
 
   const profiles = await db.profile.findMany({
     where: { ownerId: session.user.id },
-    select: { id: true, slug: true, type: true, name: true, stripeConnectAccountId: true, stripeConnectOnboarded: true },
+    select: { id: true, slug: true, type: true, name: true, stripeConnectAccountId: true, stripeConnectOnboarded: true, payoutMethodKind: true, payoutMethodDetails: true, payoutMethodUpdatedAt: true },
     orderBy: { createdAt: 'asc' },
   });
   const profileIds = profiles.map((p) => p.id);

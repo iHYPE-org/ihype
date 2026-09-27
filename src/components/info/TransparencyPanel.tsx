@@ -85,7 +85,7 @@ export async function TransparencyPanel() {
               icon: '◇',
               c: 'var(--accent)',
               head: t('transparencyPage.reasonTicketsHead', 'Tickets'),
-              body: t('transparencyPage.reasonTicketsBodyNet', 'Tickets are sold at face value set by the artist or venue, and the venue is the seller. iHYPE charges 0% on every transaction. The buyer pays the ticket price plus tax; Stripe’s card fee comes off the face value, and the rest splits 75% to the artist and 25% to the venue.'),
+              body: t('transparencyPage.reasonTicketsBodyAgreement', 'Tickets are sold at face value, and the venue is the seller: every sale lands in the venue’s own Stripe account. iHYPE charges 0% and never holds ticket money. The venue pays each act directly, after the show, under a split agreement that act signed before sales opened. The buyer pays the ticket price plus tax.'),
             },
             {
               icon: '◐',

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getAppProfilePathForType } from '@/lib/profile-paths';
 import { PayoutConnectButton } from '@/components/PayoutConnectButton';
+import { PayoutMethodForm } from '@/components/payouts/PayoutMethodForm';
 import { getServerT } from '@/lib/i18n/server';
 
 type SettingsProfile = {
@@ -10,6 +11,8 @@ type SettingsProfile = {
   name: string;
   stripeConnectAccountId: string | null;
   stripeConnectOnboarded: boolean;
+  payoutMethodKind: string | null;
+  payoutMethodDetails: string | null;
 };
 
 function roleLabel(type: string, t: Awaited<ReturnType<typeof getServerT>>) {
@@ -22,7 +25,7 @@ export async function PayoutSettingsPanel({ profiles, stripeReady }: { profiles:
   const t = await getServerT();
   return (
     <div className="pset-panel">
-      <p className="pset-sub">{t('payoutSettingsPanel.autoPayoutNoteNet', 'Your share is paid out automatically after each show. Stripe’s card fee comes off the face value first; the rest splits 75% artist / 25% venue per the charter.')}</p>
+      <p className="pset-sub">{t('payoutSettingsPanel.agreementNote', 'Venues sell the tickets through their own Stripe account and pay each act directly, within 7 days of the show, under the split agreement both of you sign. iHYPE takes 0% and never holds the money.')}</p>
 
       {!stripeReady && (
         <div className="pset-warn">{t('payoutSettingsPanel.paymentsNotConfigured', 'Payments are not configured on this server right now — connecting accounts is temporarily unavailable.')}</div>
@@ -30,7 +33,7 @@ export async function PayoutSettingsPanel({ profiles, stripeReady }: { profiles:
 
       {profiles.length === 0 ? (
         <div className="pset-empty">
-          <p>{t('payoutSettingsPanel.noProfileYet', "You don't have an artist, DJ, or venue profile yet — payout accounts connect to those profile types.")}</p>
+          <p>{t('payoutSettingsPanel.noProfileYetArtistVenue', 'You do not have an artist or venue profile yet.')}</p>
           <Link href="/app/me/profiles">{t('payoutSettingsPanel.createProfile', 'Create a profile →')}</Link>
         </div>
       ) : (
@@ -47,6 +50,19 @@ export async function PayoutSettingsPanel({ profiles, stripeReady }: { profiles:
                 </span>
               </div>
 
+              {p.type === 'ARTIST' ? (
+                <>
+                  <PayoutMethodForm initialDetails={p.payoutMethodDetails} initialKind={p.payoutMethodKind} profileId={p.id} />
+                  {/* An artist connected Stripe before 2026-09-27 still has
+                      shares from those sales on the way through iHYPE; the
+                      account stays, and nothing new is routed to it. */}
+                  {p.stripeConnectAccountId && (
+                    <p className="pset-legacy-note">
+                      {t('payoutSettingsPanel.legacyArtistStripe', 'Your Stripe account stays connected for shares from ticket sales made before 27 September 2026. Everything sold since is paid to you by the venue.')}
+                    </p>
+                  )}
+                </>
+              ) : (
               <div className="pset-account-row">
                 <div className="pset-account-icon" aria-hidden>
                   <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
@@ -70,6 +86,8 @@ export async function PayoutSettingsPanel({ profiles, stripeReady }: { profiles:
                 )}
               </div>
 
+              )}
+
               {/* A VENUE is agreeing to something materially different from an
                   artist or a promoter, and it has to be said BEFORE the button
                   rather than discovered in a Stripe dashboard afterwards.
@@ -86,7 +104,7 @@ export async function PayoutSettingsPanel({ profiles, stripeReady }: { profiles:
                   read what it agreed to. */}
               {p.type === 'VENUE' && (
                 <p className="pset-merchant-note">
-                  {t('payoutSettingsPanel.venueMerchantNoteNet', 'Connecting makes your venue the seller of record for every ticket to your shows, and tickets cannot go on sale until it is done. Ticket money is charged to your Stripe account first, so you receive it directly — and refunds, card disputes and sales tax are yours to handle, the same as tickets you sell at the door. If a buyer disputes a charge, Stripe takes the ticket price and its own $15 dispute fee from your account, not from iHYPE. iHYPE takes 0%. Stripe’s card fee comes off the face value first; the artist’s 75% of what is left is carried out of your ticket revenue automatically, and your 25% stays with you.')}
+                  {t('payoutSettingsPanel.venueMerchantNoteAgreement', 'Connecting makes your venue the seller of record for every ticket to your shows, and tickets cannot go on sale until it is done. Every ticket sale is charged to your Stripe account, and you keep all of it: you pay each act its agreed share yourself within 7 days of the show, under the split agreement you both sign. Stripe’s card fees, refunds, card disputes and sales tax are yours to handle, the same as tickets you sell at the door. If a buyer disputes a charge, Stripe takes the ticket price and its $15 dispute fee from your account, not from iHYPE. iHYPE takes 0%.')}
                 </p>
               )}
             </div>
@@ -122,6 +140,7 @@ export async function PayoutSettingsPanel({ profiles, stripeReady }: { profiles:
         /* The venue disclosure is the one block on this panel that is a legal
            statement rather than a status readout, so it is set apart from the
            card it sits in rather than reading as another row of metadata. */
+        .pset-legacy-note { margin: 12px 0 0; font-size: 0.9375rem; color: var(--ink-a65); line-height: 1.55; }
         .pset-merchant-note { margin: 14px 0 0; padding: 12px 14px; border-left: 3px solid var(--role-venue); background: rgba(var(--role-venue-rgb),.08); border-radius: 0 var(--radius-md) var(--radius-md) 0; font-size: 0.9375rem; line-height: 1.6; color: var(--ink-a70); }
         .pset-note { padding: 14px 16px; border-radius: var(--radius-md); border: 1px solid var(--line); background: var(--bg2); margin-bottom: 0; }
         .pset-note-label { font-family: var(--font-mono); font-size: 0.9375rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-a65); margin-bottom: 4px; }

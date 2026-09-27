@@ -87,6 +87,7 @@ const JOBS: CronJob[] = [
   { path: '/api/cron?job=artist-onboarding',     schedule: '0 11 * * *'  },
   { path: '/api/cron?job=show-payouts',          schedule: '0 13 * * *'  },
   { path: '/api/cron?job=ad-settlement',         schedule: '0 13 * * *'  },
+  { path: '/api/cron?job=split-settlement',      schedule: '0 13 * * *'  },  // split-agreement statements + non-payment pauses
   { path: '/api/cron?job=stripe-connect-health', schedule: '0 */6 * * *' },
   { path: '/api/cron?job=stripe-reconcile',      schedule: '0 5 * * *'   },  // Stripe's ledger against ours; reports, never writes
 

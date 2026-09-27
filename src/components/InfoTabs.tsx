@@ -163,17 +163,7 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
         <h2>{t('legalPage.charter.constraintTitle', 'The founding constraint')}</h2>
         <p>{t('legalPage.charter.constraintBody', "iHYPE was incorporated with a single non-negotiable structural commitment: the platform takes nothing from ticket sales. This commitment is embedded in the company's founding documents and cannot be amended by management, board resolution, investor pressure, or acquisition.")}</p>
         <h2>{t('legalPage.charter.splitTitle', 'The split')}</h2>
-        {/* Static bar and static percentages, unlike the standalone /charter
-            page this was folded in from. That version counted up from 0 when an
-            IntersectionObserver fired — inside a tab panel that starts hidden,
-            a missed observer would leave the platform's defining number reading
-            "0% artist · 0% venue". Not a trade worth an
-            animation. */}
-        <div className="charter-split-bar" aria-hidden="true">
-          <div style={{ flex: 75, background: 'var(--accent)' }} />
-          <div style={{ flex: 25, background: 'var(--role-venue)' }} />
-        </div>
-        <p className="legal-split-display">{t('legalPage.charter.splitDisplayNet', '75% artist · 25% venue after Stripe’s card fee · 0% iHYPE.')}</p>
+        <p className="legal-split-display">{t('legalPage.charter.splitDisplayAgreement', '0% iHYPE. The venue sells every ticket through its own Stripe account and pays each act the share both of them signed in a Show Revenue Split Agreement.')}</p>
         <div className="charter-callout">
           <p>{t('legalPage.charter.splitBodyConstraint', 'This is not a pricing strategy. It is a constraint. We built the business model around it, not the other way around.')}</p>
         </div>
@@ -334,8 +324,6 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
         /* A recessed meter in a brass rail, not three flat pills. This is the
            charter's signature number and the one graphic the whole product is
            an argument about; on a hi-fi console it is the VU meter. */
-        .charter-split-bar { display: flex; height: 18px; border-radius: 3px; overflow: hidden; margin: 1.5rem 0 0; gap: 3px; padding: 3px; background: var(--walnut-3); box-shadow: 0 0 0 1px var(--brass-deep), 0 0 0 3px var(--brass), inset 0 2px 5px rgba(0,0,0,.55); }
-        .charter-split-bar div { border-radius: 1px; }
         /* --radius-card, not a literal 16px: it is the radius Design System 8
            added for exactly this shape, and rule 35 asks new work to use it. */
         .charter-callout { background: rgba(var(--accent-rgb),.06); border: 1px solid rgba(var(--accent-rgb),.15); border-radius: var(--radius-card, 18px); padding: 20px 24px; margin: 0 0 1rem; }
@@ -356,9 +344,6 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
           .legal-trans-notice p { color: #111 !important; }
           .legal-doc a { color: #111 !important; text-decoration: underline; }
           .charter-callout p { color: #111 !important; }
-          /* A flat bar prints as three grey blocks with no legend — the
-             percentages beside it already carry the number. */
-          .charter-split-bar { display: none !important; }
         }
       `}</style>
     </div>

@@ -29,8 +29,12 @@ export type GuideSummary = {
   trackCount: number;
   /** Venue: an address, a city and a capacity are all on the page. */
   hasVenueDetails: boolean;
-  /** Stripe setup finished — the venue can take a charge / the artist can be paid. */
+  /** Venue: Stripe setup finished, so it can take a charge. */
   payoutsReady: boolean;
+  /** Artist: "Where you get paid" recorded (payoutMethodKind + details). An
+      artist needs no Stripe account since 2026-09-27 (row 528): the venue
+      pays each act directly under the split agreement the act signs. */
+  payoutMethodSet: boolean;
   /** Shows naming this profile as headliner or venue, cancelled ones excluded. */
   showCount: number;
   /** The guided setup wizard reported finishing. */
@@ -107,7 +111,7 @@ export function buildGuide(summary: GuideSummary): Guide {
     steps: [
       { id: 'artist-about', href: editorHref(profile.id, 'about'), done: about },
       { id: 'artist-track', href: editorHref(profile.id, 'media'), done: summary.trackCount > 0 },
-      { id: 'artist-payouts', href: '/app/me/payouts?tab=settings', done: summary.payoutsReady },
+      { id: 'artist-payouts', href: '/app/me/payouts?tab=settings', done: summary.payoutMethodSet },
       { id: 'artist-show', href: '/app/me/events/new', done: summary.showCount > 0 },
     ],
   };

@@ -332,6 +332,41 @@ export function calculateTicketOrderFinancials(input: OrderInput & TicketTaxInpu
   };
 }
 
+/**
+ * A sale under the Show Revenue Split Agreement (2026-09-27, DESIGN_SYNC row
+ * 528): the buyer pays face value plus the venue's tax, the whole charge lands
+ * on the venue's Stripe account, and iHYPE takes and routes nothing. What each
+ * act is owed is not a property of the ORDER any more — it is the Artist Share
+ * of the show's Net Ticket Receipts under that act's signed agreement,
+ * computed on the settlement statement (`computeArtistShare`). So the order
+ * records the venue as holding the face value and the artist column as 0.
+ */
+export function calculateVenueKeepsAllFinancials(input: TicketTaxInput) {
+  if (!Number.isInteger(input.ticketPriceCents) || input.ticketPriceCents <= 0) {
+    throw new Error('Ticket price must be a positive whole number of cents.');
+  }
+  if (!Number.isInteger(input.quantity) || input.quantity <= 0) {
+    throw new Error('Ticket quantity must be a positive whole number.');
+  }
+  const taxes = calculateTicketTaxes(input);
+  const subtotalCents = input.ticketPriceCents * input.quantity;
+  const totalChargeCents = subtotalCents + taxes.totalTaxCents;
+  return {
+    subtotalCents,
+    ...taxes,
+    /** Stripe's estimated fee, charged to the venue as merchant (Agreement 4.4). */
+    stripeFeeCents: stripeCutOf(totalChargeCents),
+    netCents: subtotalCents,
+    venuePayoutCents: subtotalCents,
+    artistPayoutCents: 0,
+    promoterPayoutCents: 0,
+    platformCommissionCents: 0,
+    reserveFeeCents: 0,
+    processingFeeCents: 0,
+    totalChargeCents,
+  };
+}
+
 export function formatCurrencyFromCents(amountCents: number, locale: Locale) {
   return formatUsd(locale, amountCents, 2);
 }

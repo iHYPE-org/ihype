@@ -9,6 +9,7 @@ const base: GuideSummary = {
   trackCount: 0,
   hasVenueDetails: false,
   payoutsReady: false,
+  payoutMethodSet: false,
   showCount: 0,
   onboarded: false,
 };
@@ -37,10 +38,21 @@ describe('buildGuide', () => {
   it('ticks steps off from the facts, and needs BOTH photo and bio for the first', () => {
     const half = buildGuide({ ...base, hasPhoto: true });
     expect(half.steps[0].done).toBe(false);
-    const guide = buildGuide({ ...base, hasPhoto: true, hasBio: true, trackCount: 2, payoutsReady: true, showCount: 1, onboarded: true });
+    const guide = buildGuide({ ...base, hasPhoto: true, hasBio: true, trackCount: 2, payoutMethodSet: true, showCount: 1, onboarded: true });
     expect(guide.steps.every((s) => s.done)).toBe(true);
     expect(guideProgress(guide)).toEqual({ done: 4, total: 4 });
     expect(guide.wizardHref).toBeNull();
+  });
+
+  it('ticks an artist’s payout step on where it gets paid, never on Stripe', () => {
+    expect(buildGuide({ ...base, payoutsReady: true }).steps[2].done).toBe(false);
+    expect(buildGuide({ ...base, payoutMethodSet: true }).steps[2].done).toBe(true);
+  });
+
+  it('keeps the venue payout step on Stripe', () => {
+    const venue = { ...base, role: 'VENUE' as const };
+    expect(buildGuide({ ...venue, payoutMethodSet: true }).steps[2].done).toBe(false);
+    expect(buildGuide({ ...venue, payoutsReady: true }).steps[2].done).toBe(true);
   });
 
   it('gives a venue its own five steps, the demand radar unmeasured', () => {

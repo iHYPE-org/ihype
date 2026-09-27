@@ -28,7 +28,7 @@ const REVENUE = {
   ],
   notes: [
     'Founder compensation is not self-approved. It must be approved in advance by conflict-free members of the independent board using comparable compensation data, documented, reviewed annually, and published through transparency reporting.',
-    'None of it touches the ticket split. Tickets are sold by the venue through Stripe. Stripe\u2019s card fee comes off the face value before the split, and the buyer pays the ticket price plus tax and nothing else.',
+    'None of it touches ticket money. Tickets are sold by the venue through its own Stripe account, the venue pays each act the share both signed in a Show Revenue Split Agreement, and the buyer pays the ticket price plus tax and nothing else.',
   ],
 } as const;
 
@@ -95,8 +95,9 @@ const SECTIONS = [
  * who to write to, and the ROLE LABELS on the split bar. A member who cannot
  * read "Artist · Venue" cannot read the single most important fact iHYPE
  * publishes about itself, and translating a label does not move a number —
- * 75/25/0 after Stripe's fee is the promise (since 2026-09-25; it was
- * 70/20/10/0 before) and it is identical in every language.
+ * 0% to iHYPE is the promise, and the act's share is whatever the venue
+ * offers and the act signs (since 2026-09-27, DESIGN_SYNC row 528; it was a
+ * fixed 75/25 before, and 70/20/10 before that).
  *
  * NOT TRANSLATED: the commitments themselves — the constraint paragraph, where
  * advertising revenue goes, the compensation ceiling, the board-approval rule.
@@ -121,15 +122,12 @@ export async function MmmCharter() {
 
       <section aria-labelledby="charter-split" className="mmm-charter-split">
         <p className="mmm-eyebrow" id="charter-split">{t('mmmLegal.everyTicket', 'Every ticket. Every time.')}</p>
-        <div aria-hidden="true" className="mmm-charter-split-bar">
-          <span data-share="artist" /><span data-share="venue" />
-        </div>
         <div className="mmm-charter-shares">
-          <div><strong>75%</strong><span>{t('mmmLegal.shareArtist', 'Artist')}</span></div>
-          <div><strong>25%</strong><span>{t('mmmLegal.shareVenue', 'Venue')}</span></div>
+          <div><strong>{t('mmmLegal.shareArtistSigned', 'Signed')}</strong><span>{t('mmmLegal.shareArtist', 'Artist')}</span></div>
+          <div><strong>{t('mmmLegal.shareVenueRest', 'The rest')}</strong><span>{t('mmmLegal.shareVenue', 'Venue')}</span></div>
           <div><strong>0%</strong><span>iHYPE</span></div>
         </div>
-        <p className="mmm-charter-split-note">{t('mmmLegal.shareAfterFee', 'Of the face value after Stripe’s card fee. The buyer pays the ticket price plus tax.')}</p>
+        <p className="mmm-charter-split-note">{t('mmmLegal.shareAgreementNote', 'The venue sells every ticket through its own Stripe account and pays each act the percentage both signed in a Show Revenue Split Agreement. iHYPE never holds ticket money. The buyer pays the ticket price plus tax.')}</p>
         {/* i18n-exempt: a charter undertaking, not a label. English governs —
             see LegalLanguageNotice. */}
         <p className="mmm-charter-callout">This is not a pricing strategy. It is a constraint. We built the business model around it, not the other way around.</p>

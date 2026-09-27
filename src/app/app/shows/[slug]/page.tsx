@@ -10,7 +10,8 @@ import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { formatShowTime } from '@/lib/utils';
 import { isPaymentProcessingConfigured } from '@/lib/payments';
 import { isAdminSession } from '@/lib/permissions';
-import { canViewShow, formatShowWhere, isTicketingOpen, resolveShowSplits, splitFaceValueCents } from '@/lib/show-detail';
+import { canViewShow, formatShowWhere, isTicketingOpen, resolveShowSplits } from '@/lib/show-detail';
+import { readAgreementReadiness } from '@/lib/split-agreement-data';
 import { TicketSaleCard } from '@/components/TicketSaleCard';
 import { HypeButton } from '@/components/HypeButton';
 
@@ -153,9 +154,14 @@ export default async function MmmShowPage({
 
   const venue = show.venueProfile;
   const where = formatShowWhere(venue);
-  const ticketingOpen = isTicketingOpen(show);
+  /* Sales open only once every act has signed the split agreement and the
+     venue is not paused for an unresolved payment report (row 528); the
+     purchase route refuses otherwise, so the card must not offer a form. */
+  const agreementReady = show.isTicketed
+    ? await readAgreementReadiness(show.id).then((r) => r.ready).catch(() => false)
+    : true;
+  const ticketingOpen = isTicketingOpen(show) && agreementReady;
   const splits = resolveShowSplits(show);
-  const faceShares = splits ? splitFaceValueCents(show.ticketPriceCents, splits) : null;
 
   /* ── S9 · Show detail ──────────────────────────────────────────────────
      Translated from design/handoff-console/reference/s9-show-detail.html.
@@ -212,29 +218,25 @@ export default async function MmmShowPage({
         </div>
       )}
 
-      {/* The split, stated on the surface where money changes hands rather than
-          only in the charter: Stripe's card fee off the top, then 75% to the
-          artist and 25% to the venue of what is left (2026-09-25). The same
-          arithmetic the purchase route runs, so the page cannot state a split
-          the sale does not make. Absent when the show is not ticketed. */}
+      {/* How the money moves, stated on the surface where it changes hands.
+          Since 2026-09-27 (DESIGN_SYNC row 528) there is no fixed split: the
+          venue sells every ticket through its own Stripe account and keeps the
+          charge, and pays each act directly under the Show Revenue Split
+          Agreement that act signed. Percentages are per offer, so this pane
+          names none. `splits` still gates the ticket card below (it is null
+          for a show with no payout configuration). */}
       {splits && (
         <>
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, padding: '13px 0', borderTop: '1px solid var(--line)', borderBottom: '1px solid var(--line)' }}>
-            <span style={{ fontSize: '0.9375rem', color: 'var(--ink-2)' }}>{t('mmmShowPane.splitLocked', 'Split locked at publish')}</span>
+            <span style={{ fontSize: '0.9375rem', color: 'var(--ink-2)' }}>{t('mmmShowPane.splitAgreementLabel', 'Acts paid under signed split agreements')}</span>
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '0.14em' }}>
-              {splits.artist} / {splits.venue} · iHYPE $0
+              iHYPE $0
             </span>
           </div>
-          {/* WHAT the percentages are a share OF: the face value after Stripe's
-              fee. The buyer pays face value and tax and nothing on top. */}
           <div className="mmm-show-fee">
-            {faceShares
-              ? t('mmmShowPane.faceSharesNet', '{face} face value · {fee} card fee · {artist} artist · {venue} venue')
-                  .replace('{face}', formatCurrencyFromCents(show.ticketPriceCents, locale))
-                  .replace('{fee}', formatCurrencyFromCents(faceShares.fee, locale))
-                  .replace('{artist}', formatCurrencyFromCents(faceShares.artist, locale))
-                  .replace('{venue}', formatCurrencyFromCents(faceShares.venue, locale))
-              : show.ticketPriceCents > 0 ? formatCurrencyFromCents(show.ticketPriceCents, locale) : t('mmmShowPane.free', 'Free')}
+            {show.ticketPriceCents > 0
+              ? t('mmmShowPane.faceValueVenueSells', '{face} face value · sold by the venue').replace('{face}', formatCurrencyFromCents(show.ticketPriceCents, locale))
+              : t('mmmShowPane.free', 'Free')}
           </div>
           <div className="mmm-show-fee">
             {t('mmmShowPane.feeNoteNet', '$0 iHYPE fee · you pay the ticket price and its tax, nothing more')}
@@ -298,7 +300,7 @@ export default async function MmmShowPage({
             ticketPriceCents={show.ticketPriceCents}
             ticketingOpen={ticketingOpen}
             venuePaymentReady={Boolean(venue.stripeConnectOnboarded)}
-            ticketingOpensAtLabel={show.ticketingOpensAt ? formatShowTime(show.ticketingOpensAt, locale, show.timeZone) : null}
+            ticketingOpensAtLabel={agreementReady && show.ticketingOpensAt ? formatShowTime(show.ticketingOpensAt, locale, show.timeZone) : null}
             ticketsSoldCount={show.ticketsSoldCount}
             title={show.title}
             venueLocation={{

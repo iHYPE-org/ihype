@@ -20,11 +20,9 @@ import {
   createVenueDirectCheckoutSession,
   isConnectMerchantReady,
 } from '@/lib/stripe';
-import {
-  ARTIST_SHARE_PERCENT,
-  VENUE_SHARE_PERCENT,
-  calculateTicketOrderFinancials,
-} from '@/lib/ticketing';
+import { calculateVenueKeepsAllFinancials } from '@/lib/ticketing';
+import { VENUE_KEEPS_ALL } from '@/lib/settlement-mode';
+import { readAgreementReadiness } from '@/lib/split-agreement-data';
 import { readClientAddress } from '@/lib/request-meta';
 import { PAYMENTS_UNAVAILABLE_MESSAGE, isStripeUnavailable } from '@/lib/stripe-errors';
 import { voidReservedTicketOrder } from '@/lib/ticket-order-state';
@@ -132,6 +130,7 @@ export async function POST(
               country: true,
               ticketTaxRatePpm: true,
               stripeConnectAccountId: true,
+              paymentReportHoldAt: true,
               ownerId: true,
             },
           },
@@ -183,12 +182,7 @@ export async function POST(
        door policy is the show's age restriction, printed on the page. */
     if (!show) return NextResponse.json({ error: 'Show not found' }, { status: 404 });
 
-    if (
-      !show.isTicketed ||
-      !show.ticketPriceCents ||
-      show.venuePayoutPercent === null ||
-      show.artistPayoutPercent === null
-    ) {
+    if (!show.isTicketed || !show.ticketPriceCents) {
       return NextResponse.json({ error: 'This show is not configured for ticket sales' }, { status: 400 });
     }
     if (!['SCHEDULED', 'LIVE'].includes(show.status)) {
@@ -205,6 +199,33 @@ export async function POST(
     if (!isTicketingOpen(show)) {
       return NextResponse.json(
         { error: 'Tickets for this show are not on sale yet.', code: 'TICKETING_NOT_OPEN' },
+        { status: 409 },
+      );
+    }
+
+    /* NO SALE WITHOUT A SIGNED AGREEMENT WITH EVERY ACT (owner, 2026-09-27:
+       every ticketed show). The venue collects all the money and pays each
+       act itself, so a ticket sold before the acts have signed is money the
+       venue holds under no contract. A revised offer on a show already on sale
+       pauses sales the same way until every act has signed the revision. */
+    const agreements = await readAgreementReadiness(show.id);
+    if (!agreements.ready) {
+      return NextResponse.json(
+        {
+          error: 'Tickets for this show go on sale once every act has signed the split agreement with the venue.',
+          code: 'SPLIT_AGREEMENT_PENDING',
+        },
+        { status: 409 },
+      );
+    }
+    /* Split Agreement 8.6: an artist's non-payment report left unresolved past
+       the pause window stops the venue's new sales. */
+    if (show.venueProfile?.paymentReportHoldAt) {
+      return NextResponse.json(
+        {
+          error: 'Ticket sales for this venue are paused while an artist payment report is resolved.',
+          code: 'VENUE_PAYMENT_HOLD',
+        },
         { status: 409 },
       );
     }
@@ -248,8 +269,9 @@ export async function POST(
      *
      * The charge is created on the venue's own Stripe account: their name is
      * on the buyer's statement, disputes and refunds are debited from them,
-     * and they collect and remit the tax. iHYPE claims only the artist's 75%
-     * as an application fee and pays it onward, and holds nothing else.
+     * and they collect and remit the tax. Since 2026-09-27 the venue also
+     * keeps the whole charge and pays each act under the signed split
+     * agreement; iHYPE claims no application fee and holds nothing.
      *
      * Until this date two fallbacks let a sale proceed without that — a
      * destination charge to the headliner, and a platform-settled charge with
@@ -280,14 +302,11 @@ export async function POST(
       );
     }
 
-    /* The charter split, not the show's stored percentages: a show created
-       under the old 70/20/10 carries 20/70 on its row, and a sale today is
-       made under today's terms. */
-    const financials = calculateTicketOrderFinancials({
+    /* The venue keeps the whole charge; each act's share is settled under its
+       signed agreement on the settlement statement, not on the order. */
+    const financials = calculateVenueKeepsAllFinancials({
       ticketPriceCents: show.ticketPriceCents,
       quantity: body.quantity,
-      venuePayoutPercent: VENUE_SHARE_PERCENT,
-      artistPayoutPercent: ARTIST_SHARE_PERCENT,
       /* Tax follows the VENUE: admission is taxed where the show happens,
          and the venue remits it. The buyer's location is recorded on the
          order below for reporting, never used to price it. */
@@ -371,10 +390,9 @@ export async function POST(
           quantity: body.quantity,
           status: TicketOrderStatus.RESERVED,
           affiliatePromoterProfileId: affiliatePromoterProfile?.id,
-          // What Stripe routed with the charge. buildPayableEntries reads this
-          // at capture so it does not write a payable for a share the act has
-          // already been paid.
-          settlementMode: 'VENUE_DIRECT',
+          // The charge is the venue's and carries no application fee, so
+          // buildPayableEntries writes nothing: iHYPE holds none of it.
+          settlementMode: VENUE_KEEPS_ALL,
           settlementAccountId: venueDirectAccountId,
           subtotalCents: financials.subtotalCents,
           taxLocalCents: financials.localCents,
@@ -403,7 +421,7 @@ export async function POST(
     const checkout = await createVenueDirectCheckoutSession({
       amountCents: financials.totalChargeCents,
       venueAccountId: venueDirectAccountId,
-      artistPayoutCents: financials.artistPayoutCents,
+      keepsAll: true,
       showId: show.id,
       showSlug: show.slug,
       showTitle: show.title,

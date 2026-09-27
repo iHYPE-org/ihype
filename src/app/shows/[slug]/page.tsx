@@ -36,7 +36,8 @@ import { ShowTabs } from '@/components/ShowTabs';
 import { ShowComments } from '@/components/ShowComments';
 /* Shared with the shell copy of this page — see the module header for what had
    already drifted between the two. */
-import { canViewShow, isTicketingOpen, resolveShowSplits, splitFaceValueCents } from '@/lib/show-detail';
+import { canViewShow, isTicketingOpen } from '@/lib/show-detail';
+import { readAgreementReadiness } from '@/lib/split-agreement-data';
 import { buildShowJsonLd } from '@/lib/show-jsonld';
 import { showReminderLinkKeys } from '@/lib/show-reminder';
 
@@ -396,8 +397,11 @@ export default async function ShowDetailPage({
   const price = show.isTicketed ? show.ticketPriceCents / 100 : 0;
   /* Resolved once, from the same module the shell copy reads, so the two pages
      cannot report different money for one show. */
-  const ticketSplits = show.isTicketed ? resolveShowSplits(show) : null;
-  const faceSplit = ticketSplits ? splitFaceValueCents(show.ticketPriceCents, ticketSplits) : null;
+  /* Sales open only once every act has signed the split agreement (row 528);
+     the purchase route refuses otherwise, so the card must not offer a form. */
+  const agreementReady = show.isTicketed
+    ? await readAgreementReadiness(show.id).then((r) => r.ready).catch(() => false)
+    : true;
   const sold  = show.ticketsSoldCount || 0;
   const cap   = show.ticketCapacity ?? null;
   const pct   = cap ? Math.round((sold / cap) * 100) : 0;
@@ -519,33 +523,16 @@ export default async function ShowDetailPage({
             <p className="meta">{t('showsSlugPage.draftPreviewNoticeOrganiser', 'Draft previews stay private until the organiser publishes the show.')}</p>
           )}
 
-          {/* THE SAME ARITHMETIC THE SHELL COPY AND THE PAYOUT ENTRIES USE.
-              This bar used to compute each share as `price * (pct / 100)` and
-              `toFixed(2)` it — three independent roundings of a float, where
-              `splitFaceValueCents` rounds in integer cents and lets the last
-              share absorb the remainder. They disagree by a cent on ordinary
-              prices: at $19.95 the float version told an artist $13.96 against
-              the $13.97 they are actually paid, and at $5.55 the promoter row
-              differed. This is the page people SHARE to sell a ticket, so it
-              was the most-read wrong number in the product. */}
-          {ticketSplits && faceSplit && (
-            <div style={{ display: 'flex', gap: 0, borderRadius: 10, overflow: 'hidden', marginTop: 24 }}>
-              {/* Stripe's card fee first, because it comes off the top: the
-                  artist's and venue's cells are shares of what is left. */}
-              <div style={{ flex: Math.max(Math.round((faceSplit.fee / Math.max(show.ticketPriceCents, 1)) * 100), 1), padding: 16, textAlign: 'center', background: 'var(--bg-3)' }}>
-                <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--ink-2)' }}>{formatCurrencyFromCents(faceSplit.fee, locale)}</div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '.14em', marginTop: 4, color: 'var(--ink-3)' }}>{t('showsSlugPage.cardFeeSplitLabel', 'Card fee')}</div>
-              </div>
-              <div style={{ flex: Math.max(ticketSplits.artist, 1), padding: 16, textAlign: 'center', background: 'rgba(var(--accent-rgb),.15)' }}>
-                <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--accent-text)' }}>{formatCurrencyFromCents(faceSplit.artist, locale)}</div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '.14em', marginTop: 4, color: 'var(--accent-text)' }}>{t('showsSlugPage.artistSplitLabel', 'Artist')} · {ticketSplits.artist}%</div>
-              </div>
-              <div style={{ flex: Math.max(ticketSplits.venue, 1), padding: 16, textAlign: 'center', background: 'rgba(var(--role-venue-rgb),.15)' }}>
-                <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--role-venue)' }}>{formatCurrencyFromCents(faceSplit.venue, locale)}</div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '.14em', marginTop: 4, color: 'var(--role-venue)' }}>{t('showsSlugPage.venueSplitLabel', 'Venue')} · {ticketSplits.venue}%</div>
-              </div>
-            </div>
-          )}
+          {/* Where the money goes, said without a number. Since row 528 the act's
+              share is whatever the venue offered and the act signed — a private
+              term between them — so the public page states the model, not a
+              split. The venue sells the ticket and keeps the sale; iHYPE takes
+              nothing. */}
+          {show.isTicketed ? (
+            <p className="meta" style={{ marginTop: 24 }}>
+              {t('showsSlugPage.moneyModelAgreement', 'The venue sells every ticket through its own Stripe account and pays each act the share both signed in a split agreement. iHYPE takes 0%.')}
+            </p>
+          ) : null}
         </div>
 
         {show.status === 'LIVE' && show.headlinerProfileId ? (
@@ -670,8 +657,7 @@ export default async function ShowDetailPage({
                       <tr><th>{t('showsSlugPage.ticketsSoldLabel', 'Tickets sold')}</th><td>{show.ticketsSoldCount}</td></tr>
                       <tr><th>{t('showsSlugPage.capacityTableLabel', 'Capacity')}</th><td>{show.ticketCapacity ?? t('showsSlugPage.openCapacity', 'Open')}</td></tr>
                       <tr><th>{t('showsSlugPage.grossSalesLabel', 'Gross sales')}</th><td>{formatCurrencyFromCents(show.ticketPriceCents * show.ticketsSoldCount, locale)}</td></tr>
-                      <tr><th>{t('showsSlugPage.artistSplitLabelNet', 'Artist split (after card fee)')}</th><td>{ticketSplits?.artist ?? 0}%</td></tr>
-                      <tr><th>{t('showsSlugPage.venueSplitLabelNet', 'Venue split (after card fee)')}</th><td>{ticketSplits?.venue ?? 0}%</td></tr>
+                      <tr><th>{t('showsSlugPage.splitAgreementLabel', 'Split agreement')}</th><td>{agreementReady ? t('showsSlugPage.splitAgreementSigned', 'Signed by every act') : t('showsSlugPage.splitAgreementAwaiting', 'Awaiting signatures')}</td></tr>
                       <tr><th>{t('showsSlugPage.eventOpensLabel', 'Event officially opens')}</th><td>{show.ticketingOpensAt ? formatShowTime(show.ticketingOpensAt, locale, show.timeZone) : t('showsSlugPage.venueControlled', 'Venue-controlled')}</td></tr>
                     </>
                   ) : null}
@@ -991,9 +977,9 @@ export default async function ShowDetailPage({
                 showId={show.id}
                 ticketCapacity={show.ticketCapacity}
                 ticketPriceCents={show.ticketPriceCents}
-                ticketingOpen={isTicketingOpen(show)}
+                ticketingOpen={isTicketingOpen(show) && agreementReady}
                 venuePaymentReady={Boolean(show.venueProfile.stripeConnectOnboarded)}
-                ticketingOpensAtLabel={show.ticketingOpensAt ? formatShowTime(show.ticketingOpensAt, locale, show.timeZone) : null}
+                ticketingOpensAtLabel={agreementReady && show.ticketingOpensAt ? formatShowTime(show.ticketingOpensAt, locale, show.timeZone) : null}
                 ticketsSoldCount={show.ticketsSoldCount}
                 title={show.title}
                 venueName={show.venueProfile.name}
@@ -1015,7 +1001,7 @@ export default async function ShowDetailPage({
               </div>
 
               <div style={{ marginTop: 16, fontSize: '0.9375rem', color: 'var(--ink-a65)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '.12em', lineHeight: 1.5 }}>
-                {t('showsSlugPage.splitLockedByCharter', 'Split locked by charter · iHYPE takes 0%')}
+                {t('showsSlugPage.splitAgreementCharter', 'Acts paid under signed split agreements · iHYPE takes 0%')}
               </div>
             </aside>
           ) : null}

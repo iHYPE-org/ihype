@@ -161,7 +161,21 @@ const RETIRED = [
     pattern: /\b70\s?\/\s?20\s?\/\s?10\b|\b70\s?%\s(?:to\b|of\b|artist|share|goes|keeps|payout)|\bartists?'?s?\s?(?:·|:|share|payout|gets|keeps)?\s?70\s?%|\b20\s?%\s(?:(?:to )?(?:the |your )?venue|of every|you\b)|\b10\s?%\s(?:(?:to )?(?:the )?promot|you\b)|\bpromoter pool\b|\bpromoters?'?s? (?:share|cut|earnings)\b|\bpaid by the buyer\b|\bdispute protection\b/i,
     what: 'the 70/20/10 split, the promoter share and the buyer-paid processing fee',
     retired: '2026-09-25 — owner decision: Stripe fee off the top, then 75% artist / 25% venue, no promoter share',
-    instead: 'Stripe\'s card fee comes off the face value; the rest is 75% to the artist and 25% to the venue; iHYPE takes 0%. The buyer pays the ticket price plus tax. A HYPE link tracks referrals and earns nothing.',
+    instead: 'The venue keeps every sale and pays each act the share both signed in a Show Revenue Split Agreement; iHYPE takes 0%. The buyer pays the ticket price plus tax. A HYPE link tracks referrals and earns nothing.',
+  },
+  {
+    /* THE FIXED 75/25 IS GONE TOO (owner, 2026-09-27, DESIGN_SYNC row 528:
+       "Per-offer %, venue pays fees"). The venue sells every ticket through
+       its own Stripe account, keeps all of it, pays Stripe's fee as its own
+       cost, and pays each act the percentage both signed in a Show Revenue
+       Split Agreement within seven days. So there is no platform-wide split
+       to state, the artist's share never passes through iHYPE, and an
+       artist does not connect Stripe. A per-offer "70%" in a worked example
+       is not matched; a fixed 75/25 or a share routed through iHYPE is. */
+    pattern: /\b75\s?\/\s?25\b|\b75\s?%\s(?:to\b|of\b|artist|share|goes|keeps|payout)|\bartists?'?s?\s?(?:·|:|share|payout|gets|keeps)?\s?75\s?%|\b25\s?%\s(?:(?:to )?(?:the |your )?venue|of every|you\b)|\bvenue\s?(?:·|:)\s?25\s?%|\biHYPE (?:pays|transfers|sends) (?:the |each )?(?:artist|act)s?\b/i,
+    what: 'the fixed 75/25 split, or an artist share paid out by iHYPE',
+    retired: '2026-09-27 — owner decision: per-offer percentage in a signed split agreement; the venue pays the act',
+    instead: 'The venue keeps every sale and pays each act the percentage both signed in a Show Revenue Split Agreement, within seven days of the show. Stripe\'s card fee is the venue\'s cost. iHYPE takes 0% and holds no ticket money.',
   },
   {
     /* THE 18+ REQUIREMENT IS GONE (owner, 2026-09-25: "since we no longer

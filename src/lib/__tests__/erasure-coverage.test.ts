@@ -56,6 +56,8 @@ const RECORDED_GAPS = new Map<string, string>([
   ['AdImpression', 'the once-per-listener-per-day dedup key; deleting it lets an advertiser be charged twice for the same person'],
   ['InviteCode', 'usedByUserId records who claimed an invite; unlink rather than delete, or the code reads unused'],
   ['AdminDevice', 'a registered admin device; only ever exists for an administrator'],
+  ['ShowLineupSlot', 'a lineup offer carries the venue signer\'s user id; it is one half of a contract with another party, kept like the agreement it becomes'],
+  ['ShowSplitAgreement', 'a signed contract between two parties; each may enforce it and iHYPE keeps it at least 3 years (Split Agreement 10.5)'],
 ]);
 
 function userLinkedModels(schema: string): string[] {

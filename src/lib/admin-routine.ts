@@ -213,6 +213,7 @@ export const AUTOMATED_JOBS: readonly AutomatedJob[] = [
      owed nothing at the end of a term it ran in full — only an early
      cancellation refunds its unused days — and a metered remainder under
      Stripe's 50c minimum is kept because Stripe cannot refund it. */
+  { path: '/api/cron?job=split-settlement', schedule: '0 13 * * *', label: 'Split settlement', what: 'Tells venue and acts a settlement statement is ready a day after the show, and pauses a venue whose artist non-payment report is unresolved 14 days past the settlement date. Moves no money — the venue pays each act', aliveKey: 'split-settlement' },
   { path: '/api/cron?job=ad-settlement', schedule: '0 13 * * *', label: 'Ad settlement', what: 'Settles a campaign whose run has ended: a metered one is refunded what it did not spend, a sponsorship that ran its full term is owed nothing. Records what Stripe did', aliveKey: 'ad-settlement' },
   { path: '/api/cron?job=onboarding', schedule: '0 14 * * *', label: 'Member onboarding', what: 'Sends the next onboarding step to new members', aliveKey: 'onboarding' },
   { path: '/api/cron/welcome-sequence', schedule: '0 15 * * *', label: 'Welcome sequence', what: 'Sends the welcome drip' },

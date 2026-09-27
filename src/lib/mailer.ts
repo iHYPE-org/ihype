@@ -78,6 +78,8 @@ type ConfiguredEmailInput = {
   /** The EmailDeliveryLog `type` this send is recorded under; 'generic' when
    *  the caller does not say. Never the body. */
   deliveryType?: string;
+  /** Files to attach — Resend's shape: a filename and base64 content. */
+  attachments?: { filename: string; content: string }[];
 };
 
 /**
@@ -236,7 +238,7 @@ async function sendConfiguredEmail(input: ConfiguredEmailInput) {
     const sunk = await fetch(sink, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ from, to: input.to, subject: input.subject, text: input.text, html: input.html, headers: input.headers ?? null, idempotencyKey: input.idempotencyKey ?? null }),
+      body: JSON.stringify({ from, to: input.to, subject: input.subject, text: input.text, html: input.html, headers: input.headers ?? null, idempotencyKey: input.idempotencyKey ?? null, attachments: input.attachments?.map((a) => a.filename) ?? null }),
     });
     if (!sunk.ok) throw new Error(`Email sink refused the message: HTTP ${sunk.status}`);
     return 'sink' as const;
@@ -259,7 +261,8 @@ async function sendConfiguredEmail(input: ConfiguredEmailInput) {
       subject: input.subject,
       text: input.text,
       html: input.html,
-      ...(input.headers ? { headers: input.headers } : {})
+      ...(input.headers ? { headers: input.headers } : {}),
+      ...(input.attachments?.length ? { attachments: input.attachments } : {}),
     }),
     /* Bounded (2026-09-24, DESIGN_SYNC row 513). A magic link is the only way
        in for many members, and a stalled Resend held that request open with

@@ -122,7 +122,7 @@ export function MmmSheet({ onClose, target }: { onClose: () => void; target: Map
         )}
 
         <div className="mmm-eyebrow" style={{ margin: '11px 0 0', fontSize: '0.9375rem', letterSpacing: 0, textTransform: 'none' }}>
-          {t('mmmSheet.splitLineNet', 'After Stripe’s card fee: 75% artist · 25% venue · $0 iHYPE fee')}
+          {t('mmmSheet.splitLineAgreement', 'Venue sells · acts paid under signed splits · $0 iHYPE fee')}
         </div>
 
         <div className="mmm-sheet-actions">
@@ -199,7 +199,6 @@ function describe(target: MapSheetTarget, locale: Locale): SheetContent {
       stats: [
         ...(venue.capacity ? [{ value: String(venue.capacity), label: 'Capacity' }] : []),
         { value: String(venue.upcomingCount), label: 'Upcoming' },
-        { value: '25%', label: 'Gate share' },
       ],
       listTitle: venue.genres.length ? 'Books' : '',
       list: venue.genres.map((entry) => ({ a: entry, b: '', c: '' })),
@@ -221,7 +220,7 @@ function describe(target: MapSheetTarget, locale: Locale): SheetContent {
       verified: false,
       initial: city.city.charAt(0) || '?',
       venueShape: false,
-      stats: [{ value: String(city.count), label: 'Artists' }, { value: '75%', label: 'Ticket share' }],
+      stats: [{ value: String(city.count), label: 'Artists' }],
       listTitle: 'Most hyped here',
       list: city.artists.map((artist) => ({
         a: artist.name,

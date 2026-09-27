@@ -799,9 +799,47 @@ async function main() {
     showSlug = show?.slug ?? '';
     assert(showId, `show create returned no id: ${JSON.stringify(body).slice(0, 160)}`);
 
+    /* Since row 528 a ticketed show is created DRAFT and goes on sale only
+       when every act has signed the Show Revenue Split Agreement. The walk
+       drives the real sequence: the act records where it gets paid, the venue
+       previews and sends the offer (its signature), the act accepts and signs. */
+    assert(show?.status === 'DRAFT', `a ticketed show must be created DRAFT, got ${show?.status}`);
+    ok(await api('/api/profile/payout-method', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ profileId: artistProfile.id, kind: 'BANK_TRANSFER', details: 'Walk test account, routing on file' }),
+      cookie: creator.cookie,
+    }), [200]);
+    const slots = [{ profileId: artistProfile.id, splitPercent: 70, isHeadliner: true }];
+    const preview = ok(await api(`/api/shows/${showId}/lineup`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ slots, preview: true }),
+      cookie: creator.cookie,
+    }), [200]);
+    const offer = preview?.agreements?.[0];
+    assert(offer?.hash, `offer preview returned no agreement hash: ${JSON.stringify(preview).slice(0, 160)}`);
+    ok(await api(`/api/shows/${showId}/lineup`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ slots, signerName: 'Walk Venue Signer', agreementHashes: { [artistProfile.id]: offer.hash } }),
+      cookie: creator.cookie,
+    }), [200, 201]);
+    const beforeSign = await prisma.show.findUnique({ where: { id: showId }, select: { status: true } });
+    assert(beforeSign?.status === 'DRAFT', 'the show left DRAFT before the act signed');
+    ok(await api(`/api/shows/${showId}/lineup/respond`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ status: 'ACCEPTED', agreementHash: offer.hash, signerName: 'Walk Artist Signer' }),
+      cookie: creator.cookie,
+    }), [200]);
+
     const stored = await prisma.show.findUnique({ where: { id: showId } });
     assert(stored, 'show create answered ok but no Show row exists');
-    return `show ${showSlug} · ${stored.artistPayoutPercent}/${stored.venuePayoutPercent}/${stored.promoterPayoutPercent} split · ${stored.ticketPriceCents}c`;
+    assert(stored.status === 'SCHEDULED' && stored.ticketingOpensAt, `the last signature did not schedule the show and open sales (${stored.status})`);
+    const agreement = await prisma.showSplitAgreement.findFirst({ where: { showId, supersededAt: null } });
+    assert(agreement?.textHash === offer.hash, 'no signed agreement row carries the hash both parties signed');
+    return `show ${showSlug} · agreement ${agreement!.textHash.slice(0, 12)} signed by both · ${stored.ticketPriceCents}c`;
   });
 
   /** Envelopes already delivered, by confirmation code, so they can be resent. */
@@ -861,16 +899,14 @@ async function main() {
     }
     assert(session, 'no Checkout Session carried this confirmationCode');
 
-    const orderRow = await prisma.ticketOrder.findUnique({ where: { confirmationCode: code }, select: { artistPayoutCents: true } });
-    // A direct charge on the venue, carrying the artist's share as the
-    // application fee — the shape the hosted session would have created.
+    // A direct charge on the venue with NO application fee: since row 528 the
+    // venue keeps every sale and pays the act itself under the agreement.
     const intent = await stripe.paymentIntents.create({
       amount: session.amount_total ?? 0,
       currency: session.currency ?? 'usd',
       payment_method: 'pm_card_visa',
       confirm: true,
       automatic_payment_methods: { enabled: true, allow_redirects: 'never' },
-      application_fee_amount: orderRow?.artistPayoutCents ?? 0,
       metadata: { confirmationCode: code, alpha: 'true' },
     }, { idempotencyKey: `alpha-pay:${code}`, stripeAccount: merchant });
 
@@ -908,28 +944,25 @@ async function main() {
     assert(order.status === 'CAPTURED', `order is ${order.status}, expected CAPTURED`);
     assert(order.tickets.length === 1, `expected 1 ticket, got ${order.tickets.length}`);
 
-    /* THE 75/25 OF THE NET, AS PAYABLES. The venue is the merchant, so its
-       quarter and the tax never left its account and carry no payable; the
-       artist's 75% came to iHYPE as the application fee and is the one payable
-       the order owes. A HYPE link was attached and earns nothing. */
-    assert(order.settlementMode === 'VENUE_DIRECT', `order settled as ${order.settlementMode}, expected VENUE_DIRECT`);
+    /* THE VENUE KEEPS ALL OF IT. The venue is the merchant and iHYPE takes no
+       application fee, so the order carries no payable at all: the act is paid
+       by the venue under the signed Show Revenue Split Agreement (row 528). A
+       HYPE link was attached and earns nothing. */
+    assert(order.settlementMode === 'VENUE_KEEPS_ALL', `order settled as ${order.settlementMode}, expected VENUE_KEEPS_ALL`);
     assert(order.processingFeeCents === 0 && order.reserveFeeCents === 0, `the buyer paid ${order.processingFeeCents}c processing + ${order.reserveFeeCents}c reserve on top of face value`);
     assert(order.promoterPayoutCents === 0, `the order records a ${order.promoterPayoutCents}c promoter share`);
+    assert(order.artistPayoutCents === 0, `the order routes ${order.artistPayoutCents}c to the artist through iHYPE`);
+    assert(order.venuePayoutCents === order.subtotalCents, `venue receives ${order.venuePayoutCents}c, not the whole ${order.subtotalCents}c face value`);
     const payables = await prisma.accountsPayableEntry.findMany({ where: { ticketOrderId: order.id } });
-    const shape = payables.map((p) => `${p.category}:${p.amountCents}`).join(', ');
-    const artistEntry = payables.find((p) => p.category === 'ARTIST_PAYOUT');
-    assert(artistEntry, `no artist payable (payables: ${shape})`);
-    assert(artistEntry.amountCents === order.artistPayoutCents, `artist payable ${artistEntry.amountCents}c does not match the order's ${order.artistPayoutCents}c`);
-    assert(payables.length === 1, `expected only the artist payable on a venue-direct order, got: ${shape}`);
-    const net = order.artistPayoutCents + order.venuePayoutCents;
-    assert(net < order.subtotalCents, `artist + venue (${net}c) is not under the face value (${order.subtotalCents}c) — the card fee did not come off the top`);
-    assert(order.venuePayoutCents === Math.round(net * 0.25), `venue share ${order.venuePayoutCents}c is not 25% of the ${net}c net`);
+    assert(payables.length === 0, `a venue-keeps-all order wrote ${payables.length} payable(s)`);
+    const statementLine = await prisma.showSplitAgreement.findFirst({ where: { showId: order.showId, supersededAt: null }, select: { splitPercent: true } });
+    assert(statementLine, 'the sold show has no signed agreement for the statement to pay under');
 
     return {
       confirmationCode: code,
       serializedId: order.tickets[0].serializedId,
       payables: payables.length,
-      artistCents: artistEntry.amountCents,
+      artistCents: 0,
       totalCents: order.totalChargeCents,
     };
   }
@@ -941,7 +974,7 @@ async function main() {
     const sale = await sellTicket(fan.cookie);
     confirmationCode = sale.confirmationCode;
     serializedId = sale.serializedId;
-    return `order CAPTURED ${sale.totalCents}c on the venue's account · ${sale.payables} payable · artist owed ${sale.artistCents}c = 75% of the face value after Stripe's fee`;
+    return `order CAPTURED ${sale.totalCents}c on the venue's account · ${sale.payables} payables · the venue keeps the sale and owes the act under the signed agreement`;
   });
 
   // ── 19. Scan the ticket ──────────────────────────────────────────────────
@@ -1766,72 +1799,48 @@ async function main() {
   });
 
   // ── 29. Update payout method ─────────────────────────────────────────────
-  await item('29. Update payout method (Stripe Connect onboarding)', async () => {
-    if (!stripe) blocked('STRIPE_SECRET_KEY not set');
+  await item('29. Update payout method (the act records where the venue pays it)', async () => {
     /* The money terms first (row 521): an artist who never acknowledged them
-       is refused before any Stripe account exists, and the refusal names the
-       version to acknowledge — which is what the retry sends, so the walk
-       proves the gate and the pass with one source of the version. */
-    const unacknowledged = await api('/api/stripe/connect/onboard', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ profileId: artistProfile.id }),
-      cookie: creator.cookie,
-    });
-    assert(
-      unacknowledged.status === 400 && unacknowledged.body?.code === 'MONEY_TERMS_REQUIRED' && unacknowledged.body?.version,
-      `onboarding without the money terms answered ${unacknowledged.status} ${JSON.stringify(unacknowledged.body).slice(0, 160)}, expected 400 MONEY_TERMS_REQUIRED`,
-    );
-    const attempt = await api('/api/stripe/connect/onboard', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ profileId: artistProfile.id, acceptedMoneyTermsVersion: unacknowledged.body.version }),
-      cookie: creator.cookie,
-    });
-
-    /* Account creation prefills `defaults.profile.business_url` with the
-       member's own iHYPE page. Under this harness that is
-       http://localhost:8787/…, which Stripe rejects as a business URL — an
-       artifact of testing on loopback, not a defect. Rather than assume that,
-       prove it: run the same create against Stripe with the production URL
-       shape and see whether it is accepted. */
-    if (attempt.status >= 500) {
-      /* Two arms of the SAME create, differing only in the business URL, so a
-         pass/fail split isolates the URL as the cause rather than asserting it. */
-      const createWith = (businessUrl: string) => stripe.v2.core.accounts.create({
-        contact_email: `alpha-connect-${run}@example.com`,
-        dashboard: 'full',
-        identity: { country: 'us', entity_type: 'individual' },
-        configuration: {
-          recipient: { capabilities: { stripe_balance: { stripe_transfers: { requested: true } } } },
-          merchant: { capabilities: { card_payments: { requested: true } } },
-        },
-        defaults: {
-          currency: 'usd',
-          profile: { business_url: businessUrl, product_description: 'Alpha acceptance walk probe.' },
-          responsibilities: { fees_collector: 'stripe', losses_collector: 'stripe' },
-        },
-      }).then(
-        (account) => ({ ok: true as const, id: account.id }),
-        (error: Error) => ({ ok: false as const, message: error.message }),
+       is refused before anything else, and the refusal names the version to
+       acknowledge. Then, since row 528, an ARTIST is refused a Stripe account
+       at all — the venue pays the act directly under the signed agreement, so
+       the act's payout method is the one recorded with PUT
+       /api/profile/payout-method (item 15 did that before signing). */
+    /* The Connect half needs Stripe configured (the route answers 503 before
+       any other check without it); the payout-method half does not. */
+    let connectNote = 'Connect checks skipped: STRIPE_SECRET_KEY not set';
+    if (stripe) {
+      const unacknowledged = await api('/api/stripe/connect/onboard', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ profileId: artistProfile.id }),
+        cookie: creator.cookie,
+      });
+      assert(
+        unacknowledged.status === 400 && unacknowledged.body?.code === 'MONEY_TERMS_REQUIRED' && unacknowledged.body?.version,
+        `onboarding without the money terms answered ${unacknowledged.status} ${JSON.stringify(unacknowledged.body).slice(0, 160)}, expected 400 MONEY_TERMS_REQUIRED`,
       );
-
-      const local = await createWith(`http://localhost:8787/artists/${artistProfile.slug}`);
-      const production = await createWith(`https://ihype.org/artists/${artistProfile.slug}`);
-
-      if (!local.ok && production.ok) {
-        blocked(`Stripe rejects a localhost business_url, so this route cannot succeed on loopback. Same create with https://ihype.org/… succeeded (${production.id}). Environment, not code.`);
+      const attempt = await api('/api/stripe/connect/onboard', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ profileId: artistProfile.id, acceptedMoneyTermsVersion: unacknowledged.body.version }),
+        cookie: creator.cookie,
+      });
+      const before = await prisma.profile.findUnique({ where: { id: artistProfile.id }, select: { stripeConnectAccountId: true } });
+      if (!before?.stripeConnectAccountId) {
+        assert(attempt.status === 400 && attempt.body?.code === 'ARTIST_PAID_BY_VENUE', `an artist Connect request answered ${attempt.status} ${JSON.stringify(attempt.body).slice(0, 160)}, expected 400 ARTIST_PAID_BY_VENUE`);
       }
-      if (!production.ok) {
-        throw new Error(`route answered ${attempt.status}; the production-URL probe ALSO failed, so this is not just loopback: ${production.message.slice(0, 200)}`);
-      }
-      throw new Error(`route answered ${attempt.status} but both probes succeeded — the fault is in the route, not the URL`);
+      connectNote = 'artist refused a Stripe account (paid by the venue)';
     }
-    const body = ok(attempt, [200, 201]);
-    assert(body?.url, `no onboarding url returned: ${JSON.stringify(body).slice(0, 160)}`);
-    const profile = await prisma.profile.findUnique({ where: { id: artistProfile.id }, select: { stripeConnectAccountId: true } });
-    assert(profile?.stripeConnectAccountId, 'onboarding link created but no Connect account id was stored');
-    return `Connect account ${profile.stripeConnectAccountId} created, onboarding link issued`;
+    ok(await api('/api/profile/payout-method', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ profileId: artistProfile.id, kind: 'CHECK', details: 'Mail to the walk test address' }),
+      cookie: creator.cookie,
+    }), [200]);
+    const profile = await prisma.profile.findUnique({ where: { id: artistProfile.id }, select: { payoutMethodKind: true, payoutMethodDetails: true } });
+    assert(profile?.payoutMethodKind === 'CHECK' && profile.payoutMethodDetails, `the payout method did not update (${profile?.payoutMethodKind})`);
+    return `${connectNote} · payout method updated to ${profile.payoutMethodKind}`;
   });
 
   // ── 30. HYPE link referral ───────────────────────────────────────────────

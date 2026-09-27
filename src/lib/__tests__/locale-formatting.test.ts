@@ -31,6 +31,7 @@ const SCAN_ROOTS = ['src/app', 'src/components', 'src/lib'];
 const ALLOWED: { prefix: string; reason: string }[] = [
   { prefix: 'src/lib/format-locale.ts', reason: 'the locale → BCP-47 map itself' },
   { prefix: 'src/lib/zoned-time.ts', reason: 'formatToParts, read structurally — the tag never reaches a reader' },
+  { prefix: 'src/lib/split-agreement.ts', reason: 'formatToParts, read structurally, for a signed English contract whose text is hashed' },
   { prefix: 'src/app/admin/', reason: 'the operator console ships in English by decision' },
   { prefix: 'src/components/admin/', reason: 'the operator console ships in English by decision' },
   { prefix: 'src/components/AdminAdsClient.tsx', reason: 'the console in the wrong folder (row 388) — /admin/ads is its only mount' },

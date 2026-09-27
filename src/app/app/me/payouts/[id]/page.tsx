@@ -11,8 +11,8 @@ import { PayoutActions } from '@/components/PayoutActions';
 import { getServerI18n } from '@/lib/i18n/server';
 import { isShowOrganizer } from '@/lib/show-organizer';
 import { PAYOUT_HOLD_DAYS } from '@/lib/payout-release';
-import { stripeCutOf } from '@/lib/stripe-fees';
-import { VENUE_SHARE_PERCENT } from '@/lib/ticketing';
+import { VENUE_KEEPS_ALL } from '@/lib/settlement-mode';
+import { SETTLEMENT_DAYS_AFTER_SHOW } from '@/lib/split-agreement';
 
 export const dynamic = 'force-dynamic';
 
@@ -84,14 +84,26 @@ export default async function PayoutPage({ params }: { params: Promise<{ id: str
    * reads is caught: a money page must reach the error boundary rather than
    * render a smaller number (the payouts hub's own rule, DESIGN_SYNC row 459).
    */
-  const [capturedOrders, reservedOrders, payablesByStatus] = await Promise.all([
+  /* TWO KINDS OF ORDER SINCE 2026-09-27 (DESIGN_SYNC row 528). An order sold
+     VENUE_KEEPS_ALL lands in the venue's own Stripe account in full and writes
+     no payables: the venue pays each act itself under the signed Show Revenue
+     Split Agreement, recorded on the show's settlement statement. So there is
+     no split for this page to compute for those orders, and it projects none —
+     the percentages are per offer, not a rule. Orders sold earlier recorded
+     their shares at purchase and still pay out through the payout run; the
+     breakdown below is theirs alone. */
+  const [legacyOrders, agreementOrders, reservedOrders, payablesByStatus] = await Promise.all([
     db.ticketOrder.aggregate({
-      where: { showId: show.id, status: 'CAPTURED' },
+      where: { showId: show.id, status: 'CAPTURED', settlementMode: { not: VENUE_KEEPS_ALL } },
       _sum: {
         quantity: true, subtotalCents: true,
         artistPayoutCents: true, venuePayoutCents: true, promoterPayoutCents: true,
       },
       _count: { _all: true },
+    }),
+    db.ticketOrder.aggregate({
+      where: { showId: show.id, status: 'CAPTURED', settlementMode: VENUE_KEEPS_ALL },
+      _sum: { quantity: true, subtotalCents: true },
     }),
     db.ticketOrder.aggregate({
       where: { showId: show.id, status: 'RESERVED' },
@@ -107,37 +119,29 @@ export default async function PayoutPage({ params }: { params: Promise<{ id: str
   const priceCents = show.ticketPriceCents ?? 0;
   const sold = show.ticketsSoldCount ?? 0;
   const capacity = show.ticketCapacity ?? 0;
-  const paidTickets = capturedOrders._sum.quantity ?? 0;
+  const legacyTickets = legacyOrders._sum.quantity ?? 0;
+  const agreementTickets = agreementOrders._sum.quantity ?? 0;
+  const paidTickets = legacyTickets + agreementTickets;
   const heldTickets = reservedOrders._sum.quantity ?? 0;
-  const collectedCents = capturedOrders._sum.subtotalCents ?? 0;
-  const hasMoney = collectedCents > 0;
+  const legacyCollectedCents = legacyOrders._sum.subtotalCents ?? 0;
+  const agreementCollectedCents = agreementOrders._sum.subtotalCents ?? 0;
+  const collectedCents = legacyCollectedCents + agreementCollectedCents;
+  const hasLegacyMoney = legacyCollectedCents > 0;
 
   const releasedCents = payablesByStatus.find((row) => row.status === 'RELEASED')?._sum.amountCents ?? 0;
   const heldPayableCents = payablesByStatus.find((row) => row.status === 'PENDING')?._sum.amountCents ?? 0;
 
-  /* With money collected, the shares are the SUM of what each order recorded
-     and the percentages are derived from them — never the other way round.
-     Stripe's fee is what the face value left over after the shares: since
-     2026-09-25 it comes off the top before the 75/25, and on an order sold
-     under the old terms (buyer paid the fee on top, 70/20/10) it is zero. A
-     promoter share can only exist on those older orders and is drawn only
-     when one does. With nothing collected this is openly a projection of one
-     ticket at the current terms, and the copy below says so. */
-  const projectedFeeCents = priceCents > 0 ? stripeCutOf(priceCents) : 0;
-  const projectedNetCents = Math.max(0, priceCents - projectedFeeCents);
-  const projectedVenueCents = Math.round(projectedNetCents * (VENUE_SHARE_PERCENT / 100));
-  const artistCents = hasMoney
-    ? (capturedOrders._sum.artistPayoutCents ?? 0)
-    : projectedNetCents - projectedVenueCents;
-  const venueCents = hasMoney
-    ? (capturedOrders._sum.venuePayoutCents ?? 0)
-    : projectedVenueCents;
-  const promoterCents = hasMoney ? (capturedOrders._sum.promoterPayoutCents ?? 0) : 0;
-  const feeCents = hasMoney
-    ? Math.max(0, collectedCents - artistCents - venueCents - promoterCents)
-    : projectedFeeCents;
+  /* The legacy shares are the SUM of what each order recorded, and the
+     percentages are derived from them — never the other way round. Stripe's
+     fee is what the face value left over after the shares (zero on orders sold
+     under 70/20/10, where the buyer paid it on top). A promoter share can only
+     exist on those oldest orders and is drawn only when one does. */
+  const artistCents = legacyOrders._sum.artistPayoutCents ?? 0;
+  const venueCents = legacyOrders._sum.venuePayoutCents ?? 0;
+  const promoterCents = legacyOrders._sum.promoterPayoutCents ?? 0;
+  const feeCents = Math.max(0, legacyCollectedCents - artistCents - venueCents - promoterCents);
 
-  const shareBase = hasMoney ? collectedCents : priceCents;
+  const shareBase = legacyCollectedCents;
   const pctOf = (cents: number) => (shareBase > 0 ? Math.round((cents / shareBase) * 1000) / 10 : 0);
   const artistPct = pctOf(artistCents);
   const venuePct = pctOf(venueCents);
@@ -158,9 +162,7 @@ export default async function PayoutPage({ params }: { params: Promise<{ id: str
       color: 'var(--ink-3)',
       name: 'Stripe',
       href: null,
-      note: hasMoney
-        ? t('payoutIdPage.stripeFeeNote', 'Taken off the face value before the split. Orders sold before 25 September 2026 carried the fee on top, so it reads zero for those.')
-        : t('payoutIdPage.stripeFeeEstimate', 'Estimated at the standard US card rate. It comes off the face value before the split.'),
+      note: t('payoutIdPage.stripeFeeNote', 'Taken off the face value before the split. Orders sold before 25 September 2026 carried the fee on top, so it reads zero for those.'),
     },
     /* Historical only. The promoter share was retired on 2026-09-25; it can
        exist only on orders sold under the old split, and a cell reading $0.00
@@ -227,33 +229,51 @@ export default async function PayoutPage({ params }: { params: Promise<{ id: str
         </div>
       </div>
 
-      {/* Split breakdown */}
+      {/* HOW ACTS ARE PAID, for every order sold since 2026-09-27: by the venue,
+          directly, under the split agreement each act signed. No percentage is
+          stated — the agreement carries it — and the settlement statement is
+          where each payment is recorded and confirmed. */}
+      <div className="payout-card" style={{ background: 'var(--bg-2)', border: '1px solid var(--line, var(--hair-80))', borderRadius: 18, padding: '1.5rem', marginBottom: '1.25rem' }}>
+        <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1rem', color: 'var(--ink)', marginBottom: 6 }}>
+          {t('payoutIdPage.agreementHeading', 'How the acts are paid')}
+        </h2>
+        <p style={{ fontSize: '0.9375rem', color: 'var(--ink-2)', lineHeight: 1.6 }}>
+          {t('payoutIdPage.agreementBody', 'The venue sells every ticket and keeps the charge in its own Stripe account. It pays each act directly, within {days} days of the show, under the split agreement that act signed before sales opened.')
+            .replace('{days}', String(SETTLEMENT_DAYS_AFTER_SHOW))}
+          {agreementCollectedCents > 0 ? (
+            <>
+              {' '}
+              {t('payoutIdPage.agreementCollected', '{tickets} ticket(s) · {collected} sold under the agreement.')
+                .replace('{tickets}', formatNumber(locale, agreementTickets))
+                .replace('{collected}', fmtCents(agreementCollectedCents, locale))}
+            </>
+          ) : null}
+        </p>
+        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginTop: 12 }}>
+          <Link className="mmm-standalone-link" href={`/app/me/shows/${show.slug}/settlement`} style={{ display: 'inline-flex', alignItems: 'center', minHeight: 44, fontSize: '0.9375rem', color: 'var(--accent-text)' }}>
+            {t('payoutIdPage.openSettlement', 'Open the settlement statement →')}
+          </Link>
+          <Link className="mmm-standalone-link" href={`/app/me/shows/${show.slug}/lineup`} style={{ display: 'inline-flex', alignItems: 'center', minHeight: 44, fontSize: '0.9375rem', color: 'var(--ink-2)' }}>
+            {t('payoutIdPage.openAgreements', 'See the split agreements →')}
+          </Link>
+        </div>
+      </div>
+
+      {/* Legacy split breakdown — orders sold before 2026-09-27 only, and only
+          when there are some. Nothing here is a projection. */}
+      {hasLegacyMoney ? (
       <div className="payout-card" style={{ background: 'var(--bg-2)', border: '1px solid var(--line, var(--hair-80))', borderRadius: 18, padding: '1.5rem', marginBottom: '1.25rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--role-venue)" strokeWidth="3" strokeLinecap="round"><polyline points="20 6 9 17 4 12" /></svg>
           <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1rem', color: 'var(--ink)' }}>
-            {!hasMoney
-              ? t('payoutIdPage.howItWillSplit', 'How this show will split.')
-              : show.status === 'ENDED'
-                ? t('payoutIdPage.whereMoneyWent', 'Where the money went.')
-                : t('payoutIdPage.whereMoneyGoes', 'Where the money goes.')}
+            {t('payoutIdPage.legacyHeading', 'Orders sold before 27 September 2026')}
           </h2>
         </div>
         <p style={{ fontSize: '0.9375rem', color: 'var(--ink-2)', lineHeight: 1.5, marginBottom: 16 }}>
-          {hasMoney ? (
-            <>
-              {t('payoutIdPage.collectedSoFar', '{tickets} paid ticket(s) · {collected} collected.')
-                .replace('{tickets}', formatNumber(locale, paidTickets))
-                .replace('{collected}', fmtCents(collectedCents, locale))}{' '}
-              {t('payoutIdPage.everyDollarAccounted', "Here's every dollar, accounted for.")}
-            </>
-          ) : (
-            /* NOT "every dollar accounted for" over no dollars. A projection is
-               a different claim from a statement: this projects one ticket at
-               the current terms, with Stripe's fee estimated. */
-            t('payoutIdPage.projectionIntro', 'Nothing has been charged yet. This is how one {price} ticket would split.')
-              .replace('{price}', fmtCents(priceCents, locale))
-          )}
+          {t('payoutIdPage.collectedSoFar', '{tickets} paid ticket(s) · {collected} collected.')
+            .replace('{tickets}', formatNumber(locale, legacyTickets))
+            .replace('{collected}', fmtCents(legacyCollectedCents, locale))}{' '}
+          {t('payoutIdPage.legacyPayoutRun', 'These still pay out through the iHYPE payout run, at the shares recorded when each order was sold.')}
         </p>
         <div style={{ display: 'flex', height: 10, borderRadius: 999, overflow: 'hidden', gap: 2, marginBottom: 20 }}>
           {/* The real proportions of the face value, read off the cells beneath
@@ -285,6 +305,7 @@ export default async function PayoutPage({ params }: { params: Promise<{ id: str
           </div>
         </div>
       </div>
+      ) : null}
 
       {/* WHAT HAS ACTUALLY MOVED. The card above explains the split; this says
           whether any of it has left iHYPE's balance yet, read off the payables

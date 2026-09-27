@@ -23,6 +23,7 @@ const artist = {
   avatarImage: '/cdn/profile/a.png', logoImage: null, bio: 'Loud.',
   addressLine1: null, city: null, capacity: null,
   stripeConnectOnboarded: false, onboardedAt: null,
+  payoutMethodKind: null, payoutMethodDetails: null,
 };
 
 beforeEach(() => {
@@ -47,6 +48,13 @@ describe('GET /api/me/getting-started', () => {
     const body = await res.json();
     expect(body.guide.role).toBe('ARTIST');
     expect(body.guide.steps.map((s: { done: boolean }) => s.done)).toEqual([true, true, false, false]);
+  });
+
+  it('ticks the artist payout step once where it gets paid is recorded, with no Stripe account', async () => {
+    profileFindFirst.mockResolvedValue({ ...artist, payoutMethodKind: 'PAYMENT_APP', payoutMethodDetails: 'Venmo @theband' });
+    const body = await (await GET()).json();
+    expect(body.guide.steps[2]).toMatchObject({ id: 'artist-payouts', done: true });
+    expect(profileFindFirst.mock.calls[0][0].select).toMatchObject({ payoutMethodKind: true, payoutMethodDetails: true });
   });
 
   it('gives a member with no creator profile the fan guide', async () => {

@@ -2,10 +2,11 @@ import type { Metadata } from 'next';
 import { RecruitingKitPage, type RecruitingKitConfig } from '@/components/RecruitingKitPage';
 import { getCityHeatForRole } from '@/lib/recruiting-kit';
 import { getServerT } from '@/lib/i18n/server';
+import { SETTLEMENT_DAYS_AFTER_SHOW } from '@/lib/split-agreement';
 
 export const metadata: Metadata = {
   title: 'For Venues · iHYPE',
-  description: '25% of every gate after Stripe’s card fee, real demand data on who your city wants to see, and one booking inbox.',
+  description: 'Every ticket sale in your own Stripe account, real demand data on who your city wants to see, and one booking inbox.',
 };
 
 function buildConfig(t: Awaited<ReturnType<typeof getServerT>>): RecruitingKitConfig {
@@ -16,26 +17,27 @@ function buildConfig(t: Awaited<ReturnType<typeof getServerT>>): RecruitingKitCo
   eyebrow: t('forVenuesPage.eyebrow', 'For Venues'),
   headline: <>{t('forVenuesPage.headlineLine1', 'Your room.')}<br />{t('forVenuesPage.headlineLine2', 'Your booking.')}<br /><span style={{ color: 'var(--role-venue)' }}>{t('forVenuesPage.headlineLine3', 'Your data.')}</span></>,
   heroBody: (
-    <>{t('forVenuesPage.heroBodyLead', 'iHYPE guarantees you')} <strong>{t('forVenuesPage.heroBodyStrongNet', '25% of every gate after Stripe’s card fee')}</strong>{t('forVenuesPage.heroBodyRest', ', real demand data on who your city wants to see, and a booking inbox that keeps every offer in one place.')}</>
+    <>{t('forVenuesPage.heroBodyLeadKeep', 'With iHYPE you keep')} <strong>{t('forVenuesPage.heroBodyStrongKeepAll', 'every ticket sale, in your own Stripe account')}</strong>{t('forVenuesPage.heroBodyRest', ', real demand data on who your city wants to see, and a booking inbox that keeps every offer in one place.')}</>
   ),
   applyHeading: t('forVenuesPage.applyHeading', 'Apply as a venue'),
   applySub: t('forVenuesPage.applySub', 'Set up your venue page and start booking shows on your own terms.'),
   applyCta: t('forVenuesPage.applyCta', 'Get started as a venue →'),
   applyFinePrint: t('forVenuesPage.applyFinePrint', 'No spam. 0% platform fee, always.'),
   stats: [
-    { value: '25%', label: t('forVenuesPage.stat1LabelNet', 'Your gate after Stripe’s fee · guaranteed') },
+    { value: '100%', label: t('forVenuesPage.stat1LabelKeepAll', 'Of each sale into your own Stripe account') },
     { value: '$0', label: t('forVenuesPage.stat2Label', 'Platform fee to list') },
     { value: 'Live', label: t('forVenuesPage.stat3Label', 'Demand radar by city') },
-    /* See the same tile on /for-artists: the hold is `PAYOUT_HOLD_DAYS` = 10
-       days after the show, not 24 hours. */
-    { value: '10 days', label: t('forVenuesPage.statPayoutHold', 'After the show, then settled') },
+    /* See the same tile on /for-artists: since 2026-09-27 the venue pays each
+       act by the Settlement Date, SETTLEMENT_DAYS_AFTER_SHOW days after the
+       show, under the split agreement the act signed. */
+    { value: t('forVenuesPage.statSettlementValue', '{n} days').replace('{n}', String(SETTLEMENT_DAYS_AFTER_SHOW)), label: t('forVenuesPage.statSettlementLabel', 'After the show, you pay each act') },
   ],
   heatLabel: t('forVenuesPage.heatLabel', 'Where fans are asking for shows'),
   quote: <>{t('forVenuesPage.quoteLead', 'Book who your city is')} <span>{t('forVenuesPage.quoteEmphasis', 'actually hyping')}</span>{t('forVenuesPage.quoteRest', ' — not a guess.')}</>,
   checklist: [
     t('forVenuesPage.checklist1', 'See real hype and streaming demand before you book'),
     t('forVenuesPage.checklist2', 'Manage every booking offer in one inbox'),
-    t('forVenuesPage.checklistSellerOfRecord', 'You are the seller on every ticket, and your 25% locks the moment the show publishes'),
+    t('forVenuesPage.checklistKeepAll', 'You are the seller on every ticket and keep the whole charge; you pay each act under the split it signed'),
     t('forVenuesPage.checklist4', 'QR check-in at the door — no separate scanner app'),
     t('forVenuesPage.checklist5', 'No booking agent required to list a room'),
   ],
@@ -54,7 +56,7 @@ function buildConfig(t: Awaited<ReturnType<typeof getServerT>>): RecruitingKitCo
        tickets sold against capacity, this month's earnings and the next
        payout — so the claim is trimmed to what it really shows. */
     { title: t('forVenuesPage.featureDoorTitle', 'A door that works with no signal'), body: t('forVenuesPage.featureDoorBody', "Scan tickets with the camera on a phone — no hardware, no app. Download the night's guest list first and it keeps admitting people when the basement has no bars, then syncs when it comes back.") },
-    { title: t('forVenuesPage.featureFillTitle', 'Fill and takings per show'), body: t('forVenuesPage.featureFillBody', 'Tickets sold against capacity on every date, what you have earned this month, and when the next payout lands.') },
+    { title: t('forVenuesPage.featureFillTitle', 'Fill and takings per show'), body: t('forVenuesPage.featureFillBodySettlement', 'Tickets sold against capacity on every date, and a settlement statement for each show that records what you paid each act.') },
     { title: t('forVenuesPage.feature5Title', 'Event creator'), body: t('forVenuesPage.feature5Body', 'Publish a show with price, capacity, and lineup split in minutes.') },
     { title: t('forVenuesPage.featureAsksTitle', 'Fans asking for acts by name'), body: t('forVenuesPage.featureAsksBody', 'Fans request the artists they want in your room. Each ask is weighed by how recent it is, how many separate people made it and how close they live — including acts you have never heard of.') },
   ],

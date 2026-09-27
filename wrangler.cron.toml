@@ -35,7 +35,7 @@ crons = [
   "0 10 * * *",   # new-to-scene
   "0 11 * * *",   # artist-onboarding
   "0 12 * * *",   # show-reminders, workbench-digest, held-track-notice
-  "0 13 * * *",   # show-payouts, ad-settlement
+  "0 13 * * *",   # show-payouts, ad-settlement, split-settlement
   "0 14 * * *",   # onboarding
   "0 15 * * *",   # welcome-sequence
   "0 5 * * *",    # backup-verify, stripe-reconcile

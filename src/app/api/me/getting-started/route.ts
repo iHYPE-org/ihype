@@ -29,6 +29,7 @@ export async function GET() {
     avatarImage: string | null; logoImage: string | null; bio: string | null;
     addressLine1: string | null; city: string | null; capacity: number | null;
     stripeConnectOnboarded: boolean; onboardedAt: Date | null;
+    payoutMethodKind: string | null; payoutMethodDetails: string | null;
   } | null;
   try {
     profile = await withDbRetry(() =>
@@ -40,6 +41,7 @@ export async function GET() {
           avatarImage: true, logoImage: true, bio: true,
           addressLine1: true, city: true, capacity: true,
           stripeConnectOnboarded: true, onboardedAt: true,
+          payoutMethodKind: true, payoutMethodDetails: true,
         },
       }),
     );
@@ -52,7 +54,7 @@ export async function GET() {
   if (!profile) {
     const guide = buildGuide({
       role: 'FAN', profile: null, hasPhoto: false, hasBio: false, trackCount: 0,
-      hasVenueDetails: false, payoutsReady: false, showCount: 0, onboarded: true,
+      hasVenueDetails: false, payoutsReady: false, payoutMethodSet: false, showCount: 0, onboarded: true,
     });
     return NextResponse.json({ guide, name: null }, { headers });
   }
@@ -81,6 +83,7 @@ export async function GET() {
     trackCount,
     hasVenueDetails: Boolean(profile.addressLine1?.trim() && profile.city?.trim() && profile.capacity),
     payoutsReady: profile.stripeConnectOnboarded,
+    payoutMethodSet: Boolean(profile.payoutMethodKind && profile.payoutMethodDetails?.trim()),
     showCount,
     onboarded: Boolean(profile.onboardedAt),
   };

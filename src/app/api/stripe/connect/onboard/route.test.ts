@@ -41,7 +41,7 @@ const ACCEPTED = { acceptedMoneyTermsVersion: MONEY_TERMS_VERSION };
 
 const PROFILE = {
   id: 'prof_1',
-  type: 'ARTIST',
+  type: 'VENUE',
   name: 'Test Act',
   slug: 'test-act',
   stripeConnectAccountId: null as string | null,
@@ -128,7 +128,7 @@ describe('POST /api/stripe/connect/onboard', () => {
       expect.objectContaining({
         action: 'money_terms_accepted',
         entityId: 'prof_1',
-        metadata: { version: MONEY_TERMS_VERSION, profileType: 'ARTIST' },
+        metadata: { version: MONEY_TERMS_VERSION, profileType: 'VENUE' },
       }),
     );
   });
@@ -146,6 +146,21 @@ describe('POST /api/stripe/connect/onboard', () => {
     const res = await POST(makeRequest({ profileId: 'prof_1', ...ACCEPTED }));
 
     expect(res.status).toBe(403);
+    expect(createStripeConnectAccount).not.toHaveBeenCalled();
+  });
+
+  it('refuses a new Stripe account for an artist — the venue pays artists directly (row 528)', async () => {
+    profileFindUnique.mockResolvedValue({ ...PROFILE, type: 'ARTIST', stripeConnectAccountId: null });
+    const res = await POST(makeRequest({ profileId: 'prof_1', ...ACCEPTED }));
+    expect(res.status).toBe(400);
+    expect(await res.json()).toMatchObject({ code: 'ARTIST_PAID_BY_VENUE' });
+    expect(createStripeConnectAccount).not.toHaveBeenCalled();
+  });
+
+  it('still lets an artist with an existing account resume it, for shares from older sales', async () => {
+    profileFindUnique.mockResolvedValue({ ...PROFILE, type: 'ARTIST', stripeConnectAccountId: 'acct_existing' });
+    const res = await POST(makeRequest({ profileId: 'prof_1', ...ACCEPTED }));
+    expect(res.status).toBe(200);
     expect(createStripeConnectAccount).not.toHaveBeenCalled();
   });
 });

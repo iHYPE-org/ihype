@@ -66,7 +66,7 @@ export const ME_PANEL_ROWS: Record<MePanelId, readonly MePanelRow[]> = {
        per browser session until the member ticks "Don't show this again";
        this row is the way back to it afterwards. */
     { label: 'How to use iHYPE', detail: 'The quick-start steps for your account', href: '/app/me?guide=1' },
-    { label: 'The charter', detail: '75% artist · 25% venue after Stripe’s fee · $0 iHYPE', href: '/app/me/info/charter' },
+    { label: 'The charter', detail: 'Venue sells · acts paid under signed splits · $0 iHYPE', href: '/app/me/info/charter' },
     /* The roadmap board. `/api/feedback` and `CommunityVoteBoard` were both
        real and the board was mounted nowhere, so nothing in the product could
        reach it — the legacy `/community` route is a redirect into this panel's

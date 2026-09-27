@@ -238,7 +238,7 @@ export const FEATURE_CATALOGUE: readonly FeatureDefinition[] = [
   {
     id: 'payouts',
     label: 'Payouts',
-    member: 'Artist and venue get their 75/25 after the show',
+    member: 'Acts are paid by the venue under signed split agreements; orders sold before 2026-09-27 still pay out through the payout run',
     tier: 'core',
     flags: ['payments_enabled'],
     needs: ['stripe'],

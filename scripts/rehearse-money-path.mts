@@ -551,6 +551,20 @@ async function assertOrderFinancials(prisma: PrismaClient, seeded: Seeded, confi
 }
 
 async function main() {
+  /* SUPERSEDED BY ROW 528 (2026-09-27). This rehearsal watches payables go
+     PENDING -> RELEASED under the three settlement modes that captured an
+     artist share into iHYPE. New sales are VENUE_KEEPS_ALL: the venue keeps
+     every sale, no application fee is taken and no payable is written — the
+     venue pays the act under the signed Show Revenue Split Agreement, which
+     the nightly acceptance walk (items 15, 16 + 31, 17, 29) drives instead.
+     A sale can no longer create the state this script asserts on, so it
+     refuses rather than report a failure that is really the model changing.
+     Rewrite it around the settlement statement before running it again. */
+  const superseded = true as boolean;
+  if (superseded) {
+    console.error('rehearse:money is superseded by the split agreement (DESIGN_SYNC row 528): new sales write no payables. Use the acceptance walk.');
+    process.exit(2);
+  }
   preflightStatic();
   const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: DATABASE_URL }) });
 

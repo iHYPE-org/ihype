@@ -24,7 +24,7 @@ function buildConfig(t: Awaited<ReturnType<typeof getServerT>>): RecruitingKitCo
   applyFinePrint: t('forFansPage.applyFinePrint', 'No spam. iHYPE takes $0 — ever.'),
   stats: [
     { value: '$0', label: t('forFansPage.stat1Label', 'iHYPE fee, ever') },
-    { value: '75%', label: t('forFansPage.stat2ArtistShare', 'Of the price to the artist, after Stripe’s fee') },
+    { value: t('forFansPage.stat2ValueSigned', 'Signed'), label: t('forFansPage.stat2SignedSplit', 'Split between venue and acts, before sales open') },
     { value: 'Free', label: t('forFansPage.stat3Label', 'Radio, always') },
     { value: '1', label: t('forFansPage.stat4Label', 'Vote, one member') },
   ],
@@ -49,7 +49,7 @@ function buildConfig(t: Awaited<ReturnType<typeof getServerT>>): RecruitingKitCo
      member one vote. Keys renamed where the meaning changed. */
   features: [
     { title: t('forFansPage.feature1Title', 'HYPE mechanic'), body: t('forFansPage.featureHypeBodyWindow', 'Back an act and it counts as a real demand signal. One hype per act per day, so the loudest wallet never outvotes the room.') },
-    { title: t('forFansPage.feature2Title', 'Direct ticketing'), body: t('forFansPage.feature2BodyVenueSeller', 'Face value plus tax, QR wallet, zero scalper markup — sold by the venue, with 75% to the artist.') },
+    { title: t('forFansPage.feature2Title', 'Direct ticketing'), body: t('forFansPage.feature2BodyAgreement', 'Face value plus tax, QR wallet, zero scalper markup — sold by the venue, which pays every act under a signed split.') },
     { title: t('forFansPage.featureReferralsTitle', 'HYPE Link referrals'), body: t('forFansPage.featureReferralsBody', 'Share any show. Every ticket your link helps sell is credited to you.') },
     { title: t('forFansPage.featureStationTitle', 'A station that never stops'), body: t('forFansPage.featureStationBody', 'Always-on audio drawn from the artists on here, free and with no paywall — ad breaks between songs, never cutting one short.') },
     { title: t('forFansPage.feature5Title', 'Seeds discovery'), body: t('forFansPage.feature5Body', 'A taste-matched swipe deck that surfaces artists before they blow up.') },
