@@ -136,7 +136,7 @@ export default async function JournalPost({
           lineHeight: 1.6
         }}
       >
-        {t('journalSlugPage.splitNoteNet', 'Every show covered in the Journal splits 75% to the artist and 25% to the venue after Stripe’s card fee — and iHYPE takes 0%.')}{' '}
+        {t('journalSlugPage.splitNoteAgreement', 'Every show covered in the Journal is sold by the venue, which pays each act under a split the act signed — and iHYPE takes 0%.')}{' '}
         <Link href="/info?tab=charter" style={{ color: 'var(--accent-text)' }}>
           {t('journalSlugPage.charterLink', 'See the charter →')}
         </Link>

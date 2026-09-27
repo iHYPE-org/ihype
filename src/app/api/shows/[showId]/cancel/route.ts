@@ -1,3 +1,4 @@
+import { isVenueMerchantMode } from '@/lib/settlement-mode';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
@@ -191,7 +192,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ sho
           await cancelTicketPaymentIntent(
             order.stripePaymentIntentId,
             // A venue-direct intent exists only on the venue's account.
-            order.settlementMode === 'VENUE_DIRECT' ? order.settlementAccountId : null,
+            isVenueMerchantMode(order.settlementMode) ? order.settlementAccountId : null,
           );
           /* Nothing was ever captured, so there is no money to return twice —
              but the authorization IS released, and an operator told to "refund

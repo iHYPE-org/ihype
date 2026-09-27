@@ -33,7 +33,7 @@
 export type LegalClause = { heading: string; body: string };
 
 /** ISO date of the last change to either part. Rendered in the reader's locale. */
-export const LEGAL_LAST_UPDATED = '2026-09-25';
+export const LEGAL_LAST_UPDATED = '2026-09-27';
 
 export const TERMS: readonly LegalClause[] = [
   {
@@ -45,8 +45,16 @@ export const TERMS: readonly LegalClause[] = [
     body: 'All tickets are sold at face value, plus any sales tax that applies where the show takes place. iHYPE charges $0 in platform fees — this is locked in our charter and cannot be changed. Ticket purchases are final. Refunds are issued only if an event is cancelled by the organizer.',
   },
   {
-    heading: 'The ticket split',
-    body: 'Stripe’s card fee is taken off each ticket’s face value first; what is left splits 75% to the artist and 25% to the venue. iHYPE receives 0%. The venue is the seller of record on every sale and is responsible for the sales tax on it. iHYPE’s 0% is a founding constraint, not a policy — it cannot be altered by management, the board, or investors.',
+    heading: 'Ticket money and the split agreement',
+    body: 'The venue is the seller of record on every sale. Each ticket is charged to the venue’s own Stripe account, and the venue receives all of it and is responsible for the sales tax on it and for its card fees. The venue pays each artist directly under a Show Revenue Split Agreement that the venue and that artist sign in the app before tickets go on sale; the artist’s share is whatever that agreement says. iHYPE receives 0%. iHYPE’s 0% is a founding constraint, not a policy — it cannot be altered by management, the board, or investors.',
+  },
+  {
+    heading: 'iHYPE’s role in the split agreement',
+    body: 'iHYPE provides the software used to form a split agreement, sell tickets and record sales. iHYPE does not receive, hold, transmit or guarantee ticket money or any artist’s share, is not an agent, escrow agent or fiduciary of either party, is not a party to the payment, and has no obligation to pay any artist. iHYPE may rely on and enforce the sections of each agreement that say so. Neither party may name iHYPE in a claim about an artist’s share, except to compel iHYPE to produce records it holds under a lawful subpoena or court order.',
+  },
+  {
+    heading: 'Settlement records and account measures',
+    body: 'iHYPE keeps each signed agreement, its acceptance record and each settlement statement for at least 3 years and makes them available to either party on request. If an artist reports non-payment and the report remains unresolved more than 14 days after the payment was due, iHYPE may pause the venue’s new ticket sales, lineup offers and payouts setup, and may show on the venue’s profile that it has an unresolved payment report, until the report is resolved. iHYPE decides whether to take these measures and is not liable to either party for taking them or not.',
   },
   {
     heading: 'HYPE Link referrals',
@@ -81,7 +89,7 @@ export const PRIVACY: readonly LegalClause[] = [
   },
   {
     heading: 'Payment data',
-    body: 'Payments are processed by Apple Pay and Stripe. iHYPE never stores card numbers or bank account details. Payout routing information for artists and venues is encrypted at rest and visible only to you and our payments processor.',
+    body: 'Payments are processed by Apple Pay and Stripe. iHYPE never stores card numbers. A venue’s payout details are held by Stripe, not by iHYPE. The payment method an artist records to be paid by venues is shown only to that artist and to the venue of a show the artist has signed a split agreement with, and is kept in that agreement’s acceptance record.',
   },
   {
     heading: 'Analytics',
@@ -101,10 +109,10 @@ export const PRIVACY: readonly LegalClause[] = [
   },
   {
     heading: 'Security',
-    body: 'Data in transit is encrypted with TLS, and data at rest, including payout routing details, is encrypted. Access to user data is limited to the systems and staff that need it to operate the platform, and personal data is excluded from error reports wherever possible.',
+    body: 'Data in transit is encrypted with TLS, and data at rest, including payment details, is encrypted. Access to user data is limited to the systems and staff that need it to operate the platform, and personal data is excluded from error reports wherever possible.',
   },
   {
     heading: 'Subprocessors',
-    body: 'We use a small number of vendors to run iHYPE, each bound by its own data protection terms: Stripe (payment processing and artist and venue payouts — it holds card and bank details; iHYPE never does), Supabase (database hosting), Cloudflare (application hosting, media storage and bot protection), Resend (account and notification email) and Sentry (error monitoring, configured to exclude personal data). None of these vendors may use your data for their own purposes.',
+    body: 'We use a small number of vendors to run iHYPE, each bound by its own data protection terms: Stripe (payment processing for venues — it holds card and bank details; iHYPE never does), Supabase (database hosting), Cloudflare (application hosting, media storage and bot protection), Resend (account and notification email) and Sentry (error monitoring, configured to exclude personal data). None of these vendors may use your data for their own purposes.',
   },
 ];

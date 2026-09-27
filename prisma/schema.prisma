@@ -276,6 +276,16 @@ model Profile {
   previousShowHighlights        String?
   stripeConnectAccountId        String?                     @unique
   stripeConnectOnboarded        Boolean                     @default(false)
+  /// Where an ARTIST is paid by the venues it plays (Split Agreement 5.2):
+  /// BANK_TRANSFER | CHECK | PAYMENT_APP | OTHER, with the details the venue
+  /// needs. Shown only to the venue of a show the artist has signed for.
+  payoutMethodKind              String?
+  payoutMethodDetails           String?
+  payoutMethodUpdatedAt         DateTime?
+  /// Set on a VENUE while an artist's non-payment report has stayed
+  /// unresolved past the pause window (Split Agreement 8.6). While set, the
+  /// venue can sell no tickets and send no lineup offers.
+  paymentReportHoldAt           DateTime?
   verified                      Boolean                     @default(false)
   isVerified                    Boolean                     @default(false)
   verificationStatus            OwnershipVerificationStatus @default(UNVERIFIED)
@@ -307,6 +317,8 @@ model Profile {
   headlinerShows                Show[]                      @relation("HeadlinerShows")
   promotedShows                 Show[]                      @relation("PromotedShows")
   lineupSlots                   ShowLineupSlot[]
+  venueSplitAgreements          ShowSplitAgreement[]        @relation("VenueSplitAgreements")
+  artistSplitAgreements         ShowSplitAgreement[]        @relation("ArtistSplitAgreements")
   mediaUploads                  ArtistMediaAsset[]
   profileHypes                  ProfileHypeEvent[]
   venueConnectionRequests       VenueConnectionRequest[]    @relation("VenueConnectionRequests")
@@ -610,42 +622,44 @@ model SupportRequest {
 }
 
 model Show {
-  id                     String                 @id @default(cuid())
-  slug                   String                 @unique
+  id                     String                   @id @default(cuid())
+  slug                   String                   @unique
   title                  String
   description            String?
   recapText              String?
   productionPlan         Json?
-  status                 ShowStatus             @default(DRAFT)
+  status                 ShowStatus               @default(DRAFT)
   startsAt               DateTime
   endsAt                 DateTime?
-  /* The IANA zone the door time was entered in — the VENUE's wall clock, not
-     the reader's. `startsAt` is an instant, so every reader needs this to say
-     what time the doors open; null means the show predates the column (or was
-     created by a writer with no browser) and readers fall back to naming the
-     zone they rendered in. See `formatDoorTime()` in `src/lib/format-locale.ts`. */
+  /**
+   * The IANA zone the door time was entered in — the VENUE's wall clock, not
+   * the reader's. `startsAt` is an instant, so every reader needs this to say
+   * what time the doors open; null means the show predates the column (or was
+   * created by a writer with no browser) and readers fall back to naming the
+   * zone they rendered in. See `formatDoorTime()` in `src/lib/format-locale.ts`.
+   */
   timeZone               String?
-  createdAt              DateTime               @default(now())
-  updatedAt              DateTime               @updatedAt
+  createdAt              DateTime                 @default(now())
+  updatedAt              DateTime                 @updatedAt
   creatorId              String
-  creator                User                   @relation("CreatedShows", fields: [creatorId], references: [id], onDelete: Cascade)
+  creator                User                     @relation("CreatedShows", fields: [creatorId], references: [id], onDelete: Cascade)
   venueProfileId         String?
-  venueProfile           Profile?               @relation("VenueShows", fields: [venueProfileId], references: [id])
+  venueProfile           Profile?                 @relation("VenueShows", fields: [venueProfileId], references: [id])
   headlinerProfileId     String?
-  headlinerProfile       Profile?               @relation("HeadlinerShows", fields: [headlinerProfileId], references: [id])
+  headlinerProfile       Profile?                 @relation("HeadlinerShows", fields: [headlinerProfileId], references: [id])
   promoterProfileId      String?
-  promoterProfile        Profile?               @relation("PromotedShows", fields: [promoterProfileId], references: [id])
+  promoterProfile        Profile?                 @relation("PromotedShows", fields: [promoterProfileId], references: [id])
   posterImage            String?
   ticketingOpensAt       DateTime?
   bookingLegalNotes      String?
-  isTicketed             Boolean                @default(false)
-  ticketPriceCents       Int                    @default(0)
+  isTicketed             Boolean                  @default(false)
+  ticketPriceCents       Int                      @default(0)
   ticketCapacity         Int?
   venuePayoutPercent     Int?
   artistPayoutPercent    Int?
-  promoterPayoutPercent  Int                    @default(0)
-  ticketsSoldCount       Int                    @default(0)
-  hypeCount              Int                    @default(0)
+  promoterPayoutPercent  Int                      @default(0)
+  ticketsSoldCount       Int                      @default(0)
+  hypeCount              Int                      @default(0)
   tags                   String[]
   hypes                  HypeEvent[]
   showListens            ShowListen[]
@@ -654,12 +668,14 @@ model Show {
   accountsPayableEntries AccountsPayableEntry[]
   advertisingConfig      ShowAdvertisingConfig?
   lineupSlots            ShowLineupSlot[]
+  splitAgreements        ShowSplitAgreement[]
+  settlementStatement    ShowSettlementStatement?
   comments               ShowComment[]
   rsvps                  ShowRsvp[]
   attendees              ShowAttendee[]
   setlistVotes           SetlistVote[]
-  moderationStatus       String                 @default("APPROVED")
-  featured               Boolean                @default(false)
+  moderationStatus       String                   @default("APPROVED")
+  featured               Boolean                  @default(false)
   capacityAlertSentAt    DateTime?
   dmcaDeadline           DateTime?
   dmcaStatus             String?
@@ -692,19 +708,117 @@ model Show {
 // sum to 100%) — the venue proposes the lineup + splits, every named act
 // must ACCEPT before the show can leave DRAFT and go on sale.
 model ShowLineupSlot {
-  id           String           @id @default(cuid())
-  showId       String
-  show         Show             @relation(fields: [showId], references: [id], onDelete: Cascade)
-  profileId    String
-  profile      Profile          @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  isHeadliner  Boolean          @default(false)
-  splitPercent Int
-  status       LineupSlotStatus @default(PENDING)
-  proposedAt   DateTime         @default(now())
-  respondedAt  DateTime?
+  id                 String              @id @default(cuid())
+  showId             String
+  show               Show                @relation(fields: [showId], references: [id], onDelete: Cascade)
+  profileId          String
+  profile            Profile             @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  isHeadliner        Boolean             @default(false)
+  splitPercent       Int
+  status             LineupSlotStatus    @default(PENDING)
+  proposedAt         DateTime            @default(now())
+  respondedAt        DateTime?
+  /// The rest of the Lineup Offer (Show Revenue Split Agreement, 2026-09-27).
+  guaranteeCents     Int?
+  /// [{ label, capCents }] — the only venue costs that may come off Net Ticket Receipts.
+  approvedDeductions Json?
+  guarantorName      String?
+  juryWaiver         Boolean             @default(false)
+  /// The venue's signature: sending the offer after being shown the full text.
+  agreementVersion   String?
+  agreementHash      String?
+  venueSignerUserId  String?
+  venueSignerName    String?
+  venueSignedAt      DateTime?
+  venueSignerIp      String?
+  venueSignerDevice  String?
+  agreement          ShowSplitAgreement?
 
   @@unique([showId, profileId])
   @@index([profileId, status])
+}
+
+/// A signed Show Revenue Split Agreement between one venue and one act for
+/// one show (src/lib/split-agreement.ts). Written once, when the act accepts,
+/// and never edited: the text both parties signed, its SHA-256, and who signed
+/// when and from where. It outlives a revised offer (supersededAt) and the
+/// lineup slot itself, because it is the record either party takes to court.
+model ShowSplitAgreement {
+  id                  String              @id @default(cuid())
+  lineupSlotId        String?             @unique
+  lineupSlot          ShowLineupSlot?     @relation(fields: [lineupSlotId], references: [id], onDelete: SetNull)
+  showId              String
+  show                Show                @relation(fields: [showId], references: [id], onDelete: Restrict)
+  venueProfileId      String
+  venueProfile        Profile             @relation("VenueSplitAgreements", fields: [venueProfileId], references: [id], onDelete: Restrict)
+  artistProfileId     String
+  artistProfile       Profile             @relation("ArtistSplitAgreements", fields: [artistProfileId], references: [id], onDelete: Restrict)
+  version             String
+  textHash            String
+  text                String
+  splitPercent        Int
+  guaranteeCents      Int?
+  approvedDeductions  Json?
+  guarantorName       String?
+  juryWaiver          Boolean             @default(false)
+  venueSignerUserId   String
+  venueSignerName     String
+  venueSignedAt       DateTime
+  venueSignerIp       String?
+  venueSignerDevice   String?
+  artistSignerUserId  String
+  artistSignerName    String
+  artistSignedAt      DateTime
+  artistSignerIp      String?
+  artistSignerDevice  String?
+  /// The payment method the act had on file when it signed (5.2).
+  artistPaymentMethod String
+  supersededAt        DateTime?
+  createdAt           DateTime            @default(now())
+  payment             ArtistSharePayment?
+
+  @@index([showId])
+  @@index([venueProfileId])
+  @@index([artistProfileId])
+}
+
+/// The show-level half of the Settlement Statement (Split Agreement 6): what
+/// the venue adds that iHYPE cannot see — admission sold outside iHYPE, and
+/// chargebacks it lost. Everything else on the statement is computed from the
+/// show's orders.
+model ShowSettlementStatement {
+  id                   String    @id @default(cuid())
+  showId               String    @unique
+  show                 Show      @relation(fields: [showId], references: [id], onDelete: Cascade)
+  offPlatformCents     Int       @default(0)
+  offPlatformNote      String?
+  chargebacksLostCents Int       @default(0)
+  chargebacksNote      String?
+  /// When both sides were told the statement is ready (6.1).
+  notifiedAt           DateTime?
+  updatedAt            DateTime  @updatedAt
+  createdAt            DateTime  @default(now())
+}
+
+/// One act's payment under one agreement: what the venue says it paid and
+/// what the act says it received (Split Agreement 5.3, 8.1).
+model ArtistSharePayment {
+  id                     String             @id @default(cuid())
+  agreementId            String             @unique
+  agreement              ShowSplitAgreement @relation(fields: [agreementId], references: [id], onDelete: Cascade)
+  deductionsAppliedCents Int                @default(0)
+  deductionsNote         String?
+  paidMarkedAt           DateTime?
+  paidAmountCents        Int?
+  paidOn                 DateTime?
+  paidMethod             String?
+  paidReference          String?
+  artistConfirmedAt      DateTime?
+  reportedAt             DateTime?
+  reportNote             String?
+  reportResolvedAt       DateTime?
+  updatedAt              DateTime           @updatedAt
+  createdAt              DateTime           @default(now())
 }
 
 model ShowAdvertisingConfig {
@@ -1064,9 +1178,9 @@ model Session {
   userId       String
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
 }
-
 
 model Seed {
   id        String   @id @default(cuid())
@@ -1420,9 +1534,9 @@ model InviteCode {
 }
 
 model SocialPost {
-  id          String    @id @default(cuid())
+  id          String   @id @default(cuid())
   text        String
-  generatedAt DateTime  @default(now())
+  generatedAt DateTime @default(now())
   platform    String?
 }
 

@@ -218,10 +218,15 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Ticket price and capacity are required for ticketed events' }, { status: 400 });
       }
 
-      /* The split is the charter's, not the request's: 75% to the artist and
-         25% to the venue of the net face value (2026-09-25). An organiser
-         used to send the percentages and the route validated them; nothing
-         a client sends can change them now. */
+      /* A ticketed show is sold by a VENUE, and cannot go on sale until every
+         act has signed the Show Revenue Split Agreement with it (2026-09-27,
+         DESIGN_SYNC row 528). So it is always created as a DRAFT; the last
+         signature in /api/shows/[showId]/lineup/respond schedules it and opens
+         sales. What each act is paid is set by the signed offer, never here. */
+      if (!body.venueProfileId) {
+        return NextResponse.json({ error: 'A ticketed event needs a venue — the venue sells the tickets.' }, { status: 400 });
+      }
+      body.status = 'DRAFT';
     }
 
     const show = await createShowWithUniqueSlug(body.title, (slug) => withDbRetry(() => db.show.create({

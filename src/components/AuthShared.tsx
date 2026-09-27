@@ -79,7 +79,7 @@ export function AuthCardShell({
         </div>
 
         <p className="authcard-charter">
-          {t('authShared.charterLineNet', '75/25 after Stripe’s fee · iHYPE fee $0')} · <Link href="/info?tab=charter">{t('authShared.charterLink', 'The charter')}</Link>
+          {t('authShared.charterLineAgreement', 'Signed splits for every act · iHYPE fee $0')} · <Link href="/info?tab=charter">{t('authShared.charterLink', 'The charter')}</Link>
         </p>
       </div>
     </section>

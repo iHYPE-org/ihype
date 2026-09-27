@@ -309,6 +309,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ ok: true, flagged });
     }
 
+    case 'split-settlement': {
+      /* Show Revenue Split Agreement: tells venue and acts a statement is
+         ready, and keeps each venue's non-payment pause in line with the
+         reports behind it (Agreement 6.1, 8.6). Moves no money. */
+      const { runSplitSettlement } = await import('@/lib/settlement-statement-data');
+      const result = await runSplitSettlement();
+      await pingCronAlive('split-settlement');
+      return NextResponse.json({ ok: true, ...result });
+    }
+
     case 'show-payouts': {
       const { triggerShowPayouts } = await import('@/lib/show-payouts');
       const result = await triggerShowPayouts();

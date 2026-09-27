@@ -1,3 +1,4 @@
+import { readAgreementReadiness } from '@/lib/split-agreement-data';
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { auth } from '@/lib/auth';
@@ -156,6 +157,36 @@ export async function PATCH(
       select: { id: true, slug: true, status: true },
     });
 
+    /* The title and the date are written into every signed split agreement
+       for this show (the Lineup Offer block), so changing either changes the
+       contract. Section 7.6: a new date binds only once both parties accept
+       it. Every agreement is marked superseded and every act goes back to
+       PENDING with no venue signature, so the venue re-sends the offer and
+       each act signs again; a ticketed show stops selling until they have. */
+    const termsChanged =
+      (body.title !== undefined && body.title !== show.title) ||
+      (body.startsAt !== undefined && new Date(body.startsAt).getTime() !== show.startsAt.getTime());
+    if (termsChanged) {
+      const now = new Date();
+      const reset = await db.$transaction(async (tx) => {
+        await tx.showSplitAgreement.updateMany({ where: { showId: show.id, supersededAt: null }, data: { supersededAt: now } });
+        const slots = await tx.showLineupSlot.updateMany({
+          where: { showId: show.id },
+          data: { status: 'PENDING', respondedAt: null, agreementHash: null, venueSignedAt: null },
+        });
+        return slots.count;
+      });
+      const venueOwnerId = show.venueProfile?.ownerId;
+      if (reset > 0 && venueOwnerId) {
+        await notifyUser(venueOwnerId, {
+          type: 'lineup_offer_needs_resend',
+          title: 'Send the lineup offer again',
+          body: `"${body.title ?? show.title}" changed, so every act has to sign the updated agreement. Send the offer again from the lineup page.`,
+          link: `/app/me/shows/${updated.slug}/lineup`,
+        }).catch(() => undefined);
+      }
+    }
+
     /* A moved start time is the one edit a ticket holder has to hear about:
        they bought a night, not a title. Every captured order's buyer gets the
        in-app notice (and push, where registered) with the new time; the show
@@ -185,6 +216,18 @@ export async function PATCH(
      row): `ticketingOpensAt` null means NOT on sale, and this transition was
      the one publish path that left it null — a ticketed show flipped
      DRAFT → SCHEDULED here would have been permanently unbuyable. */
+  /* A ticketed show is scheduled by the last act's signature, not by hand:
+     its tickets may not be sold before every act has signed the split
+     agreement with the venue (DESIGN_SYNC row 528). */
+  if (newStatus === 'SCHEDULED' && show.isTicketed) {
+    const agreements = await readAgreementReadiness(show.id);
+    if (!agreements.ready) {
+      return NextResponse.json(
+        { error: 'Every act has to sign the split agreement before this show can be scheduled. Send the lineup offer from the lineup page.', code: 'SPLIT_AGREEMENT_PENDING' },
+        { status: 409 },
+      );
+    }
+  }
   const opensSales = newStatus === 'SCHEDULED' && show.isTicketed && !show.ticketingOpensAt;
   const updated = await db.show.update({
     where: { id: show.id },

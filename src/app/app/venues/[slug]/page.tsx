@@ -293,7 +293,7 @@ export default async function MmmVenuePage({
       {activeTab === 'contact' && (
         /* Contact is also the coordination sheet (owner, 2026-09-02): the
            venue's own words first, then the terms every date here is booked
-           under — where booking happens, the split the charter fixes, the
+           under — where booking happens, the split agreement each act signs, the
            ticket terms, the per-show lineup agreement. Every line points at
            something the product already holds; nothing here is a new document. */
         <ProfilePanel empty="" isEmpty={false} tabId="contact" title={t('mmmStrip.contact', 'Contact')}>
@@ -307,11 +307,11 @@ export default async function MmmVenuePage({
             </div>
             <div>
               <dt>{t('profilePane.factSplit', 'Split')}</dt>
-              <dd>{t('profilePane.factSplitBodyNet', 'After Stripe’s card fee, 75% artist · 25% venue, fixed by the')} <Link href="/info?tab=charter">{t('profilePane.charter', 'charter')}</Link>.</dd>
+              <dd>{t('profilePane.factSplitBodyAgreement', 'Set per show in a signed split agreement between the venue and each act; the venue pays acts directly. See the')} <Link href="/info?tab=charter">{t('profilePane.charter', 'charter')}</Link>.</dd>
             </div>
             <div>
               <dt>{t('venuePane.factLineup', 'Lineup')}</dt>
-              <dd>{t('venuePane.factLineupBody', 'A multi-act bill splits the artist share by a lineup agreement every act accepts, on the show’s own page.')}</dd>
+              <dd>{t('venuePane.factLineupBodyAgreement', 'Each act on the bill signs its own split with the venue before tickets go on sale.')}</dd>
             </div>
             <div>
               <dt>{t('profilePane.factTickets', 'Tickets')}</dt>

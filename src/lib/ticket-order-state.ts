@@ -4,6 +4,7 @@ import {
   Prisma,
   TicketOrderStatus,
 } from '@prisma/client/edge';
+import { VENUE_KEEPS_ALL, isVenueMerchantMode } from '@/lib/settlement-mode';
 import { createSerializedTicketId } from '@/lib/tickets';
 import { releaseShowInventory } from '@/lib/ticket-inventory';
 
@@ -124,8 +125,12 @@ export function buildPayableEntries(
    *                 came back to iHYPE as the application fee.
    *   PLATFORM      everything captured to iHYPE; every share is a payable.
    */
-  const venueIsMerchant = order.settlementMode === 'VENUE_DIRECT';
-  const artistWasRouted = order.settlementMode === 'DESTINATION' || Boolean(order.settlementAccountId && order.settlementMode !== 'VENUE_DIRECT');
+  /* VENUE_KEEPS_ALL: iHYPE received nothing, so it owes nothing. The venue
+     pays each act itself under the signed split agreement, and the settlement
+     statement — not a payable — is the record of what it owes. */
+  if (order.settlementMode === VENUE_KEEPS_ALL) return entries;
+  const venueIsMerchant = isVenueMerchantMode(order.settlementMode);
+  const artistWasRouted = order.settlementMode === 'DESTINATION' || Boolean(order.settlementAccountId && !venueIsMerchant);
 
   if (!venueIsMerchant) {
     push(order.taxLocalCents, 'TAX_LOCAL', 'Local tax payable', 'Captured ticket order tax.');

@@ -7,11 +7,8 @@ import { ShareButton } from '@/components/ShareButton';
 import { TurnstileWidget, type TurnstileWidgetHandle } from '@/components/TurnstileWidget';
 import { useI18n } from '@/components/I18nProvider';
 import {
-  ARTIST_SHARE_PERCENT,
-  VENUE_SHARE_PERCENT,
-  calculateTicketOrderFinancials,
+  calculateVenueKeepsAllFinancials,
   formatCurrencyFromCents,
-  formatPercent
 } from '@/lib/ticketing';
 import { openExternalUrl } from '@/lib/open-external';
 
@@ -102,35 +99,17 @@ export function TicketSaleCard({
 
   const preview = useMemo(
     () =>
-      calculateTicketOrderFinancials({
+      /* The same helper the purchase route calls, so the total on the button
+         is the total charged. */
+      calculateVenueKeepsAllFinancials({
         ticketPriceCents,
         quantity: quantityForPreview,
-        /* The charter split, the same constants the purchase route passes —
-           never the show's stored percentages, which a show created under
-           70/20/10 still carries. */
-        venuePayoutPercent: VENUE_SHARE_PERCENT,
-        artistPayoutPercent: ARTIST_SHARE_PERCENT,
         venueLocation,
         venueTaxRatePpm
       }),
     [quantityForPreview, ticketPriceCents, venueLocation, venueTaxRatePpm]
   );
 
-  /* One share per row, each percentage read back off the amount the SAME
-     helper the purchase route calls produced for this order. The show's own
-     percentages are the input to that helper, never the label. */
-  const splitRows = useMemo(() => {
-    const base = preview.subtotalCents;
-    const pct = (cents: number) => (base > 0 ? Math.round((cents / base) * 1000) / 10 : 0);
-    /* Stripe's card fee is a row of its own and comes FIRST: it is taken off
-       the face value before the 75/25, so the artist's and venue's lines are
-       shares of what is left, and the three rows sum to the face value. */
-    return [
-      { key: 'var(--ink-3)', name: t('ticketSaleCard.stripeFeeRow', 'Card processing (Stripe)'), cents: preview.stripeFeeCents, percent: pct(preview.stripeFeeCents) },
-      { key: 'var(--accent)', name: artistName, cents: preview.artistPayoutCents, percent: pct(preview.artistPayoutCents) },
-      { key: 'var(--role-venue)', name: venueName, cents: preview.venuePayoutCents, percent: pct(preview.venuePayoutCents) },
-    ];
-  }, [artistName, preview, t, venueName]);
 
   const fanPaymentLabel =
     currentFan?.storedPaymentTokenBrand && currentFan?.storedPaymentTokenLast4
@@ -201,8 +180,8 @@ export function TicketSaleCard({
           <h2>{heading ?? title}</h2>
           <p className="kicker">
             {t(
-              'ticketSaleCard.kickerVenueSeller',
-              'The venue sells these tickets through Stripe. The artist’s share is paid out to them after the show.'
+              'ticketSaleCard.kickerVenuePaysArtists',
+              'The venue sells these tickets through Stripe and pays each artist under the split agreement they signed.'
             )}
           </p>
         </div>
@@ -233,39 +212,20 @@ export function TicketSaleCard({
         </div>
       </div>
 
-{/* S4's split card (reference/s4-checkout.html): the keyed bar over one
-          row per share, real names and this order's real amounts — replacing
-          three separate stat cards saying the same thing without the bar.
-          The percentages used to be read off the show's configured split;
-          they are DERIVED from this order's own amounts now — see below. */}
-      <div style={{ border: '1px solid var(--line)', borderRadius: 'var(--radius-panel)', padding: 18, display: 'flex', flexDirection: 'column', gap: 14 }}>
+{/* WHERE THE MONEY GOES (Show Revenue Split Agreement, 2026-09-27). The
+          whole charge goes to the venue; each act is paid by the venue under
+          its own signed agreement, whose percentages are the parties'
+          business and are not printed here. What a buyer is owed is the
+          plain statement of who holds their money. */}
+      <div style={{ border: '1px solid var(--line)', borderRadius: 'var(--radius-panel)', padding: 18, display: 'flex', flexDirection: 'column', gap: 10 }}>
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-3)' }}>
-          {t('ticketSaleCard.whereItGoes', 'Where the face value goes')}
+          {t('ticketSaleCard.whereMoneyGoes', 'Where your money goes')}
         </div>
-        {/* Every share is DERIVED from the amount beside it, never from the
-            configured percentage — or a redistributed promoter tenth reads as
-            a payment nobody receives while the artist's real 77.78% is
-            labelled 70%. A zero share draws no segment rather than a hairline
-            claiming one. */}
-        <div style={{ display: 'flex', height: 12, borderRadius: 2, overflow: 'hidden', gap: 2 }}>
-          {splitRows.filter((row) => row.cents > 0).map((row) => (
-            <div key={row.key} style={{ flex: Math.max(row.percent, 1), background: row.key }} />
-          ))}
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
-          {splitRows.map((row) => (
-            <div key={row.key} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span aria-hidden="true" style={{ width: 9, height: 9, borderRadius: 2, background: row.key, flex: '0 0 auto' }} />
-              <span style={{ flex: 1, fontSize: '0.9375rem', color: 'var(--ink-2)' }}>{row.name} · {formatPercent(row.percent)}</span>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem' }}>{formatCurrencyFromCents(row.cents, locale)}</span>
-            </div>
-          ))}
-        </div>
-        <div style={{ fontSize: '0.9375rem', color: 'var(--ink-3)', lineHeight: 1.4 }}>
-          {t('ticketSaleCard.splitNote', 'Stripe’s card fee comes off the top; what is left is split {artist}% to the artist and {venue}% to the venue. iHYPE takes nothing.')
-            .replace('{artist}', String(ARTIST_SHARE_PERCENT))
-            .replace('{venue}', String(VENUE_SHARE_PERCENT))}
-        </div>
+        <p style={{ margin: 0, fontSize: '0.9375rem', lineHeight: 1.55, color: 'var(--ink-2)' }}>
+          {t('ticketSaleCard.venueKeepsNote', '{venue} receives your payment and pays {artist} their agreed share after the show. iHYPE takes nothing and never holds your money.')
+            .replace('{venue}', venueName)
+            .replace('{artist}', artistName)}
+        </p>
       </div>
 
       {/* ALL SALES ARE FINAL — rendered for EVERY state of this card, not just
@@ -443,9 +403,7 @@ export function TicketSaleCard({
                     sentence that justifies a fee is precisely the wrong thing
                     to shrink — caught by `npm run lint`, not by review. */}
                 <p style={{ margin: 0, fontSize: '0.9375rem', lineHeight: 1.55, color: 'var(--ink-2)' }}>
-                  {t('ticketSaleCard.feeExplainerNet', 'You pay the ticket price and its tax, and nothing more. Stripe’s card fee comes out of the ticket price, and what is left is split {artist}% to the artist and {venue}% to the venue, who is the seller on this sale. iHYPE takes nothing.')
-                    .replace('{artist}', String(ARTIST_SHARE_PERCENT))
-                    .replace('{venue}', String(VENUE_SHARE_PERCENT))}
+                  {t('ticketSaleCard.feeExplainerVenueKeeps', 'You pay the ticket price and its tax, and nothing more. The venue is the seller on this sale and pays the card fee itself. iHYPE takes nothing.')}
                 </p>
               </div>
             </div>

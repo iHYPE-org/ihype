@@ -2,10 +2,11 @@ import type { Metadata } from 'next';
 import { RecruitingKitPage, type RecruitingKitConfig } from '@/components/RecruitingKitPage';
 import { getCityHeatForRole } from '@/lib/recruiting-kit';
 import { getServerT } from '@/lib/i18n/server';
+import { SETTLEMENT_DAYS_AFTER_SHOW } from '@/lib/split-agreement';
 
 export const metadata: Metadata = {
   title: 'For Artists · iHYPE',
-  description: '75% of every ticket after Stripe’s card fee, your fans’ contact info, and tools to run your own shows.',
+  description: 'A signed split with every venue, paid to you directly after the show, your fans’ contact info, and tools to run your own shows.',
 };
 
 function buildConfig(t: Awaited<ReturnType<typeof getServerT>>): RecruitingKitConfig {
@@ -16,34 +17,29 @@ function buildConfig(t: Awaited<ReturnType<typeof getServerT>>): RecruitingKitCo
   eyebrow: t('forArtistsPage.eyebrow', 'For Artists'),
   headline: <>{t('forArtistsPage.headlineLine1', 'Your music.')}<br />{t('forArtistsPage.headlineLine2', 'Your gate.')}<br /><span style={{ color: 'var(--accent-text)' }}>{t('forArtistsPage.headlineLine3', 'Your fans.')}</span></>,
   heroBody: (
-    <>{t('forArtistsPage.heroBodyLead', 'iHYPE gives you')} <strong>{t('forArtistsPage.heroBodyStrongNet', '75% of every ticket after Stripe’s card fee')}</strong>{t('forArtistsPage.heroBodyRest', ', your fans’ contact info, and tools to run your own shows — no agent, no Ticketmaster, no platform that owns the relationship.')}</>
+    <>{t('forArtistsPage.heroBodyLead', 'iHYPE gives you')} <strong>{t('forArtistsPage.heroBodyStrongAgreement', 'a signed split agreement with every venue, paid to you directly')}</strong>{t('forArtistsPage.heroBodyRest', ', your fans’ contact info, and tools to run your own shows — no agent, no Ticketmaster, no platform that owns the relationship.')}</>
   ),
   applyHeading: t('forArtistsPage.applyHeading', 'Apply as an artist'),
   applySub: t('forArtistsPage.applySub', 'Set up your artist page and start selling tickets on your own terms.'),
   applyCta: t('forArtistsPage.applyCta', 'Get started as an artist →'),
   applyFinePrint: t('forArtistsPage.applyFinePrint', 'No spam. 0% platform fee, always.'),
   stats: [
-    { value: '75%', label: t('forArtistsPage.stat1LabelNet', 'Your gate after Stripe’s fee · locked') },
+    { value: t('forArtistsPage.stat1ValueSigned', 'Signed'), label: t('forArtistsPage.stat1LabelAgreement', 'Your split, before any ticket goes on sale') },
     { value: '$0', label: t('forArtistsPage.stat2Label', 'Platform fee on tickets') },
     { value: '100%', label: t('forArtistsPage.stat3Label', 'Fan data ownership') },
-    /* NOT "24h". `PAYOUT_HOLD_DAYS` is 10 and has been since 2026-08-27 —
-       `triggerShowPayouts()` pays a payable only once the show has ENDED and
-       its start is at least ten days past, and only to a FINISHED Connect
-       account. This tile said 24h and the checklist below said "night of
-       show"; both were the pre-hold behaviour, left on the page an artist
-       reads BEFORE they sign up, which is the worst place in the product to
-       overstate when money arrives. Same defect row 474 records fixing on the
-       surfaces that COMPUTE a release date — that fix went to the computers
-       and never to the page that states the number as a headline.
-       Read the figure off `PAYOUT_HOLD_DAYS`, never off this line. */
-    { value: '10 days', label: t('forArtistsPage.statPayoutHold', 'After the show, then paid out') },
+    /* Since 2026-09-27 (DESIGN_SYNC row 528) the venue keeps every sale and
+       pays each act directly by the Settlement Date, SETTLEMENT_DAYS_AFTER_SHOW
+       days after the show, under the signed split agreement. The old tile read
+       `PAYOUT_HOLD_DAYS` (10), which now governs only orders sold before that
+       date. Read the figure off the constant, never off this line. */
+    { value: t('forArtistsPage.statSettlementValue', '{n} days').replace('{n}', String(SETTLEMENT_DAYS_AFTER_SHOW)), label: t('forArtistsPage.statSettlementLabel', 'After the show, the venue pays you') },
   ],
   heatLabel: t('forArtistsPage.heatLabel', 'Where fan demand is hottest right now'),
   quote: <>{t('forArtistsPage.quoteLead', 'A charter that can’t be')} <span>{t('forArtistsPage.quoteEmphasis', 'unwritten')}</span>{t('forArtistsPage.quoteRest', ' after the first ticket sells.')}</>,
   checklist: [
-    t('forArtistsPage.checklist1', 'Set your price and split before publish'),
+    t('forArtistsPage.checklistSignSplit', 'Every act signs its split before a ticket goes on sale'),
     t('forArtistsPage.checklist2', 'Once a ticket sells, the split is sealed'),
-    t('forArtistsPage.checklistPayoutHoldNet', 'Your 75% transfers ten days after the show, straight to your own account'),
+    t('forArtistsPage.checklistPaidDirect', 'The venue pays you directly within {n} days of the show, wherever you tell it to').replace('{n}', String(SETTLEMENT_DAYS_AFTER_SHOW)),
     t('forArtistsPage.checklistCalendar', 'Tour dates and open nights on your profile'),
     t('forArtistsPage.checklist5', 'No agent or manager needed to list'),
   ],

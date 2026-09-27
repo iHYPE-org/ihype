@@ -105,22 +105,22 @@ export default async function WelcomePage() {
     },
     ARTIST: {
       roleLabel: t('welcomePage.roleArtist', 'Artist'), tint: 'var(--accent)',
-      sub: t('welcomePage.subArtistNet', 'Welcome to the platform where 75% of every ticket is yours after Stripe’s card fee — locked by charter, before a single ticket sells.'),
+      sub: t('welcomePage.subArtistAgreement', 'Welcome to the platform where every venue signs your split with you before a single ticket sells — and pays you directly after the show.'),
       cta: t('welcomePage.ctaArtist', 'Set up your page →'), ctaHref: onboardingPath ?? '/app/me/profiles',
       steps: [
-        { title: t('welcomePage.artistStep1Title', 'Complete verification'), desc: t('welcomePage.artistStep1DescNet', 'Link your catalog and confirm identity — your 75% share activates the moment you’re verified.') },
+        { title: t('welcomePage.artistStep1Title', 'Complete verification'), desc: t('welcomePage.artistStep1DescVerified', 'Link your catalog and confirm identity, so venues and fans know the act on the bill is you.') },
         { title: t('welcomePage.artistStep2Title', 'Upload your first track'), desc: t('welcomePage.artistStep2DescStation', 'Choose all-rights or free-use licensing per track; free-use tracks can air on the station.') },
-        { title: t('welcomePage.artistStep3Title', 'Publish a show'), desc: t('welcomePage.artistStep3DescNet', 'Set face-value pricing; the venue sells the tickets and your 75% after Stripe’s fee is locked. $0 platform fees.') },
+        { title: t('welcomePage.artistStep3Title', 'Publish a show'), desc: t('welcomePage.artistStep3DescAgreement', 'The venue sells the tickets at face value and sends you a split to sign; sales open once every act signs. $0 platform fees.') },
       ],
     },
     VENUE: {
       roleLabel: t('welcomePage.roleVenue', 'Venue'), tint: 'var(--role-venue)',
-      sub: t('welcomePage.subVenueNet', 'A guaranteed 25% of every gate after Stripe’s card fee, by charter — plus real demand data on who fans actually want to see.'),
+      sub: t('welcomePage.subVenueKeepAll', 'Every ticket sale lands in your own Stripe account, and you pay each act under a split it signs — plus real demand data on who fans actually want to see.'),
       cta: t('welcomePage.ctaVenue', 'List your room →'), ctaHref: onboardingPath ?? '/app/me/profiles',
       steps: [
         { title: t('welcomePage.venueStep1Title', 'Verify your room'), desc: t('welcomePage.venueStep1Desc', 'Confirm capacity and address so events can go live with serialized, QR-verified tickets.') },
         { title: t('welcomePage.venueStep2Title', 'Check the demand radar'), desc: t('welcomePage.venueStep2Desc', 'See which artists your city is hyping before you book — no promoter guesswork.') },
-        { title: t('welcomePage.venueStep3Title', 'Publish your first event'), desc: t('welcomePage.venueStep3DescSeller', 'You sell every ticket as the seller of record, once your Stripe payment setup is done. Your 25% is locked at publish.') },
+        { title: t('welcomePage.venueStep3Title', 'Publish your first event'), desc: t('welcomePage.venueStep3DescAgreement', 'You sell every ticket as the seller of record, once your Stripe payment setup is done. Send each act a split to sign; sales open when all have signed.') },
       ],
     },
   };
@@ -172,7 +172,7 @@ export default async function WelcomePage() {
         </div>
 
         <Link className="welcome-cta" href={c.ctaHref}>{c.cta}</Link>
-        <div className="welcome-split">{t('welcomePage.splitFooterNet', 'After Stripe’s card fee: 75% artist · 25% venue · 0% iHYPE')}</div>
+        <div className="welcome-split">{t('welcomePage.splitFooterAgreement', 'Venue sells · acts paid under signed splits · 0% iHYPE')}</div>
       </div>
 
       <style>{`

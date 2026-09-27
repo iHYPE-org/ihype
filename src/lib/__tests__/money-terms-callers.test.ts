@@ -22,7 +22,11 @@ describe('money terms', () => {
     const callers = walk(join(process.cwd(), 'src/components')).filter((file) =>
       readFileSync(file, 'utf8').includes("fetch('/api/stripe/connect/onboard'"),
     );
-    expect(callers.length).toBeGreaterThanOrEqual(3);
+    /* Two since 2026-09-27 (row 528): only a VENUE connects Stripe, so the
+       artist onboarding wizard records where the artist gets paid instead of
+       calling this route. PayoutConnectButton and MmmSettings remain. The
+       floor exists so an empty scan cannot pass. */
+    expect(callers.length).toBeGreaterThanOrEqual(2);
     for (const file of callers) {
       const source = readFileSync(file, 'utf8');
       expect(source, file).toContain('MoneyTermsDisclosure');

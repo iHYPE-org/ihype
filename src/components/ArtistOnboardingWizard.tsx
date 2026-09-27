@@ -4,10 +4,9 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useI18n } from '@/components/I18nProvider';
 import { useMarkOnboarded } from '@/lib/use-mark-onboarded';
-import { useRouter } from 'next/navigation';
-import { openExternalUrl } from '@/lib/open-external';
 import { MoneyTermsDisclosure } from '@/components/MoneyTermsDisclosure';
-import { MONEY_TERMS_VERSION } from '@/lib/money-terms';
+import { PayoutMethodForm } from '@/components/payouts/PayoutMethodForm';
+import { SETTLEMENT_DAYS_AFTER_SHOW } from '@/lib/split-agreement';
 
 // Step 2 is verification. Artists previously had no such step at all, while
 // the DJ and venue wizards both did — an artist claimed a stage name and the
@@ -24,6 +23,8 @@ export function ArtistOnboardingWizard({
   initialGenre,
   initialLink,
   initialVerificationStatus,
+  initialPayoutKind = null,
+  initialPayoutDetails = null,
 }: {
   profileId: string;
   slug: string;
@@ -31,10 +32,13 @@ export function ArtistOnboardingWizard({
   initialGenre: string;
   initialLink: string;
   initialVerificationStatus: string;
+  /* "Where you get paid" (Profile.payoutMethodKind/-Details). Optional so a
+     caller that does not read them yet still renders an empty form. */
+  initialPayoutKind?: string | null;
+  initialPayoutDetails?: string | null;
 }) {
   const { t } = useI18n();
   const alreadyVerified = initialVerificationStatus === 'VERIFIED';
-  const router = useRouter();
   const [step, setStep] = useState<Step>(0);
   const [proofLink, setProofLink] = useState(initialLink);
   const [proofFile, setProofFile] = useState<File | null>(null);
@@ -48,12 +52,12 @@ export function ArtistOnboardingWizard({
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  const [payoutBusy, setPayoutBusy] = useState(false);
-  const [payoutError, setPayoutError] = useState<string | null>(null);
-  const [moneyTermsAck, setMoneyTermsAck] = useState(false);
-
-  // Step 4 is the done screen, reached either by connecting payouts or by the
-  // explicit Skip. Both count: skipping an optional step is still finishing.
+  // Step 4 is the done screen, reached either by saving where you get paid
+  // or by the explicit Skip. Both count: skipping an optional step is still
+  // finishing. An artist needs no Stripe account since 2026-09-27 (DESIGN_SYNC
+  // row 528): the venue keeps every sale and pays each act directly under the
+  // split agreement the act signs, so this step records a payment method
+  // rather than starting Stripe Connect.
   useMarkOnboarded(profileId, step === 4);
 
   async function submitVerification() {
@@ -123,34 +127,6 @@ export function ArtistOnboardingWizard({
     setStep(2);
   }
 
-  async function connectStripe() {
-    if (payoutBusy) return;
-    setPayoutBusy(true);
-    setPayoutError(null);
-    try {
-      const res = await fetch('/api/stripe/connect/onboard', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ profileId, acceptedMoneyTermsVersion: MONEY_TERMS_VERSION }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setPayoutError(data.error ?? t('artistOnboardingWizard.payoutStartFailed', 'Could not start payouts setup. Please try again.'));
-        setPayoutBusy(false);
-        return;
-      }
-      if (data.onboardingUrl) {
-        await openExternalUrl(data.onboardingUrl, { onReturn: () => router.refresh() });
-        return;
-      }
-      setPayoutError(t('artistOnboardingWizard.payoutNoLink', 'Stripe did not return an onboarding link. Please try again.'));
-      setPayoutBusy(false);
-    } catch {
-      setPayoutError(t('artistOnboardingWizard.networkError', 'Network error — try again.'));
-      setPayoutBusy(false);
-    }
-  }
-
   function skipPayouts() {
     setStep(4);
   }
@@ -218,7 +194,7 @@ export function ArtistOnboardingWizard({
             <div className="aow-reminder-card">
               <div className="aow-reminder-label">{t('artistOnboardingWizard.reminderLabel', 'Reminder')}</div>
               <div className="aow-reminder-text">
-                {t('artistOnboardingWizard.reminderTextNet', 'Stripe’s card fee comes off each ticket first; the rest splits 75% to you and 25% to the venue. iHYPE takes $0 — locked in our charter.')}
+                {t('artistOnboardingWizard.reminderTextAgreement', 'The venue sells the tickets and sends you a split agreement to sign; sales open only once every act has signed. iHYPE takes $0 — locked in our charter.')}
               </div>
             </div>
 
@@ -236,7 +212,7 @@ export function ArtistOnboardingWizard({
             <div className="aow-eyebrow">{t('artistOnboardingWizard.step3Eyebrow', 'Step 3 of 4')}</div>
             <h1 className="aow-title">{t('artistOnboardingWizard.verifyTitle', 'Verify your identity.')}</h1>
             <p className="aow-sub">
-              {t('artistOnboardingWizard.verifySubNet', 'Artist accounts are verified before payouts are released — 75% of a ticket has to reach the person who actually played. Reviewed within 48 hours.')}
+              {t('artistOnboardingWizard.verifySubAgreement', 'Artist accounts are verified so venues and fans know the act on the bill is really you. Reviewed within 48 hours.')}
             </p>
 
             <div className="aow-reminder-card" style={{ marginBottom: 18 }}>
@@ -302,26 +278,23 @@ export function ArtistOnboardingWizard({
         {step === 3 && (
           <div>
             <div className="aow-eyebrow">{t('artistOnboardingWizard.step4Eyebrow', 'Step 4 of 4')}</div>
-            <h1 className="aow-title">{t('artistOnboardingWizard.step3Title', 'Connect payouts.')}</h1>
+            <h1 className="aow-title">{t('artistOnboardingWizard.step3TitleWhereYouGetPaid', 'Where you get paid.')}</h1>
             <p className="aow-sub">
-              {t('artistOnboardingWizard.step3SubNet', 'Your 75% share pays out automatically after each show, via Stripe Connect.')}
+              {t('artistOnboardingWizard.step3SubPaidDirect', 'Venues pay you directly within {n} days of each show, under the split agreement you sign. No Stripe account needed.').replace('{n}', String(SETTLEMENT_DAYS_AFTER_SHOW))}
             </p>
 
-            {/* Every fee and money duty, read and acknowledged before Stripe
-                (row 521); the route refuses setup without the acknowledgement. */}
-            <MoneyTermsDisclosure acknowledged={moneyTermsAck} onAcknowledgeChange={setMoneyTermsAck} role="ARTIST" />
+            {/* Every fee and money duty, stated before the artist records where
+                they get paid (row 521). Shown open with no checkbox: the
+                acknowledgement gate belongs to Stripe setup, which only a
+                venue does now. */}
+            <MoneyTermsDisclosure role="ARTIST" />
 
-            {payoutError && <div className="aow-error">{payoutError}</div>}
+            <PayoutMethodForm initialDetails={initialPayoutDetails} initialKind={initialPayoutKind} profileId={profileId} />
 
-            <button
-              className="aow-btn aow-btn-solid"
-              disabled={payoutBusy || !moneyTermsAck}
-              onClick={connectStripe}
-              type="button"
-            >
-              {payoutBusy ? t('artistOnboardingWizard.connecting', 'Connecting…') : t('artistOnboardingWizard.connectStripe', 'Connect with Stripe →')}
+            <button className="aow-btn aow-btn-solid" onClick={() => setStep(4)} type="button">
+              {t('artistOnboardingWizard.continue', 'Continue →')}
             </button>
-            <button className="aow-btn aow-btn-ghost" disabled={payoutBusy} onClick={skipPayouts} type="button">
+            <button className="aow-btn aow-btn-ghost" onClick={skipPayouts} type="button">
               {t('artistOnboardingWizard.doThisLater', "I'll do this later")}
             </button>
           </div>

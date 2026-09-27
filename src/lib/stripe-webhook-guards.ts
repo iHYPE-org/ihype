@@ -1,3 +1,4 @@
+import { isVenueMerchantMode } from '@/lib/settlement-mode';
 /**
  * The checks a Stripe event has to pass before it may move money-state,
  * beyond its signature (security sweep, 2026-09-02).
@@ -27,7 +28,7 @@ export type SettlementSource = {
 
 /** Which connected account, if any, an event about this order may come from. */
 export function expectedEventAccount(order: SettlementSource): string | null {
-  return order.settlementMode === 'VENUE_DIRECT' ? order.settlementAccountId : null;
+  return isVenueMerchantMode(order.settlementMode) ? order.settlementAccountId : null;
 }
 
 export function ticketOrderMatchesEvent(

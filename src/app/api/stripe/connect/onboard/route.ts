@@ -83,6 +83,22 @@ export async function POST(request: Request) {
      from orders sold under the old split can still be pending on a fan's
      profile, so the gate stays open. */
 
+  /* AN ARTIST NO LONGER NEEDS STRIPE (2026-09-27, DESIGN_SYNC row 528): the
+     venue collects every ticket sale and pays each act directly under the
+     signed split agreement, into the payment method the act records. A new
+     artist account would be a Stripe account nothing pays into. An artist
+     who connected before keeps the account — legacy shares still settle to
+     it — and may resume or refresh it; nobody opens a new one. */
+  if (profile.type === 'ARTIST' && !profile.stripeConnectAccountId) {
+    return NextResponse.json(
+      {
+        error: 'Artists are paid directly by the venue now. Add where you get paid in your payout settings instead.',
+        code: 'ARTIST_PAID_BY_VENUE',
+      },
+      { status: 400 },
+    );
+  }
+
   /* NO ARTIST OR VENUE CONNECTS PAYOUTS WITHOUT HAVING READ THE MONEY TERMS
      (owner, 2026-09-25: "no one should be blindsided"). Connecting Stripe is
      the moment an account becomes able to sell or be paid, so it is the one

@@ -331,7 +331,7 @@ export function PageRoleModules({ profile, color, initialTool }: { profile: Modu
             color={color}
             href="/app/me/events/new"
             icon={icons.event(color)}
-            sub={isVenue ? t('pageRoleModules.eventCreatorSubVenueNet', 'Book your room — sell the tickets, keep 25% after Stripe’s fee') : t('pageRoleModules.eventCreatorSubArtistNet', 'List your show — keep 75% after Stripe’s fee')}
+            sub={isVenue ? t('pageRoleModules.eventCreatorSubVenueKeepAll', 'Book your room — sell the tickets, pay each act under a signed split') : t('pageRoleModules.eventCreatorSubArtistAgreement', 'Propose your show — the venue sends you a split to sign')}
             title={t('pageRoleModules.eventCreatorTitle', 'Event creator')}
           />
         )}

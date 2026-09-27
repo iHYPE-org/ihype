@@ -10,7 +10,7 @@ import { useI18n } from '@/components/I18nProvider';
 import { openExternalUrl } from '@/lib/open-external';
 import { MoneyTermsDisclosure } from '@/components/MoneyTermsDisclosure';
 import { MONEY_TERMS_VERSION, isMoneyTermsRole } from '@/lib/money-terms';
-import { PAYOUT_HOLD_DAYS } from '@/lib/payout-release';
+import { SETTLEMENT_DAYS_AFTER_SHOW } from '@/lib/split-agreement';
 
 interface Prefs {
   newShows: boolean;
@@ -371,7 +371,7 @@ export function MmmSettings() {
   /* One sentence, used by the OS share sheet and by the three channel links
      below it, so a member's link never arrives bare with no idea what it is. */
   const hypeLinkShareText = inviteHexId
-    ? t('settingsPage.hypeLinkShareTextNet', 'Come find live music with me on iHYPE — artists keep 75% of every ticket after the card fee: https://ihype.org/invite/{code}').replace('{code}', inviteHexId)
+    ? t('settingsPage.hypeLinkShareTextFee', 'Come find live music with me on iHYPE — face-value tickets and a 0% platform fee: https://ihype.org/invite/{code}').replace('{code}', inviteHexId)
     : '';
 
   async function shareInviteLink() {
@@ -489,6 +489,9 @@ export function MmmSettings() {
 
   const isCreator = role === 'ARTIST' || role === 'VENUE';
   const roleColor = ROLE_COLOR[role] ?? 'var(--role-fan)';
+  // Only a venue connects Stripe (row 528); the payout profile's own type
+  // decides, falling back to the account role when the read carried none.
+  const venueSeller = (payout?.profileType ?? role) === 'VENUE';
 
   return (
     <div className="settings-page settings-col">
@@ -602,6 +605,13 @@ export function MmmSettings() {
                 </button>
               </div>
 
+              {/* SINCE 2026-09-27 (DESIGN_SYNC row 528) ONLY A VENUE CONNECTS
+                  STRIPE. The venue sells every ticket through its own account
+                  and keeps the whole charge, then pays each act directly under
+                  the split agreement the act signed — so an artist records
+                  where it gets paid instead, at /app/me/payouts?tab=settings,
+                  and needs no Stripe account. The fixed split row that sat
+                  here is gone: percentages are per offer now. */}
               <div className="settings-row settings-payout-card">
                 <div className="settings-payout-ic">
                   <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke={roleColor} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2" /><line x1="2" y1="10" x2="22" y2="10" /></svg>
@@ -610,44 +620,32 @@ export function MmmSettings() {
                   <div className="settings-row-label">
                     {loadFailed
                       ? t('settingsPage.moneyUnavailable', 'Could not be read just now')
-                      : payout?.connected
-                        ? t('settingsPage.payoutConnected', 'Payout method connected')
-                        : t('settingsPage.noPayoutDestination', 'No payout destination connected yet')}
+                      : isCreator && !venueSeller
+                        ? t('settingsPage.whereYouGetPaid', 'Where you get paid')
+                        : payout?.connected
+                          ? t('settingsPage.stripeConnectedVenue', 'Stripe connected')
+                          : t('settingsPage.noStripeConnected', 'Stripe not connected yet')}
                   </div>
-                  {/* TWO THINGS WERE WRONG HERE AT ONCE (2026-09-15).
-                      "Within 2 business days of a show closing" was the
-                      behaviour until PAYOUT_HOLD_DAYS was introduced on
-                      2026-08-27 so a card dispute arriving the next morning
-                      has something left to reverse; the sentence outlived it.
-                      And it printed the same promise to a member with NO
-                      payout destination, whom the cron skips on every run,
-                      silently, for ever. The key is renamed rather than
-                      edited, so every locale falls back to correct English. */}
                   <div className="settings-row-detail">
                     {!isCreator
                       ? t('settingsPage.payoutNonCreatorDetail', 'Only needed if you run an artist or venue page — a HYPE link earns no share of a ticket')
-                      : payout?.connected
-                        ? t('settingsPage.payoutsLandHold', 'Released about {days} days after a show ends, once the dispute window closes')
-                            .replace('{days}', String(PAYOUT_HOLD_DAYS))
-                        : t('settingsPage.payoutsNeedDestination', 'Connect an account to be paid — your share is held until you do, and nothing is released without one')}
-                  </div>
-                  <div className="settings-split-mini">
-                    {isCreator ? (
-                      <span style={{ color: roleColor }}>{role === 'VENUE' ? t('settingsPage.splitVenueYouNet', '25% you') : t('settingsPage.splitArtistYouNet', '75% you')}</span>
-                    ) : null}
-                    <span style={{ color: 'var(--ink-a65)' }}>{t('settingsPage.splitArtistNet', '75% artist')}</span>
-                    <span style={{ color: 'var(--ink-a65)' }}>{t('settingsPage.splitVenueNet', '25% venue')}</span>
-                    <span style={{ color: 'var(--ink-a65)' }}>{t('settingsPage.splitAfterFee', 'after Stripe’s fee')}</span>
+                      : !venueSeller
+                        ? t('settingsPage.artistPaidByVenue', 'Venues pay you directly within {days} days of each show, under the split you sign — no Stripe account needed').replace('{days}', String(SETTLEMENT_DAYS_AFTER_SHOW))
+                        : payout?.connected
+                          ? t('settingsPage.venueSalesLand', 'Every ticket sale lands in your account; you pay each act under its signed split')
+                          : t('settingsPage.venueNeedsStripe', 'Connect Stripe to sell tickets — no show goes on sale until you do')}
                   </div>
                 </div>
-                {payout && (
+                {isCreator && !venueSeller ? (
+                  <Link className="settings-btn settings-btn-ghost" href="/app/me/payouts?tab=settings">{t('settingsPage.open', 'Open')}</Link>
+                ) : payout ? (
                   <button className="settings-btn settings-btn-ghost" disabled={moneyBusy === 'payout' || (isMoneyTermsRole(payout.profileType) && !moneyTermsAck)} onClick={() => void connectPayouts()} type="button">
                     {moneyBusy === 'payout' ? t('settingsPage.opening', 'Opening…') : payout.connected ? t('settingsPage.manage', 'Manage') : t('settingsPage.connect', 'Connect')}
                   </button>
-                )}
+                ) : null}
               </div>
 
-              {payout && isMoneyTermsRole(payout.profileType) ? (
+              {venueSeller && payout && isMoneyTermsRole(payout.profileType) ? (
                 <MoneyTermsDisclosure acknowledged={moneyTermsAck} onAcknowledgeChange={setMoneyTermsAck} role={payout.profileType} />
               ) : null}
 
@@ -914,8 +912,6 @@ export function MmmSettings() {
         .settings-passkeys { padding: 11px 0; }
         .settings-payout-card { align-items: center; gap: 14px; }
         .settings-payout-ic { width: 40px; height: 40px; border-radius: 10px; background: rgba(var(--surface-tint-rgb), .08); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .settings-split-mini { display: flex; gap: 10px; margin-top: 10px; }
-        .settings-split-mini span { font-family: var(--font-mono); font-size: 0.9375rem; text-transform: uppercase; letter-spacing: .08em; padding: 3px 8px; border-radius: 6px; background: rgba(var(--surface-tint-rgb), .07); }
 
         @media (max-width: 600px) {
           .settings-page { padding: 24px 16px 100px; }

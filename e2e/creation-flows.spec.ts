@@ -173,7 +173,7 @@ test.describe('uploading a track', () => {
 });
 
 test.describe('creating an event', () => {
-  test('an artist with a venue publishes an event and locks the charter', async ({ context, page }) => {
+  test('an artist with a venue creates a ticketed event and is sent to its lineup offer', async ({ context, page }) => {
     await signIn(context, `e2e-create-event-${RUN}@ihype.org`, [
       { type: 'ARTIST', name: 'E2E Event Artist' },
       { type: 'VENUE', name: 'E2E Event Venue' },
@@ -202,7 +202,7 @@ test.describe('creating an event', () => {
        walk instead of breaking it. */
     await page.locator('#event-date:visible').fill('2026-12-31');
     await page.locator('#event-time:visible').fill('19:00');
-    const publish = page.getByRole('button', { name: /Publish event & lock charter/i });
+    const publish = page.getByRole('button', { name: /Create event & send the lineup offer/i });
     for (let hop = 0; hop < 5 && !(await publish.count()); hop += 1) {
       const next = page.getByRole('button', { name: /Continue/ }).first();
       await expect(next).toBeEnabled();
@@ -210,11 +210,10 @@ test.describe('creating an event', () => {
     }
     await publish.click();
 
-    /* Publishing answers with the slug and the page flips to its published
-       state. The charter warning above the button is the sentence that
-       matters legally; asserting the publish succeeded asserts the 75/25
-       freeze it describes was accepted. */
-    await expect(page.getByText(/published|live|view event/i).first()).toBeVisible({ timeout: 20_000 });
+    /* A ticketed show is created DRAFT since row 528: it goes on sale only
+       once every act has signed the Show Revenue Split Agreement, so the page
+       flips to its saved-as-draft state and points at the lineup offer. */
+    await expect(page.getByRole('link', { name: /lineup offer/i }).first()).toBeVisible({ timeout: 20_000 });
   });
 });
 

@@ -35,6 +35,8 @@ export default async function ArtistOnboardingPage({ params }: { params: Promise
       genre: true,
       links: true,
       verificationStatus: true,
+      payoutMethodKind: true,
+      payoutMethodDetails: true,
     },
   });
   if (!profile || profile.type !== 'ARTIST') return notFound();
@@ -50,6 +52,8 @@ export default async function ArtistOnboardingPage({ params }: { params: Promise
       initialGenre={profile.genre ?? ''}
       initialLink={profile.links ?? ''}
       initialVerificationStatus={profile.verificationStatus}
+      initialPayoutKind={profile.payoutMethodKind}
+      initialPayoutDetails={profile.payoutMethodDetails}
     />
   );
 }

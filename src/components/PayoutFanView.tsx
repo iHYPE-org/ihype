@@ -2,24 +2,18 @@
 
 import { useState } from 'react';
 import { useI18n } from '@/components/I18nProvider';
-import { PAYOUT_HOLD_DAYS } from '@/lib/payout-release';
-import { stripeCutOf } from '@/lib/stripe-fees';
-import { VENUE_SHARE_PERCENT } from '@/lib/ticketing';
+import { SETTLEMENT_DAYS_AFTER_SHOW } from '@/lib/split-agreement';
 
-/* One ticket at the terms in force since 2026-09-25: Stripe's card fee comes
-   off the face value first, then 75% to the artist and 25% to the venue, 0%
-   to iHYPE. There is no promoter share. The fee is an estimate at the
-   standard US card rate on a one-ticket order; tax is added for the buyer and
-   is never part of the split. */
+/* One ticket at the terms in force since 2026-09-27 (DESIGN_SYNC row 528):
+   the venue sells it through its own Stripe account and keeps the whole
+   charge, then pays each act directly under the Show Revenue Split Agreement
+   that act signed. There is no fixed split to compute here — percentages are
+   per offer — so this view names none. iHYPE takes 0%. */
 export function PayoutFanView({ priceCents }: { priceCents: number }) {
   const { t } = useI18n();
   const [expanded, setExpanded] = useState(false);
 
   const fmt = (cents: number) => `$${(cents / 100).toFixed(2)}`;
-  const feeShare = stripeCutOf(priceCents);
-  const netCents = Math.max(0, priceCents - feeShare);
-  const venueShare = Math.round(netCents * (VENUE_SHARE_PERCENT / 100));
-  const artistShare = netCents - venueShare;
 
   return (
     <div className="payout-card" style={{ background: 'var(--bg-2)', border: '1px solid var(--line, var(--hair-80))', borderRadius: 18, padding: '1.5rem', marginBottom: '1.25rem' }}>
@@ -43,14 +37,11 @@ export function PayoutFanView({ priceCents }: { priceCents: number }) {
           <div style={{ display: 'grid', gap: 8 }}>
             <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', color: 'var(--ink-3)', flexShrink: 0, minWidth: 90 }}>{t('payoutFanView.yourLabel', 'Your')} {fmt(priceCents)}</span>
-              <span style={{ fontSize: '0.9375rem', color: 'var(--ink-2)', lineHeight: 1.5 }}>{fmt(feeShare)} {t('payoutFanView.stripeFeeLabel', 'Stripe card fee')} · {fmt(artistShare)} {t('payoutFanView.artistLabel', 'artist')} · {fmt(venueShare)} {t('payoutFanView.venueLabel', 'venue')} · $0 {t('payoutFanView.ihypeLabel', 'iHYPE')}</span>
+              <span style={{ fontSize: '0.9375rem', color: 'var(--ink-2)', lineHeight: 1.5 }}>{t('payoutFanView.toTheVenue', 'to the venue that sold it')} · $0 {t('payoutFanView.ihypeLabel', 'iHYPE')}</span>
             </div>
             <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', color: 'var(--ink-3)', flexShrink: 0, minWidth: 90 }} />
-              {/* The fee is Stripe's, estimated at the standard US card rate,
-                  and it comes off the face value before the split — the buyer
-                  pays the ticket price plus tax and nothing else. */}
-              <span style={{ fontSize: '0.9375rem', color: 'var(--ink-3)', lineHeight: 1.5 }}>{t('payoutFanView.feeOffTheTop', 'Stripe’s card fee comes off the face value first (estimated at the standard US card rate); the rest splits 75% to the artist and 25% to the venue. The buyer pays the ticket price plus tax and nothing else.')}</span>
+              <span style={{ fontSize: '0.9375rem', color: 'var(--ink-3)', lineHeight: 1.5 }}>{t('payoutFanView.venuePaysActs', 'The venue keeps the charge and pays each act under the split agreement that act signed before sales opened. The buyer pays the ticket price plus tax and nothing else.')}</span>
             </div>
             <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', color: 'var(--ink-3)', flexShrink: 0, minWidth: 90 }}>{t('payoutFanView.ihypeFeeLabel', 'iHYPE fee')}</span>
@@ -59,13 +50,11 @@ export function PayoutFanView({ priceCents }: { priceCents: number }) {
             <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', color: 'var(--ink-3)', flexShrink: 0, minWidth: 90 }}>{t('payoutFanView.paidOutLabel', 'Paid out')}</span>
               <span style={{ fontSize: '0.9375rem', color: 'var(--ink-2)', lineHeight: 1.5 }}>
-                {/* "Same night" was the behaviour until 2026-08-27, when
-                    PAYOUT_HOLD_DAYS was introduced so a card dispute arriving
-                    the morning after has something left to reverse. The sentence
-                    outlived the behaviour by three weeks on the one page whose
-                    job is explaining the money. */}
-                {t('payoutFanView.paidOutValue2', 'Automatically, about {days} days after the show.')
-                  .replace('{days}', String(PAYOUT_HOLD_DAYS))}
+                {/* The Settlement Date: the venue pays each act within
+                    SETTLEMENT_DAYS_AFTER_SHOW days (Split Agreement). Read the
+                    number off the constant, never off this comment. */}
+                {t('payoutFanView.paidOutByVenue', 'By the venue, directly to each act, within {days} days of the show.')
+                  .replace('{days}', String(SETTLEMENT_DAYS_AFTER_SHOW))}
               </span>
             </div>
           </div>

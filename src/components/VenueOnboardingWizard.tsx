@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useI18n } from '@/components/I18nProvider';
 import { MoneyTermsDisclosure } from '@/components/MoneyTermsDisclosure';
 import { useMarkOnboarded } from '@/lib/use-mark-onboarded';
+import { SETTLEMENT_DAYS_AFTER_SHOW } from '@/lib/split-agreement';
 
 type VerificationStatus = 'UNVERIFIED' | 'PENDING' | 'VERIFIED' | 'REJECTED';
 
@@ -142,7 +143,6 @@ export default function VenueOnboardingWizard({
   }
 
   const pct = [20, 40, 60, 80, 100][step];
-  const capacityOrDefault = capacity || '300';
   const nameOrVenue = name.trim() || 'your venue';
 
   return (
@@ -155,7 +155,7 @@ export default function VenueOnboardingWizard({
       {step === 0 && (
         <div className="von-step">
           <h1 className="von-title">{t('venueOnboardingWizard.step0Title', 'Set up your venue.')}</h1>
-          <p className="von-sub">{t('venueOnboardingWizard.step0SubNet', 'This becomes your public venue page. You sell the tickets and keep 25% of each one after Stripe’s card fee — locked in the charter.')}</p>
+          <p className="von-sub">{t('venueOnboardingWizard.step0SubKeepAll', 'This becomes your public venue page. You sell the tickets through your own Stripe account and pay each act under the split it signs.')}</p>
 
           <label className="von-label" htmlFor="von-name">{t('venueOnboardingWizard.venueNameLabel', 'Venue name')}</label>
           <input
@@ -226,13 +226,12 @@ export default function VenueOnboardingWizard({
           <p className="von-sub">{t('venueOnboardingWizard.step2Sub', "You'll see matching artists in your demand radar and booking inbox.")}</p>
 
           <div className="von-card">
-            <div className="von-card-label">{t('venueOnboardingWizard.sellsOutLabel', 'If it sells out')} ({capacityOrDefault} {t('venueOnboardingWizard.capUnit', 'cap · $18')})</div>
-            <div className="von-split-bar">
-              <div className="von-split-artist" />
-              <div className="von-split-venue" />
-            </div>
+            {/* No fixed split since 2026-09-27 (DESIGN_SYNC row 528): the venue
+                keeps every sale and pays each act under the Show Revenue Split
+                Agreement that act signed, so this card names no percentage. */}
+            <div className="von-card-label">{t('venueOnboardingWizard.moneyMovesLabel', 'How the money moves')}</div>
             <div className="von-split-legend">
-              {t('venueOnboardingWizard.splitArtistNet', '75% artist after Stripe’s fee')} · <span className="von-split-venue-text">{t('venueOnboardingWizard.splitVenueNet', '25% your venue')}</span> · {t('venueOnboardingWizard.splitIhype', '0% iHYPE')}
+              {t('venueOnboardingWizard.moneyMovesBody', 'Every sale lands in your own Stripe account in full. You pay each act what its signed split says, within {n} days of the show.').replace('{n}', String(SETTLEMENT_DAYS_AFTER_SHOW))} <span className="von-split-venue-text">{t('venueOnboardingWizard.splitIhype', '0% iHYPE')}</span>
             </div>
           </div>
 
@@ -344,10 +343,7 @@ export default function VenueOnboardingWizard({
         .von-card { border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--bg-3); padding: 20px; margin-top: 12px; }
         .von-card-label { font-family: var(--font-mono); font-size: 0.6875rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-a65); margin-bottom: 10px; }
         .von-card-label-accent { color: var(--role-venue); }
-        .von-split-bar { display: flex; height: 8px; border-radius: var(--radius-pill); overflow: hidden; gap: 2px; margin-bottom: 10px; }
-        .von-split-artist { flex: 75; background: var(--accent); }
-        .von-split-venue { flex: 25; background: var(--role-venue); }
-        .von-split-legend { font-family: var(--font-mono); font-size: 0.9375rem; color: var(--ink-a65); }
+        .von-split-legend { font-size: 0.9375rem; line-height: 1.55; color: var(--ink-a65); }
         .von-split-venue-text { color: var(--role-venue); }
         .von-proof-text { font-size: 0.9375rem; color: var(--ink-a65); line-height: 1.8; }
         .von-sublabel { margin-top: 20px; margin-bottom: 4px; font-family: var(--font-mono); font-size: 0.9375rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-a65); }

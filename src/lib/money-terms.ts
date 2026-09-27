@@ -15,34 +15,50 @@
  *
  * Pure: no database, no Stripe — imported by client components and routes.
  */
-import { splitFaceValueCents } from '@/lib/show-detail';
-import { ARTIST_SHARE_PERCENT, VENUE_SHARE_PERCENT } from '@/lib/ticketing';
-import { PAYOUT_HOLD_DAYS } from '@/lib/payout-release';
-import { STRIPE_FIXED_CENTS, STRIPE_PERCENT } from '@/lib/stripe-fees';
+import { STRIPE_FIXED_CENTS, STRIPE_PERCENT, stripeCutOf } from '@/lib/stripe-fees';
+import {
+  NON_PAYMENT_PAUSE_DAYS,
+  PAYMENT_AUTO_CONFIRM_DAYS,
+  SETTLEMENT_DAYS_AFTER_SHOW,
+  SPLIT_AGREEMENT_VERSION,
+} from '@/lib/split-agreement';
 
-/** Bump when any sentence the disclosure states changes meaning. */
-export const MONEY_TERMS_VERSION = '2026-09-25.2';
+/** Bump when any sentence the disclosure states changes meaning.
+ *  2026-09-27.1: the venue keeps every sale and pays each act under a signed
+ *  Show Revenue Split Agreement (DESIGN_SYNC row 528); nothing passes through
+ *  iHYPE. */
+export const MONEY_TERMS_VERSION = '2026-09-27.1';
 
 export type MoneyTermsRole = 'ARTIST' | 'VENUE';
 
 /** The face value the worked example uses. */
 export const MONEY_TERMS_EXAMPLE_CENTS = 2000;
+/** The artist percentage the worked example assumes. It is only an example:
+ *  every act's percentage is whatever its signed offer says. */
+export const MONEY_TERMS_EXAMPLE_ARTIST_PERCENT = 70;
 
-export function moneyTermsExample(faceValueCents = MONEY_TERMS_EXAMPLE_CENTS) {
-  const shares = splitFaceValueCents(faceValueCents, {
-    artist: ARTIST_SHARE_PERCENT,
-    venue: VENUE_SHARE_PERCENT,
-  });
-  if (!shares) throw new Error('The money-terms example needs a sellable face value.');
-  return { faceValueCents, ...shares };
+/**
+ * One $20 ticket under an offer of 70%: the buyer pays $20 plus tax, the
+ * whole charge lands on the venue's Stripe account, Stripe takes its fee from
+ * the venue, and the venue owes the act 70% of the $20 (card fees are the
+ * venue's cost, Agreement 4.4).
+ */
+export function moneyTermsExample(faceValueCents = MONEY_TERMS_EXAMPLE_CENTS, artistPercent = MONEY_TERMS_EXAMPLE_ARTIST_PERCENT) {
+  if (!Number.isInteger(faceValueCents) || faceValueCents <= 0) {
+    throw new Error('The money-terms example needs a sellable face value.');
+  }
+  const fee = stripeCutOf(faceValueCents);
+  const artist = Math.round((faceValueCents * artistPercent) / 100);
+  return { faceValueCents, fee, artist, venue: faceValueCents - fee - artist, artistPercent };
 }
 
 export const MONEY_TERMS_FACTS = {
-  artistPercent: ARTIST_SHARE_PERCENT,
-  venuePercent: VENUE_SHARE_PERCENT,
   stripePercent: Math.round(STRIPE_PERCENT * 1000) / 10,
   stripeFixedCents: STRIPE_FIXED_CENTS,
-  payoutHoldDays: PAYOUT_HOLD_DAYS,
+  settlementDays: SETTLEMENT_DAYS_AFTER_SHOW,
+  autoConfirmDays: PAYMENT_AUTO_CONFIRM_DAYS,
+  pauseDays: NON_PAYMENT_PAUSE_DAYS,
+  agreementVersion: SPLIT_AGREEMENT_VERSION,
 } as const;
 
 export function isMoneyTermsRole(type: string | null | undefined): type is MoneyTermsRole {

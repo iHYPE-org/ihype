@@ -111,7 +111,7 @@ export function translateMeRow(t: Translate, row: { href: string; label: string;
     case '/app/me?guide=1':
       return { label: t('mmmMe.row.guide', 'How to use iHYPE'), detail: t('mmmMe.row.guideDetail', 'The quick-start steps for your account') };
     case '/app/me/info/charter':
-      return { label: t('mmmMe.row.charter', 'The charter'), detail: t('mmmMe.row.charterDetailNet', '75% artist · 25% venue after Stripe’s fee · $0 iHYPE') };
+      return { label: t('mmmMe.row.charter', 'The charter'), detail: t('mmmMe.row.charterDetailAgreement', 'Venue sells · acts paid under signed splits · $0 iHYPE') };
     case '/app/me/info/community':
       return { label: t('mmmMe.row.community', 'Community roadmap'), detail: t('mmmMe.row.communityDetail', 'See what members have asked for, add one, vote') };
     case '/app/me/info/transparency':

@@ -15,7 +15,7 @@ export async function checkCronHealth(): Promise<{ stale: string[]; unknown: str
     'held-track-notice',
     'notification-jobs',
     'onboarding', 'feature-shows', 'stripe-connect-health',
-    'artist-onboarding', 'show-payouts', 'ad-settlement', 'close-stale-bookings',
+    'artist-onboarding', 'show-payouts', 'ad-settlement', 'split-settlement', 'close-stale-bookings',
     'ad-audio-sweep',
     'stripe-reconcile',
     'weekly-picks', 'follow-digest', 'audit-log-rotate',

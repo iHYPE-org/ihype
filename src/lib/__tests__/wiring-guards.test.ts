@@ -215,16 +215,16 @@ describe('the show page sells the same way on both copies', () => {
     'src/app/app/shows/[slug]/page.tsx',
   ];
 
-  it('derives the money from one place in both copies', () => {
-    /* The public copy painted its 70/20/10 bar with `price * (pct/100)` and
-       `toFixed(2)` — three independent roundings of a float, disagreeing with
-       the integer-cent helper (and so with the payout entries) by a cent at
-       ordinary prices. Both copies read `splitFaceValueCents` now. */
-    const handRolled = pages.filter((f) => !/\bsplitFaceValueCents\b/.test(code(f)));
-    expect(
-      handRolled,
-      'this copy computes the split itself — use splitFaceValueCents, which the payout entries follow',
-    ).toEqual([]);
+  it('states no fixed split and gates the sale on the signed agreement in both copies', () => {
+    /* Since row 528 there is no platform-wide split: each act's share is what
+       the venue offered and the act signed, so neither copy may compute one
+       (the old `splitFaceValueCents` bar, or `price * pct`), and both must
+       read `readAgreementReadiness` before offering a purchase form the
+       ticket route answers 409 SPLIT_AGREEMENT_PENDING to. */
+    const computesSplit = pages.filter((f) => /\bsplitFaceValueCents\b|PayoutPercent\s*\/\s*100/.test(code(f)));
+    expect(computesSplit, 'this copy states a fixed split — the act\'s share lives in its signed agreement').toEqual([]);
+    const ungated = pages.filter((f) => !/\breadAgreementReadiness\b/.test(code(f)));
+    expect(ungated, 'this copy offers a purchase form before every act has signed').toEqual([]);
   });
 
   it('gates the sale on payment readiness in both copies', () => {

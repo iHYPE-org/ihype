@@ -29,8 +29,8 @@ function stepCopy(t: T, id: GuideStepId): { title: string; body: string } {
       body: t('gettingStarted.artistTrackBody', 'MP3, AAC, WAV or FLAC. Release it now or pick a date. Every upload is checked for copyright.'),
     };
     case 'artist-payouts': return {
-      title: t('gettingStarted.artistPayoutsTitle', 'Set up payouts'),
-      body: t('gettingStarted.artistPayoutsBody', 'Read the money terms, then connect Stripe so your 75% of every ticket has somewhere to go.'),
+      title: t('gettingStarted.artistPayoutMethodTitle', 'Add where you get paid'),
+      body: t('gettingStarted.artistPayoutMethodBody', 'Venues pay you directly after each show, under the split you sign. Tell them how — bank transfer, check or a payment app. No Stripe needed.'),
     };
     case 'artist-show': return {
       title: t('gettingStarted.artistShowTitle', 'Add a show'),
@@ -50,7 +50,7 @@ function stepCopy(t: T, id: GuideStepId): { title: string; body: string } {
     };
     case 'venue-event': return {
       title: t('gettingStarted.venueEventTitle', 'Publish your first event'),
-      body: t('gettingStarted.venueEventBody', 'Date, lineup and ticket price. Tickets go on sale as soon as you publish.'),
+      body: t('gettingStarted.venueEventBodyAgreement', 'Date, lineup and ticket price. Send each act a split to sign; tickets go on sale once every act has signed.'),
     };
     case 'venue-demand': return {
       title: t('gettingStarted.venueDemandTitle', 'See who fans want you to book'),

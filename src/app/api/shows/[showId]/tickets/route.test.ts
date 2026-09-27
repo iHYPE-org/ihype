@@ -27,10 +27,14 @@ vi.mock('@/lib/tickets', () => ({
   buildTicketVerificationUrl: vi.fn().mockReturnValue('https://ihype.org/verify/stub'),
   formatTicketStatus: vi.fn().mockReturnValue('Captured'),
 }));
+/* Every act has signed by default: a purchase-path test starts from a show
+   that may sell. The refusal has its own test below. */
+const readAgreementReadiness = vi.fn().mockResolvedValue({ ready: true });
+vi.mock('@/lib/split-agreement-data', () => ({
+  readAgreementReadiness: (...args: unknown[]) => readAgreementReadiness(...args),
+}));
 vi.mock('@/lib/ticketing', () => ({
-  ARTIST_SHARE_PERCENT: 75,
-  VENUE_SHARE_PERCENT: 25,
-  calculateTicketOrderFinancials: vi.fn().mockReturnValue({
+  calculateVenueKeepsAllFinancials: vi.fn().mockReturnValue({
     subtotalCents: 2000,
     localCents: 0,
     stateCents: 0,
@@ -38,9 +42,14 @@ vi.mock('@/lib/ticketing', () => ({
     internationalCents: 0,
     totalTaxCents: 0,
     totalChargeCents: 2000,
-    venuePayoutCents: 400,
-    artistPayoutCents: 1600,
+    stripeFeeCents: 88,
+    netCents: 2000,
+    venuePayoutCents: 2000,
+    artistPayoutCents: 0,
     promoterPayoutCents: 0,
+    platformCommissionCents: 0,
+    reserveFeeCents: 0,
+    processingFeeCents: 0,
   }),
   formatCurrencyFromCents: vi.fn((cents: number) => `$${(cents / 100).toFixed(2)}`),
 }));
@@ -218,38 +227,50 @@ describe('POST /api/shows/[showId]/tickets', () => {
       isConnectMerchantReady.mockResolvedValue(true);
     });
 
-    it('charges on the venue account and claims only the artist share', async () => {
+    it('charges on the venue account and claims nothing — the venue pays the acts (row 528)', async () => {
       const res = await POST(makeRequest({ quantity: 1 }), params);
       expect(res.status).toBe(201);
 
       const [call] = createVenueDirectCheckoutSession.mock.calls.at(-1) as [Record<string, unknown>];
       expect(call.venueAccountId).toBe('acct_venue');
-      expect(call.artistPayoutCents).toBe(1600);
+      expect(call.keepsAll).toBe(true);
+      expect(call).not.toHaveProperty('artistPayoutCents');
       expect(call).not.toHaveProperty('promoterPayoutCents');
       // Selected on card_payments, never on the payout capability.
       expect(isConnectMerchantReady).toHaveBeenCalledWith('acct_venue');
 
       const [{ data }] = dbTicketOrderCreate.mock.calls.at(-1) as [{ data: Record<string, unknown> }];
-      expect(data.settlementMode).toBe('VENUE_DIRECT');
+      expect(data.settlementMode).toBe('VENUE_KEEPS_ALL');
       expect(data.settlementAccountId).toBe('acct_venue');
+      expect(data.artistPayoutCents).toBe(0);
     });
 
-    it('computes the sale under the charter split, not the show row', async () => {
-      // The row carries 20/80 here; the sale is made under 75/25.
-      const { calculateTicketOrderFinancials } = await import('@/lib/ticketing');
-      await POST(makeRequest({ quantity: 1 }), params);
-      const [input] = vi.mocked(calculateTicketOrderFinancials).mock.calls.at(-1) as [Record<string, unknown>];
-      expect(input.artistPayoutPercent).toBe(75);
-      expect(input.venuePayoutPercent).toBe(25);
+    it('refuses a sale, holding nothing, until every act has signed the split agreement', async () => {
+      readAgreementReadiness.mockResolvedValueOnce({ ready: false, code: 'AWAITING_SIGNATURES', pendingActs: ['Band'] });
+      const res = await POST(makeRequest({ quantity: 1 }), params);
+      expect(res.status).toBe(409);
+      expect(await res.json()).toMatchObject({ code: 'SPLIT_AGREEMENT_PENDING' });
+      expect(dbTicketOrderCreate).not.toHaveBeenCalled();
+      expect(createVenueDirectCheckoutSession).not.toHaveBeenCalled();
+    });
+
+    it('refuses a sale while the venue is paused for an unresolved artist payment report', async () => {
+      dbShowFindUnique.mockResolvedValueOnce(baseShow({
+        venueProfile: { ...baseShow().venueProfile, paymentReportHoldAt: new Date() },
+      }));
+      const res = await POST(makeRequest({ quantity: 1 }), params);
+      expect(res.status).toBe(409);
+      expect(await res.json()).toMatchObject({ code: 'VENUE_PAYMENT_HOLD' });
+      expect(dbTicketOrderCreate).not.toHaveBeenCalled();
     });
 
     it("prices the tax at the venue's own rate when the venue has set one", async () => {
-      const { calculateTicketOrderFinancials } = await import('@/lib/ticketing');
+      const { calculateVenueKeepsAllFinancials } = await import('@/lib/ticketing');
       dbShowFindUnique.mockResolvedValueOnce(baseShow({
         venueProfile: { ...baseShow().venueProfile, stateRegion: 'NY', country: 'US', ticketTaxRatePpm: 88_750 },
       }));
       await POST(makeRequest({ quantity: 1 }), params);
-      const [input] = vi.mocked(calculateTicketOrderFinancials).mock.calls.at(-1) as [Record<string, unknown>];
+      const [input] = vi.mocked(calculateVenueKeepsAllFinancials).mock.calls.at(-1) as [Record<string, unknown>];
       expect(input.venueTaxRatePpm).toBe(88_750);
       expect(input.venueLocation).toMatchObject({ stateRegion: 'NY', country: 'US' });
     });

@@ -1470,9 +1470,9 @@ test.describe('ME with a real profile', () => {
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Terms and privacy');
     await expect(page.locator('.mmm-charter-back')).toHaveCount(1);
     await expect(page.locator('.mmm-document-part')).toHaveText(['Terms of service', 'Privacy policy']);
-    // 9 terms clauses + 8 privacy clauses + contact, numbered as one sequence.
-    await expect(page.locator('.mmm-document-section')).toHaveCount(18);
-    await expect(page.locator('.mmm-document-section > span').last()).toHaveText('18');
+    // 11 terms clauses + 8 privacy clauses + contact, numbered as one sequence.
+    await expect(page.locator('.mmm-document-section')).toHaveCount(20);
+    await expect(page.locator('.mmm-document-section > span').last()).toHaveText('20');
     // Data rights and the named subprocessors are the two clauses the terms
     // do not carry; they are why the privacy policy was kept rather than
     // dropped, so they are asserted by name.

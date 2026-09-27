@@ -1,3 +1,4 @@
+import { carriesApplicationFee, isVenueMerchantMode } from '@/lib/settlement-mode';
 import Stripe from 'stripe';
 import { readRuntimeEnv } from '@/lib/runtime-env';
 import { calculateDirectChargeApplicationFee } from '@/lib/ticketing';
@@ -553,12 +554,17 @@ export async function createVenueDirectCheckoutSession({
   showTitle,
   quantity,
   ticketOrderConfirmationCode,
+  keepsAll = false,
 }: {
   amountCents: number;
   /** The venue's Connect account. The charge is created ON this account. */
   venueAccountId: string;
-  /** The artist's 75% of the net face value, claimed as the application fee. */
-  artistPayoutCents: number;
+  /** VENUE_DIRECT only (orders before 2026-09-27): the artist's share, claimed
+   *  as the application fee. Omit it — or pass `keepsAll` — and the venue keeps
+   *  the whole charge, which is every sale under the split agreement. */
+  artistPayoutCents?: number;
+  /** VENUE_KEEPS_ALL: no application fee. The venue pays each act itself. */
+  keepsAll?: boolean;
   showId: string;
   showSlug: string;
   showTitle: string;
@@ -568,10 +574,17 @@ export async function createVenueDirectCheckoutSession({
   const stripe = getStripe();
   const baseUrl = readRuntimeEnv('NEXT_PUBLIC_APP_URL') ?? 'http://localhost:3000';
 
-  const { applicationFeeCents } = calculateDirectChargeApplicationFee({
-    artistPayoutCents,
-    totalChargeCents: amountCents,
-  });
+  /* NO APPLICATION FEE UNDER THE SPLIT AGREEMENT (2026-09-27, row 528). iHYPE
+     neither receives nor routes ticket money: the whole charge stays on the
+     venue's account and the venue pays each act. A fee here would put money
+     back on iHYPE's balance that nothing is going to pay out. */
+  const applicationFeeCents = keepsAll
+    ? null
+    : calculateDirectChargeApplicationFee({
+      artistPayoutCents: artistPayoutCents ?? 0,
+      totalChargeCents: amountCents,
+    }).applicationFeeCents;
+  const modeTag = keepsAll ? 'venue_keeps_all' : 'venue_direct';
 
   const session = await stripe.checkout.sessions.create(
     {
@@ -585,18 +598,18 @@ export async function createVenueDirectCheckoutSession({
         },
       }],
       payment_intent_data: {
-        application_fee_amount: applicationFeeCents,
+        ...(applicationFeeCents !== null ? { application_fee_amount: applicationFeeCents } : {}),
         metadata: {
           confirmationCode: ticketOrderConfirmationCode,
           showId,
-          settlementMode: 'venue_direct',
+          settlementMode: modeTag,
         },
       },
       metadata: {
         purpose: 'ticket_purchase',
         confirmationCode: ticketOrderConfirmationCode,
         showId,
-        settlementMode: 'venue_direct',
+        settlementMode: modeTag,
       },
       success_url: `${baseUrl}/shows/${showSlug}?checkout=success`,
       cancel_url: `${baseUrl}/shows/${showSlug}?checkout=cancelled`,
@@ -740,10 +753,10 @@ export async function refundTicketPaymentIntent(
      the two files must not disagree about what a mode means. A legacy row
      with an account id but no recorded mode is treated as a destination
      charge, exactly as the old boolean did. */
-  const venueIsMerchant = options.settlementMode === 'VENUE_DIRECT';
+  const venueIsMerchant = isVenueMerchantMode(options.settlementMode);
   const artistWasRouted =
     options.settlementMode === 'DESTINATION' ||
-    Boolean(options.settlementAccountId && options.settlementMode !== 'VENUE_DIRECT');
+    Boolean(options.settlementAccountId && !venueIsMerchant);
   const refund = await stripe.refunds.create(
     {
       payment_intent: paymentIntentId,
@@ -773,7 +786,9 @@ export async function refundTicketPaymentIntent(
        * artist's 75% share it was carrying — or the venue would be funding
        * the fan's whole refund out of the 25% it kept.
        * There is no transfer to reverse on a direct charge. */
-      ...(venueIsMerchant ? { refund_application_fee: true } : {}),
+      ...(carriesApplicationFee(options.settlementMode) ? { refund_application_fee: true } : {}),
+      /* VENUE_KEEPS_ALL carried no application fee, so there is none to
+         return: the refund is simply the venue's, from its own account. */
     },
     // The key carries the amount: a partial refund followed by a different
     // partial refund on the same intent is two distinct operations, and

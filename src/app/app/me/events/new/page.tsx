@@ -9,7 +9,6 @@ import Link from 'next/link';
 import { useI18n } from '@/components/I18nProvider';
 import { useFormDraft } from '@/lib/use-form-draft';
 import { stripeCutOf } from '@/lib/stripe-fees';
-import { VENUE_SHARE_PERCENT } from '@/lib/ticketing';
 
 type Step = 0 | 1 | 2 | 3 | 4;
 type TicketType = 'ga' | 'vip';
@@ -180,19 +179,15 @@ export default function EventsNewPage() {
   const priceDollars = parseFloat(price || '0');
   const cap = parseInt(capacity, 10) || 0;
   const gross = priceDollars * cap;
-  /* THE SPLIT IS OF WHAT IS LEFT AFTER STRIPE'S FEE (2026-09-25): the fee
-     comes off the face value first, then 75% artist / 25% venue, 0% iHYPE.
-     The fee is an estimate at the standard US card rate, per ticket and
-     assuming one ticket per order (the worst case, since Stripe's 30c is per
-     charge); tax is added on top for the buyer and is never split. */
+  /* THE VENUE RECEIVES EVERY SALE (Show Revenue Split Agreement,
+     2026-09-27): the whole charge lands on the venue's Stripe account, the
+     card fee is the venue's cost (Agreement 4.4), and each act is paid the
+     share the venue offers it in the lineup offer. The fee is an estimate at
+     the standard US card rate, per ticket and assuming one ticket per order
+     (the worst case, since Stripe's 30c is per charge). */
   const priceCents = Math.round(priceDollars * 100);
   const feePerTicketCents = priceCents > 0 ? stripeCutOf(priceCents) : 0;
-  const netPerTicketCents = Math.max(0, priceCents - feePerTicketCents);
-  const venuePerTicketCents = Math.round(netPerTicketCents * (VENUE_SHARE_PERCENT / 100));
-  const artistPerTicketCents = netPerTicketCents - venuePerTicketCents;
   const feeGross = (feePerTicketCents * cap) / 100;
-  const artistGross = (artistPerTicketCents * cap) / 100;
-  const venueGross = (venuePerTicketCents * cap) / 100;
 
   const s0Valid = Boolean(title.trim() && date && venueProfile);
 
@@ -261,13 +256,10 @@ export default function EventsNewPage() {
           isTicketed: ticketed,
           ticketPriceCents: Math.round(priceDollars * 100),
           ticketCapacity: cap || undefined,
-          // Sales open the moment the event is published. The alternative is
-          // the state the product was actually in: a live event nobody could
-          // buy a ticket for, because the column that opens sales had no UI.
+          // Sales open the moment the last act signs the offer: the route
+          // keeps the event a DRAFT until then, and this date is when they may
+          // open at the earliest.
           ticketingOpensAt: ticketed ? new Date().toISOString() : undefined,
-          venuePayoutPercent: 25,
-          artistPayoutPercent: 75,
-          promoterPayoutPercent: 0,
           tags: ticketType === 'vip' ? ['vip'] : undefined,
           headlinerProfileId: headliner?.id ?? undefined,
           venueProfileId: venueProfile?.id ?? undefined,
@@ -281,7 +273,9 @@ export default function EventsNewPage() {
       }
       clearDraft();
       setPublishedSlug(data.slug);
-      setSavedAsDraft(!publishing);
+      /* A ticketed event is created as a DRAFT whatever was asked: it goes on
+         sale when every act signs the offer, so the next stop is the lineup. */
+      setSavedAsDraft(!publishing || data.status === 'DRAFT');
       setStep(4);
     } catch {
       setError('Network error — please try again');
@@ -320,7 +314,7 @@ export default function EventsNewPage() {
           <>
             <div className="cover-slot">{t('eventsNewPage.coverArtSlot', 'Event cover art')}</div>
             <h1>{t('eventsNewPage.basicsTitle', 'Create an event.')}</h1>
-            <p className="sub">{t('eventsNewPage.basicsSubtitleNet', 'Fill in the details. The split is automatic: after Stripe’s card fee, 75% to the artist and 25% to the venue.')}</p>
+            <p className="sub">{t('eventsNewPage.basicsSubtitleAgreement', 'Fill in the details. For a ticketed event you then send each act a signed offer with their share, and tickets go on sale once every act signs.')}</p>
             <div className="field">
               <label htmlFor="event-title">{t('eventsNewPage.eventTitleLabel', 'Event title')}</label>
               <input id="event-title" onChange={(e) => setTitle(e.target.value)} placeholder={t('eventsNewPage.eventTitlePlaceholder', 'e.g. Midnight Echo — Live at The Echo')} value={title} />
@@ -345,7 +339,7 @@ export default function EventsNewPage() {
         {step === 1 && (
           <>
             <h1>{t('eventsNewPage.ticketingTitle', 'Ticketing.')}</h1>
-            <p className="sub">{t('eventsNewPage.ticketingSubtitleNet', 'Set face value and capacity. Stripe’s card fee comes off the face value first; the rest splits 75% artist · 25% venue · $0 iHYPE.')}</p>
+            <p className="sub">{t('eventsNewPage.ticketingSubtitleAgreement', 'Set face value and capacity. The venue receives every sale, pays the card fee, and pays each act the share it offers them. iHYPE takes $0.')}</p>
             <div className="grid2">
               <div className="field">
                 <label htmlFor="event-price">{t('eventsNewPage.faceValueLabel', 'Face value ($)')}</label>
@@ -368,9 +362,9 @@ export default function EventsNewPage() {
               </div>
               <div style={{ height: 1, background: 'var(--line)', marginBottom: 12 }} />
               {[
-                { key: 'var(--line-2)', label: t('eventsNewPage.splitStripeFee', 'Stripe card fee (est.)'), value: fmt$(feeGross, locale) },
-                { key: 'var(--accent)', label: t('eventsNewPage.splitArtistNet', 'Artist · 75% after fee'), value: fmt$(artistGross, locale), strong: true },
-                { key: 'var(--role-venue)', label: t('eventsNewPage.splitVenueNet', 'Venue · 25% after fee'), value: fmt$(venueGross, locale) },
+                { key: 'var(--role-venue)', label: t('eventsNewPage.splitVenueReceives', 'Venue receives'), value: fmt$(gross, locale), strong: true },
+                { key: 'var(--line-2)', label: t('eventsNewPage.splitStripeFeeVenue', 'Stripe card fee, paid by the venue (est.)'), value: fmt$(feeGross, locale) },
+                { key: 'var(--accent)', label: t('eventsNewPage.splitArtistsOffer', 'Artists · the share you offer each act'), value: t('eventsNewPage.setInOffer', 'set in the offer') },
                 { key: 'var(--line-2)', label: 'iHYPE', value: '$0', zero: true },
               ].map((row) => (
                 <div key={row.label} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '5px 0' }}>
@@ -383,19 +377,16 @@ export default function EventsNewPage() {
             <div className="card">
               <div className="label" style={{ marginBottom: 12 }}>{t('eventsNewPage.payoutPreviewLabel', 'Payout preview · per ticket')}</div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9375rem', padding: '6px 0' }}>
-                <span style={{ color: 'var(--ink-3)' }}>{t('eventsNewPage.payoutStripeFee', 'Stripe card fee (est.)')}</span><b>{fmtCents(feePerTicketCents / 100)}</b>
+                <span style={{ color: 'var(--role-venue)' }}>{t('eventsNewPage.payoutVenueReceives', 'Venue receives')}</span><b>{fmtCents(priceCents / 100)}</b>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9375rem', padding: '6px 0' }}>
-                <span style={{ color: 'var(--accent-text)' }}>{t('eventsNewPage.payoutArtistNet', 'Artist · 75% after fee')}</span><b>{fmtCents(artistPerTicketCents / 100)}</b>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9375rem', padding: '6px 0' }}>
-                <span style={{ color: 'var(--role-venue)' }}>{t('eventsNewPage.payoutVenueNet', 'Venue · 25% after fee')}</span><b>{fmtCents(venuePerTicketCents / 100)}</b>
+                <span style={{ color: 'var(--ink-3)' }}>{t('eventsNewPage.payoutStripeFeeVenue', 'Stripe card fee, paid by the venue (est.)')}</span><b>{fmtCents(feePerTicketCents / 100)}</b>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9375rem', padding: '6px 0', borderTop: '1px solid var(--hair-50)', marginTop: 4 }}>
                 <span style={{ color: 'var(--ink-3)' }}>{t('eventsNewPage.payoutIhype', 'iHYPE · 0%')}</span><b style={{ color: 'var(--ink-3)' }}>$0.00</b>
               </div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', color: 'var(--ink-3)', marginTop: 10, lineHeight: 1.6 }}>
-                {t('eventsNewPage.payoutFinePrintNet', 'The buyer pays face value plus tax and nothing else. Stripe’s card fee (2.9% + $0.30 on a standard US card, more on AMEX and international cards) comes off the face value before the split. Sell-out gross:')} {fmt$(gross, locale)}.
+                {t('eventsNewPage.payoutFinePrintAgreement', 'The buyer pays face value plus tax and nothing else. The venue pays each act its share of the ticket receipts (after tax and refunds) within 7 days of the show, under the agreement both sign. Sell-out gross:')} {fmt$(gross, locale)}.
               </div>
             </div>
             <div className="field"><label>{t('eventsNewPage.ticketTypesLabel', 'Ticket types')}</label></div>
@@ -461,19 +452,17 @@ export default function EventsNewPage() {
             <p className="sub">
               {mustRequest
                 ? t('eventsNewPage.reviewRequestSubtitle', 'You do not run this venue, so this goes to them as a private date request. They confirm the night and open ticket sales.')
-                : t('eventsNewPage.reviewSubtitleVenueReady', 'Once published, your event goes live. Tickets go on sale as soon as the venue has finished Stripe payment setup.')}
+                : priceDollars > 0
+                  ? t('eventsNewPage.reviewSubtitleOffer', 'Next you send each act a signed offer with their share. Tickets go on sale once every act has signed and the venue has finished Stripe payment setup.')
+                  : t('eventsNewPage.reviewSubtitleFree', 'Once published, your free event goes live.')}
             </p>
             <div className="card">
               <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.1rem', marginBottom: 4 }}>{title || t('eventsNewPage.untitledEvent', 'Untitled Event')}</div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', color: 'var(--ink-3)', marginBottom: 14 }}>
                 {date || t('eventsNewPage.tbd', 'TBD')} · {venueProfile?.name ?? t('eventsNewPage.tbd', 'TBD')} · ${priceDollars || 0} · {cap || 0} {t('eventsNewPage.capAbbrev', 'cap')}
               </div>
-              <div className="split-bar" style={{ marginBottom: 12 }}>
-                <div style={{ flex: 75, background: 'var(--accent)', borderRadius: 'var(--radius-pill) 0 0 var(--radius-pill)' }} />
-                <div style={{ flex: 25, background: 'var(--role-venue)', borderRadius: '0 var(--radius-pill) var(--radius-pill) 0' }} />
-              </div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', color: 'var(--ink-3)' }}>
-                {fmt$(artistGross, locale)} {t('eventsNewPage.artistWord', 'artist')} · {fmt$(venueGross, locale)} {t('eventsNewPage.venueWord', 'venue')} · {fmt$(feeGross, locale)} {t('eventsNewPage.stripeFeeWord', 'Stripe fee')} · $0 iHYPE
+                {fmt$(gross, locale)} {t('eventsNewPage.sellOutToVenue', 'sell-out to the venue')} · {fmt$(feeGross, locale)} {t('eventsNewPage.stripeFeeWord', 'Stripe fee')} · $0 iHYPE
               </div>
             </div>
             <div style={{ padding: '12px 14px', borderRadius: 12, border: '1px solid rgba(var(--warning-rgb),.25)', background: 'rgba(var(--warning-rgb),.06)', marginBottom: 14 }}>
@@ -481,12 +470,12 @@ export default function EventsNewPage() {
                 ⚠ {t('eventsNewPage.reviewWarningTitle', 'Review before you lock')}
               </div>
               <div style={{ fontSize: '0.9375rem', color: 'var(--ink-2)', lineHeight: 1.6 }}>
-                {t('eventsNewPage.reviewWarningLead', 'Publishing freezes the charter:')} <b style={{ color: 'var(--ink)' }}>{t('eventsNewPage.chartersSplitNet', '75% artist · 25% venue after Stripe’s card fee · 0% iHYPE')}</b> {t('eventsNewPage.reviewWarningAt', 'at')} <b style={{ color: 'var(--ink)' }}>${priceDollars || 0}</b> {t('eventsNewPage.reviewWarningFaceValue', 'face value,')} {cap || 0} {t('eventsNewPage.reviewWarningTickets', 'serialized QR tickets. The split can never change after the first sale. Resale is limited to face value — see the')} <Link href="/ticket-policy" style={{ color: 'var(--accent-text)' }}>{t('eventsNewPage.ticketPolicyLink', 'ticket policy')}</Link> {t('eventsNewPage.reviewWarningTerms', 'for refund and transfer terms.')}
+                {t('eventsNewPage.reviewWarningAgreement', 'Each act’s share is set in the lineup offer you send next, and binds only when both of you sign. You receive every ticket sale and pay each act within 7 days of the show. The offer can change only by sending a revised one that the act signs again. Resale is limited to face value — see the')} <Link href="/ticket-policy" style={{ color: 'var(--accent-text)' }}>{t('eventsNewPage.ticketPolicyLink', 'ticket policy')}</Link> {t('eventsNewPage.reviewWarningTerms', 'for refund and transfer terms.')}
               </div>
             </div>
             <div style={{ padding: '12px 14px', borderRadius: 12, border: '1px solid rgba(var(--role-venue-rgb),.2)', background: 'rgba(var(--role-venue-rgb),.04)', marginBottom: 14 }}>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', color: 'var(--role-venue)', lineHeight: 1.5 }}>
-                {t('eventsNewPage.ihypeChipVenueSeller', 'iHYPE takes $0 · 75/25 after Stripe’s fee · the venue sells the tickets once its Stripe payment setup is done')}
+                {t('eventsNewPage.ihypeChipAgreement', 'iHYPE takes $0 and holds nothing · the venue sells the tickets and pays each act under a signed agreement')}
               </div>
             </div>
             <div aria-atomic="true" aria-live="polite">
@@ -508,14 +497,14 @@ export default function EventsNewPage() {
             ) : (
               <>
                 <button className="btn-primary" disabled={submitting} onClick={() => void submitShow('publish')} type="button">
-                  {submitting ? t('eventsNewPage.publishing', 'Publishing…') : t('eventsNewPage.publishCta', 'Publish event & lock charter')}
+                  {submitting
+                    ? t('eventsNewPage.publishing', 'Publishing…')
+                    : priceDollars > 0
+                      ? t('eventsNewPage.createAndOfferCta', 'Create event & send the lineup offer')
+                      : t('eventsNewPage.publishFreeCta', 'Publish free event')}
                 </button>
-                {/* The way in to the lineup & split agreement. A multi-act
-                    split is proposed on a DRAFT show and the show goes live
-                    when every act accepts, so a venue that wants one has to be
-                    able to create a draft — and nothing in the product could. */}
                 <button className="btn-ghost" disabled={submitting} onClick={() => void submitShow('draft')} type="button">
-                  {t('eventsNewPage.saveDraftCta', 'Save as draft — propose a lineup split first')}
+                  {t('eventsNewPage.saveDraftPlainCta', 'Save as draft')}
                 </button>
               </>
             )}
@@ -540,8 +529,8 @@ export default function EventsNewPage() {
               {savedAsDraft
                 ? mustRequest
                   ? t('eventsNewPage.requestSentSubtitle', 'The venue can see the date now. It stays private until they confirm it and open ticket sales.')
-                  : t('eventsNewPage.draftSavedSubtitle', 'The draft is private. Propose the lineup and split next — the event goes live when every act accepts.')
-                : t('eventsNewPage.publishedSubtitle', 'Your event is live. Tickets are on sale. Fans who hyped the artist will get notified first.')}
+                  : t('eventsNewPage.draftSavedSubtitleOffer', 'The event is private for now. Send each act the lineup offer next — tickets go on sale when every act has signed.')
+                : t('eventsNewPage.publishedFreeSubtitle', 'Your free event is live. Fans who hyped the artist will get notified first.')}
             </p>
             {publishedSlug && (
               <Link
@@ -550,7 +539,7 @@ export default function EventsNewPage() {
                 style={{ display: 'block', textAlign: 'center', textDecoration: 'none', marginBottom: 10 }}
               >
                 {savedAsDraft
-                  ? t('eventsNewPage.openLineup', 'Open lineup & split →')
+                  ? t('eventsNewPage.openLineupOffer', 'Send the lineup offer →')
                   : t('eventsNewPage.viewEventPage', 'View event page →')}
               </Link>
             )}

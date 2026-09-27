@@ -8,18 +8,30 @@ vi.mock('@/lib/auto-mod', () => ({ checkContent: () => ({ flagged: false }) }));
 const notifyUser = vi.fn().mockResolvedValue(undefined);
 vi.mock('@/lib/notify', () => ({ notifyUser: (...a: unknown[]) => notifyUser(...a) }));
 
+const readAgreementReadiness = vi.fn().mockResolvedValue({ ready: true });
+vi.mock('@/lib/split-agreement-data', () => ({ readAgreementReadiness: (...a: unknown[]) => readAgreementReadiness(...a) }));
+
 const showFindFirst = vi.fn();
 const showUpdate = vi.fn();
 const orderFindMany = vi.fn();
-vi.mock('@/lib/db', () => ({
-  db: {
-    show: {
-      findFirst: (...a: unknown[]) => showFindFirst(...a),
-      update: (...a: unknown[]) => showUpdate(...a),
+const agreementUpdateMany = vi.fn().mockResolvedValue({ count: 0 });
+const slotUpdateMany = vi.fn().mockResolvedValue({ count: 0 });
+vi.mock('@/lib/db', () => {
+  const tx = {
+    showSplitAgreement: { updateMany: (...a: unknown[]) => agreementUpdateMany(...a) },
+    showLineupSlot: { updateMany: (...a: unknown[]) => slotUpdateMany(...a) },
+  };
+  return {
+    db: {
+      show: {
+        findFirst: (...a: unknown[]) => showFindFirst(...a),
+        update: (...a: unknown[]) => showUpdate(...a),
+      },
+      ticketOrder: { findMany: (...a: unknown[]) => orderFindMany(...a) },
+      $transaction: async (fn: (t: typeof tx) => unknown) => fn(tx),
     },
-    ticketOrder: { findMany: (...a: unknown[]) => orderFindMany(...a) },
-  },
-}));
+  };
+});
 
 import { auth } from '@/lib/auth';
 import { PATCH } from './route';
@@ -117,5 +129,25 @@ describe('PATCH /api/shows/[showId] — the edit page is its first caller (row 4
     const res = await PATCH(patch({ startsAt: '2026-10-03T20:00:00.000Z' }), params);
     expect(res.status).toBe(200);
     expect(showUpdate).toHaveBeenCalledTimes(1);
+  });
+
+  it('sends a changed show back for fresh signatures, because the title and date are in every agreement (7.6)', async () => {
+    signIn('venue-owner');
+    slotUpdateMany.mockResolvedValueOnce({ count: 2 });
+    const res = await PATCH(patch({ startsAt: '2026-10-09T20:00:00.000Z' }), params);
+    expect(res.status).toBe(200);
+    expect(agreementUpdateMany).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ supersededAt: expect.any(Date) }) }));
+    expect(slotUpdateMany).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ status: 'PENDING', agreementHash: null }) }));
+    expect(notifyUser).toHaveBeenCalledWith('venue-owner', expect.objectContaining({ type: 'lineup_offer_needs_resend' }));
+  });
+
+  it('refuses to schedule a ticketed draft by hand before every act has signed', async () => {
+    signIn('venue-owner');
+    showFindFirst.mockResolvedValueOnce({ ...SHOW, status: 'DRAFT', ticketingOpensAt: null });
+    readAgreementReadiness.mockResolvedValueOnce({ ready: false, code: 'NO_OFFER', pendingActs: [] });
+    const res = await PATCH(patch({ status: 'SCHEDULED' }), params);
+    expect(res.status).toBe(409);
+    expect(await res.json()).toMatchObject({ code: 'SPLIT_AGREEMENT_PENDING' });
+    expect(showUpdate).not.toHaveBeenCalled();
   });
 });
