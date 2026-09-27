@@ -1001,7 +1001,7 @@ export default async function ShowDetailPage({
               </div>
 
               <div style={{ marginTop: 16, fontSize: '0.9375rem', color: 'var(--ink-a65)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '.12em', lineHeight: 1.5 }}>
-                {t('showsSlugPage.splitLockedByCharter', 'Split locked by charter · iHYPE takes 0%')}
+                {t('showsSlugPage.splitAgreementCharter', 'Acts paid under signed split agreements · iHYPE takes 0%')}
               </div>
             </aside>
           ) : null}

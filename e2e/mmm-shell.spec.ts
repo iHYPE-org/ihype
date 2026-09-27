@@ -1227,7 +1227,7 @@ test.describe('Music · Map · Me shell', () => {
       }
     });
 
-    test('the in-shell buy pane renders the real split and the sale card', async ({ page }) => {
+    test('the in-shell buy pane states the agreement model and the sale card', async ({ page }) => {
       await page.goto(`/app/shows/${seeded.slug}`);
 
       /* WHICH HALF OF THE PANE RENDERS DEPENDS ON WHETHER STRIPE IS
@@ -1263,8 +1263,7 @@ test.describe('Music · Map · Me shell', () => {
         await expect(notice).toHaveCount(1);
         await expect(page.locator('h1.mmm-show-title:visible')).toHaveCount(1);
         await expect(page.locator('h1.mmm-show-title:visible')).toHaveText(seeded.title);
-        await expect(page.getByText('Split locked at publish')).toBeVisible();
-        await expect(page.getByText('75 / 25 · iHYPE $0')).toBeVisible();
+        await expect(page.getByText('Acts paid under signed split agreements')).toBeVisible();
         return;
       }
 
@@ -1281,20 +1280,15 @@ test.describe('Music · Map · Me shell', () => {
       // absorbed by a `.first()`.
       await expect(page.locator('h1.mmm-show-title:visible')).toHaveCount(1);
       await expect(page.locator('h1.mmm-show-title:visible')).toHaveText(seeded.title);
-      // The split states the show's OWN percentages. S9 (2026-08-24) replaced
-      // the labelled bar with the locked-split ledger row, and the per-role
-      // named shares moved into the sale card's split rows — so the assertion
-      // follows the information, not the retired node: the numbers must be the
-      // show's own, and every share must still be NAMED somewhere on the pane.
-      await expect(page.getByText('Split locked at publish')).toBeVisible();
-      await expect(page.getByText('75 / 25 · iHYPE $0')).toBeVisible();
+      // Since row 528 the pane states the MODEL, not a split: each act's
+      // share is set in its own signed agreement, so no fixed percentage may
+      // appear, and the sale card says the venue keeps the sale and pays the act.
+      await expect(page.getByText('Acts paid under signed split agreements')).toBeVisible();
       const saleCard = page.locator('.mmm-show-sale:visible');
-      // Stripe's fee is its own row, and the artist and venue split what is
-      // left 75/25 — no promoter row since 2026-09-25.
-      await expect(saleCard).toContainText('Card processing (Stripe)');
-      await expect(saleCard).toContainText('75% to the artist and 25% to the venue');
+      await expect(saleCard).toContainText('Where your money goes');
+      await expect(saleCard).not.toContainText('75%');
       await expect(saleCard).not.toContainText('Promoter');
-      // WHAT the percentages are a share of — the face-value line survives.
+      // The face-value line survives.
       await expect(page.locator('.mmm-show-fee').first()).toContainText('face value');
       // And the disclosure that changes what the buyer is agreeing to.
       //
