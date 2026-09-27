@@ -31,6 +31,8 @@ const MAX_MESSAGE_LENGTH = 400;
 const schema = z.object({
   reason: z.enum(REASONS),
   message: z.string().max(MAX_MESSAGE_LENGTH * 2).optional(),
+  /** Which act cancelled or did not appear, when `reason` is 'artist' (Split Agreement 7.4). */
+  actProfileId: z.string().min(1).max(64).optional(),
 });
 
 function normalizeMessage(raw: string | undefined): string | null {
@@ -115,6 +117,28 @@ export async function POST(request: Request, { params }: { params: Promise<{ sho
 
   if (!['DRAFT', 'SCHEDULED'].includes(show.status)) {
     return NextResponse.json({ error: `This show can't be cancelled from its current status (${show.status}).` }, { status: 400 });
+  }
+
+  /* SPLIT AGREEMENT 7.3 / 7.4 (owner, 2026-09-27: "venue is responsible for
+     lost ticket sale fees to Stripe, Artist responsible if they don't show
+     up"). Who bears the fees Stripe keeps on the refunds depends on who
+     cancelled, so an 'artist' cancellation must name the act, and it must be
+     an act on this show's lineup. With one act on the lineup it is that act;
+     every other reason is the venue's (7.3). Resolved BEFORE any refund runs,
+     so a request that cannot say who caused it refunds nothing. */
+  let cancelledByActProfileId: string | null = null;
+  if (body.reason === 'artist') {
+    const acts = await db.showLineupSlot.findMany({ where: { showId }, select: { profileId: true } });
+    if (body.actProfileId) {
+      if (!acts.some((a) => a.profileId === body.actProfileId)) {
+        return NextResponse.json({ error: 'That act is not on this show\'s lineup.' }, { status: 400 });
+      }
+      cancelledByActProfileId = body.actProfileId;
+    } else if (acts.length === 1) {
+      cancelledByActProfileId = acts[0].profileId;
+    } else if (acts.length > 1) {
+      return NextResponse.json({ error: 'Choose which act cancelled or did not appear.', code: 'ACT_REQUIRED' }, { status: 400 });
+    }
   }
 
   const orders = await db.ticketOrder.findMany({
@@ -251,6 +275,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ sho
       status: 'CANCELED',
       cancellationReason: REASON_LABEL[body.reason as (typeof REASONS)[number]],
       cancellationMessage: organizerMessage,
+      cancelledByActProfileId,
       canceledAt: new Date(),
     },
   });

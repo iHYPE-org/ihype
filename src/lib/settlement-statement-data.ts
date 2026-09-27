@@ -7,7 +7,7 @@ import { db } from '@/lib/db';
 import { log } from '@/lib/logger';
 import { notifyUser } from '@/lib/notify';
 import { parseApprovedDeductions } from '@/lib/split-agreement-data';
-import { buildStatementLines, isHoldEligible, summarizeOrders } from '@/lib/settlement-statement';
+import { buildStatementLines, isHoldEligible, summarizeOrders, type CancellationCause } from '@/lib/settlement-statement';
 
 export async function loadShowSettlement(showId: string) {
   const [orders, statement, agreements] = await Promise.all([
@@ -35,15 +35,16 @@ export async function loadShowSettlement(showId: string) {
 
 export function statementFor(
   loaded: Awaited<ReturnType<typeof loadShowSettlement>>,
-  cancelled: boolean,
+  cancellation: CancellationCause,
 ) {
   return buildStatementLines({
     orders: loaded.summary,
     offPlatformCents: loaded.offPlatformCents,
     chargebacksLostCents: loaded.chargebacksLostCents,
-    cancelled,
+    cancellation,
     agreements: loaded.agreements.map((a) => ({
       id: a.id,
+      artistProfileId: a.artistProfileId,
       artistName: a.artistProfile.name,
       splitPercent: a.splitPercent,
       guaranteeCents: a.guaranteeCents,

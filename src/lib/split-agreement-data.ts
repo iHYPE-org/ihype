@@ -40,7 +40,7 @@ export function venueAddressLine(venue: { addressLine1?: string | null; city?: s
 }
 
 export function termsFor(input: {
-  show: { id: string; title: string; startsAt: Date; timeZone: string | null };
+  show: { id: string; title: string; startsAt: Date; timeZone: string | null; isTicketed: boolean; ticketPriceCents: number };
   venue: { name: string; addressLine1?: string | null; city?: string | null; stateRegion?: string | null; postalCode?: string | null };
   artistName: string;
   slot: {
@@ -59,6 +59,7 @@ export function termsFor(input: {
     venueName: input.venue.name,
     venueAddress: venueAddressLine(input.venue),
     artistName: input.artistName,
+    ticketPriceCents: input.show.isTicketed && input.show.ticketPriceCents > 0 ? input.show.ticketPriceCents : null,
     splitPercent: input.slot.splitPercent,
     guaranteeCents: input.slot.guaranteeCents,
     approvedDeductions: parseApprovedDeductions(input.slot.approvedDeductions),

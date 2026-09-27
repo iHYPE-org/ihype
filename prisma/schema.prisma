@@ -622,15 +622,15 @@ model SupportRequest {
 }
 
 model Show {
-  id                     String                   @id @default(cuid())
-  slug                   String                   @unique
-  title                  String
-  description            String?
-  recapText              String?
-  productionPlan         Json?
-  status                 ShowStatus               @default(DRAFT)
-  startsAt               DateTime
-  endsAt                 DateTime?
+  id                      String                   @id @default(cuid())
+  slug                    String                   @unique
+  title                   String
+  description             String?
+  recapText               String?
+  productionPlan          Json?
+  status                  ShowStatus               @default(DRAFT)
+  startsAt                DateTime
+  endsAt                  DateTime?
   /**
    * The IANA zone the door time was entered in — the VENUE's wall clock, not
    * the reader's. `startsAt` is an instant, so every reader needs this to say
@@ -638,56 +638,62 @@ model Show {
    * created by a writer with no browser) and readers fall back to naming the
    * zone they rendered in. See `formatDoorTime()` in `src/lib/format-locale.ts`.
    */
-  timeZone               String?
-  createdAt              DateTime                 @default(now())
-  updatedAt              DateTime                 @updatedAt
-  creatorId              String
-  creator                User                     @relation("CreatedShows", fields: [creatorId], references: [id], onDelete: Cascade)
-  venueProfileId         String?
-  venueProfile           Profile?                 @relation("VenueShows", fields: [venueProfileId], references: [id])
-  headlinerProfileId     String?
-  headlinerProfile       Profile?                 @relation("HeadlinerShows", fields: [headlinerProfileId], references: [id])
-  promoterProfileId      String?
-  promoterProfile        Profile?                 @relation("PromotedShows", fields: [promoterProfileId], references: [id])
-  posterImage            String?
-  ticketingOpensAt       DateTime?
-  bookingLegalNotes      String?
-  isTicketed             Boolean                  @default(false)
-  ticketPriceCents       Int                      @default(0)
-  ticketCapacity         Int?
-  venuePayoutPercent     Int?
-  artistPayoutPercent    Int?
-  promoterPayoutPercent  Int                      @default(0)
-  ticketsSoldCount       Int                      @default(0)
-  hypeCount              Int                      @default(0)
-  tags                   String[]
-  hypes                  HypeEvent[]
-  showListens            ShowListen[]
-  ticketOrders           TicketOrder[]
-  tickets                Ticket[]
-  accountsPayableEntries AccountsPayableEntry[]
-  advertisingConfig      ShowAdvertisingConfig?
-  lineupSlots            ShowLineupSlot[]
-  splitAgreements        ShowSplitAgreement[]
-  settlementStatement    ShowSettlementStatement?
-  comments               ShowComment[]
-  rsvps                  ShowRsvp[]
-  attendees              ShowAttendee[]
-  setlistVotes           SetlistVote[]
-  moderationStatus       String                   @default("APPROVED")
-  featured               Boolean                  @default(false)
-  capacityAlertSentAt    DateTime?
-  dmcaDeadline           DateTime?
-  dmcaStatus             String?
+  timeZone                String?
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  creatorId               String
+  creator                 User                     @relation("CreatedShows", fields: [creatorId], references: [id], onDelete: Cascade)
+  venueProfileId          String?
+  venueProfile            Profile?                 @relation("VenueShows", fields: [venueProfileId], references: [id])
+  headlinerProfileId      String?
+  headlinerProfile        Profile?                 @relation("HeadlinerShows", fields: [headlinerProfileId], references: [id])
+  promoterProfileId       String?
+  promoterProfile         Profile?                 @relation("PromotedShows", fields: [promoterProfileId], references: [id])
+  posterImage             String?
+  ticketingOpensAt        DateTime?
+  bookingLegalNotes       String?
+  isTicketed              Boolean                  @default(false)
+  ticketPriceCents        Int                      @default(0)
+  ticketCapacity          Int?
+  venuePayoutPercent      Int?
+  artistPayoutPercent     Int?
+  promoterPayoutPercent   Int                      @default(0)
+  ticketsSoldCount        Int                      @default(0)
+  hypeCount               Int                      @default(0)
+  tags                    String[]
+  hypes                   HypeEvent[]
+  showListens             ShowListen[]
+  ticketOrders            TicketOrder[]
+  tickets                 Ticket[]
+  accountsPayableEntries  AccountsPayableEntry[]
+  advertisingConfig       ShowAdvertisingConfig?
+  lineupSlots             ShowLineupSlot[]
+  splitAgreements         ShowSplitAgreement[]
+  settlementStatement     ShowSettlementStatement?
+  comments                ShowComment[]
+  rsvps                   ShowRsvp[]
+  attendees               ShowAttendee[]
+  setlistVotes            SetlistVote[]
+  moderationStatus        String                   @default("APPROVED")
+  featured                Boolean                  @default(false)
+  capacityAlertSentAt     DateTime?
+  dmcaDeadline            DateTime?
+  dmcaStatus              String?
   // Organizer-initiated cancellation (Event Cancellation Flow) — distinct
   // from the admin-moderation CANCELED path, which has no reason recorded.
-  cancellationReason     String?
+  cancellationReason      String?
   // Optional free text the organizer writes for their own ticket holders on
   // cancellation. Kept separate from cancellationReason, which only ever
   // holds one of four fixed labels — folding them together would make it
   // impossible to tell an organizer's words from the platform's.
-  cancellationMessage    String?
-  canceledAt             DateTime?
+  cancellationMessage     String?
+  canceledAt              DateTime?
+  // The act whose cancellation or no-show cancelled the show (Split
+  // Agreement 7.4): that act is owed nothing and reimburses the venue for the
+  // fees Stripe kept on the refunds. Null when the venue cancelled (7.3), so
+  // the venue bears those fees. A profile id, not a relation: the record must
+  // survive the act deleting its profile.
+  cancelledByActProfileId String?
 
   @@index([startsAt, status])
   @@index([status])

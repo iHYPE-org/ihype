@@ -45,7 +45,7 @@ export default async function LineupOfferPage({ params }: { params: Promise<{ sl
   const show = await db.show.findUnique({
     where: { slug },
     select: {
-      id: true, slug: true, title: true, startsAt: true, timeZone: true, status: true, isTicketed: true,
+      id: true, slug: true, title: true, startsAt: true, timeZone: true, status: true, isTicketed: true, ticketPriceCents: true,
       venueProfile: {
         select: {
           id: true, ownerId: true, name: true, paymentReportHoldAt: true,

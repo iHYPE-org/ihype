@@ -40,6 +40,7 @@ export function EventCancellationFlow({
   startsAtLabel,
   ticketsSoldCount,
   dashboardHref,
+  acts = [],
 }: {
   showId: string;
   showSlug: string;
@@ -48,10 +49,14 @@ export function EventCancellationFlow({
   startsAtLabel: string;
   ticketsSoldCount: number;
   dashboardHref: string;
+  /** The acts on the lineup, so an 'artist' cancellation can name which one (Split Agreement 7.4). */
+  acts?: { profileId: string; name: string }[];
 }) {
   const { locale, t } = useI18n();
   const router = useRouter();
   const [reason, setReason] = useState<string | null>(null);
+  const [actProfileId, setActProfileId] = useState<string | null>(null);
+  const needsAct = reason === 'artist' && acts.length > 1;
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -66,7 +71,11 @@ export function EventCancellationFlow({
       const res = await fetch(`/api/shows/${showId}/cancel`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason, message: message.trim() || undefined }),
+        body: JSON.stringify({
+          reason,
+          message: message.trim() || undefined,
+          actProfileId: reason === 'artist' ? (actProfileId ?? (acts.length === 1 ? acts[0].profileId : undefined)) : undefined,
+        }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -140,6 +149,26 @@ export function EventCancellationFlow({
         ))}
       </div>
 
+      {needsAct && (
+        <fieldset className="ecf-reasons">
+          <legend className="ecf-message-label">{t('eventCancellationFlow.whichAct', 'Which act cancelled or did not appear?')}</legend>
+          {acts.map((a) => (
+            <label className="ecf-reason-row" key={a.profileId}>
+              <input checked={actProfileId === a.profileId} name="act" onChange={() => setActProfileId(a.profileId)} type="radio" />
+              {a.name}
+            </label>
+          ))}
+        </fieldset>
+      )}
+
+      {reason && (
+        <p className="ecf-fee-note">
+          {reason === 'artist'
+            ? t('eventCancellationFlow.feeNoteArtist', 'Under the split agreement, the act that cancelled or did not appear is owed nothing and reimburses the venue for the fees Stripe keeps on the refunds (Section 7.4).')
+            : t('eventCancellationFlow.feeNoteVenue', 'Under the split agreement, the venue bears the fees Stripe keeps on the refunds, and still owes each act its cancellation amount (Section 7.3).')}
+        </p>
+      )}
+
       <div className="ecf-message">
         <label className="ecf-message-label" htmlFor="ecf-message">
           {t('eventCancellationFlow.messageLabel', 'Add details for ticket holders')}
@@ -176,7 +205,7 @@ export function EventCancellationFlow({
 
       {error && <p className="ecf-error">{error}</p>}
 
-      <button className="ecf-btn ecf-btn-danger" disabled={!reason || submitting} onClick={confirm} type="button">
+      <button className="ecf-btn ecf-btn-danger" disabled={!reason || (needsAct && !actProfileId) || submitting} onClick={confirm} type="button">
         {submitting ? t('eventCancellationFlow.cancelling', 'Cancelling…') : t('eventCancellationFlow.confirmButton', 'Cancel event & refund everyone →')}
       </button>
       <Link className="ecf-btn ecf-btn-outline" href={`/shows/${showSlug}`}>
@@ -190,6 +219,8 @@ export function EventCancellationFlow({
         .ecf-card { border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--bg2); padding: 18px 20px; margin-bottom: 20px; }
         .ecf-card-title { font-family: var(--font-display); font-weight: 800; font-size: 0.9375rem; color: var(--ink); }
         .ecf-card-meta { font-size: 0.9375rem; color: var(--ink-a65); margin-top: 3px; }
+        fieldset.ecf-reasons { border: 0; padding: 0; min-width: 0; }
+        .ecf-fee-note { font-size: 0.9375rem; line-height: 1.5; color: var(--ink-a65); margin: 0 0 16px; }
         .ecf-reasons { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
         .ecf-reason-row { display: flex; align-items: center; gap: 10px; font-size: 0.9375rem; color: var(--ink); padding: 10px 4px; }
         .ecf-message { margin-bottom: 18px; }

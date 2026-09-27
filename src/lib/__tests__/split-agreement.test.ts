@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   SPLIT_AGREEMENT_VERSION,
+  artistCentsPerTicket,
   cancellationAmount,
   computeArtistShare,
   hashAgreementText,
@@ -24,6 +25,7 @@ const TERMS: SplitAgreementTerms = {
   venueName: 'The Room',
   venueAddress: '1 Main St, Portland, ME 04101',
   artistName: 'The Band',
+  ticketPriceCents: 1_800,
   splitPercent: 70,
   guaranteeCents: null,
   approvedDeductions: [],
@@ -55,6 +57,7 @@ describe('the signed text', () => {
       { showStartsAt: '2026-10-10T01:00:00.000Z' },
       { showTitle: 'Another Night' },
       { juryWaiver: true },
+      { ticketPriceCents: 2_000 },
       { guarantorName: 'Pat Owner' },
       { approvedDeductions: [{ label: 'Sound', capCents: 15_000 }] },
     ]) {
@@ -79,11 +82,29 @@ describe('the signed text', () => {
     }
   });
 
+  it('states the exact amount of each ticket the act receives (owner, 2026-09-27)', () => {
+    const text = renderSplitAgreement(TERMS);
+    expect(text).toContain('Ticket price: $18.00 per ticket, plus sales tax');
+    expect(text).toContain('Artist Share of each ticket sold: $12.60 (70% of $18.00;');
+    // 4.3: a half cent goes to the act.
+    expect(artistCentsPerTicket(1_835, 70)).toBe(1_285);
+    expect(renderSplitAgreement({ ...TERMS, ticketPriceCents: null })).toContain('Ticket price: this Show sells no tickets through iHYPE');
+  });
+
+  it('puts the refund fees on the venue when it cancels and on the act when the act cancels or does not appear', () => {
+    const text = renderSplitAgreement(TERMS);
+    expect(text).toContain('The Venue bears every fee Stripe keeps on those refunds');
+    expect(text).toContain('7.4 Cancelled by the Artist, or the Artist does not appear.');
+    expect(text).toContain('the Artist reimburses the Venue for the fees Stripe kept on the tickets refunded because of it');
+    expect(text).not.toContain('illness or injury certified');
+  });
+
   it('refuses terms nobody could sign', () => {
     expect(validateAgreementTerms({ ...TERMS, splitPercent: 0 })).not.toBeNull();
     expect(validateAgreementTerms({ ...TERMS, splitPercent: 101 })).not.toBeNull();
     expect(validateAgreementTerms({ ...TERMS, guaranteeCents: -1 })).not.toBeNull();
     expect(validateAgreementTerms({ ...TERMS, approvedDeductions: [{ label: '', capCents: 1 }] })).not.toBeNull();
+    expect(validateAgreementTerms({ ...TERMS, ticketPriceCents: 0 })).not.toBeNull();
     expect(validateAgreementTerms(TERMS)).toBeNull();
   });
 });
@@ -111,16 +132,37 @@ describe('the Artist Share (Section 4)', () => {
 
   it('counts admission sold outside iHYPE and takes off only the capped deductions', () => {
     const lines = buildStatementLines({
-      orders: { ticketsSold: 10, ticketsRefunded: 0, grossCents: 20_000, taxCents: 0, refundsCents: 0 },
+      orders: { ticketsSold: 10, ticketsRefunded: 0, grossCents: 20_000, taxCents: 0, refundsCents: 0, refundedChargesCents: [] },
       offPlatformCents: 5_000,
       chargebacksLostCents: 0,
-      cancelled: false,
-      agreements: [{ id: 'a', artistName: 'Band', splitPercent: 50, guaranteeCents: null, deductionCapCents: 1_000, deductionsAppliedCents: 9_999 }],
+      cancellation: { cancelled: false },
+      agreements: [{ id: 'a', artistProfileId: 'p_a', artistName: 'Band', splitPercent: 50, guaranteeCents: null, deductionCapCents: 1_000, deductionsAppliedCents: 9_999 }],
     });
     expect(lines.grossCents).toBe(25_000);
     expect(lines.netCents).toBe(25_000);
     expect(lines.lines[0].deductionsAppliedCents).toBe(1_000);
     expect(lines.lines[0].artistShareCents).toBe(12_000);
+  });
+
+  it('charges the refund fees to the act that caused a cancellation, and owes it nothing (7.4)', () => {
+    const orders = summarizeOrders([
+      { status: 'VOID', quantity: 2, subtotalCents: 3_600, totalTaxCents: 198, chargedAt: new Date(), refundedAt: new Date() },
+      { status: 'VOID', quantity: 1, subtotalCents: 1_800, totalTaxCents: 99, chargedAt: new Date(), refundedAt: new Date() },
+    ]);
+    expect(orders.refundedChargesCents).toEqual([3_798, 1_899]);
+    const agreements = [
+      { id: 'a', artistProfileId: 'p_a', artistName: 'Headliner', splitPercent: 60, guaranteeCents: null, deductionCapCents: 0, deductionsAppliedCents: 0 },
+      { id: 'b', artistProfileId: 'p_b', artistName: 'Opener', splitPercent: 20, guaranteeCents: null, deductionCapCents: 0, deductionsAppliedCents: 0 },
+    ];
+    // Stripe standard rate per charge: round(3798 × 2.9%) + 30 = 140, round(1899 × 2.9%) + 30 = 85.
+    const byAct = buildStatementLines({ orders, offPlatformCents: 0, chargebacksLostCents: 0, cancellation: { cancelled: true, byActProfileId: 'p_a' }, agreements });
+    expect(byAct.refundFeesCents).toBe(225);
+    expect(byAct.lines[0]).toMatchObject({ venueCancellationCents: 0, artistOwesRefundFeesCents: 225 });
+    expect(byAct.lines[1].artistOwesRefundFeesCents).toBeNull();
+    expect(byAct.lines[1].venueCancellationCents).toBeGreaterThan(0);
+    const byVenue = buildStatementLines({ orders, offPlatformCents: 0, chargebacksLostCents: 0, cancellation: { cancelled: true, byActProfileId: null }, agreements });
+    expect(byVenue.lines.every((l) => l.artistOwesRefundFeesCents === null)).toBe(true);
+    expect(byVenue.refundFeesCents).toBe(225);
   });
 
   it('owes a venue-cancelled show the greater of the guarantee and half the share (7.3)', () => {
@@ -137,7 +179,7 @@ describe('the Settlement Statement', () => {
       { status: 'RESERVED', quantity: 4, subtotalCents: 7_200, totalTaxCents: 396, chargedAt: null, refundedAt: null },
       { status: 'VOID', quantity: 1, subtotalCents: 1_800, totalTaxCents: 99, chargedAt: null, refundedAt: null },
     ]);
-    expect(summary).toEqual({ ticketsSold: 3, ticketsRefunded: 1, grossCents: 5_697, taxCents: 297, refundsCents: 1_800 });
+    expect(summary).toMatchObject({ ticketsSold: 3, ticketsRefunded: 1, grossCents: 5_697, taxCents: 297, refundsCents: 1_800 });
   });
 
   it('completes a marked payment only when the artist confirms or five days pass without a report (5.3)', () => {

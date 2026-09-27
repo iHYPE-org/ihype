@@ -30,13 +30,13 @@ vi.mock('@/lib/db', () => {
 });
 
 import { auth } from '@/lib/auth';
-import { renderAndHashAgreement } from '@/lib/split-agreement';
+import { SPLIT_AGREEMENT_VERSION, renderAndHashAgreement } from '@/lib/split-agreement';
 import { termsFor } from '@/lib/split-agreement-data';
 import { PATCH } from './route';
 
 const SHOW = {
   id: 'show_1', slug: 'the-night', title: 'The Night', status: 'DRAFT', startsAt: new Date('2026-12-01T01:00:00Z'), timeZone: 'America/New_York',
-  isTicketed: true, ticketingOpensAt: null,
+  isTicketed: true, ticketPriceCents: 1_800, ticketingOpensAt: null,
   venueProfile: { id: 'venue_1', ownerId: 'venue-owner', name: 'The Room', addressLine1: '1 Main St', city: 'Portland', stateRegion: 'ME', postalCode: '04101' },
 };
 const SLOT_TERMS = { splitPercent: 70, guaranteeCents: null, approvedDeductions: [], guarantorName: null, juryWaiver: false };
@@ -45,7 +45,7 @@ let hash = '';
 function slot(overrides: Record<string, unknown> = {}) {
   return {
     id: 'slot_1', status: 'PENDING', profileId: 'artist_1', ...SLOT_TERMS,
-    agreementVersion: '2026-09-27.1', agreementHash: hash,
+    agreementVersion: SPLIT_AGREEMENT_VERSION, agreementHash: hash,
     venueSignerUserId: 'venue-owner', venueSignerName: 'Pat Venue', venueSignedAt: new Date('2026-09-27T00:00:00Z'), venueSignerIp: null, venueSignerDevice: null,
     profile: { name: 'The Band', payoutMethodKind: 'PAYMENT_APP', payoutMethodDetails: 'Venmo @band' },
     ...overrides,
@@ -88,6 +88,8 @@ describe('PATCH /api/shows/[showId]/lineup/respond — the act signs the split a
     showFindUnique.mockResolvedValueOnce({ ...SHOW, title: 'Renamed' });
     const res = await PATCH(req({ status: 'ACCEPTED', agreementHash: hash, signerName: 'Sam Band' }), params);
     expect(res.status).toBe(409);
+    // The venue signed other text, so the act is told the VENUE must resend.
+    expect(await res.json()).toMatchObject({ code: 'OFFER_OUTDATED' });
     expect(agreementCreate).not.toHaveBeenCalled();
   });
 
