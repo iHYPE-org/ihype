@@ -12,6 +12,7 @@ import {
   validateAgreementTerms,
 } from '@/lib/split-agreement';
 import { termsFor } from '@/lib/split-agreement-data';
+import { actPerformanceSchema, engagementSchema } from '@/lib/performance-agreement';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,6 +27,8 @@ const slotSchema = z.object({
   isHeadliner: z.boolean().optional().default(false),
   guaranteeCents: z.number().int().positive().max(100_000_000).nullable().optional().default(null),
   approvedDeductions: z.array(deductionSchema).max(MAX_APPROVED_DEDUCTIONS).optional().default([]),
+  /** Part A terms that differ per act (Artist Performance Agreement, 2026-09-28.1). */
+  performance: actPerformanceSchema,
 });
 
 const schema = z.object({
@@ -38,6 +41,8 @@ const schema = z.object({
   guarantorName: z.string().trim().max(120).nullable().optional().default(null),
   /** Section 10.6. */
   juryWaiver: z.boolean().optional().default(false),
+  /** Part A terms that hold for every act: the purchaser, doors, insurance… */
+  engagement: engagementSchema,
   /** Render the agreements for the signer to read, and sign nothing. */
   preview: z.boolean().optional().default(false),
   /** The venue's signature: the signer's full name, typed. */
@@ -145,6 +150,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ sho
         approvedDeductions: slot.approvedDeductions,
         guarantorName,
         juryWaiver: body.juryWaiver,
+        performanceTerms: { ...body.engagement, ...slot.performance },
       },
     });
     const invalid = validateAgreementTerms(terms);
@@ -187,6 +193,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ sho
         approvedDeductions: slot.approvedDeductions,
         guarantorName,
         juryWaiver: body.juryWaiver,
+        performanceTerms: { ...body.engagement, ...slot.performance },
         agreementVersion: SPLIT_AGREEMENT_VERSION,
         agreementHash: hash,
         venueSignerUserId: session.user.id,

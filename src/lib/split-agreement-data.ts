@@ -4,6 +4,7 @@
  * signed, whether a show may sell, and the payment method an act is paid by.
  */
 import type { Prisma } from '@prisma/client/edge';
+import { parsePerformanceTerms } from '@/lib/performance-agreement';
 import { db } from '@/lib/db';
 import type { ApprovedDeduction, SplitAgreementTerms } from '@/lib/split-agreement';
 
@@ -49,6 +50,7 @@ export function termsFor(input: {
     approvedDeductions: Prisma.JsonValue | null;
     guarantorName: string | null;
     juryWaiver: boolean;
+    performanceTerms?: Prisma.JsonValue | null;
   };
 }): SplitAgreementTerms {
   return {
@@ -65,6 +67,7 @@ export function termsFor(input: {
     approvedDeductions: parseApprovedDeductions(input.slot.approvedDeductions),
     guarantorName: input.slot.guarantorName,
     juryWaiver: input.slot.juryWaiver,
+    performance: parsePerformanceTerms(input.slot.performanceTerms ?? null),
   };
 }
 
