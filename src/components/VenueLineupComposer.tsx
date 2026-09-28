@@ -172,12 +172,16 @@ export function VenueLineupComposer({
     });
   }
 
+  /* By slug, exactly. This read `/api/search`, whose answer is `results`
+     with lowercase types and which matches names rather than slugs, so it
+     found nobody and no venue could send an offer from here (found driving
+     the composer for DESIGN_SYNC row 530). */
   async function resolveProfile(slug: string): Promise<{ id: string; name: string } | null> {
-    const res = await fetch(`/api/search?q=${encodeURIComponent(slug)}&type=artist&limit=10`);
+    const res = await fetch(`/api/profile/${encodeURIComponent(slug)}`);
     if (!res.ok) return null;
     const data = await res.json().catch(() => null);
-    const match = (data?.profiles ?? []).find((p: { slug: string; type: string }) => p.slug === slug && p.type === 'ARTIST');
-    return match ? { id: match.id, name: match.name } : null;
+    const p = data?.profile as { id?: string; name?: string; type?: string } | undefined;
+    return p?.id && p.type === 'ARTIST' ? { id: p.id, name: p.name ?? slug } : null;
   }
 
   function offerBody(profileIds: string[]) {
