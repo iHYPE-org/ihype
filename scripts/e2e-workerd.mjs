@@ -407,8 +407,15 @@ function spawnDevServer(index) {
            1393 MB "Mark-Compact … Aborted" crashes CI kept attributing to app
            code), so every MB the tooling does not hoard is headroom for the
            suite. Error-level still surfaces real failures; the per-request
-           [wrangler:info] lines are what this silences. */
-        WRANGLER_LOG: 'error',
+           [wrangler:info] lines are what this silences.
+
+           EXCEPT IN --serve (the nightly's acceptance walk). Measured
+           2026-09-28: at 'error' wrangler forwards NONE of the worker's own
+           console output, so nightly run 31's server log held one line while
+           the walk read a 500 from the purchase route whose log.error said
+           why — undiagnosable. The walk is ~50 requests, not a shard, so the
+           volume argument above does not reach it. */
+        WRANGLER_LOG: SERVE_ONLY ? 'log' : 'error',
         // The developer's .env normally points at next dev on :3000. This
         // isolated Worker owns :8787, so all server-side auth/WebAuthn origin
         // checks must use the same origin Playwright is exercising.

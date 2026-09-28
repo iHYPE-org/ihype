@@ -9,7 +9,7 @@ export const maxDuration = 60;
 // Reservations older than this without payment capture are voided.
 //
 // LONGER THAN THE CHECKOUT SESSION, deliberately (second security scan,
-// 2026-09-02). Stripe Checkout sessions are created with a 30-minute
+// 2026-09-02). Stripe Checkout sessions are created with a 31-minute
 // `expires_at` (src/lib/stripe.ts), and `stripePaymentIntentId` is only
 // written when the webhook reports completion — so with a 15-minute TTL a
 // buyer who paid at minute 16 to 30 found their order already VOID when the
