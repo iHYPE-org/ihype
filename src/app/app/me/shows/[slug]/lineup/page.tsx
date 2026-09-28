@@ -11,6 +11,7 @@ import { VenueLineupComposer } from '@/components/VenueLineupComposer';
 import { getServerI18n } from '@/lib/i18n/server';
 import { renderAndHashAgreement } from '@/lib/split-agreement';
 import { describePayoutMethod, parseApprovedDeductions, termsFor } from '@/lib/split-agreement-data';
+import { parsePerformanceTerms } from '@/lib/performance-agreement';
 
 export const dynamic = 'force-dynamic';
 
@@ -62,7 +63,7 @@ export default async function LineupOfferPage({ params }: { params: Promise<{ sl
     orderBy: [{ isHeadliner: 'desc' }, { splitPercent: 'desc' }],
     select: {
       id: true, profileId: true, isHeadliner: true, splitPercent: true, status: true,
-      guaranteeCents: true, approvedDeductions: true, guarantorName: true, juryWaiver: true,
+      guaranteeCents: true, approvedDeductions: true, guarantorName: true, juryWaiver: true, performanceTerms: true,
       agreementHash: true, venueSignedAt: true,
       agreement: { select: { id: true, supersededAt: true, artistSignedAt: true } },
       profile: {
@@ -97,7 +98,7 @@ export default async function LineupOfferPage({ params }: { params: Promise<{ sl
       <div className="lsp-eyebrow">{t('showsSlugLineupPage.lineupOffer', 'Lineup offer')}</div>
       <h1 className="lsp-title">{show.title}</h1>
       <p className="lsp-sub">
-        {fmtDate(show.startsAt, locale)} @ {venue.name} · {t('showsSlugLineupPage.offerExplainer', 'Each act signs its own Show Revenue Split Agreement with the venue. The venue receives every ticket sale and pays each act its share within 7 days of the show. iHYPE holds none of the money.')}
+        {fmtDate(show.startsAt, locale)} @ {venue.name} · {t('showsSlugLineupPage.performanceExplainer', 'Each act signs its own Artist Performance Agreement with the venue: the performance terms, and the Show Revenue Split Agreement as Part B. The venue receives every ticket sale and pays each act its share within 7 days of the show. iHYPE holds none of the money.')}
       </p>
 
       {venue.paymentReportHoldAt && (
@@ -165,7 +166,7 @@ export default async function LineupOfferPage({ params }: { params: Promise<{ sl
                           showId={show.id}
                         />
                       ) : (
-                        <p className="lsp-meta">{t('showsSlugLineupPage.waitForResend', 'The show changed after the venue signed. The venue has to send the offer again before you can sign.')}</p>
+                        <p className="lsp-meta">{t('showsSlugLineupPage.waitForResendAgreement', 'The show or the agreement changed after the venue signed. The venue has to send the offer again before you can sign.')}</p>
                       )}
                     </div>
                   )}
@@ -192,7 +193,10 @@ export default async function LineupOfferPage({ params }: { params: Promise<{ sl
             isHeadliner: s.isHeadliner,
             guaranteeCents: s.guaranteeCents,
             approvedDeductions: parseApprovedDeductions(s.approvedDeductions),
+            performance: parsePerformanceTerms(s.performanceTerms),
           }))}
+          initialEngagement={parsePerformanceTerms(slots[0]?.performanceTerms ?? null)}
+          venueName={venue.name}
           initialGuarantorName={slots[0]?.guarantorName ?? null}
           initialJuryWaiver={slots[0]?.juryWaiver ?? false}
           show={{ id: show.id }}

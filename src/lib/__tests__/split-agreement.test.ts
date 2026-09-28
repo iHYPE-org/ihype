@@ -16,6 +16,20 @@ import { renderTextPdf, wrapText } from '@/lib/text-pdf';
 import { buildPayableEntries } from '@/lib/ticket-order-state';
 import { VENUE_KEEPS_ALL, carriesApplicationFee, isVenueMerchantMode } from '@/lib/settlement-mode';
 import { expectedEventAccount } from '@/lib/stripe-webhook-guards';
+import { performanceSchema, validatePerformanceTerms } from '@/lib/performance-agreement';
+
+const PERFORMANCE = performanceSchema.parse({
+  purchaserLegalName: 'The Room LLC',
+  purchaserContact: 'booking@example.com',
+  doorsTime: '19:00',
+  artistRepresentative: '',
+  loadInTime: '16:00',
+  soundcheckTime: '17:00',
+  setStartTime: '21:00',
+  setLengthMinutes: 60,
+  billing: 'HEADLINER',
+  technicalRider: 'Two vocal mics.',
+});
 
 const TERMS: SplitAgreementTerms = {
   showId: 'show_1',
@@ -31,6 +45,7 @@ const TERMS: SplitAgreementTerms = {
   approvedDeductions: [],
   guarantorName: null,
   juryWaiver: false,
+  performance: PERFORMANCE,
 };
 
 describe('the signed text', () => {
@@ -106,6 +121,43 @@ describe('the signed text', () => {
     expect(validateAgreementTerms({ ...TERMS, approvedDeductions: [{ label: '', capCents: 1 }] })).not.toBeNull();
     expect(validateAgreementTerms({ ...TERMS, ticketPriceCents: 0 })).not.toBeNull();
     expect(validateAgreementTerms(TERMS)).toBeNull();
+  });
+});
+
+describe('the Artist Performance Agreement (Part A + Part B)', () => {
+  it('is one document: the performance terms, then the split agreement as Part B, then the schedules', () => {
+    const text = renderSplitAgreement(TERMS);
+    expect(text.startsWith('iHYPE ARTIST PERFORMANCE AGREEMENT')).toBe(true);
+    const a = text.indexOf('PART A.');
+    const b = text.indexOf('PART B. SHOW REVENUE SPLIT AGREEMENT');
+    const sched = text.indexOf('SCHEDULE A');
+    expect(a).toBeGreaterThan(0);
+    expect(b).toBeGreaterThan(a);
+    expect(sched).toBeGreaterThan(b);
+    expect(text).toContain('The Room LLC');
+    expect(text).toContain('Two vocal mics.');
+  });
+
+  it('keeps the legacy split-only text for a slot sent before performance terms existed', () => {
+    const legacy = renderSplitAgreement({ ...TERMS, performance: null });
+    expect(legacy).not.toContain('ARTIST PERFORMANCE AGREEMENT');
+    expect(legacy).toContain('SHOW REVENUE SPLIT AGREEMENT');
+  });
+
+  it('refuses an offer with no performance terms, or times that run backwards', () => {
+    expect(validateAgreementTerms({ ...TERMS, performance: null })).not.toBeNull();
+    expect(validatePerformanceTerms({ ...PERFORMANCE, soundcheckTime: '15:00' })).not.toBeNull();
+    expect(validatePerformanceTerms({ ...PERFORMANCE, setStartTime: '16:30' })).not.toBeNull();
+    // A set after midnight follows an evening soundcheck.
+    expect(validatePerformanceTerms({ ...PERFORMANCE, setStartTime: '00:30' })).toBeNull();
+    expect(validatePerformanceTerms(PERFORMANCE)).toBeNull();
+  });
+
+  it('changes the signature when any performance term changes', async () => {
+    const base = await hashAgreementText(renderSplitAgreement(TERMS));
+    for (const change of [{ setStartTime: '21:30' }, { doorsTime: '18:30' }, { insuranceCents: 200_000_000 }, { hospitalityRider: 'Water.' }]) {
+      expect(await hashAgreementText(renderSplitAgreement({ ...TERMS, performance: { ...PERFORMANCE, ...change } }))).not.toBe(base);
+    }
   });
 });
 

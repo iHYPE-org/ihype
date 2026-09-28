@@ -50,7 +50,7 @@ async function signIn(
   profiles: { type: 'ARTIST' | 'VENUE'; name: string; verified?: boolean }[] = [],
 ) {
   test.skip(!canSeedSession(), 'AUTH_SECRET and a scratch DATABASE_URL are required.');
-  await applySessionCookie(context, email, { profiles });
+  return applySessionCookie(context, email, { profiles });
 }
 
 test.describe('creating pages', () => {
@@ -174,7 +174,7 @@ test.describe('uploading a track', () => {
 
 test.describe('creating an event', () => {
   test('an artist with a venue creates a ticketed event and is sent to its lineup offer', async ({ context, page }) => {
-    await signIn(context, `e2e-create-event-${RUN}@ihype.org`, [
+    const seeded = await signIn(context, `e2e-create-event-${RUN}@ihype.org`, [
       { type: 'ARTIST', name: 'E2E Event Artist' },
       { type: 'VENUE', name: 'E2E Event Venue' },
     ]);
@@ -213,7 +213,28 @@ test.describe('creating an event', () => {
     /* A ticketed show is created DRAFT since row 528: it goes on sale only
        once every act has signed the Show Revenue Split Agreement, so the page
        flips to its saved-as-draft state and points at the lineup offer. */
-    await expect(page.getByRole('link', { name: /lineup offer/i }).first()).toBeVisible({ timeout: 20_000 });
+    const offerLink = page.getByRole('link', { name: /lineup offer/i }).first();
+    await expect(offerLink).toBeVisible({ timeout: 20_000 });
+
+    /* The Artist Performance Agreement (DESIGN_SYNC row 530): the offer
+       carries Part A's performance terms, and the server's preview renders
+       them ahead of the split agreement as Part B. */
+    await offerLink.click();
+    await page.waitForURL(/\/lineup$/);
+    const artistSlug = seeded.profiles.find((p) => p.type === 'ARTIST')!.slug;
+    const slugField = await settled(page, 'input.vlc-input-slug');
+    if (!(await slugField.inputValue())) await slugField.fill(artistSlug);
+    await page.locator('input.vlc-input-pct').fill('70');
+    await page.getByLabel('Purchaser’s contact (email or phone)').fill('booking@example.com');
+    await page.getByLabel('Doors').fill('19:00');
+    await page.getByLabel('Load-in').fill('16:00');
+    await page.getByLabel('Soundcheck', { exact: true }).fill('17:00');
+    await page.getByLabel('Set start').fill('21:00');
+    await page.getByLabel('Set length (minutes)').fill('60');
+    await page.getByRole('button', { name: /Review the agreements/i }).click();
+    const text = page.locator('.vlc-agreement-text').first();
+    await expect(text).toContainText('ARTIST PERFORMANCE AGREEMENT', { timeout: 20_000 });
+    await expect(text).toContainText('PART B. SHOW REVENUE SPLIT AGREEMENT');
   });
 });
 

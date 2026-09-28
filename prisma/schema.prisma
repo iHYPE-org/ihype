@@ -730,6 +730,10 @@ model ShowLineupSlot {
   approvedDeductions Json?
   guarantorName      String?
   juryWaiver         Boolean             @default(false)
+  // Part A of the Artist Performance Agreement (src/lib/performance-agreement.ts):
+  // times, riders, hospitality, promotion and insurance. Null for an offer
+  // sent before agreement version 2026-09-28.1.
+  performanceTerms   Json?
   /// The venue's signature: sending the offer after being shown the full text.
   agreementVersion   String?
   agreementHash      String?
@@ -767,6 +771,10 @@ model ShowSplitAgreement {
   approvedDeductions  Json?
   guarantorName       String?
   juryWaiver          Boolean             @default(false)
+  // Part A of the Artist Performance Agreement (src/lib/performance-agreement.ts):
+  // times, riders, hospitality, promotion and insurance. Null for an offer
+  // sent before agreement version 2026-09-28.1.
+  performanceTerms    Json?
   venueSignerUserId   String
   venueSignerName     String
   venueSignedAt       DateTime

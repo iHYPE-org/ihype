@@ -810,11 +810,14 @@ async function main() {
       body: JSON.stringify({ profileId: artistProfile.id, kind: 'BANK_TRANSFER', details: 'Walk test account, routing on file' }),
       cookie: creator.cookie,
     }), [200]);
-    const slots = [{ profileId: artistProfile.id, splitPercent: 70, isHeadliner: true }];
+    // The Artist Performance Agreement (2026-09-28.1): Part A's terms travel with the offer.
+    const performance = { loadInTime: '16:00', soundcheckTime: '17:00', setStartTime: '21:00', setLengthMinutes: 60 };
+    const engagement = { purchaserLegalName: 'Walk Venue LLC', purchaserContact: 'walk-venue@example.com', doorsTime: '19:00' };
+    const slots = [{ profileId: artistProfile.id, splitPercent: 70, isHeadliner: true, performance }];
     const preview = ok(await api(`/api/shows/${showId}/lineup`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ slots, preview: true }),
+      body: JSON.stringify({ slots, engagement, preview: true }),
       cookie: creator.cookie,
     }), [200]);
     const offer = preview?.agreements?.[0];
@@ -822,7 +825,7 @@ async function main() {
     ok(await api(`/api/shows/${showId}/lineup`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ slots, signerName: 'Walk Venue Signer', agreementHashes: { [artistProfile.id]: offer.hash } }),
+      body: JSON.stringify({ slots, engagement, signerName: 'Walk Venue Signer', agreementHashes: { [artistProfile.id]: offer.hash } }),
       cookie: creator.cookie,
     }), [200, 201]);
     const beforeSign = await prisma.show.findUnique({ where: { id: showId }, select: { status: true } });

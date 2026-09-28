@@ -53,7 +53,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ sh
     where: { showId, profileId: { in: myProfileIds } },
     select: {
       id: true, status: true, profileId: true, splitPercent: true, guaranteeCents: true, approvedDeductions: true,
-      guarantorName: true, juryWaiver: true, agreementVersion: true, agreementHash: true,
+      guarantorName: true, juryWaiver: true, performanceTerms: true, agreementVersion: true, agreementHash: true,
       venueSignerUserId: true, venueSignerName: true, venueSignedAt: true, venueSignerIp: true, venueSignerDevice: true,
       profile: { select: { name: true, payoutMethodKind: true, payoutMethodDetails: true } },
     },
@@ -141,6 +141,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ sh
         approvedDeductions: myLineupSlot.approvedDeductions ?? undefined,
         guarantorName: myLineupSlot.guarantorName,
         juryWaiver: myLineupSlot.juryWaiver,
+        performanceTerms: myLineupSlot.performanceTerms ?? undefined,
         venueSignerUserId: myLineupSlot.venueSignerUserId!,
         venueSignerName: myLineupSlot.venueSignerName!,
         venueSignedAt: myLineupSlot.venueSignedAt!,

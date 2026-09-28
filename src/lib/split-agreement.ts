@@ -31,6 +31,13 @@
  * outside either party's control) still applies to both. These are the
  * owner's terms, not counsel's; counsel has not reviewed version .2.
  *
+ * AMENDED 2026-09-28 (version 2026-09-28.1, owner: "Add as a second in-app
+ * contract" and "Incorporate the split agreement section into the artist
+ * performance agreement"): the signed document is now the ARTIST PERFORMANCE
+ * AGREEMENT. Part A is the performance terms (src/lib/performance-agreement.ts);
+ * Part B is this text, unchanged, and it is the compensation. A Lineup Offer
+ * carries both; a legacy slot with no performance terms renders Part B alone.
+ *
  * Section 12 of the drafting document (the acceptance record) is deliberately
  * NOT part of the signed text: it describes what the app stores, not a term
  * between the parties. `ShowSplitAgreement` is that record.
@@ -38,7 +45,9 @@
  * Pure: no database — imported by routes, the page and the tests.
  */
 
-export const SPLIT_AGREEMENT_VERSION = '2026-09-27.2';
+import { renderPerformanceParts, validatePerformanceTerms, type PerformanceTerms } from '@/lib/performance-agreement';
+
+export const SPLIT_AGREEMENT_VERSION = '2026-09-28.1';
 
 /** The Settlement Date is this many days after the Show (Section 2). */
 export const SETTLEMENT_DAYS_AFTER_SHOW = 7;
@@ -72,6 +81,8 @@ export type SplitAgreementTerms = {
   guarantorName: string | null;
   /** Section 10.6 applies only when turned on. */
   juryWaiver: boolean;
+  /** Part A, the performance terms. Null only for an offer sent before 2026-09-28.1. */
+  performance: PerformanceTerms | null;
 };
 
 
@@ -157,6 +168,9 @@ export function validateAgreementTerms(terms: SplitAgreementTerms): string | nul
   if (terms.ticketPriceCents !== null && (!Number.isInteger(terms.ticketPriceCents) || terms.ticketPriceCents <= 0)) {
     return 'The ticket price must be a positive amount.';
   }
+  if (!terms.performance) return 'Add the performance terms for every act: times, set length, and the purchaser’s details.';
+  const perf = validatePerformanceTerms(terms.performance);
+  if (perf) return `${terms.artistName}: ${perf}`;
   return null;
 }
 
@@ -206,11 +220,21 @@ export function renderSplitAgreement(terms: SplitAgreementTerms): string {
     ? `- Guarantee: ${plainUsd(terms.guaranteeCents)}, the minimum amount stated in the Lineup Offer that the Artist is paid whether or not the Split Percentage reaches it.`
     : '- Guarantee: none in this Lineup Offer.';
 
+  const parts = terms.performance
+    ? renderPerformanceParts(terms.performance, {
+      artistName: terms.artistName,
+      venueName: terms.venueName,
+      venueAddress: terms.venueAddress,
+      showTitle: terms.showTitle,
+      showDate: formatShowDate(terms.showStartsAt, terms.showTimeZone),
+      zone: terms.showTimeZone ?? 'UTC',
+    })
+    : null;
+
   return [
-    'iHYPE SHOW REVENUE SPLIT AGREEMENT',
-    '',
-    offer,
-    '',
+    ...(parts
+      ? ['iHYPE ARTIST PERFORMANCE AGREEMENT', '(incorporating the iHYPE Show Revenue Split Agreement as Part B)', '', offer, '', ...parts.partA, '', 'PART B. SHOW REVENUE SPLIT AGREEMENT', '']
+      : ['iHYPE SHOW REVENUE SPLIT AGREEMENT', '', offer, '']),
     'This agreement makes the venue legally responsible for paying each artist their agreed share of ticket sales. All ticket money goes to the venue\'s own Stripe account; iHYPE never holds, routes or guarantees it.',
     '',
     'It is formed in the iHYPE app, once per artist per show: the venue sends a lineup offer with the artist\'s share, and the artist accepts it. Each accepted offer is a separate, binding contract between that venue and that artist.',
@@ -371,6 +395,7 @@ export function renderSplitAgreement(terms: SplitAgreementTerms): string {
     '11.7 Survival. Sections 3 through 10 survive the Show, cancellation, and closure of either party\'s iHYPE account until the Artist Share is paid in full.',
     '',
     '11.8 Counterparts and copies. A PDF or printout of the accepted Agreement is as valid as the original.',
+    ...(parts ? ['', ...parts.schedules] : []),
   ].join('\n');
 }
 
