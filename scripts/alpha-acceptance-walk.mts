@@ -1521,6 +1521,14 @@ async function main() {
     }), [200, 201]);
     const closedId = (closed?.show ?? closed)?.id;
     assert(closedId, 'could not create the closed-sale show');
+    /* Since row 528 every ticketed show is created DRAFT and only the last
+       act's signature schedules it (and opens sales in the same write), so the
+       product never produces a SCHEDULED show with sales shut by itself. The
+       gate still guards every other writer of that state — a seed, a future
+       edit path — so the state is written here directly and the route is
+       asked about exactly it. Without this the request stops at the DRAFT
+       check (400) and never reaches the rule under test. */
+    await prisma.show.update({ where: { id: closedId }, data: { status: 'SCHEDULED', ticketingOpensAt: null } });
 
     const attempt = await api(`/api/shows/${closedId}/tickets`, {
       method: 'POST',
@@ -1803,37 +1811,41 @@ async function main() {
 
   // ── 29. Update payout method ─────────────────────────────────────────────
   await item('29. Update payout method (the act records where the venue pays it)', async () => {
-    /* The money terms first (row 521): an artist who never acknowledged them
-       is refused before anything else, and the refusal names the version to
-       acknowledge. Then, since row 528, an ARTIST is refused a Stripe account
-       at all — the venue pays the act directly under the signed agreement, so
-       the act's payout method is the one recorded with PUT
-       /api/profile/payout-method (item 15 did that before signing). */
+    /* Since row 528 an ARTIST is refused a Stripe account before anything
+       else: the venue pays the act directly under the signed agreement, so the
+       act's payout method is the one recorded with PUT
+       /api/profile/payout-method (item 15 did that before signing), and asking
+       an artist to acknowledge terms for an account they cannot open would be
+       theatre. The money terms (row 521) still gate the VENUE, the one role
+       that connects Stripe, and are proved on the venue's profile. */
     /* The Connect half needs Stripe configured (the route answers 503 before
        any other check without it); the payout-method half does not. */
     let connectNote = 'Connect checks skipped: STRIPE_SECRET_KEY not set';
     if (stripe) {
-      const unacknowledged = await api('/api/stripe/connect/onboard', {
+      const artistBefore = await prisma.profile.findUnique({ where: { id: artistProfile.id }, select: { stripeConnectAccountId: true } });
+      const artistAttempt = await api('/api/stripe/connect/onboard', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ profileId: artistProfile.id }),
         cookie: creator.cookie,
       });
-      assert(
-        unacknowledged.status === 400 && unacknowledged.body?.code === 'MONEY_TERMS_REQUIRED' && unacknowledged.body?.version,
-        `onboarding without the money terms answered ${unacknowledged.status} ${JSON.stringify(unacknowledged.body).slice(0, 160)}, expected 400 MONEY_TERMS_REQUIRED`,
-      );
-      const attempt = await api('/api/stripe/connect/onboard', {
+      if (!artistBefore?.stripeConnectAccountId) {
+        assert(
+          artistAttempt.status === 400 && artistAttempt.body?.code === 'ARTIST_PAID_BY_VENUE',
+          `an artist Connect request answered ${artistAttempt.status} ${JSON.stringify(artistAttempt.body).slice(0, 160)}, expected 400 ARTIST_PAID_BY_VENUE`,
+        );
+      }
+      const unacknowledged = await api('/api/stripe/connect/onboard', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ profileId: artistProfile.id, acceptedMoneyTermsVersion: unacknowledged.body.version }),
+        body: JSON.stringify({ profileId: venueProfile.id }),
         cookie: creator.cookie,
       });
-      const before = await prisma.profile.findUnique({ where: { id: artistProfile.id }, select: { stripeConnectAccountId: true } });
-      if (!before?.stripeConnectAccountId) {
-        assert(attempt.status === 400 && attempt.body?.code === 'ARTIST_PAID_BY_VENUE', `an artist Connect request answered ${attempt.status} ${JSON.stringify(attempt.body).slice(0, 160)}, expected 400 ARTIST_PAID_BY_VENUE`);
-      }
-      connectNote = 'artist refused a Stripe account (paid by the venue)';
+      assert(
+        unacknowledged.status === 400 && unacknowledged.body?.code === 'MONEY_TERMS_REQUIRED' && unacknowledged.body?.version,
+        `a venue onboarding without the money terms answered ${unacknowledged.status} ${JSON.stringify(unacknowledged.body).slice(0, 160)}, expected 400 MONEY_TERMS_REQUIRED`,
+      );
+      connectNote = 'artist refused a Stripe account (paid by the venue); venue refused without the money terms';
     }
     ok(await api('/api/profile/payout-method', {
       method: 'PUT',

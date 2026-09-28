@@ -68,7 +68,14 @@ async function nativeBrowser() {
     const { Capacitor } = await import('@capacitor/core');
     if (!Capacitor.isNativePlatform()) return null;
     const { Browser } = await import('@capacitor/browser');
-    return Browser;
+    /* Boxed, never returned bare. A Capacitor plugin is a Proxy that answers
+       EVERY property with a native-method wrapper, `then` included, so an
+       async function returning it makes the promise machinery treat it as a
+       thenable and call `Browser.then()` — which rejects with "Browser.then()
+       is not implemented on ios", outside this try and outside the caller's.
+       Sentry JAVASCRIPT-NEXTJS-H, 2026-09-27, on /app/me/advertising: every
+       in-app trip to Stripe or the web did nothing on iOS. */
+    return { plugin: Browser };
   } catch {
     /* The plugin is absent or failed to load. Fall through to the web path,
        which on native means the old eject — degraded, but never a dead
@@ -79,7 +86,7 @@ async function nativeBrowser() {
 }
 
 export async function openExternalUrl(url: string, options: ExternalTripOptions = {}): Promise<void> {
-  const Browser = await nativeBrowser();
+  const Browser = (await nativeBrowser())?.plugin;
 
   if (!Browser) {
     window.location.assign(url);
