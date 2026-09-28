@@ -545,6 +545,19 @@ export async function createConnectOnboardingUrl({
  * the VENUE's branding, which is arguably right — a fan recognises the venue
  * they are going to — but it is not iHYPE's.
  */
+/**
+ * How long a ticket Checkout Session stays open. Stripe refuses an
+ * `expires_at` less than 30 minutes after IT creates the session, and this is
+ * computed from a floored "now" on our side: at exactly 30 × 60, any request
+ * that reaches Stripe in the next wall-clock second read 1799 s and was
+ * refused as an invalid request — a 500 on a purchase with identical inputs
+ * to the two that had just succeeded (nightly run 31, walk item 17). One
+ * minute of margin. It must stay under the 35-minute reservation TTL in
+ * `src/app/api/cron/expire-reservations/route.ts`, or a buyer could pay into
+ * an order the cron has already voided.
+ */
+export const CHECKOUT_SESSION_TTL_SECONDS = 31 * 60;
+
 export async function createVenueDirectCheckoutSession({
   amountCents,
   venueAccountId,
@@ -613,7 +626,7 @@ export async function createVenueDirectCheckoutSession({
       },
       success_url: `${baseUrl}/shows/${showSlug}?checkout=success`,
       cancel_url: `${baseUrl}/shows/${showSlug}?checkout=cancelled`,
-      expires_at: Math.floor(Date.now() / 1000) + 30 * 60,
+      expires_at: Math.floor(Date.now() / 1000) + CHECKOUT_SESSION_TTL_SECONDS,
     },
     {
       /* THE HEADER IS THE WHOLE DIFFERENCE. Without `stripeAccount` this is an
