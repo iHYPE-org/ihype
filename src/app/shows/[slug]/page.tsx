@@ -38,6 +38,7 @@ import { ShowComments } from '@/components/ShowComments';
    already drifted between the two. */
 import { canViewShow, isTicketingOpen } from '@/lib/show-detail';
 import { readAgreementReadiness } from '@/lib/split-agreement-data';
+import { orderActsShareCents } from '@/lib/artist-share';
 import { buildShowJsonLd } from '@/lib/show-jsonld';
 import { showReminderLinkKeys } from '@/lib/show-reminder';
 
@@ -230,6 +231,7 @@ export default async function ShowDetailPage({
           quantity: true,
           totalChargeCents: true,
           subtotalCents: true,
+          settlementMode: true,
           venuePayoutCents: true,
           artistPayoutCents: true,
           promoterPayoutCents: true,
@@ -237,6 +239,14 @@ export default async function ShowDetailPage({
         },
       })
     : [];
+  /* The acts' share of a VENUE_KEEPS_ALL order is not on the order (the sale
+     writes artistPayoutCents as 0 — the venue pays each act under the signed
+     split); it is the face value times the live splits. See artist-share.ts. */
+  const liveSplitPercentsP = isShowOwner || isAdminSession(session)
+    ? db.showSplitAgreement.findMany({ where: { showId: show.id, supersededAt: null }, select: { splitPercent: true } })
+        .then((rows) => rows.map((r) => r.splitPercent))
+        .catch(() => null)
+    : Promise.resolve([] as number[]);
   const userShowHypeP = session?.user?.id
     ? db.hypeEvent.findUnique({ where: { userId_showId: { userId: session.user.id, showId: show.id } }, select: { createdAt: true } })
     : Promise.resolve(null);
@@ -351,6 +361,7 @@ export default async function ShowDetailPage({
   const viewerReminded = Boolean(viewerReminder);
 
   const recentTicketOrders = await recentTicketOrdersP;
+  const liveSplitPercents = await liveSplitPercentsP;
   /* Orders sold before 2026-09-25 carried a 10% referral share; later ones
      carry none, so the column appears only when an order on the page has one. */
   const showReferralColumn = recentTicketOrders.some((order) => order.promoterPayoutCents > 0);
@@ -819,7 +830,11 @@ export default async function ShowDetailPage({
                             <td>{order.quantity}</td>
                             <td>{formatCurrencyFromCents(order.totalChargeCents || order.subtotalCents, locale)}</td>
                             <td>{formatCurrencyFromCents(order.venuePayoutCents, locale)}</td>
-                            <td>{formatCurrencyFromCents(order.artistPayoutCents, locale)}</td>
+                            <td>{(() => {
+                              // A failed agreement read is a dash, never a 0 (row 448's rule).
+                              const acts = liveSplitPercents === null ? null : orderActsShareCents(order, liveSplitPercents);
+                              return acts == null ? '—' : formatCurrencyFromCents(acts, locale);
+                            })()}</td>
                             {showReferralColumn ? <td>{formatCurrencyFromCents(order.promoterPayoutCents, locale)}</td> : null}
                             <td style={totalPassed > 0 ? { color: 'var(--accent-text)', fontWeight: 600 } : { color: 'var(--muted)' }}>
                               {totalPassed > 0 ? `${totalPassed}×` : '—'}

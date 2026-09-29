@@ -1,4 +1,5 @@
 import type { Locale } from '@/lib/i18n/locales';
+import { sumActShares } from '@/lib/artist-share';
 import { formatDate, formatDoorTime, formatNumber } from '@/lib/format-locale';
 import type { Metadata } from 'next';
 import Link from 'next/link';
@@ -159,7 +160,7 @@ export default async function ArtistAnalyticsPage({
       : Promise.resolve([]),
     db.ticketOrder.findMany({
       where: { status: 'CAPTURED', createdAt: { gte: start, lte: end }, show: { headlinerProfileId: profile.id, ...getDemoCreatorExclusion() } },
-      select: { quantity: true, totalChargeCents: true, artistPayoutCents: true, showId: true },
+      select: { quantity: true, totalChargeCents: true, artistPayoutCents: true, subtotalCents: true, settlementMode: true, showId: true },
     }),
     db.ticketOrder.aggregate({
       where: { status: 'CAPTURED', createdAt: { gte: prevStart, lt: prevEnd }, show: { headlinerProfileId: profile.id, ...getDemoCreatorExclusion() } },
@@ -182,7 +183,20 @@ export default async function ArtistAnalyticsPage({
 
   const currentTicketsSold = currentTicketOrders.reduce((sum, o) => sum + o.quantity, 0);
   const previousTicketsSold = previousTicketAgg._sum.quantity ?? 0;
-  const grossArtistShareCents = currentTicketOrders.reduce((sum, o) => sum + o.artistPayoutCents, 0);
+  /* Since the split agreement a sale records artistPayoutCents as 0 — the
+     venue pays the act the split both signed — so this tile read $0 for every
+     sale from 2026-09-27 until the 09-29 audit. The share is the face value
+     times the act's live split on that show (artist-share.ts); the settlement
+     statement is what the venue actually pays. A failed agreement read keeps
+     the figure null, and null renders as a dash, never 0. */
+  const showIdsInWindow = [...new Set(currentTicketOrders.map((o) => o.showId))];
+  const liveSplits = showIdsInWindow.length
+    ? await db.showSplitAgreement.findMany({
+        where: { artistProfileId: profile.id, supersededAt: null, showId: { in: showIdsInWindow } },
+        select: { showId: true, splitPercent: true },
+      }).then((rows) => new Map(rows.map((r) => [r.showId, r.splitPercent]))).catch(() => null)
+    : new Map<string, number>();
+  const grossArtistShare = liveSplits === null ? null : sumActShares(currentTicketOrders, liveSplits);
 
   const listenersDelta = pctDelta(distinctCurrentListeners, distinctPreviousListeners);
   const ticketsDelta = pctDelta(currentTicketsSold, previousTicketsSold);
@@ -286,8 +300,10 @@ export default async function ArtistAnalyticsPage({
         </div>
         <div className="aa-stat-card">
           <div className="aa-stat-label">{t('artistsSlugAnalyticsPage.grossYourShare', 'Gross (your share)')}</div>
-          <div className="aa-stat-val" style={{ color: 'var(--accent-text)' }}>{formatCurrencyFromCents(grossArtistShareCents, locale)}</div>
-          <div className="aa-stat-sub">{t('artistsSlugAnalyticsPage.zeroFee', '$0 iHYPE fee')}</div>
+          <div className="aa-stat-val" style={{ color: 'var(--accent-text)' }}>{grossArtistShare === null ? '—' : formatCurrencyFromCents(grossArtistShare.cents, locale)}</div>
+          <div className="aa-stat-sub">{grossArtistShare && grossArtistShare.unsignedOrders > 0
+            ? t('artistsSlugAnalyticsPage.shareUnsigned', 'Some sales have no signed split yet · $0 iHYPE fee')
+            : t('artistsSlugAnalyticsPage.shareSigned', 'Under your signed split, before deductions · $0 iHYPE fee')}</div>
         </div>
       </div>
 
