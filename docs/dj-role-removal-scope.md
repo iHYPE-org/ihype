@@ -1,3 +1,4 @@
+<!-- retired-claim-exempt-file: the 2026-08-05 scope document FOR the removal; every mention names what was removed, and rewording a signed-off record would falsify it -->
 # Dropping the DJ role — scope and open decisions
 
 **Status: SIGNED OFF 2026-08-05. Step 1 (close the signup door) is LANDED.

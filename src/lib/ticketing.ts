@@ -5,36 +5,28 @@ import US_SALES_TAX from '@/lib/tax/us-sales-tax-rates.json';
 export const PLATFORM_COMMISSION_PERCENT = 0;
 
 /**
- * THE SPLIT: 75% to the artist, 25% to the venue, 0% to iHYPE — of what is
- * left of the face value after Stripe's fee (owner, 2026-09-25: "Take fee off
- * the top for sure. It should be a split POST fee between artist/venue", with
- * 75/25 and no sale until the venue is the merchant).
+ * THERE IS NO PLATFORM-WIDE SPLIT (2026-09-27, DESIGN_SYNC row 528; the
+ * constants that stated one were removed 2026-09-29, row 533). A sale is
+ * `VENUE_KEEPS_ALL`: the venue collects the whole face value on its own
+ * Stripe account, pays Stripe's card fee as its own cost (Agreement 4.4) and
+ * pays each act the percentage both signed in that act's Show Revenue Split
+ * Agreement, computed on the settlement statement. iHYPE takes 0%.
  *
- * It replaced the 70/20/10 charter split. The 10% promoter pool is gone: a
- * HYPE link still records who referred a sale, and earns nothing.
- *
- * ## Why the fee comes off the top
- *
- * The venue is the merchant of record on every sale (see the purchase route),
- * and Stripe debits its fee from the merchant. Left there, the whole fee would
- * fall on the venue's quarter: $3.20 of a $100 ticket is 12.8% of a $25
- * share. Taking it off the face value first spreads it 75/25, the same as the
- * money, so neither party pays for the other's share of the charge.
+ * The percentage-taking arithmetic below (`calculateTicketOrderPayouts`,
+ * `calculateTicketOrderFinancials`) survives for the ORDERS recorded under the
+ * three older modes, whose payables split by the percentages stored on their
+ * show. No new show carries any; `POST /api/shows` stamps null.
  *
  * ## What "the fee" is here
  *
  * An ESTIMATE at Stripe's standard US rate (`stripeCutOf`), computed on the
  * whole charge — face value plus tax, because Stripe charges on everything it
- * processes. The application fee that carries the artist's share is fixed when
- * the checkout session is created, before the card brand is known, so an Amex
- * or international card (which cost more) leaves the venue a few cents under
- * 25%. That gap is stated rather than hidden; see DESIGN_SYNC row 520.
+ * processes. Under the older modes it came off the face value before the
+ * split; under the agreement it is simply the venue's cost.
  *
- * Tax is never part of the split. The venue collects and remits it as the
- * merchant, so the fee is taken from the face value, not from the tax.
+ * Tax is never part of any split. The venue collects and remits it as the
+ * merchant.
  */
-export const ARTIST_SHARE_PERCENT = 75;
-export const VENUE_SHARE_PERCENT = 25;
 
 type SplitInput = {
   venuePayoutPercent: number;

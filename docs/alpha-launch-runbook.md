@@ -52,17 +52,13 @@ Do not put credentials, customer data, or full webhook payloads in this file.
 > the Stripe, cron and payments-flag variables when the caller has them, and
 > refuses a live key outright.
 >
-> **Still not executed, and still blocking:** `npm run stripe:rehearsal` (the
-> Stripe-side semantics, which needs no database), and `triggerShowPayouts()`
-> run TWICE against an ended show to see `released: 0` the second time. The walk
-> creates payables and voids them on refund; it does not release them.
->
-> **Step 0, before any of the below:** `STRIPE_SECRET_KEY=sk_test_… npm run
-> stripe:rehearsal`. It refuses any key that is not `sk_test_`, and it
-> rehearses the Stripe-side semantics the app depends on: full capture to the
-> platform balance with no `transfer_data`, three transfers summing exactly
-> with the last absorbing the remainder, per-entry transfer idempotency, full
-> refund, and partial capture plus hold release for ad settlement.
+> **Both were executed** — `stripe:rehearsal` on 2026-09-06 (25/25) and the
+> payout cron's double run on 2026-08-30 (`released: 0` on the second pass) —
+> against the settlement model of the time. Since 2026-09-27 a sale is
+> `VENUE_KEEPS_ALL` and no payable is written (DESIGN_SYNC row 528); the walk
+> proves the live path nightly, and `npm run stripe:rehearsal` now rehearses
+> only what a sale moves: a charge on the venue with no fee, its refund, and a
+> sponsorship's pro-rata refund (row 533).
 >
 > It has **no database**, so it cannot exercise `triggerShowPayouts()`'s own
 > state transitions (PENDING → RELEASED, the `stripeTransferId` write, the
@@ -134,8 +130,9 @@ refund handling during an incident; those are recovery paths, not new risk.
 - Assign the support and incident contacts for the launch window.
 - Review errors, failed email, abandoned orders, open reports, and queue backlog
   daily throughout alpha.
-- Before inviting testers, publish at least 10 playable tracks, 5 discoverable
-  artists, 2 discoverable venues, 2 upcoming events, and 1 scheduled radio show.
+- Before inviting testers, publish at least 5 discoverable artists, 2
+  discoverable venues and 2 upcoming events. (There is no minimum number of
+  tracks — owner, 2026-09-02 — and no DJ-authored show to schedule.)
 
 ## Native release rehearsal
 

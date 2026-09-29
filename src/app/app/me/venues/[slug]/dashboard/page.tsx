@@ -71,6 +71,22 @@ export default async function VenueDashboardPage({ params }: { params: Promise<{
             {data.pendingBookingRequestCount > 0 ? t('venuesSlugDashboardPage.needsReview', 'Needs review') : t('venuesSlugDashboardPage.allCaughtUp', 'All caught up')}
           </div>
         </div>
+        {/* What the venue OWES under the split agreement, not what it is paid:
+            since row 528 no money reaches a venue through iHYPE. The legacy
+            "Next Payout" card below draws only for a payable the cron still
+            holds from an order sold under the older modes, and only while
+            nothing is owed to an act (2026-09-29, DESIGN_SYNC row 533). */}
+        {data.nextSettlement || !data.nextPayout ? (
+        <div className="vdash-card">
+          <div className="vdash-card-label">{t('venuesSlugDashboardPage.payActsBy', 'Pay your acts by')}</div>
+          <div className="vdash-card-val">{data.nextSettlement ? data.nextSettlement.dateLabel : '—'}</div>
+          <div className="vdash-card-sub">
+            {data.nextSettlement
+              ? t('venuesSlugDashboardPage.owedToActs', '{amount} owed under signed splits · before deductions').replace('{amount}', formatCurrencyFromCents(data.nextSettlement.owedCents, locale))
+              : t('venuesSlugDashboardPage.noActsDue', 'Nothing owed to acts right now')}
+          </div>
+        </div>
+        ) : (
         <div className="vdash-card">
           <div className="vdash-card-label">{t('venuesSlugDashboardPage.nextPayout', 'Next Payout')}</div>
           <div className="vdash-card-val">
@@ -88,6 +104,7 @@ export default async function VenueDashboardPage({ params }: { params: Promise<{
                 : t('venuesSlugDashboardPage.noPendingPayouts', 'No pending payouts right now')}
           </div>
         </div>
+        )}
       </div>
 
       <div className="vdash-grid">

@@ -11,7 +11,6 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { buildArtistMediaCollection } from '../src/lib/media';
 import { isProductionSeedingAllowed } from '../src/lib/runtime-flags';
 import { createSerializedTicketId } from '../src/lib/tickets';
-import { calculateTicketOrderPayouts } from '../src/lib/ticketing';
 
 // Prisma 7 requires a driver adapter — a bare `new PrismaClient()` throws at
 // construction ("PrismaClient failed to initialize ... provide adapter").
@@ -908,7 +907,7 @@ async function main() {
       type: ProfileType.ARTIST,
       name: 'Riverwest Echo',
       headline: 'Milwaukee promoter energy with enough reach to move a Midwest weekend.',
-      bio: 'Midwest promoter profile connecting warehouse shows, regional listeners, and city-to-city momentum.',
+      bio: 'Midwest touring profile connecting warehouse shows, regional listeners, and city-to-city momentum.',
       aboutContent: 'Riverwest Echo specializes in routing artists between Chicago, Milwaukee, Detroit, and every room that can turn regional demand into a real crowd.',
       recommendContent: 'Recommend artists who can travel well across the Midwest and build demand between local scenes.',
       city: 'Milwaukee',
@@ -929,7 +928,7 @@ async function main() {
       type: ProfileType.ARTIST,
       name: 'Riverwest Echo',
       headline: 'Milwaukee promoter energy with enough reach to move a Midwest weekend.',
-      bio: 'Midwest promoter profile connecting warehouse shows, regional listeners, and city-to-city momentum.',
+      bio: 'Midwest touring profile connecting warehouse shows, regional listeners, and city-to-city momentum.',
       aboutContent: 'Riverwest Echo specializes in routing artists between Chicago, Milwaukee, Detroit, and every room that can turn regional demand into a real crowd.',
       recommendContent: 'Recommend artists who can travel well across the Midwest and build demand between local scenes.',
       city: 'Milwaukee',
@@ -973,9 +972,6 @@ async function main() {
       ticketingOpensAt: seedTicketingOpensAt,
       ticketPriceCents: 3200,
       ticketCapacity: 260,
-      venuePayoutPercent: 25,
-      artistPayoutPercent: 75,
-      promoterPayoutPercent: 0,
       tags: ['live', 'techno', 'warehouse'],
       ticketsSoldCount: 184,
       hypeCount: 54
@@ -994,9 +990,6 @@ async function main() {
       ticketingOpensAt: seedTicketingOpensAt,
       ticketPriceCents: 3200,
       ticketCapacity: 260,
-      venuePayoutPercent: 25,
-      artistPayoutPercent: 75,
-      promoterPayoutPercent: 0,
       tags: ['live', 'techno', 'warehouse'],
       ticketsSoldCount: 184,
       hypeCount: 54
@@ -1018,9 +1011,6 @@ async function main() {
       ticketingOpensAt: seedTicketingOpensAt,
       ticketPriceCents: 2800,
       ticketCapacity: 180,
-      venuePayoutPercent: 25,
-      artistPayoutPercent: 75,
-      promoterPayoutPercent: 0,
       tags: ['scheduled', 'indie', 'rooftop'],
       ticketsSoldCount: 126,
       hypeCount: 37
@@ -1039,9 +1029,6 @@ async function main() {
       ticketingOpensAt: seedTicketingOpensAt,
       ticketPriceCents: 2800,
       ticketCapacity: 180,
-      venuePayoutPercent: 25,
-      artistPayoutPercent: 75,
-      promoterPayoutPercent: 0,
       tags: ['scheduled', 'indie', 'rooftop'],
       ticketsSoldCount: 126,
       hypeCount: 37
@@ -1063,9 +1050,6 @@ async function main() {
       ticketingOpensAt: seedTicketingOpensAt,
       ticketPriceCents: 3500,
       ticketCapacity: 400,
-      venuePayoutPercent: 25,
-      artistPayoutPercent: 75,
-      promoterPayoutPercent: 0,
       tags: ['live', 'chicago', 'house'],
       ticketsSoldCount: 342,
       hypeCount: 61
@@ -1084,9 +1068,6 @@ async function main() {
       ticketingOpensAt: seedTicketingOpensAt,
       ticketPriceCents: 3500,
       ticketCapacity: 400,
-      venuePayoutPercent: 25,
-      artistPayoutPercent: 75,
-      promoterPayoutPercent: 0,
       tags: ['live', 'chicago', 'house'],
       ticketsSoldCount: 342,
       hypeCount: 61
@@ -1108,9 +1089,6 @@ async function main() {
       ticketingOpensAt: seedTicketingOpensAt,
       ticketPriceCents: 2400,
       ticketCapacity: 150,
-      venuePayoutPercent: 25,
-      artistPayoutPercent: 75,
-      promoterPayoutPercent: 0,
       tags: ['scheduled', 'midwest', 'regional'],
       ticketsSoldCount: 98,
       hypeCount: 27
@@ -1129,9 +1107,6 @@ async function main() {
       ticketingOpensAt: seedTicketingOpensAt,
       ticketPriceCents: 2400,
       ticketCapacity: 150,
-      venuePayoutPercent: 25,
-      artistPayoutPercent: 75,
-      promoterPayoutPercent: 0,
       tags: ['scheduled', 'midwest', 'regional'],
       ticketsSoldCount: 98,
       hypeCount: 27
@@ -1154,9 +1129,6 @@ async function main() {
       ticketingOpensAt: seedTicketingOpensAt,
       ticketPriceCents: 1800,
       ticketCapacity: 240,
-      venuePayoutPercent: 25,
-      artistPayoutPercent: 75,
-      promoterPayoutPercent: 0,
       tags: ['archive', 'late-night'],
       ticketsSoldCount: 211,
       hypeCount: 19
@@ -1176,9 +1148,6 @@ async function main() {
       ticketingOpensAt: seedTicketingOpensAt,
       ticketPriceCents: 1800,
       ticketCapacity: 240,
-      venuePayoutPercent: 25,
-      artistPayoutPercent: 75,
-      promoterPayoutPercent: 0,
       tags: ['archive', 'late-night'],
       ticketsSoldCount: 211,
       hypeCount: 19
@@ -1200,9 +1169,6 @@ async function main() {
       ticketingOpensAt: seedTicketingOpensAt,
       ticketPriceCents: 2600,
       ticketCapacity: 190,
-      venuePayoutPercent: 25,
-      artistPayoutPercent: 75,
-      promoterPayoutPercent: 0,
       tags: ['scheduled', 'austin', 'indie-dance'],
       ticketsSoldCount: 132,
       hypeCount: 31
@@ -1221,9 +1187,6 @@ async function main() {
       ticketingOpensAt: seedTicketingOpensAt,
       ticketPriceCents: 2600,
       ticketCapacity: 190,
-      venuePayoutPercent: 25,
-      artistPayoutPercent: 75,
-      promoterPayoutPercent: 0,
       tags: ['scheduled', 'austin', 'indie-dance'],
       ticketsSoldCount: 132,
       hypeCount: 31
@@ -1246,9 +1209,6 @@ async function main() {
       ticketingOpensAt: seedTicketingOpensAt,
       ticketPriceCents: 3000,
       ticketCapacity: 220,
-      venuePayoutPercent: 25,
-      artistPayoutPercent: 75,
-      promoterPayoutPercent: 0,
       tags: ['archive', 'seattle', 'breakbeat'],
       ticketsSoldCount: 159,
       hypeCount: 29
@@ -1268,9 +1228,6 @@ async function main() {
       ticketingOpensAt: seedTicketingOpensAt,
       ticketPriceCents: 3000,
       ticketCapacity: 220,
-      venuePayoutPercent: 25,
-      artistPayoutPercent: 75,
-      promoterPayoutPercent: 0,
       tags: ['archive', 'seattle', 'breakbeat'],
       ticketsSoldCount: 159,
       hypeCount: 29
@@ -1466,12 +1423,12 @@ async function main() {
     { show: signalYardShow, buyerName: 'Pulse Scout', buyerEmail: 'pulse-scout@ihype.org', quantity: 48 },
     { show: signalYardShow, buyerName: 'Midwest Move', buyerEmail: 'midwest-move@ihype.org', quantity: 44 }
   ].map(({ show, buyerName, buyerEmail, quantity }, index) => {
-    const payouts = calculateTicketOrderPayouts({
-      ticketPriceCents: show.ticketPriceCents,
-      quantity,
-      venuePayoutPercent: show.venuePayoutPercent ?? 0,
-      artistPayoutPercent: show.artistPayoutPercent ?? 0,
-    });
+    /* The shape a sale takes since 2026-09-27 (VENUE_KEEPS_ALL, DESIGN_SYNC
+       row 528): the venue collects the whole face value and pays each act its
+       signed share outside Stripe, so the row routes nothing to the artist
+       through iHYPE. Until 2026-09-29 (row 533) this split the demo orders by
+       show-level percentages no show carries any more. */
+    const subtotalCents = show.ticketPriceCents * quantity;
 
     return {
       confirmationCode: `DEMO-${index + 1}`,
@@ -1479,10 +1436,12 @@ async function main() {
       buyerName,
       buyerEmail,
       quantity,
-      subtotalCents: payouts.subtotalCents,
-      venuePayoutCents: payouts.venuePayoutCents,
-      artistPayoutCents: payouts.artistPayoutCents,
-      promoterPayoutCents: payouts.promoterPayoutCents
+      subtotalCents,
+      totalChargeCents: subtotalCents,
+      venuePayoutCents: subtotalCents,
+      artistPayoutCents: 0,
+      promoterPayoutCents: 0,
+      settlementMode: 'VENUE_KEEPS_ALL'
     };
   });
 

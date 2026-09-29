@@ -10,7 +10,7 @@ import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { formatShowTime } from '@/lib/utils';
 import { isPaymentProcessingConfigured } from '@/lib/payments';
 import { isAdminSession } from '@/lib/permissions';
-import { canViewShow, formatShowWhere, isTicketingOpen, resolveShowSplits } from '@/lib/show-detail';
+import { canViewShow, formatShowWhere, isTicketingOpen } from '@/lib/show-detail';
 import { readAgreementReadiness } from '@/lib/split-agreement-data';
 import { TicketSaleCard } from '@/components/TicketSaleCard';
 import { HypeButton } from '@/components/HypeButton';
@@ -91,9 +91,6 @@ export default async function MmmShowPage({
            pane's storageUrl: the reference demanded data the query already
            owned the row for. */
         hypeCount: true,
-        venuePayoutPercent: true,
-        artistPayoutPercent: true,
-        promoterPayoutPercent: true,
         headlinerProfile: { select: { name: true, slug: true } },
         promoterProfile: { select: { name: true } },
         venueProfile: {
@@ -161,7 +158,6 @@ export default async function MmmShowPage({
     ? await readAgreementReadiness(show.id).then((r) => r.ready).catch(() => false)
     : true;
   const ticketingOpen = isTicketingOpen(show) && agreementReady;
-  const splits = resolveShowSplits(show);
 
   /* ── S9 · Show detail ──────────────────────────────────────────────────
      Translated from design/handoff-console/reference/s9-show-detail.html.
@@ -223,9 +219,10 @@ export default async function MmmShowPage({
           venue sells every ticket through its own Stripe account and keeps the
           charge, and pays each act directly under the Show Revenue Split
           Agreement that act signed. Percentages are per offer, so this pane
-          names none. `splits` still gates the ticket card below (it is null
-          for a show with no payout configuration). */}
-      {splits && (
+          names none and nothing below gates on one: the ticket card renders
+          for every ticketed show (2026-09-29, DESIGN_SYNC row 533 — the
+          resolved-split gate went with the fixed split). */}
+      {show.isTicketed && (
         <>
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, padding: '13px 0', borderTop: '1px solid var(--line)', borderBottom: '1px solid var(--line)' }}>
             <span style={{ fontSize: '0.9375rem', color: 'var(--ink-2)' }}>{t('mmmShowPane.splitAgreementLabel', 'Acts paid under signed split agreements')}</span>
@@ -270,14 +267,14 @@ export default async function MmmShowPage({
           `ticketingOpensAt` bug of 2026-09-03, and the same disagreement
           `show-detail.ts` exists to prevent. `wiring-guards.test.ts` now
           asserts both pages consult this. */}
-      {show.isTicketed && venue && show.headlinerProfile && splits && !paymentsReady ? (
+      {show.isTicketed && venue && show.headlinerProfile && !paymentsReady ? (
         <div className="mmm-empty">
           <strong style={{ display: 'block', marginBottom: 6 }}>{t('mmmShowPane.paidComingSoon', 'Paid tickets · Coming soon')}</strong>
           {t('mmmShowPane.paidComingSoonBodyNet', 'Ticket sales have not opened on iHYPE yet. When they do, you pay the face value and its tax, nothing more.')}
         </div>
       ) : null}
 
-      {show.isTicketed && venue && show.headlinerProfile && splits && paymentsReady ? (
+      {show.isTicketed && venue && show.headlinerProfile && paymentsReady ? (
         <div className="mmm-show-sale">
           <TicketSaleCard
             heading="Tickets"

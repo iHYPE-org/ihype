@@ -218,11 +218,23 @@ const rootsArg = process.argv.find((arg) => arg.startsWith('--roots='));
 /* `--roots=` exists so a test can point this at a scratch directory. A probe
    dropped into `src/` breaks other suites that walk that tree under parallel
    execution — measured, on `audit-untranslated`'s own first test. */
+/* WIDENED 2026-09-29 (DESIGN_SYNC row 533; owner: "Fix all above issues").
+   For its first eighteen days this scanned `src/` and `.ts(x)` only, so the
+   money model retired on 09-25 and again on 09-27 went on being STATED in
+   `README.md`, both store-submission documents, the runbooks, three
+   rehearsal scripts and the e2e fixture — every one of them a text a person
+   or a store reviewer reads as the product's own description of itself.
+   Documents and scripts are claims too; the audit that found them was the
+   second full audit in two days, which is what a gate is for. `CLAUDE.md`
+   and `DESIGN_SYNC.md` are NOT scanned: both are append-only history whose
+   job is to record what used to be true, and `prisma/migrations*` for the
+   same reason. A root may be a FILE (README.md). */
 const ROOTS = rootsArg
   ? rootsArg.slice('--roots='.length).split(',').filter(Boolean)
-  : ['src/app', 'src/components', 'src/lib'];
+  : ['src/app', 'src/components', 'src/lib', 'docs', 'scripts', 'e2e', 'workers', 'prisma', 'README.md'];
 
-const SKIP_DIRS = new Set(['admin', '__tests__', 'ds', 'node_modules']);
+const SKIP_DIRS = new Set(['admin', '__tests__', 'ds', 'node_modules', 'migrations', 'migrations-pending']);
+const SCANNED = /\.(tsx?|mts|mjs|md)$/;
 const SKIP_FILES = /\.(test|spec)\.tsx?$|(^|\/)Admin[A-Z][^/]*\.tsx?$/;
 
 /**
@@ -239,7 +251,13 @@ const SKIP_FILES = /\.(test|spec)\.tsx?$|(^|\/)Admin[A-Z][^/]*\.tsx?$/;
  * own language. That decision is made and is not what this skip is waiting
  * on.
  */
-const SKIP_PATHS = [/MmmLegal\.tsx$/, /MmmCharter\.tsx$/, /MmmDmca\.tsx$/];
+const SKIP_PATHS = [
+  /MmmLegal\.tsx$/, /MmmCharter\.tsx$/, /MmmDmca\.tsx$/,
+  /* This file: the table above QUOTES every retired phrase in string
+     literals, which `maskComments` cannot blank. A scanner that reads its own
+     definition acts on it — the trap recorded at the top. */
+  /audit-retired-claims\.mjs$/,
+];
 
 /** `retired-claim-exempt: <reason>` — the reason is required. */
 const EXEMPT = /retired-claim-exempt:\s*\S/i;
@@ -250,7 +268,13 @@ const verbose = process.argv.includes('--list');
 
 function walk(dir, out = []) {
   let entries;
-  try { entries = readdirSync(dir); } catch { return out; }
+  try {
+    if (statSync(dir).isFile()) {
+      if (SCANNED.test(dir) && !SKIP_FILES.test(dir) && !SKIP_PATHS.some((re) => re.test(dir))) out.push(dir);
+      return out;
+    }
+    entries = readdirSync(dir);
+  } catch { return out; }
   for (const entry of entries) {
     const full = join(dir, entry);
     let stat;
@@ -258,7 +282,7 @@ function walk(dir, out = []) {
     if (stat.isDirectory()) {
       if (SKIP_DIRS.has(entry)) continue;
       walk(full, out);
-    } else if (/\.tsx?$/.test(entry) && !SKIP_FILES.test(entry) && !SKIP_PATHS.some((re) => re.test(full))) {
+    } else if (SCANNED.test(entry) && !SKIP_FILES.test(entry) && !SKIP_PATHS.some((re) => re.test(full))) {
       out.push(full);
     }
   }

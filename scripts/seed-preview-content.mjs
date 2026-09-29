@@ -299,27 +299,14 @@ async function main() {
         // Every preview venue is in Portland, Maine, so every door time is
         // on Eastern time. Without it the page states the runtime's clock.
         timeZone: 'America/New_York',
-        /**
-         * THE SPLIT, without which the ticket box does not render at all.
-         *
-         * `venuePayoutPercent` and `artistPayoutPercent` are `Int?` with NO
-         * default (prisma/schema.prisma), and `/shows/[slug]/page.tsx` gates
-         * the entire ticket aside on both being non-null. So a seeded show
-         * with an open `ticketingOpensAt` and null percents renders NEITHER a
-         * purchase form NOR the "not on sale yet" sentence — the sidebar is
-         * simply absent and the page says nothing at all about tickets.
-         *
-         * Measured on production 2026-09-04, immediately after the
-         * ticketingOpensAt fix: eight shows on sale by the API's reckoning and
-         * zero buyable by the page's. Fixing one nullable column had exposed
-         * the next one, which is the argument for the guard in
-         * wiring-guards.test.ts covering the whole set rather than one field.
-         *
-         * 70/20 are the charter's figures; the promoter's 10 is
-         * `@default(10)` and is deliberately not restated here.
-         */
-        artistPayoutPercent: 75,
-        venuePayoutPercent: 25,
+        /* No show-level split (2026-09-29, DESIGN_SYNC row 533). Until then
+           this seeded 75/25 because `/shows/[slug]` gated its whole ticket
+           aside on both percentages being non-null (measured on production
+           2026-09-04: eight shows on sale by the API's reckoning and zero
+           buyable by the page's). The gate is `isTicketed` alone now, and the
+           split is per act in a signed agreement — which this preview seed
+           does not create, so these shows read "awaiting signatures", which is
+           the truth about them. */
       };
       await prisma.show.upsert({
         where: { slug },

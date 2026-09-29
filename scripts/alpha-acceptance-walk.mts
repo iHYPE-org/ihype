@@ -776,15 +776,12 @@ async function main() {
         venueProfileId: venueProfile.id,
         headlinerProfileId: artistProfile.id,
         /* `isTicketed` is the switch every ticket field hangs off: without it
-           the route stores price 0 and null percentages, and the purchase
-           endpoint then refuses with "not configured for ticket sales". The
-           two percentages are REQUIRED once it is on — the route rejects the
-           create rather than inventing a split. */
+           the route stores price 0 and the purchase endpoint refuses with
+           "not configured for ticket sales". No percentages: the split is
+           per act, in the agreement signed below (row 533). */
         isTicketed: true,
         ticketPriceCents: TICKET_PRICE_CENTS,
         ticketCapacity: 50,
-        artistPayoutPercent: 75,
-        venuePayoutPercent: 25,
         /* On sale from now. `isTicketingOpen()` reads this column and the
            purchase route refuses a closed sale, so a ticketed show created
            without it can be published and never sold — which is exactly the
@@ -892,8 +889,8 @@ async function main() {
        form, and this sandbox cannot reach checkout.stripe.com (its egress proxy
        re-signs TLS). So the intent is created directly — real money movement in
        test mode — and only the completion ENVELOPE is synthesized, signed with
-       the same scheme real delivery uses. Same approach as
-       scripts/rehearse-money-path.mts, for the same reason. */
+       the same scheme real delivery uses. (The retired rehearse-money-path
+       script did the same, for the same reason.) */
     let session: Stripe.Checkout.Session | undefined;
     for (let attempt = 0; attempt < 5 && !session; attempt++) {
       // The session lives on the VENUE's account, so it is listed there.
@@ -954,7 +951,7 @@ async function main() {
        HYPE link was attached and earns nothing. */
     assert(order.settlementMode === 'VENUE_KEEPS_ALL', `order settled as ${order.settlementMode}, expected VENUE_KEEPS_ALL`);
     assert(order.processingFeeCents === 0 && order.reserveFeeCents === 0, `the buyer paid ${order.processingFeeCents}c processing + ${order.reserveFeeCents}c reserve on top of face value`);
-    assert(order.promoterPayoutCents === 0, `the order records a ${order.promoterPayoutCents}c promoter share`);
+    assert(order.promoterPayoutCents === 0, `the order records a ${order.promoterPayoutCents}c referral share; a HYPE link earns nothing`);
     assert(order.artistPayoutCents === 0, `the order routes ${order.artistPayoutCents}c to the artist through iHYPE`);
     assert(order.venuePayoutCents === order.subtotalCents, `venue receives ${order.venuePayoutCents}c, not the whole ${order.subtotalCents}c face value`);
     const payables = await prisma.accountsPayableEntry.findMany({ where: { ticketOrderId: order.id } });
@@ -1514,8 +1511,6 @@ async function main() {
         isTicketed: true,
         ticketPriceCents: TICKET_PRICE_CENTS,
         ticketCapacity: 10,
-        artistPayoutPercent: 75,
-        venuePayoutPercent: 25,
         // Deliberately omitted: no ticketingOpensAt means sales are not open.
       }),
       cookie: creator.cookie,
@@ -1862,7 +1857,7 @@ async function main() {
   // ── 30. HYPE link referral ───────────────────────────────────────────────
   await item('30. HYPE link referral', async () => {
     const profile = await prisma.profile.findUnique({ where: { id: promoterProfile.id }, select: { hexId: true } });
-    assert(profile?.hexId, 'promoter profile has no hexId');
+    assert(profile?.hexId, 'referrer profile has no hexId');
 
     const short = await api(`/h/${profile.hexId}`);
     const location = short.status >= 300 && short.status < 400 ? '(redirect)' : '';
@@ -1924,7 +1919,7 @@ async function main() {
       where: { id: promoterProfile.id },
       select: { hexId: true, ownerId: true },
     });
-    assert(referrerProfile?.hexId, 'promoter profile has no hexId');
+    assert(referrerProfile?.hexId, 'referrer profile has no hexId');
 
     const before = await prisma.hypeLedgerEntry.aggregate({
       where: { userId: referrerProfile.ownerId, source: 'FAN_REFERRED' },

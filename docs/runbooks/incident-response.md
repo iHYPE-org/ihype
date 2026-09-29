@@ -52,7 +52,7 @@ Most secrets here (`CRON_SECRET`, `STRIPE_WEBHOOK_SECRET`, `AUTH_SECRET`, `RESEN
 ## Vendor contacts
 - Supabase support: dashboard → Support (project `bjkabtzvgfshsrmjhrkx`)
 - Cloudflare: dash.cloudflare.com support (Worker `ihype`)
-- Stripe: dashboard → Help (has live chat for fraud)
+- Stripe: dashboard → Help (a fraud line is reachable from the dashboard's support chat)
 - Resend: resend.com support
 - GitHub: github.com/support (compromised-account flow)
 

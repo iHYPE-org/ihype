@@ -144,6 +144,40 @@ export async function PATCH(
       productionPlan = parsedPlan.data;
     }
 
+    /* The title and the date are written into every signed split agreement
+       for this show (the Lineup Offer block), so changing either changes the
+       contract. Section 7.6: a new date binds only once both parties accept
+       it. Every agreement is marked superseded and every act goes back to
+       PENDING with no venue signature, so the venue re-sends the offer and
+       each act signs again; a ticketed show stops selling until they have.
+
+       NOT ONCE A TICKET HAS BEEN SOLD UNDER THEM (2026-09-29, DESIGN_SYNC row
+       533). Superseding erases the settlement statement, the act's report path
+       and the 8.6 non-payment hold for every order already sold — the signed
+       PDF survives and the product's only remedy does not. So a change that
+       would supersede a live agreement is refused while captured orders exist:
+       the venue keeps the announced night, or cancels (refunding every buyer,
+       7.3) and creates the show again. A show with no agreement to supersede
+       (one created before the agreement, or unticketed) edits as before. */
+    const termsChanged =
+      (body.title !== undefined && body.title !== show.title) ||
+      (body.startsAt !== undefined && new Date(body.startsAt).getTime() !== show.startsAt.getTime());
+    if (termsChanged) {
+      const [liveAgreements, soldOrders] = await Promise.all([
+        db.showSplitAgreement.count({ where: { showId: show.id, supersededAt: null } }),
+        db.ticketOrder.count({ where: { showId: show.id, status: 'CAPTURED' } }),
+      ]);
+      if (liveAgreements > 0 && soldOrders > 0) {
+        return NextResponse.json(
+          {
+            error: 'Tickets have been sold under the signed split agreements, which name this title and date. Keep them, or cancel the show (every buyer is refunded) and create it again.',
+            code: 'AGREEMENT_HAS_SALES',
+          },
+          { status: 409 },
+        );
+      }
+    }
+
     const updated = await db.show.update({
       where: { id: show.id },
       data: {
@@ -157,15 +191,6 @@ export async function PATCH(
       select: { id: true, slug: true, status: true },
     });
 
-    /* The title and the date are written into every signed split agreement
-       for this show (the Lineup Offer block), so changing either changes the
-       contract. Section 7.6: a new date binds only once both parties accept
-       it. Every agreement is marked superseded and every act goes back to
-       PENDING with no venue signature, so the venue re-sends the offer and
-       each act signs again; a ticketed show stops selling until they have. */
-    const termsChanged =
-      (body.title !== undefined && body.title !== show.title) ||
-      (body.startsAt !== undefined && new Date(body.startsAt).getTime() !== show.startsAt.getTime());
     if (termsChanged) {
       const now = new Date();
       const reset = await db.$transaction(async (tx) => {

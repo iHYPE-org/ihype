@@ -886,8 +886,8 @@ export async function createAdCampaignCheckoutSession({
      `throw new Error('Checkout session did not return a payment intent id.')`
      therefore fired on EVERY ad campaign that cleared vetting, so the route
      answered 500 and no advertiser could ever pay. This codebase already knew
-     the intent was lazy — scripts/rehearse-money-path.mts says so for tickets
-     — but the ad path was written as though it were not.
+     the intent was lazy — the acceptance walk's ticket item says so — but the
+     ad path was written as though it were not.
 
      The id is picked up later instead: the campaign's PaymentIntent carries
      `metadata.adId` (set through `payment_intent_data` above), and the webhook

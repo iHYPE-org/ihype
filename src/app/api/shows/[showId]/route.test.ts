@@ -15,6 +15,8 @@ const showFindFirst = vi.fn();
 const showUpdate = vi.fn();
 const orderFindMany = vi.fn();
 const agreementUpdateMany = vi.fn().mockResolvedValue({ count: 0 });
+const agreementCount = vi.fn().mockResolvedValue(0);
+const orderCount = vi.fn().mockResolvedValue(0);
 const slotUpdateMany = vi.fn().mockResolvedValue({ count: 0 });
 vi.mock('@/lib/db', () => {
   const tx = {
@@ -27,7 +29,8 @@ vi.mock('@/lib/db', () => {
         findFirst: (...a: unknown[]) => showFindFirst(...a),
         update: (...a: unknown[]) => showUpdate(...a),
       },
-      ticketOrder: { findMany: (...a: unknown[]) => orderFindMany(...a) },
+      ticketOrder: { findMany: (...a: unknown[]) => orderFindMany(...a), count: (...a: unknown[]) => orderCount(...a) },
+      showSplitAgreement: { count: (...a: unknown[]) => agreementCount(...a) },
       $transaction: async (fn: (t: typeof tx) => unknown) => fn(tx),
     },
   };
@@ -139,6 +142,37 @@ describe('PATCH /api/shows/[showId] — the edit page is its first caller (row 4
     expect(agreementUpdateMany).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ supersededAt: expect.any(Date) }) }));
     expect(slotUpdateMany).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ status: 'PENDING', agreementHash: null }) }));
     expect(notifyUser).toHaveBeenCalledWith('venue-owner', expect.objectContaining({ type: 'lineup_offer_needs_resend' }));
+  });
+
+  it('refuses a title or date change once tickets are sold under a signed agreement (row 533)', async () => {
+    signIn('venue-owner');
+    agreementCount.mockResolvedValueOnce(1);
+    orderCount.mockResolvedValueOnce(3);
+    const res = await PATCH(patch({ startsAt: '2026-10-09T20:00:00.000Z' }), params);
+    expect(res.status).toBe(409);
+    expect(await res.json()).toMatchObject({ code: 'AGREEMENT_HAS_SALES' });
+    // Nothing was written: the refusal comes BEFORE the update, or the title
+    // would already be changed under agreements that name the old one.
+    expect(showUpdate).not.toHaveBeenCalled();
+    expect(agreementUpdateMany).not.toHaveBeenCalled();
+  });
+
+  it('still edits a show with sales but no agreement to supersede — the row-446 typo fix survives', async () => {
+    signIn('venue-owner');
+    agreementCount.mockResolvedValueOnce(0);
+    orderCount.mockResolvedValueOnce(3);
+    const res = await PATCH(patch({ title: 'The Night (corrected)' }), params);
+    expect(res.status).toBe(200);
+    expect(showUpdate).toHaveBeenCalledTimes(1);
+  });
+
+  it('leaves the description editable after sales — it is not in the agreement', async () => {
+    signIn('venue-owner');
+    agreementCount.mockResolvedValue(1);
+    orderCount.mockResolvedValue(3);
+    const res = await PATCH(patch({ description: 'Doors at seven.' }), params);
+    expect(res.status).toBe(200);
+    expect(agreementCount).not.toHaveBeenCalled();
   });
 
   it('refuses to schedule a ticketed draft by hand before every act has signed', async () => {

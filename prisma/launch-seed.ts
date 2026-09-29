@@ -139,9 +139,6 @@ async function main() {
       timeZone: 'America/Chicago',
       ticketPriceCents: 1200,
       ticketCapacity: 150,
-      venuePayoutPercent: 25,
-      artistPayoutPercent: 75,
-      promoterPayoutPercent: 0,
       tags: ['launch', 'zero-fee', 'chicago'],
       hypeCount: 31
     }

@@ -8,20 +8,21 @@ import {
   calculateTicketTaxes,
   calculateTicketOrderFinancials,
   calculateDirectChargeApplicationFee,
-  ARTIST_SHARE_PERCENT,
-  VENUE_SHARE_PERCENT,
   PLATFORM_COMMISSION_PERCENT,
   SALES_TAX_SOURCE,
   MAX_VENUE_TAX_RATE_PPM,
   isValidVenueTaxRatePpm,
 } from '../ticketing';
 
-const CHARTER = { venuePayoutPercent: VENUE_SHARE_PERCENT, artistPayoutPercent: ARTIST_SHARE_PERCENT };
+/* The percentages an order sold under the older settlement modes carried on
+   its show. No constant states them any more (2026-09-29, DESIGN_SYNC row
+   533): a sale is VENUE_KEEPS_ALL and each act's share is its own signed
+   percentage. The arithmetic below is exercised with these literals because
+   the legacy orders' refunds and payouts still run through it. */
+const CHARTER = { venuePayoutPercent: 25, artistPayoutPercent: 75 };
 
-describe('the charter split (2026-09-25)', () => {
-  it('is 75% artist, 25% venue, 0% iHYPE', () => {
-    expect(ARTIST_SHARE_PERCENT).toBe(75);
-    expect(VENUE_SHARE_PERCENT).toBe(25);
+describe('the platform commission', () => {
+  it('is 0% — iHYPE takes nothing from a ticket', () => {
     expect(PLATFORM_COMMISSION_PERCENT).toBe(0);
   });
 });

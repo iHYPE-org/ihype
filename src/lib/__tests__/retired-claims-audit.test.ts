@@ -52,6 +52,33 @@ describe('the retired-claims audit', () => {
     expect(status).toBe(2);
   });
 
+  it('scans documents and scripts too, not only src/ (row 533)', () => {
+    /* For eighteen days the money model retired on 09-25 and 09-27 went on
+       being stated in README.md, both store-submission documents and three
+       rehearsal scripts, because this walked `src/` and `.ts(x)` alone. */
+    const dir = mkdtempSync(join(tmpdir(), 'retired-claims-docs-'));
+    writeFileSync(join(dir, 'NOTES.md'), '# Money\n\nArtists and venues sell tickets under a fixed 70/20/10 split.\n');
+    writeFileSync(join(dir, 'tool.mjs'), "console.log('the DJ role');\n");
+    try {
+      const { out, status } = run(['--list', `--roots=${dir}`]);
+      expect(status).toBe(1);
+      expect(out).toContain('NOTES.md');
+      expect(out).toContain('tool.mjs');
+      // A root may be a single FILE, which is how README.md is reached.
+      const one = run(['--list', `--roots=${join(dir, 'NOTES.md')}`]);
+      expect(one.status).toBe(1);
+      expect(one.out).toContain("1 retired claim in member-facing copy");
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('never reads its own table of retired phrases', () => {
+    const { out } = run(['--list', '--roots=scripts/audit-retired-claims.mjs']);
+    // Zero files, not zero claims: the scanner's own file is skipped by name.
+    expect(out).toContain('found no files to scan');
+  });
+
   it('catches a capability claim that the product cannot honour', () => {
     const { out, status } = probe('export const C = () => <p>Go live with live chat and a listener count.</p>;\n');
     expect(status).toBe(1);
