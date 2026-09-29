@@ -1,5 +1,6 @@
 import { formatDate } from '@/lib/format-locale';
 import { payoutHoldEndsAt } from '@/lib/payout-release';
+import { nextActSettlement } from '@/lib/venue-settlement-due';
 import type { Locale } from '@/lib/i18n/locales';
 import { db } from '@/lib/db';
 import { getProfileInsights } from '@/lib/profile-insights';
@@ -36,6 +37,14 @@ export type VenueDashboardData = {
   thisMonthEarningsCents: number;
   /** `dateLabel` is the formatted date alone; the page writes the sentence around it ("After … show ends"), so the words come from the dictionary. */
   nextPayout: { dateLabel: string; amountCents?: number; estimated: boolean } | null;
+  /**
+   * What the venue OWES its acts under their signed split agreements, and the
+   * soonest settlement date it is due by (`venue-settlement-due.ts`). This is
+   * the card since 2026-09-29; `nextPayout` above is the legacy payables the
+   * cron issues for orders sold under the older modes, drawn only when one
+   * exists and nothing is owed.
+   */
+  nextSettlement: { dateLabel: string; owedCents: number; shows: number } | null;
   upcomingShows: VenueDashboardShow[];
   activity: VenueDashboardActivity[];
   nextScannableShowSlug: string | null;
@@ -58,8 +67,9 @@ function nextCronRun(from: Date): Date {
  * Owner-only aggregate data for the Venue Dashboard hub. Every number here is
  * a real Prisma query result — no projections, no placeholders. "This
  * month's earnings" is summed directly from TicketOrder.venuePayoutCents
- * (the venue's actual stored share for each captured order — 25% of the net
- * face value since 2026-09-25, 20% of the face value before), not
+ * (the venue's stored share for each captured order — the WHOLE face value
+ * under VENUE_KEEPS_ALL since 2026-09-27, before it pays its acts; a fixed
+ * percentage of the net under the older modes), not
  * derived from getProfileInsights' ticketRevenueCents — that field is gross
  * ticket-order revenue across all three payout parties, so treating it as
  * "the venue's share" would misrepresent the number. getProfileInsights is
@@ -85,7 +95,14 @@ export async function getVenueDashboardData(profileId: string, locale: Locale): 
         ticketsSoldCount: true,
         ticketCapacity: true,
         headlinerProfile: { select: { name: true } },
-        ticketOrders: { where: { status: 'CAPTURED' }, select: { venuePayoutCents: true, createdAt: true } },
+        ticketOrders: {
+          where: { status: 'CAPTURED' },
+          select: { venuePayoutCents: true, createdAt: true, subtotalCents: true, settlementMode: true, artistPayoutCents: true },
+        },
+        splitAgreements: {
+          where: { supersededAt: null },
+          select: { splitPercent: true, payment: { select: { paidMarkedAt: true, artistConfirmedAt: true } } },
+        },
       },
       orderBy: { startsAt: 'asc' },
     }),
@@ -185,6 +202,11 @@ export async function getVenueDashboardData(profileId: string, locale: Locale): 
     }
   }
 
+  const due = nextActSettlement(shows.map((s) => ({ startsAt: s.startsAt, agreements: s.splitAgreements, orders: s.ticketOrders })));
+  const nextSettlement = due
+    ? { dateLabel: formatDate(locale, due.dueAt, { month: 'short', day: 'numeric' }), owedCents: due.owedCents, shows: due.shows }
+    : null;
+
   const activity: VenueDashboardActivity[] = [];
   for (const r of recentBookingRequests) {
     const name = r.fromUser.name ?? r.fromUser.username ?? 'A fan';
@@ -225,6 +247,7 @@ export async function getVenueDashboardData(profileId: string, locale: Locale): 
     ticketsSoldAllTime: insights.ticketsSold ?? 0,
     thisMonthEarningsCents,
     nextPayout,
+    nextSettlement,
     upcomingShows: upcomingShows.slice(0, UPCOMING_LIMIT).map((s) => ({
       id: s.id,
       slug: s.slug,

@@ -186,7 +186,7 @@ async function seedSecurityFixtures() {
     );
     await client.query(
       `INSERT INTO "Show" ("id", "slug", "title", "status", "startsAt", "creatorId", "isTicketed", "ticketPriceCents", "venuePayoutPercent", "artistPayoutPercent", "ticketsSoldCount", "hypeCount", "tags", "promoterPayoutPercent", "productionPlan", "createdAt", "updatedAt")
-       VALUES ($1, $2, 'Protected Workerd Smoke Show', 'SCHEDULED'::"ShowStatus", $3, $4, true, 1000, 50, 45, 0, 0, ARRAY['test']::TEXT[], 5, $5::jsonb, $6, $6)`,
+       VALUES ($1, $2, 'Protected Workerd Smoke Show', 'SCHEDULED'::"ShowStatus", $3, $4, true, 1000, NULL, NULL, 0, 0, ARRAY['test']::TEXT[], 0, $5::jsonb, $6, $6)`,
       [FIXTURE.showId, FIXTURE.showSlug, new Date(now.getTime() + 86_400_000), FIXTURE.creatorId, JSON.stringify(productionPlan), now],
     );
     await client.query(

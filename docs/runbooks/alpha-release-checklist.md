@@ -62,8 +62,8 @@
       (owner: "There should be no minimum number of uploads"). The playable
       track count is still shown on /api/health so an empty station is visible;
       it is information, not a gate. -->
-      <!-- "and 1 radio show" was here and is deliberately gone (2026-08-14). It
-      could not be satisfied: DJ-authored radio shows were retired as a product
+      <!-- A DJ-authored show requirement was here and is deliberately gone (2026-08-14). It
+      could not be satisfied: DJ-authored shows were retired as a product
       decision, `RadioShowCreator` is gone, and nothing in the app can author
       one — the check counted `Show.isRadioShow` rows, of which only
       pre-retirement rows can exist. `ALPHA_CONTENT_TARGETS` in

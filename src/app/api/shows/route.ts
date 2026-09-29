@@ -6,7 +6,6 @@ import { db, withDbRetry } from '@/lib/db';
 import { canManageOwnedResource, isAdminSession } from '@/lib/permissions';
 import { showProductionPlanSchema } from '@/lib/show-composer';
 import { resolveAdBreakClips } from '@/lib/ad-clip-selection';
-import { ARTIST_SHARE_PERCENT, VENUE_SHARE_PERCENT } from '@/lib/ticketing';
 import { slugify } from '@/lib/utils';
 import { isValidTimeZone } from '@/lib/format-locale';
 import { consumeRateLimit, rateLimitHeaders, rateLimitKey } from '@/lib/rate-limit';
@@ -247,8 +246,14 @@ export async function POST(request: NextRequest) {
         isTicketed: body.isTicketed,
         ticketPriceCents: body.isTicketed ? body.ticketPriceCents : 0,
         ticketCapacity: body.isTicketed ? body.ticketCapacity : null,
-        venuePayoutPercent: body.isTicketed ? VENUE_SHARE_PERCENT : null,
-        artistPayoutPercent: body.isTicketed ? ARTIST_SHARE_PERCENT : null,
+        /* No fixed split is stamped on a show (2026-09-29, DESIGN_SYNC row
+           533). Since row 528 each act's share is the percentage it signs in
+           its own Show Revenue Split Agreement, so a show-level 75/25 here was
+           a number no sale read and every reader of these columns survives a
+           null. They stay in the schema for orders sold under the older modes,
+           whose payables split by them. */
+        venuePayoutPercent: null,
+        artistPayoutPercent: null,
         promoterPayoutPercent: 0,
         productionPlan: body.productionPlan,
         status: body.status,

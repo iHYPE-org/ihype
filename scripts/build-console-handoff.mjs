@@ -239,13 +239,14 @@ ${rule(mmm, '.mmm-console') ?? '(not on this branch — see PR #733)'}
 ## 6 · Rules a template must not break
 
 1. **No emoji.** Unicode glyphs (\`▶ ❚❚ ♥ ✕ ✓ ★ ⬟ ♪\`) are the vocabulary.
-2. **There is no DJ role.** Deleted from the product 2026-08-06.
-3. **Promoter is not an account type.** It is a 10% payout share. \`--role-promoter\`
-   colours that slice and nothing else.
+2. **There is no DJ account type.** Deleted from the product 2026-08-06.
+3. **Promoter is not an account type, and promoting earns no share.** Anyone
+   promotes with a HYPE Link, which records a referral and earns nothing.
 4. **No white on the accent fill.** Use \`--ink-on-accent\`.
 5. **No appearance/theme switcher.** One ground.
-6. **70 / 20 / 10 / 0%** — artist / venue / promoters / iHYPE. Never restate it
-   differently.
+6. **0% iHYPE, and no fixed split.** The venue keeps every sale and pays each
+   act the percentage both signed in a Show Revenue Split Agreement. Never
+   state a platform-wide percentage.
 7. **Audio only.** No video anywhere.
 8. **admin@ihype.org** and **ihype.org** are the only contact and domain.
 
@@ -552,12 +553,13 @@ a{color:var(--accent-text)}
   <h2><span class="n">§ 06</span>Rules a template must not break</h2>
   <ol class="rules">
     <li><b>No emoji.</b> Unicode glyphs (▶ ❚❚ ♥ ✕ ✓ ★ ⬟ ♪) are the vocabulary.</li>
-    <li><b>There is no DJ role.</b> Deleted from the product 2026-08-06.</li>
-    <li><b>Promoter is not an account type.</b> It is a 10% payout share; <code>--role-promoter</code>
-      colours that slice and nothing else.</li>
+    <li><b>There is no DJ account type.</b> Deleted from the product 2026-08-06.</li>
+    <li><b>Promoter is not an account type, and promoting earns no share.</b> Anyone promotes
+      with a HYPE Link, which records a referral and earns nothing.</li>
     <li><b>No white on the accent fill.</b> Use <code>--ink-on-accent</code>.</li>
     <li><b>No appearance or theme switcher.</b> One ground.</li>
-    <li><b>70 / 20 / 10 / 0%</b> — artist / venue / promoters / iHYPE. Never restate it differently.</li>
+    <li><b>0% iHYPE, and no fixed split.</b> The venue keeps every sale and pays each act the
+      percentage both signed in a Show Revenue Split Agreement. Never state a platform-wide percentage.</li>
     <li><b>Audio only.</b> No video anywhere.</li>
     <li><b>admin@ihype.org</b> and <b>ihype.org</b> are the only contact and domain.</li>
   </ol>

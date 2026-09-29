@@ -74,8 +74,9 @@ FOR ARTISTS AND VENUES
 · Sell tickets with the split agreed before the show
 
 THE SPLIT
-70% artist, 20% venue, 10% promoters, 0% iHYPE. That is in our charter, not our
-pricing page. iHYPE is a nonprofit and takes nothing from a ticket.
+The venue keeps every ticket sale and pays each act the share both signed
+before the show. 0% iHYPE — that is in our charter, not our pricing page.
+iHYPE is a nonprofit and takes nothing from a ticket.
 
 Founded in Portland, Maine.
 ```
@@ -146,7 +147,7 @@ Local live music and tickets
 **Promotional text** (170 max, editable without a new build)
 
 ```
-Hear artists playing near you, hype the ones you want on a stage, and get tickets when the show gets booked. 70% of every ticket goes to the artist.
+Hear artists playing near you, hype the ones you want on a stage, and get tickets when the show gets booked. iHYPE takes $0 from every ticket.
 ```
 
 **Keywords** (100 max, comma separated, no spaces — currently 97)
@@ -200,7 +201,8 @@ audio ads are sold and served by iHYPE itself.
 ```
 iHYPE is a nonprofit platform for local live music. Fans discover artists
 playing near them, "hype" the acts they want to see, and buy tickets. Artists
-and venues publish profiles and sell tickets under a fixed 70/20/10 split.
+and venues publish profiles; the venue sells the tickets and pays each act the
+share both signed before the show. iHYPE takes 0%.
 
 SIGN-IN FOR REVIEW
 The app has no passwords by design — members sign in with a passkey or a

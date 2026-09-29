@@ -19,14 +19,13 @@ content, so In-App Purchase does not apply and Stripe is the correct processor.
 
 Supporting facts a reviewer can verify in the app:
 
-- **iHYPE takes $0 from the ticket price.** The split is 70% artist / 20% venue /
-  10% promoter pool, published at `/info?tab=charter` and shown per event at
-  `/payout/<id>`.
-- The only amount added at checkout is **Stripe's processing fee**, disclosed as
-  its own line before payment (`src/lib/stripe-fees.ts`). iHYPE is a nonprofit
-  and absorbs no fee: the fee is grossed up so that Stripe's cut leaves face
-  value and taxes intact, it is excluded from the 70/20/10 split, and it is
-  retained on refunds because Stripe keeps it.
+- **iHYPE takes $0 from the ticket price.** The venue sells every ticket through
+  its own Stripe account and pays each act the percentage both signed in a Show
+  Revenue Split Agreement before the show; the charter at `/info?tab=charter`
+  says so, and each act's signed agreement is the figure.
+- **The buyer pays the ticket price plus its sales tax and nothing else.**
+  Stripe's card fee is the venue's own cost (Agreement 4.4), never a line at
+  checkout, and it is not returned on a refund because Stripe keeps it.
 - There is **no digital-only content, subscription, or unlockable feature**
   anywhere in the app. Nothing is sold that is consumed inside it.
 

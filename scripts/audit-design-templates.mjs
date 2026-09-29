@@ -80,7 +80,7 @@ const WHITE_ON_ACCENT = /background:\s*(?:var\(--accent[^)]*\)|#ff5029)[^;"]*;\s
 
 const CHECKS = [
   { id: 'emoji', rule: 'ADHERENCE §29 — no emoji, anywhere', re: EMOJI },
-  { id: 'dj-role', rule: 'ADHERENCE §4 — there is no DJ role', re: DJ_ROLE },
+  { id: 'dj-role', rule: 'ADHERENCE §4 — there is no DJ account type', re: DJ_ROLE },
   { id: 'promoter-role', rule: 'ADHERENCE §3 — promoter is not an account role', re: PROMOTER_ROLE },
   { id: 'ink-on-accent', rule: 'ADHERENCE §32 — white on accent is 3.27:1, fails AA', re: WHITE_ON_ACCENT },
 ];

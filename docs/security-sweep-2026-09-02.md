@@ -1,3 +1,4 @@
+<!-- retired-claim-exempt-file: a dated report of what the code did on 2026-09-02; the promoter share it names was live that day and retired on 09-25 -->
 # Security sweep — 2026-09-02
 
 Six review passes over the whole tree (authentication and authorization on

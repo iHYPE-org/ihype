@@ -1013,36 +1013,40 @@ describe('a ticketed show is a buyable show', () => {
   });
 
   /**
-   * The SPLIT, for the same reason and found the same way one day later.
+   * THE SPLIT — REVERSED 2026-09-29 (DESIGN_SYNC row 533).
    *
-   * Fixing `ticketingOpensAt` exposed the next nullable column behind it:
-   * `/shows/[slug]/page.tsx` gates the whole ticket aside on
-   * `venuePayoutPercent !== null && artistPayoutPercent !== null`, both `Int?`
-   * with no default. A seeded show with sales open and null percents rendered
-   * NEITHER a purchase form NOR the "not on sale" sentence — the sidebar was
-   * absent and the page said nothing about tickets at all. Measured on
-   * production, after the previous fix had been declared a success.
-   *
-   * That is the argument for checking the SET rather than the one field that
-   * bit: a ticketed show is only buyable when every column the page reads is
-   * populated, and each fix that stops at one field just moves the silence.
+   * This guard used to demand `artistPayoutPercent` and `venuePayoutPercent`
+   * on every ticketed show, because `/shows/[slug]/page.tsx` gated its whole
+   * ticket aside on both being non-null (a seeded show with null percents
+   * rendered NEITHER a purchase form NOR the "not on sale" sentence — measured
+   * on production 2026-09-04). Since row 528 each act's share is the
+   * percentage it signed and no show carries a split: `POST /api/shows` stamps
+   * null, both pages gate on `isTicketed` alone, and a writer that stamps a
+   * fixed percentage states a split no sale reads. The set-not-field lesson
+   * survives in the guard below this one (`ticketingOpensAt`).
    */
-  it('never sets isTicketed: true without the payout split', () => {
-    const missing: string[] = [];
+  it('never stamps a show-level payout split on a ticketed show', () => {
+    const stamped: string[] = [];
     for (const file of files) {
       const source = code(file);
       for (const match of source.matchAll(/\.show\.(?:create|upsert)\s*\(/g)) {
         const args = withSpreads(source, callArguments(source, match.index + match[0].length - 1));
         if (!/isTicketed:\s*true/.test(args)) continue;
-        const absent = ['artistPayoutPercent', 'venuePayoutPercent'].filter((f) => !args.includes(f));
-        if (!absent.length) continue;
-        missing.push(`${file}:${source.slice(0, match.index).split('\n').length} (${absent.join(', ')})`);
+        const present = ['artistPayoutPercent', 'venuePayoutPercent'].filter((f) => new RegExp(`${f}:\\s*\\d`).test(args));
+        if (!present.length) continue;
+        stamped.push(`${file}:${source.slice(0, match.index).split('\n').length} (${present.join(', ')})`);
       }
     }
     expect(
-      missing,
-      `these writers create a ticketed show whose ticket box cannot render: ${missing.join(', ')}`,
+      stamped,
+      `these writers stamp a fixed split no sale reads — the act's share is in its signed agreement: ${stamped.join(', ')}`,
     ).toEqual([]);
+  });
+
+  it('neither show page gates its ticket card on the percent columns', () => {
+    const gated = ['src/app/shows/[slug]/page.tsx', 'src/app/app/shows/[slug]/page.tsx']
+      .filter((f) => /PayoutPercent\s*!==\s*null|resolveShowSplits/.test(code(f)));
+    expect(gated, 'a ticket card gated on a column no show carries hides every ticket box').toEqual([]);
   });
 
   it('never sets isTicketed: true without ticketingOpensAt', () => {

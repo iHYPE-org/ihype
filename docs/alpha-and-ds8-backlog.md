@@ -77,7 +77,7 @@ those. They are almost entirely design-source hygiene with no code half
 (`--role-dj` → `--role-promoter` in 46 places against **0** uses in `src/`, a
 component-namespace rename, dead `fan-app/` links, hex → token *inside the
 templates*). **Both of `PORT_TO_APP.md`'s explicitly-unverified items came back
-clean**: the DJ role is gone from every role picker, and the rigid
+clean**: the DJ account type is gone from every role picker, and the rigid
 `1fr <fixed>px` hero grids it fixed have no counterpart here — the kit pages and
 `/shows/[slug]` already collapse via `minmax(0, 1fr)` plus a media query. One
 real defect fell out and is fixed: a bare `1fr` track floors at min-content, so
@@ -98,7 +98,7 @@ optional rather than urgent.
 
 **Send the template defects to Claude Design.** `npm run audit:design -- --list`.
 31 of 41 templates break rules `ADHERENCE.md` itself publishes: 71 emoji (§29),
-a DJ role in 7 including full `isDj` variants (§4, deleted from the product),
+a DJ account type in 7 including full `isDj` variants (§4, deleted from the product),
 promoter-as-a-role in 7 (§3), 44 white-on-accent (§32, 3.27:1, fails AA). Fix
 them there and re-vendor — a session told to apply a template faithfully will
 re-introduce a deleted role and be right to. **`templates/landing/` pitches an

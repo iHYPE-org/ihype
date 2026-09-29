@@ -324,6 +324,10 @@ export type SeededShow = {
    *  not by a ticket's serialized id — a transfer moves the whole order — so a
    *  spec that only had the serializedId could not reach them. */
   orderId: string;
+  /** The act's live signed split agreement on this show (60%), and its share of the one $18.00 sale. */
+  agreementId: string;
+  splitPercent: number;
+  actShareCents: number;
 };
 
 export async function seedShowWithTicket({
@@ -411,9 +415,10 @@ export async function seedShowWithTicket({
       },
     });
 
-    // A real ticketed show: priced, with a split, so the buy pane and the split
-    // bar both have something true to draw. The split is the charter's, which
-    // is what the payout engine assumes when nothing overrides it.
+    // A real ticketed show: priced, on sale, with ONE act that has signed its
+    // Show Revenue Split Agreement (below), which is the state a ticket is
+    // sold in since 2026-09-27. No show-level percentages: none exist since
+    // 2026-09-29 (DESIGN_SYNC row 533).
     /* The title carries the KEY, and that is load-bearing rather than cosmetic.
        Every seeded show used to be called "E2E Night", so the moment a suite
        seeded two of them for one account — 'default' and 'attended' are both
@@ -460,10 +465,41 @@ export async function seedShowWithTicket({
         isTicketed: true,
         ticketPriceCents: 1800,
         ticketCapacity: 100,
-        venuePayoutPercent: 25,
-        artistPayoutPercent: 75,
-        promoterPayoutPercent: 0,
       },
+    });
+
+    /* THE SIGNED SPLIT. `readAgreementReadiness()` calls a show with no lineup
+       slot NO_OFFER, so until 2026-09-29 every show this fixture built was
+       ticketed, priced, open — and unsellable, with `TicketSaleCard` drawing
+       "awaiting signatures" for a suite that never asserted on it. The act is
+       signed at 60% by its organiser on both lines (the fixture's organiser
+       owns the venue and the act, so one user signs as each), the slot is
+       ACCEPTED, and the rows are recreated on every run so a spec that
+       superseded or paid one finds the fixture's promise again. The text is a
+       fixture's, not a rendered agreement: nothing here verifies its hash
+       against `renderSplitAgreement()`, and the walk covers that route. */
+    const splitPercent = 60;
+    const slot = await prisma.showLineupSlot.upsert({
+      where: { showId_profileId: { showId: show.id, profileId: artist.id } },
+      update: { status: 'ACCEPTED', splitPercent, isHeadliner: true, respondedAt: new Date(), venueSignedAt: new Date() },
+      create: {
+        showId: show.id, profileId: artist.id, isHeadliner: true, splitPercent, status: 'ACCEPTED',
+        respondedAt: new Date(), agreementVersion: 'e2e-fixture', agreementHash: hex(`${showSlug}-agreement`).slice(2).padEnd(64, '0'),
+        venueSignerUserId: organiser.id, venueSignerName: 'E2E Organiser', venueSignedAt: new Date(),
+      },
+    });
+    await prisma.showSplitAgreement.deleteMany({ where: { showId: show.id } });
+    const agreementText = `E2E fixture agreement: ${showTitle} at E2E Venue, E2E Artist ${splitPercent}%.`;
+    const agreement = await prisma.showSplitAgreement.create({
+      data: {
+        lineupSlotId: slot.id, showId: show.id, venueProfileId: venue.id, artistProfileId: artist.id,
+        version: 'e2e-fixture', text: agreementText, textHash: createHash('sha256').update(agreementText).digest('hex'),
+        splitPercent, juryWaiver: false,
+        venueSignerUserId: organiser.id, venueSignerName: 'E2E Organiser', venueSignedAt: new Date(),
+        artistSignerUserId: organiser.id, artistSignerName: 'E2E Organiser', artistSignedAt: new Date(),
+        artistPaymentMethod: 'Check',
+      },
+      select: { id: true },
     });
 
     const confirmationCode = `E2E-${stamp}`.toUpperCase().slice(0, 24);
@@ -496,16 +532,18 @@ export async function seedShowWithTicket({
         ...(orderCreatedAt ? { createdAt: orderCreatedAt } : {}),
         quantity: 1,
         subtotalCents: 1800,
-        /* The shape a sale takes since 2026-09-25: the buyer pays face value
-           and nothing on top, Stripe's 82c comes off the top on the venue's
-           account, and the remaining 1718 splits 75/25 (artist 1288, venue
-           430), sold VENUE_DIRECT with no promoter share. */
+        /* The shape a sale takes since 2026-09-27 (VENUE_KEEPS_ALL): the buyer
+           pays face value and nothing on top, the venue collects all 1800 on
+           its own Stripe account and pays Stripe's fee as its own cost, and
+           the act's 60% (1080) is owed by the venue under the agreement
+           above — the row records 0 to the artist THROUGH iHYPE, which is
+           what `artist-share.ts` reads past. */
         processingFeeCents: 0,
         totalChargeCents: 1800,
-        venuePayoutCents: 430,
-        artistPayoutCents: 1288,
+        venuePayoutCents: 1800,
+        artistPayoutCents: 0,
         promoterPayoutCents: 0,
-        settlementMode: 'VENUE_DIRECT',
+        settlementMode: 'VENUE_KEEPS_ALL',
         status: 'CAPTURED',
       },
     });
@@ -529,7 +567,7 @@ export async function seedShowWithTicket({
       },
     });
 
-    return { showId: show.id, slug: show.slug, title: show.title, serializedId, artistSlug, venueSlug, orderId: order.id };
+    return { showId: show.id, slug: show.slug, title: show.title, serializedId, artistSlug, venueSlug, orderId: order.id, agreementId: agreement.id, splitPercent, actShareCents: 1080 };
   } finally {
     await prisma.$disconnect();
   }

@@ -1,34 +1,34 @@
 #!/usr/bin/env node
 /**
- * The dispute walk — the last unchecked box before runbook step 3.
+ * The dispute walk: who eats a chargeback on a ticket.
  *
- * Everything about the settlement design is an argument about who eats a
- * chargeback: VENUE_DIRECT exists because a dispute on a direct charge is
- * debited from the VENUE (and under Stripe-managed risk an unrecoverable
- * shortfall is Stripe's), while DESTINATION and PLATFORM leave it with iHYPE
- * — which is what the 1.5% reserve is priced against. Stripe's docs say so
- * (quoted in docs/runbooks/money-path-rehearsal.md), a support conversation
- * said so, and until this script ran nothing had ever MEASURED it.
+ * Every ticket is sold `VENUE_KEEPS_ALL` (2026-09-27, DESIGN_SYNC row 528): a
+ * charge created ON the venue's own connected account with no application
+ * fee. The settlement design says a dispute on such a charge is debited from
+ * the VENUE — and under Stripe-managed risk an unrecoverable shortfall is
+ * Stripe's — never from iHYPE, which holds no ticket money. Stripe's docs say
+ * so (quoted in docs/runbooks/money-path-rehearsal.md); this measures it.
  *
- * This automates the measurement half of the runbook's by-hand dashboard
- * walk: it buys with Stripe's dispute test card (4000 0000 0000 0259 —
- * `pm_card_createDispute`: the charge succeeds and is then disputed as
- * fraudulent) once as a direct charge on the venue and once as a destination
- * charge on the platform, waits for each dispute to exist, and reads WHOSE
- * balance carries the disputed amount and the dispute fee off the dispute's
- * own balance_transactions. The judgement about what the numbers mean stays
- * with a person; the numbers themselves are printed here.
+ * It buys with Stripe's dispute test card (`pm_card_createDispute`: the charge
+ * succeeds and is then disputed as fraudulent) as a direct charge on the
+ * venue, waits for the dispute to exist, and reads WHOSE balance carries the
+ * disputed amount and the dispute fee off the dispute's own
+ * balance_transactions. The judgement about what the numbers mean stays with
+ * a person; the numbers themselves are printed here.
  *
- * If the venue-direct dispute lands on the PLATFORM's balance, the settlement
- * model is wrong and every number in the runbook is wrong with it.
+ * Until 2026-09-29 a second leg measured a DESTINATION charge, the mode the
+ * 1.5% reserve was priced against; no sale takes it any more and production
+ * held no order under it (row 533), so that leg is gone.
+ *
+ * If the dispute lands on the PLATFORM's balance, the settlement model is
+ * wrong and the agreement's 7.2 with it.
  *
  * Usage:
- *   STRIPE_SECRET_KEY=sk_test_… \
- *   REHEARSAL_MERCHANT_ACCOUNT=acct_venue REHEARSAL_ARTIST_ACCOUNT=acct_act \
+ *   STRIPE_SECRET_KEY=sk_test_… REHEARSAL_MERCHANT_ACCOUNT=acct_venue \
  *   npm run stripe:disputes
  *
- * Residue: two open test disputes stay in the sandbox (they can be responded
- * to or ignored; test mode only). This script refuses any key that is not
+ * Residue: one open test dispute stays in the sandbox (it can be responded to
+ * or ignored; test mode only). This script refuses any key that is not
  * `sk_test_`, so it cannot create a live dispute.
  */
 
@@ -48,10 +48,8 @@ if (!KEY.startsWith('sk_test_')) {
 const stripe = new Stripe(KEY);
 
 const VENUE = (process.env.REHEARSAL_MERCHANT_ACCOUNT ?? process.env.REHEARSAL_VENUE_ACCOUNT ?? '').trim();
-const ARTIST = (process.env.REHEARSAL_ARTIST_ACCOUNT ?? '').trim();
-if (!VENUE || !ARTIST) {
-  console.error('Set REHEARSAL_MERCHANT_ACCOUNT (a card_payments-active venue) and');
-  console.error('REHEARSAL_ARTIST_ACCOUNT (a transfers-active act). Both legs need one.');
+if (!VENUE) {
+  console.error('Set REHEARSAL_MERCHANT_ACCOUNT to a connected account with card_payments active (a venue).');
   process.exit(1);
 }
 
@@ -70,13 +68,10 @@ function check(label, condition, detail = '') {
 }
 
 /** The test dispute is created asynchronously after the charge — usually
- *  seconds, occasionally longer. Poll rather than trusting any single read,
- *  the same lesson every readback in the payout rehearsal taught. */
+ *  seconds, occasionally longer. Poll rather than trusting any single read. */
 async function waitForDispute(chargeId, scope) {
   for (let i = 0; i < 48; i += 1) {
-    const disputes = scope
-      ? await stripe.disputes.list({ charge: chargeId, limit: 1 }, scope)
-      : await stripe.disputes.list({ charge: chargeId, limit: 1 });
+    const disputes = await stripe.disputes.list({ charge: chargeId, limit: 1 }, scope);
     if (disputes.data[0]) return disputes.data[0];
     await new Promise((resolve) => setTimeout(resolve, 5000));
   }
@@ -94,15 +89,13 @@ function describeImpact(dispute) {
   return { amount, fee, net, count: txns.length };
 }
 
-async function disputeIsVisible(chargeId, scope) {
-  const disputes = scope
-    ? await stripe.disputes.list({ charge: chargeId, limit: 1 }, scope)
-    : await stripe.disputes.list({ charge: chargeId, limit: 1 });
+async function disputeIsVisibleToPlatform(chargeId) {
+  const disputes = await stripe.disputes.list({ charge: chargeId, limit: 1 });
   return Boolean(disputes.data[0]);
 }
 
-async function legVenueDirect() {
-  console.log('\n[1] VENUE_DIRECT: the dispute is the venue’s, not the platform’s');
+async function legVenueKeepsAll() {
+  console.log('\n[1] VENUE_KEEPS_ALL: the dispute is the venue’s, not the platform’s');
   const intent = await stripe.paymentIntents.create(
     {
       amount: AMOUNT,
@@ -110,84 +103,45 @@ async function legVenueDirect() {
       payment_method: 'pm_card_createDispute',
       confirm: true,
       automatic_payment_methods: { enabled: true, allow_redirects: 'never' },
-      // The same fee shape createVenueDirectCheckoutSession gives a real sale:
-      // the artist's 70% and the promoter's 10% claimed by the platform.
-      application_fee_amount: Math.floor((AMOUNT * 80) / 100),
-      metadata: { rehearsal: 'true', purpose: 'dispute-walk-venue-direct' },
+      metadata: { rehearsal: 'true', purpose: 'dispute-walk', settlementMode: 'venue_keeps_all' },
     },
     { stripeAccount: VENUE, idempotencyKey: `dispute-walk-venue:${Date.now()}` },
   );
   check('disputed-card charge succeeds on the venue', intent.status === 'succeeded', intent.status);
-
+  check('no application fee was taken', !intent.application_fee_amount, `application_fee_amount=${intent.application_fee_amount ?? 'none'}`);
   const chargeId = String(intent.latest_charge);
+
   const dispute = await waitForDispute(chargeId, { stripeAccount: VENUE });
   check('a dispute exists on the VENUE’s account', Boolean(dispute), dispute ? `${dispute.id} (${dispute.status})` : 'none after 4 minutes');
   if (!dispute) return;
 
   const impact = describeImpact(dispute);
   check(
-    'the disputed amount is debited from the VENUE’s balance',
-    impact.amount === -AMOUNT,
-    `balance_transactions on the venue: amount=${impact.amount}, dispute fee=${impact.fee}, net=${impact.net}`,
-  );
-  console.log(`        (the dispute fee of ${impact.fee} was billed on the venue’s side of the ledger)`);
-
-  const onPlatform = await disputeIsVisible(chargeId, undefined);
-  check('the dispute is INVISIBLE to a platform-scoped lookup', !onPlatform, onPlatform ? 'platform can see it — the model is wrong' : 'not on the platform');
-}
-
-async function legDestination() {
-  console.log('\n[2] DESTINATION: the dispute is the platform’s — the exposure the 1.5% reserve prices');
-  const intent = await stripe.paymentIntents.create(
-    {
-      amount: AMOUNT,
-      currency: 'usd',
-      payment_method: 'pm_card_createDispute',
-      confirm: true,
-      automatic_payment_methods: { enabled: true, allow_redirects: 'never' },
-      transfer_data: { destination: ARTIST },
-      application_fee_amount: AMOUNT - Math.floor((AMOUNT * 70) / 100),
-      metadata: { rehearsal: 'true', purpose: 'dispute-walk-destination' },
-    },
-    { idempotencyKey: `dispute-walk-dest:${Date.now()}` },
-  );
-  check('disputed-card destination charge succeeds', intent.status === 'succeeded', intent.status);
-
-  const chargeId = String(intent.latest_charge);
-  const dispute = await waitForDispute(chargeId, undefined);
-  check('a dispute exists on the PLATFORM’s account', Boolean(dispute), dispute ? `${dispute.id} (${dispute.status})` : 'none after 4 minutes');
-  if (!dispute) return;
-
-  const impact = describeImpact(dispute);
-  check(
-    'the disputed amount AND the dispute fee are debited from the PLATFORM’s balance',
+    'the disputed amount AND the dispute fee are debited from the VENUE’s balance',
     impact.amount === -AMOUNT && impact.fee > 0,
-    `balance_transactions on the platform: amount=${impact.amount}, dispute fee=${impact.fee}, net=${impact.net}`,
+    `amount=${impact.amount} fee=${impact.fee} net=${impact.net} across ${impact.count} txn(s)`,
   );
-
-  const onArtist = await disputeIsVisible(chargeId, { stripeAccount: ARTIST });
-  check('the act’s account carries NO dispute for it', !onArtist, onArtist ? 'the act was debited — the model is wrong' : 'nothing on the act');
-  console.log('        (the act’s transferred share is untouched by the dispute itself — recovering it');
-  console.log('         is the reverse-transfer decision the webhook handler deliberately leaves to a person)');
+  const onPlatform = await disputeIsVisibleToPlatform(chargeId);
+  check('the dispute is INVISIBLE to a platform-scoped lookup', !onPlatform, onPlatform ? 'platform can see it — the model is wrong' : 'not on the platform');
+  console.log('        (the act’s share is owed by the venue under the agreement and is untouched by Stripe;');
+  console.log('         the settlement statement charges a lost chargeback under 7.2, and a person reads it)');
 }
 
 async function main() {
   const account = await stripe.accounts.retrieve();
   console.log(`Stripe test-mode dispute walk — account ${account.id}`);
-  console.log('Two REAL test disputes are created below; they stay open in the sandbox.');
+  console.log('One REAL test dispute is created below; it stays open in the sandbox.');
 
-  await legVenueDirect();
-  await legDestination();
+  await legVenueKeepsAll();
 
   console.log(`\n${passed} passed, ${failed} failed.`);
   if (failed > 0) {
     console.error('\nA failure here means a real dispute would land on a different balance');
-    console.error('than the settlement design (and the reserve pricing) assumes.');
+    console.error('than the settlement design assumes.');
     process.exit(1);
   }
-  console.log('\nBoth halves of the dispute model hold: a venue-direct chargeback is the');
-  console.log('venue’s (and under Stripe-managed risk, Stripe’s beyond that); a destination');
-  console.log('chargeback is iHYPE’s, which is what the 1.5% reserve exists to fund.');
+  console.log('\nThe dispute model holds: a chargeback on a ticket is the venue’s (and under');
+  console.log('Stripe-managed risk, Stripe’s beyond that). iHYPE holds no ticket money to lose.');
 }
 
 main().catch((error) => {

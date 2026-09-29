@@ -1,5 +1,3 @@
-import { stripeCutOf } from '@/lib/stripe-fees';
-import { ARTIST_SHARE_PERCENT, VENUE_SHARE_PERCENT, calculateTicketOrderPayouts } from '@/lib/ticketing';
 import type { ShowStatus } from '@prisma/client';
 
 /**
@@ -76,56 +74,12 @@ export function isTicketingOpen(show: ShowTicketing, now: Date = new Date()): bo
   return Boolean(show.ticketingOpensAt && show.ticketingOpensAt <= now);
 }
 
-export type ShowSplitSource = {
-  artistPayoutPercent: number | null;
-  venuePayoutPercent: number | null;
-};
-
-export type ShowSplits = {
-  artist: number;
-  venue: number;
-};
-
-/**
- * The charter split for this show, or null when it is not ticketed.
- *
- * Null whenever the artist or venue share is missing — see the header. The
- * NUMBERS are the charter's (75/25 since 2026-09-25), never the row's: a show
- * created under 70/20/10 carried those percentages until the migration moved
- * it, and a sale is always made under the charter constants, so the page must
- * state the same split the purchase route will use.
- */
-export function resolveShowSplits(show: ShowSplitSource): ShowSplits | null {
-  if (show.artistPayoutPercent === null || show.venuePayoutPercent === null) return null;
-  return { artist: ARTIST_SHARE_PERCENT, venue: VENUE_SHARE_PERCENT };
-}
-
-/**
- * What one ticket's face value becomes, in cents: Stripe's card fee first,
- * then the artist's and the venue's shares of what is left.
- *
- * The same arithmetic the purchase route runs (`calculateTicketOrderPayouts`
- * with the standard-rate fee on the face value), so a page can never state a
- * split the sale does not make. The three always sum to the face value. Tax is
- * not in it: the venue collects and remits tax as the merchant, and the page
- * states the split of the ticket price.
- */
-export function splitFaceValueCents(
-  faceValueCents: number,
-  splits: ShowSplits,
-): { fee: number; artist: number; venue: number } | null {
-  if (!Number.isFinite(faceValueCents) || !Number.isInteger(faceValueCents) || faceValueCents <= 0) return null;
-  const fee = stripeCutOf(faceValueCents);
-  if (fee >= faceValueCents) return null;
-  const payouts = calculateTicketOrderPayouts({
-    ticketPriceCents: faceValueCents,
-    quantity: 1,
-    venuePayoutPercent: splits.venue,
-    artistPayoutPercent: splits.artist,
-    stripeFeeCents: fee,
-  });
-  return { fee, artist: payouts.artistPayoutCents, venue: payouts.venuePayoutCents };
-}
+/* `resolveShowSplits()` and `splitFaceValueCents()` lived here until
+   2026-09-29 (DESIGN_SYNC row 533). They stated the fixed 75/25 the charter
+   carried for two days in September; since row 528 each act's share is the
+   percentage it signed, so a page that names a split reads the live
+   agreements (see `src/lib/artist-share.ts`) and both show pages gate the
+   ticket card on `isTicketed` alone. */
 
 /** "The Armory · Portland" — the one-line place, from whatever parts exist. */
 export function formatShowWhere(venue: { name?: string | null; city?: string | null } | null): string {

@@ -1,4 +1,39 @@
+<!-- retired-claim-exempt-file: everything below the first section is the dated record of the 2026-08-30 and 2026-09-06 walks, which rehearsed the settlement modes of the time; the header says what is live -->
 # Runbook — rehearse the money path before the first sale
+
+## As of 2026-09-29 — read this first
+
+**Every sale is `VENUE_KEEPS_ALL` (2026-09-27, DESIGN_SYNC row 528), and the
+record below rehearsed a model no sale takes any more.** A ticket is a direct
+charge on the venue's own Stripe account with no application fee; the venue
+keeps the face value, pays Stripe's card fee as its own cost, and pays each act
+its signed percentage outside Stripe within seven days. No payable is written
+and iHYPE holds no ticket money. Production held zero ticket orders of any mode
+when this header was written (row 533).
+
+What proves the live path now:
+
+- **The nightly acceptance walk** (`scripts/alpha-acceptance-walk.mts`, run by
+  `.github/workflows/nightly.yml` with the repository's Stripe test secrets):
+  items 15, 16 + 31, 17, 29 and R1 create the show, send and sign the offer,
+  buy a ticket on the venue's account, refund it through the cancel flow on the
+  venue's account, and read the settlement statement.
+- **`npm run stripe:rehearsal`** (`scripts/stripe-payout-rehearsal.mjs`): the
+  Stripe-side semantics of that sale — the charge lands on the venue with no
+  fee and is invisible to the platform, its refund returns the face value and
+  not the fee, and a sponsorship's unused days come back pro-rata without a
+  double refund. Needs a venue with `card_payments` active; exits 2 without one.
+- **`npm run stripe:disputes`** (`scripts/stripe-dispute-walk.mjs`): a
+  chargeback on such a charge is debited from the venue, never the platform.
+
+`rehearse:money` (`scripts/rehearse-money-path.mts`) is deleted: it watched
+payables go PENDING → RELEASED, rows a sale no longer creates, and the walk
+covers everything it did against the live model.
+
+The sections that follow are the record of the walks that preceded the
+agreement and are kept for their measurements; do not read a "step" below as
+an instruction.
+
 
 **Status: steps 1 AND 2 executed 2026-08-30 — step 1 clean (25/25, all three
 settlement modes), step 2 walked in all three modes, the one real defect it

@@ -103,6 +103,22 @@ export async function POST(request: Request, { params }: { params: Promise<{ sho
   if (!['DRAFT', 'SCHEDULED'].includes(show.status) || show.startsAt.getTime() <= Date.now()) {
     return NextResponse.json({ error: 'A lineup offer can only be sent or revised before the show.' }, { status: 400 });
   }
+  /* Sending again supersedes every live agreement (below), and a ticket can
+     only have been sold once every act had signed one — so a re-send after a
+     sale would erase the settlement statement, the report path and the 8.6
+     hold for money already taken (2026-09-29, DESIGN_SYNC row 533). The split
+     the acts signed is the split those tickets were sold under; changing it
+     means cancelling the show, which refunds every buyer (7.3). */
+  const soldOrders = await db.ticketOrder.count({ where: { showId: show.id, status: 'CAPTURED' } });
+  if (soldOrders > 0) {
+    return NextResponse.json(
+      {
+        error: 'Tickets have been sold under the agreements the acts signed, so the offer can no longer be revised. To change it, cancel the show (every buyer is refunded) and create it again.',
+        code: 'AGREEMENT_HAS_SALES',
+      },
+      { status: 409 },
+    );
+  }
 
   let body: z.infer<typeof schema>;
   try {
