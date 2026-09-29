@@ -183,11 +183,15 @@ export function MmmGettingStarted() {
   if (!open) return null;
 
   const progress = guide ? guideProgress(guide) : null;
-  const heading = guide?.role === 'VENUE'
-    ? t('gettingStarted.headingVenue', 'Get your venue ready')
-    : guide?.role === 'ARTIST'
-      ? t('gettingStarted.headingArtist', 'Get your artist page ready')
-      : t('gettingStarted.headingFan', 'How iHYPE works');
+  // A guide that failed to load has no role: its heading is neutral, so the
+  // failure never wears the fan guide's title over a creator's screen.
+  const heading = failed || !guide
+    ? t('gettingStarted.headingFailed', 'Getting started')
+    : guide.role === 'VENUE'
+      ? t('gettingStarted.headingVenue', 'Get your venue ready')
+      : guide.role === 'ARTIST'
+        ? t('gettingStarted.headingArtist', 'Get your artist page ready')
+        : t('gettingStarted.headingFan', 'How iHYPE works');
   const lede = guide?.role === 'VENUE' || guide?.role === 'ARTIST'
     ? t('gettingStarted.ledeCreator', 'A few minutes each. Tap a step to go straight to it. Steps tick off as you finish them.')
     : t('gettingStarted.ledeFan', 'Four things to know. The links at the top of every screen take you to each one.');

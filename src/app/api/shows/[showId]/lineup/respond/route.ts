@@ -88,6 +88,19 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ sh
     return NextResponse.json({ ok: true, status: 'DECLINED' });
   }
 
+  /* Signing is bounded the way sending is (lineup/route.ts): before the show,
+     on a show that is still DRAFT or SCHEDULED. Without this an offer never
+     expired — an act that never answered and never played could sign weeks
+     after a cancelled or finished show, and the settlement date being past,
+     report non-payment the same minute and pause every sale at the venue
+     (8.6) over a booking that never happened. Declining stays open: it
+     cannot bind anyone. */
+  if (!['DRAFT', 'SCHEDULED'].includes(show.status) || show.startsAt.getTime() <= Date.now()) {
+    return NextResponse.json(
+      { error: 'This offer can no longer be signed: the show has started, ended or been cancelled.', code: 'OFFER_CLOSED' },
+      { status: 409 },
+    );
+  }
   if (!myLineupSlot.agreementHash || !myLineupSlot.venueSignedAt || !myLineupSlot.venueSignerUserId || !myLineupSlot.venueSignerName) {
     return NextResponse.json({ error: 'This offer has not been signed by the venue. Ask the venue to send it again.' }, { status: 409 });
   }

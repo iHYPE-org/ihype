@@ -43,6 +43,7 @@ import { spawn } from 'node:child_process';
 import { seedSessionCookie, sessionCookieName } from '../e2e/fixtures/session';
 import { buildTicketVerificationUrl } from '../src/lib/tickets';
 import { hashTicketCode } from '../src/lib/door-manifest';
+import { isVenueMerchantMode } from '../src/lib/settlement-mode';
 import { exitCodeFor, renderBoard, rollUp } from '../src/lib/feature-health';
 
 const BASE = (process.env.ALPHA_BASE_URL ?? 'http://localhost:8787').replace(/\/$/, '');
@@ -2057,7 +2058,12 @@ async function main() {
     const refund = await stripe.refunds.retrieve(
       refunded.stripeRefundId!,
       {},
-      refunded.settlementMode === 'VENUE_DIRECT' && refunded.settlementAccountId ? { stripeAccount: refunded.settlementAccountId } : undefined,
+      /* The refund lives wherever the charge did. `isVenueMerchantMode` is the
+         one rule (settlement-mode.ts): VENUE_KEEPS_ALL since row 528 as well as
+         the older VENUE_DIRECT. Naming one mode here is how this item failed
+         the first night a refund existed (nightly run 32) — item 17 had
+         already passed on the same refund, read through the venue. */
+      isVenueMerchantMode(refunded.settlementMode) && refunded.settlementAccountId ? { stripeAccount: refunded.settlementAccountId } : undefined,
     );
     assert(refund.status === 'succeeded', `Stripe reports the refund as ${refund.status}`);
     /* The processing fee is deliberately NOT returned (see the refundableCents

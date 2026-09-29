@@ -23,7 +23,15 @@ async function signIn(context: BrowserContext, email: string, profiles?: { type:
 
 test('an artist gets their four setup steps, each linking into the editor', async ({ context, page }) => {
   await signIn(context, `e2e-guide-artist-${Date.now()}@ihype.org`, [{ type: 'ARTIST', name: 'Guide Test Band' }]);
+  /* The dialog exists only once /api/me/getting-started has answered, and
+     this test is the first request a cold worker serves: the pane's render,
+     hydration, the route module's first load and its Prisma reads all land
+     inside the same 5 s the assertion below allows. Wait for the read itself
+     and assert it was OK — a 503 opens the dialog under the fan heading, which
+     the locator would report as "not found" (flaked once, 2026-09-28). */
+  const guideRead = page.waitForResponse((r) => r.url().includes('/api/me/getting-started'));
   await page.goto('/app/me?guide=1');
+  expect((await guideRead).ok()).toBe(true);
 
   const dialog = page.getByRole('dialog', { name: 'Get your artist page ready' });
   await expect(dialog).toBeVisible();

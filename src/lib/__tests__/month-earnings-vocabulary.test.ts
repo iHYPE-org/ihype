@@ -32,7 +32,10 @@ function monthSubline(source: string, marker: string): string {
   const at = source.indexOf(marker);
   expect(at, `${marker} not found — the card was renamed; re-derive this guard`).toBeGreaterThan(0);
   const window = source.slice(at, at + 900);
-  const m = window.match(/t\('[A-Za-z.]*(?:thisMonthEarnedSub|paidOutThisMonth)',\s*'([^']+)'/);
+  // `paidToYouThisMonth` since 2026-09-29: under the split agreement the VENUE
+  // pays the act, so "paid out" (by iHYPE) became "paid to you", and the figure
+  // adds what a venue marked paid under a signed split this month.
+  const m = window.match(/t\('[A-Za-z.]*(?:thisMonthEarnedSub|paidOutThisMonth|paidToYouThisMonth)',\s*'([^']+)'/);
   expect(m, 'the "This Month" card has no sub-line naming its quantity').not.toBeNull();
   return (m as RegExpMatchArray)[1];
 }

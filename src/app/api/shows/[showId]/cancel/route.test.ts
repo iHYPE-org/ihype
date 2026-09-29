@@ -121,6 +121,8 @@ describe('who a cancellation is charged to (Split Agreement 7.3 and 7.4)', () =>
     expect((await cancel({ reason: 'artist', actProfileId: 'p_x' })).status).toBe(400);
     expect((await cancel({ reason: 'artist', actProfileId: 'p_b' })).status).toBe(200);
     expect(showUpdate.mock.calls.at(-1)?.[0].data.cancelledByActProfileId).toBe('p_b');
+    // Only a SIGNED act can be named: a pending or declined slot is not a party.
+    expect(slotFindMany).toHaveBeenLastCalledWith(expect.objectContaining({ where: expect.objectContaining({ status: 'ACCEPTED' }) }));
   });
 
   it('leaves the fees on the venue for every other reason', async () => {

@@ -22,7 +22,8 @@ safe, and when each pin should be removed again.
 "overrides": {
   "deepmerge-ts": "^8.0.2",   // was 7.1.5, pinned exactly by @prisma/config
   "mysql2": "^3.24.3",        // was 3.15.3, pinned exactly by prisma
-  "xcode": { "uuid": "^11.1.1" }  // was 7.0.3, via @capacitor/cli
+  "xcode": { "uuid": "^11.1.1" },  // was 7.0.3, via @capacitor/cli
+  "undici": "^7.29.1"         // was 7.29.0, pinned exactly by miniflare (wrangler, dev only)
 }
 ```
 
@@ -32,6 +33,7 @@ safe, and when each pin should be removed again.
 | GHSA-3f6p-5ww8-9rcr `mysql2 < 3.22` | high | `prisma` | `prisma@6.19.3` | pin `mysql2@^3.24.3` |
 | GHSA-rgwj-5xj2-c3m3 `mysql2 <= 3.23` | moderate | `prisma` | `prisma@6.19.3` | pin `mysql2@^3.24.3` |
 | GHSA-w5hq-g745-h8pq `uuid < 11.1.1` | moderate | `@capacitor/cli` → `xcode` | `@capacitor/cli@8.4.3` | pin `uuid@^11.1.1` in the `xcode` subtree |
+| GHSA-3wwx-pv8p-q78v `undici >=7.28.0 <7.29.1` (WebSocket permessage-deflate DoS) | moderate | `wrangler` → `miniflare` (dev only) | `wrangler@4.101.0`, a downgrade of 40 minors | pin `undici@^7.29.1` (miniflare pins 7.29.0 exactly); driven by the full workerd e2e suite, 2026-09-29 |
 
 Every fix npm offered was a **major-version downgrade of a working build tool**
 — Prisma 7 back to 6, against 127 migrations and a `prisma.config.ts` written

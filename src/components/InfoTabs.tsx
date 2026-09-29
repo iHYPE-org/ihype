@@ -197,7 +197,7 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
         {/* Only the part /charter said that this tab did not. Its full
             paragraph opened with the same sentence as fundedBody above, so
             folding it in verbatim would have printed that sentence twice. */}
-        <p>{t('legalPage.charter.processingFeeBodyNet', 'None of it touches the ticket split. Tickets are sold by the venue through Stripe. Stripe’s card fee (2.9% + $0.30 on a standard US card; more on AMEX and international cards) comes off the face value before the split, and the buyer pays the ticket price plus tax and nothing else.')}</p>
+        <p>{t('legalPage.charter.processingFeeBodyVenue', 'None of it touches ticket money. Tickets are sold by the venue through Stripe, the venue keeps every sale and pays each act the share both signed, and Stripe’s card fee (2.9% + $0.30 on a standard US card; more on AMEX and international cards) is the venue’s cost. The buyer pays the ticket price plus tax and nothing else.')}</p>
         <p><Link href="/advertise" className="charter-inline-link">{t('charterPage.advertisingLink', 'See how advertising works →')}</Link></p>
         <h2>{t('legalPage.charter.leanTitle', 'Why so few people run this')}</h2>
         <p>{t('legalPage.charter.leanBody', "iHYPE is run by two people, leaning on AI automation to keep operating costs at the absolute minimum. That's deliberate: a lean operation is a sustainable operation, and there's no boardroom of investors around to talk us into breaking any of the above.")}</p>

@@ -112,7 +112,7 @@ export default async function ArtistDashboardPage({ params }: { params: Promise<
         <Link className="ad-stat-card" href={`/app/me/artists/${profile.slug}/analytics`}>
           <div className="ad-stat-label">{t('artistsSlugDashboardPage.thisMonthLabel', 'This Month')}</div>
           <div className="ad-stat-val" style={{ color: 'var(--accent-text)' }}>{formatCurrencyFromCents(dashStats.monthEarningsCents, locale)}</div>
-          <div className="ad-stat-sub">{t('artistsSlugDashboardPage.paidOutThisMonth', 'Paid out to you this month · $0 iHYPE fee')}</div>
+          <div className="ad-stat-sub">{t('artistsSlugDashboardPage.paidToYouThisMonth', 'Paid to you this month · $0 iHYPE fee')}</div>
         </Link>
         <div className="ad-stat-card">
           <div className="ad-stat-label">{t('artistsSlugDashboardPage.ticketsSoldLabel', 'Tickets Sold')}</div>
@@ -132,9 +132,11 @@ export default async function ArtistDashboardPage({ params }: { params: Promise<
               release date at all — only an earliest one. */}
           <div className="ad-stat-sub">{!dashStats.nextPayoutAt
             ? t('artistsSlugDashboardPage.noPendingPayout', 'No pending payout')
-            : dashStats.nextPayoutAwaitingShow
-              ? t('artistsSlugDashboardPage.releaseEarliest', 'Earliest — the show has to end first')
-              : t('artistsSlugDashboardPage.releaseAfterHold', 'Once the dispute window closes')}</div>
+            : dashStats.nextPayoutSource === 'agreement'
+              ? t('artistsSlugDashboardPage.venuePaysBy', 'The venue pays you by this date under your signed agreement')
+              : dashStats.nextPayoutAwaitingShow
+                ? t('artistsSlugDashboardPage.releaseEarliest', 'Earliest — the show has to end first')
+                : t('artistsSlugDashboardPage.releaseAfterHold', 'Once the dispute window closes')}</div>
         </div>
       </div>
 
