@@ -114,21 +114,21 @@
     "@capacitor/cli": "^8.5.2",
     "@next/bundle-analyzer": "^16.3.6",
     "@playwright/test": "^1.62.1",
-    "@types/node": "^26.6.2",
+    "@types/node": "^26.6.3",
     "@types/pg": "^8.23.1",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
-    "@vitest/coverage-v8": "^5.0.1",
+    "@vitest/coverage-v8": "^5.0.2",
     "chrome-launcher": "^1.2.1",
-    "dotenv": "^18.0.3",
+    "dotenv": "^18.0.4",
     "glob": "^13.0.6",
     "lighthouse": "^13.5.0",
     "prisma": "7.10.0",
     "tsx": "^4.23.15",
     "typescript": "^6.0.3",
-    "vite": "^8.3.0",
-    "vitest": "^5.0.1",
-    "wrangler": "^4.136.3"
+    "vite": "^8.3.1",
+    "vitest": "^5.0.2",
+    "wrangler": "^4.141.0"
   },
   "overrides": {
     "postcss": {
