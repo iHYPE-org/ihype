@@ -154,13 +154,13 @@ export const JOURNEYS: Journey[] = [
   },
   {
     id: 'payouts',
-    name: 'The artist and venue shares reach real accounts',
+    name: 'The venue keeps the sale, the act records where it is paid, and a refund reconciles',
     tier: 'core',
     /* The sale and the replay are here as well as under ticketing: the payable
        rows are written by the sale, and "one event twice pays once" is a
        payout assertion that happens to be reached through a ticket. */
     keys: ['29', '16 + 31', 'Replay', 'R1'],
-    toProve: 'set STRIPE_TEST_SECRET_KEY, and onboard a third Connect account so DESTINATION mode can rehearse',
+    toProve: 'set STRIPE_TEST_SECRET_KEY, with a venue whose Connect account has card_payments active',
   },
   {
     id: 'fan-payment',

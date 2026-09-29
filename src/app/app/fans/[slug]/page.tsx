@@ -318,9 +318,11 @@ export default async function FanProfilePage({
                 </p>
               </div>
             )}
-            {promoterDashboard.earnedCents === 0 ? (
-              <div className="fan-empty"><p>{t('fansSlugPage.noEarningsYet', 'No earnings yet — share your link!')}</p></div>
-            ) : (
+            {/* A link earns nothing since the split agreement (row 528), so a
+                zero is not an empty state to fill — the explainer above says
+                what the link does. The row survives only for the earnings a
+                fan's link attributed under the old split, which still settle. */}
+            {promoterDashboard.earnedCents > 0 && (
               <div className="fan-payout-list">
                 <div className="fan-payout-row">
                   <span>{t('fansSlugPage.totalEarnedLabel', 'Total earned (pending settlement)')}</span>

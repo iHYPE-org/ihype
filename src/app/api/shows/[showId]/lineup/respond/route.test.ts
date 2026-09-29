@@ -77,6 +77,19 @@ describe('PATCH /api/shows/[showId]/lineup/respond — the act signs the split a
     expect(emailSignedAgreement).toHaveBeenCalledWith('agr_1');
   });
 
+  it('refuses a signature after the show has started, and on a cancelled show, but still takes a decline', async () => {
+    showFindUnique.mockResolvedValue({ ...SHOW, startsAt: new Date(Date.now() - 60_000) });
+    const late = await PATCH(req({ status: 'ACCEPTED', agreementHash: hash, signerName: 'Sam Band' }), params);
+    expect(late.status).toBe(409);
+    expect((await late.json()).code).toBe('OFFER_CLOSED');
+    showFindUnique.mockResolvedValue({ ...SHOW, status: 'CANCELED' });
+    const cancelled = await PATCH(req({ status: 'ACCEPTED', agreementHash: hash, signerName: 'Sam Band' }), params);
+    expect(cancelled.status).toBe(409);
+    expect(agreementCreate).not.toHaveBeenCalled();
+    const declined = await PATCH(req({ status: 'DECLINED' }), params);
+    expect(declined.status).toBe(200);
+  });
+
   it('refuses to sign text that differs from what the act was shown', async () => {
     const res = await PATCH(req({ status: 'ACCEPTED', agreementHash: 'a'.repeat(64), signerName: 'Sam Band' }), params);
     expect(res.status).toBe(409);

@@ -128,7 +128,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ sho
      so a request that cannot say who caused it refunds nothing. */
   let cancelledByActProfileId: string | null = null;
   if (body.reason === 'artist') {
-    const acts = await db.showLineupSlot.findMany({ where: { showId }, select: { profileId: true } });
+    // Only an act that SIGNED can have cancelled on the venue: a PENDING or
+    // DECLINED slot has no agreement, so naming it would charge 7.4's fees to
+    // a non-party and leave the signed acts owed the 7.3 amount.
+    const acts = await db.showLineupSlot.findMany({ where: { showId, status: 'ACCEPTED' }, select: { profileId: true } });
     if (body.actProfileId) {
       if (!acts.some((a) => a.profileId === body.actProfileId)) {
         return NextResponse.json({ error: 'That act is not on this show\'s lineup.' }, { status: 400 });

@@ -19,7 +19,16 @@ const schema = z.discriminatedUnion('action', [
   z.object({
     action: z.literal('mark_paid'),
     amountCents: z.number().int().positive().max(1_000_000_000),
-    paidOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    // A real calendar day, not merely the shape of one: `2026-13-45` matched
+    // the pattern, became an Invalid Date at the write and threw a 500.
+    paidOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(
+      (day) => {
+        const at = new Date(`${day}T12:00:00Z`);
+        // An Invalid Date THROWS from toISOString; a refine that throws is an exception, not a refusal.
+        return !Number.isNaN(at.getTime()) && at.toISOString().slice(0, 10) === day;
+      },
+      { message: 'paidOn must be a real date (YYYY-MM-DD).' },
+    ),
     method: z.string().trim().min(2).max(80),
     reference: z.string().trim().min(1).max(120),
   }),
