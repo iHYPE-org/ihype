@@ -10,6 +10,15 @@ export default defineConfig({
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000',
     trace: 'on-first-retry',
+    /* A browser the environment already holds, in place of the build this
+       @playwright/test version would download. A managed sandbox ships one
+       Chromium under PLAYWRIGHT_BROWSERS_PATH and forbids `playwright
+       install`; when the lockfile moves Playwright past that build the whole
+       suite dies at launch ("Executable doesn't exist"). Unset, nothing
+       changes — CI installs the matching build and never sets this. */
+    ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
+      ? { launchOptions: { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH } }
+      : {}),
   },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
