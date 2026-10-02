@@ -2,6 +2,8 @@ import { db } from '@/lib/db';
 import { createMagicLinkToken } from '@/lib/magic-link-token';
 import { sendGenericEmail } from '@/lib/mailer';
 import { pendingDigest } from '@/lib/magic-link-pending';
+import { getTForLocale } from '@/lib/i18n/server';
+import { readUserLocale } from '@/lib/user-locale';
 
 /**
  * Creates a magic-link token for a user and emails it — the same sign-in
@@ -28,12 +30,20 @@ export async function sendMagicLinkEmail(userId: string, email: string): Promise
     'https://ihype.org';
   const link = `${baseUrl.replace(/\/$/, '')}/api/auth/magic?token=${token}`;
 
+  /* The first email that follows the member's language (2026-10-02): the one
+     every member receives, written in the locale stored on their account.
+     Nothing member-typed is interpolated — the dictionary's own sentences and
+     the link this function minted. */
+  const t = await getTForLocale(await readUserLocale(userId));
+  const intro = t('email.magicLink.intro', 'Click the link below to sign in to iHYPE. It expires in 15 minutes.');
+  const ignore = t('email.magicLink.ignore', 'If you did not request this, ignore this email.');
+
   try {
     await sendGenericEmail({
       to: email,
-      subject: 'Your iHYPE sign-in link',
-      text: `Click this link to sign in to iHYPE (expires in 15 minutes):\n\n${link}\n\nIf you did not request this, ignore this email.`,
-      html: `<p>Click the link below to sign in to iHYPE. It expires in 15 minutes.</p><p><a href="${link}">${link}</a></p><p>If you did not request this, ignore this email.</p>`,
+      subject: t('email.magicLink.subject', 'Your iHYPE sign-in link'),
+      text: `${intro}\n\n${link}\n\n${ignore}`,
+      html: `<p>${intro}</p><p><a href="${link}">${link}</a></p><p>${ignore}</p>`,
     });
   } catch (error) {
     // Do not leave a live bearer token behind when delivery failed.

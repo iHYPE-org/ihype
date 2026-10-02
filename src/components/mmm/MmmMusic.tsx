@@ -36,6 +36,10 @@ type PlaylistRow = {
   id: string;
   name: string;
   count: number;
+  /* Whether anyone holding the id may open it; the owner's row offers the
+     switch. Read as `!== false` so a row from an older payload stays public,
+     which is what it was. */
+  isPublic: boolean;
   /* The playlist's own tracks. `FanPlaylistItem` stores a fully playable row —
      url, title, artist, artwork — and `/api/fan-playlists` has always returned
      them; this type dropped the lot and kept a count, so the tab whose entire
@@ -139,10 +143,10 @@ const DEMO_CHARTS: ChartRow[] = [
 ];
 
 const DEMO_PLAYLISTS: PlaylistRow[] = [
-  { id: 'demo-list-1', name: 'Saved from Discover', count: 18, items: [] },
-  { id: 'demo-list-2', name: 'Portland After Dark', count: 12, items: [] },
-  { id: 'demo-list-3', name: 'New Local Releases', count: 24, items: [] },
-  { id: 'demo-list-4', name: 'Friday Show Shortlist', count: 7, items: [] },
+  { id: 'demo-list-1', name: 'Saved from Discover', count: 18, isPublic: true, items: [] },
+  { id: 'demo-list-2', name: 'Portland After Dark', count: 12, isPublic: true, items: [] },
+  { id: 'demo-list-3', name: 'New Local Releases', count: 24, isPublic: true, items: [] },
+  { id: 'demo-list-4', name: 'Friday Show Shortlist', count: 7, isPublic: true, items: [] },
 ];
 
 /**
@@ -1196,8 +1200,8 @@ function LikedProfileRows({ rows, heading, hrefFor }: {
  * once the server has said so, because a rename that appears to work and did
  * not is worse than one that visibly failed.
  */
-function OwnPlaylistRow({ list, onRenamed, onDeleted }: {
-  list: PlaylistRow; onRenamed: (name: string) => void; onDeleted: () => void;
+function OwnPlaylistRow({ list, onRenamed, onDeleted, onVisibility }: {
+  list: PlaylistRow; onRenamed: (name: string) => void; onDeleted: () => void; onVisibility: (isPublic: boolean) => void;
 }) {
   const { t } = useI18n();
   const [mode, setMode] = useState<'idle' | 'rename' | 'confirm'>('idle');
@@ -1220,6 +1224,27 @@ function OwnPlaylistRow({ list, onRenamed, onDeleted }: {
       setMode('idle');
     } catch {
       setError(t('mmmMusic.renameFailed', 'That name could not be saved.'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  /* Public or private, written first and shown only once the server agreed:
+     the share link is the thing at stake, and a switch that lit before the
+     write landed would tell a member their list was private while it was
+     still open to anyone holding the id (row 455's rule). */
+  const setVisibility = async (isPublic: boolean) => {
+    setBusy(true); setError(null);
+    try {
+      const response = await fetch(`/api/fan-playlists/${list.id}`, {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ isPublic }),
+      });
+      if (!response.ok) throw new Error(String(response.status));
+      onVisibility(isPublic);
+    } catch {
+      setError(t('mmmMusic.visibilityFailed', 'That setting could not be saved.'));
     } finally {
       setBusy(false);
     }
@@ -1262,7 +1287,7 @@ function OwnPlaylistRow({ list, onRenamed, onDeleted }: {
       <div className="mmm-row" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
         <Link className="mmm-row-link" href={`/app/playlists/${list.id}`}>
           <span className="mmm-row-title">{list.name}</span>
-          <span className="mmm-row-sub">{list.count} {list.count === 1 ? t('mmmMusic.trackOne', 'track') : t('mmmMusic.trackMany', 'tracks')}</span>
+          <span className="mmm-row-sub">{list.count} {list.count === 1 ? t('mmmMusic.trackOne', 'track') : t('mmmMusic.trackMany', 'tracks')}{list.isPublic ? '' : ` · ${t('mmmMusic.privateTag', 'Private')}`}</span>
         </Link>
         {mode === 'confirm' ? (
           <>
@@ -1271,8 +1296,18 @@ function OwnPlaylistRow({ list, onRenamed, onDeleted }: {
           </>
         ) : (
           <>
-            <button aria-label={`${t('mmmMusic.rename', 'Rename')} ${list.name}`} className="mmm-btn-ghost" onClick={() => setMode('rename')} type="button">{t('mmmMusic.rename', 'Rename')}</button>
-            <button aria-label={`${t('mmmMusic.delete', 'Delete')} ${list.name}`} className="mmm-btn-ghost" onClick={() => setMode('confirm')} type="button">{t('mmmMusic.delete', 'Delete')}</button>
+            <button aria-label={`${t('mmmMusic.rename', 'Rename')} ${list.name}`} className="mmm-btn-ghost" disabled={busy} onClick={() => setMode('rename')} type="button">{t('mmmMusic.rename', 'Rename')}</button>
+            <button
+              aria-label={`${list.isPublic ? t('mmmMusic.makePrivate', 'Make private') : t('mmmMusic.makePublic', 'Make public')} ${list.name}`}
+              aria-pressed={!list.isPublic}
+              className="mmm-btn-ghost"
+              disabled={busy}
+              onClick={() => void setVisibility(!list.isPublic)}
+              type="button"
+            >
+              {list.isPublic ? t('mmmMusic.makePrivate', 'Make private') : t('mmmMusic.makePublic', 'Make public')}
+            </button>
+            <button aria-label={`${t('mmmMusic.delete', 'Delete')} ${list.name}`} className="mmm-btn-ghost" disabled={busy} onClick={() => setMode('confirm')} type="button">{t('mmmMusic.delete', 'Delete')}</button>
           </>
         )}
       </div>
@@ -1312,6 +1347,7 @@ function PlaylistsTab() {
       id: String(list.id ?? ''),
       name: String(list.name ?? 'Playlist'),
       count: Array.isArray(list.items) ? list.items.length : Number(list.itemCount ?? 0),
+      isPublic: list.isPublic !== false,
       items: Array.isArray(list.items) ? (list.items as PlayableRow[]) : [],
     }));
   });
@@ -1451,6 +1487,7 @@ function PlaylistsTab() {
               list={list}
               onDeleted={() => setLists((current) => (current ?? []).filter((entry) => entry.id !== list.id))}
               onRenamed={(name) => setLists((current) => (current ?? []).map((entry) => (entry.id === list.id ? { ...entry, name } : entry)))}
+              onVisibility={(isPublic) => setLists((current) => (current ?? []).map((entry) => (entry.id === list.id ? { ...entry, isPublic } : entry)))}
             />
           ))}
         </>

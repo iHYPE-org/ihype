@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { Prisma } from '@prisma/client/edge';
 import { getDiscoverPathForType, getProfilePathForType } from '@/lib/account-routing';
 import { recordAuditEvent } from '@/lib/audit';
+import { localeFromCookieHeader } from '@/lib/i18n/locales';
 import { db } from '@/lib/db';
 import {
   generateUniqueProfileHexId,
@@ -359,6 +360,9 @@ export async function POST(request: Request) {
           // null, and null now means "signed up before this was recorded"
           // rather than "unknown".
           tosAcceptedAt: new Date(),
+          // The language the signup form was read in, so the account speaks it
+          // from the first email on. Null when no cookie reached this request.
+          locale: localeFromCookieHeader(request.headers.get('cookie')) ?? undefined,
           role: body.role,
         },
         select: { id: true, email: true, username: true, role: true },

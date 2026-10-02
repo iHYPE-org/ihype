@@ -9,6 +9,7 @@ interface Ad {
   id: string;
   title: string;
   scope: string;
+  city?: string | null;
   audioUrl: string | null;
   audioDurationSecs: number | null;
   clickUrl: string | null;
@@ -127,7 +128,7 @@ export function AdminAdsClient({ ads: initial, status, q, page, total, pageSize 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
                 <strong>{ad.title}</strong>
-                <span className="meta" style={{ marginLeft: 8 }}>{ad.slot?.name ?? ad.scope}</span>
+                <span className="meta" style={{ marginLeft: 8 }}>{ad.slot?.name ?? ad.scope}{ad.city ? ` · ${ad.city}` : ''}</span>
                 {ad.advertiser?.email && <span className="meta" style={{ marginLeft: 8 }}>· {ad.advertiser.name ?? ad.advertiser.email}</span>}
               </div>
               <span className={`badge ${STATUS_COLORS[ad.status] ?? ''}`}>{ad.status}</span>

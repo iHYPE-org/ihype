@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { SUPPORTED_LOCALES, RTL_LOCALES, isSupportedLocale, LOCALE_COOKIE, type Locale } from '@/lib/i18n/locales';
+import { SUPPORTED_LOCALES, RTL_LOCALES, isSupportedLocale, LOCALE_COOKIE, type Locale, type LocaleSource } from '@/lib/i18n/locales';
 
 const STORAGE_KEY = 'ihype-locale';
 
@@ -77,6 +77,7 @@ const I18nContext = createContext<I18nContextValue | null>(null);
 export function I18nProvider({
   children,
   initialLocale,
+  initialLocaleSource = 'cookie',
   initialDictionary,
 }: {
   children: ReactNode;
@@ -88,6 +89,14 @@ export function I18nProvider({
    * hydration mismatch for every non-English member on every page.
    */
   initialLocale: Locale;
+  /**
+   * Where the server found `initialLocale`. 'account' means no cookie reached
+   * the request and the server honoured the member's STORED choice; the mount
+   * effect then writes the cookie from it instead of guessing from the
+   * browser, or a Spanish member on a new device would see Spanish for one
+   * frame and English after hydration.
+   */
+  initialLocaleSource?: LocaleSource;
   initialDictionary: Dictionary;
 }) {
   const router = useRouter();
@@ -104,8 +113,13 @@ export function I18nProvider({
     // cookie (a first visit) the server rendered English, and the saved or
     // browser language is applied AFTER hydration — a state change, not a
     // mismatch — and written down so the next request renders in it.
-    if (hasLocaleCookie()) {
+    if (hasLocaleCookie() || initialLocaleSource === 'account') {
+      // The server already honoured the member's choice — this browser's
+      // cookie, or the account's stored locale on a browser with none — and
+      // the state above matches the HTML. Write it down so the next request
+      // reads it the cheap way.
       writeLocaleCookie(initialLocale);
+      if (initialLocaleSource === 'account') window.localStorage.setItem(STORAGE_KEY, initialLocale);
       return;
     }
     const initial = detectInitialLocale();
@@ -148,6 +162,15 @@ export function I18nProvider({
     setLocaleState(next);
     window.localStorage.setItem(STORAGE_KEY, next);
     writeLocaleCookie(next);
+    // The choice follows the member to their next device and into the mail
+    // that can be translated (User.locale). Best effort: a signed-out visitor
+    // answers 401 and the cookie above already holds the choice for this
+    // browser, so nothing here may fail the switch.
+    fetch('/api/me', {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ locale: next }),
+    }).catch(() => {});
     // A failed chunk load is not swallowed into silence any more: the refresh
     // below re-delivers the server's dictionary, and the effect above takes
     // it (DESIGN_SYNC row 457).

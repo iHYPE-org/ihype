@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
   }
 
   let body: {
-    scope?: unknown; months?: unknown;
+    scope?: unknown; months?: unknown; city?: unknown;
     title?: unknown; audioUrl?: unknown; audioDurationSecs?: unknown; clickUrl?: unknown;
   };
   try { body = await request.json(); } catch { return NextResponse.json({ error: 'Invalid JSON.' }, { status: 400 }); }
@@ -124,6 +124,16 @@ export async function POST(request: NextRequest) {
      it was a unit the buyer chose and the server never honoured. */
   if (!isSponsorshipTerm(body.months)) {
     return NextResponse.json({ error: `months must be one of ${SPONSORSHIP_TERMS_MONTHS.join(', ')}.` }, { status: 400 });
+  }
+  /* The place a LOCAL or REGIONAL sponsorship is bought for (2026-10-02).
+     LOCAL without a city is a tier name and not a place, which is how every
+     local sponsor came to share one rotation with no cap possible; NATIONAL
+     and GLOBAL carry none, whatever the client sent. Delivery does not read
+     it yet — see the column's comment in schema.prisma. */
+  const cityInput = typeof body.city === 'string' ? body.city.trim().replace(/\s+/g, ' ').slice(0, 80) : '';
+  const city = body.scope === 'LOCAL' || body.scope === 'REGIONAL' ? cityInput || null : null;
+  if (body.scope === 'LOCAL' && !city) {
+    return NextResponse.json({ error: 'city is required for a LOCAL sponsorship — name the city the spot is for.' }, { status: 400 });
   }
 
   // Slot is resolved from the coverage tier, not chosen directly by the
@@ -214,6 +224,7 @@ export async function POST(request: NextRequest) {
       advertiserId: session.user.id,
       title,
       scope: body.scope,
+      city,
       audioUrl,
       audioDurationSecs: typeof body.audioDurationSecs === 'number' && Number.isFinite(body.audioDurationSecs)
         ? Math.max(0, Math.round(body.audioDurationSecs))

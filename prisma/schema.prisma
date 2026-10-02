@@ -147,6 +147,14 @@ model User {
   lastLoginCountry        String?
   lastLoginAt             DateTime?
   tosAcceptedAt           DateTime?
+  // The language the member chose in the product (2026-10-02), one of
+  // SUPPORTED_LOCALES or null for "never chose". Written at signup from the
+  // locale cookie and whenever the switcher runs; read when a request carries
+  // no cookie (a new device, a fresh browser) so the member's language is
+  // honoured before they touch the switcher, and by the mail that can be
+  // translated — the first is the sign-in link. Until this column existed every
+  // email was English because nothing stored what language the member reads.
+  locale                  String?
   welcomeDay3SentAt       DateTime?
   welcomeDay7SentAt       DateTime?
   weeklyDigestSentAt      DateTime?
@@ -387,6 +395,13 @@ model FanPlaylist {
   id        String            @id @default(cuid())
   userId    String
   name      String
+  // Whether anyone holding the id may open it (2026-10-02). Every playlist was
+  // public to anyone with its id and the member had no way to say otherwise;
+  // the default keeps every existing playlist exactly as shareable as it was.
+  // A private playlist answers its owner only; the owner's own list, the
+  // search scope and the player's manager are unaffected because they are
+  // already scoped to the member.
+  isPublic  Boolean           @default(true)
   createdAt DateTime          @default(now())
   updatedAt DateTime          @updatedAt
   user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -1578,6 +1593,14 @@ model Ad {
   // Coverage tier the campaign was purchased at — LOCAL | REGIONAL | NATIONAL | GLOBAL.
   // Drives per-spot pricing and reach; separate from slotId (the placement).
   scope                 String         @default("REGIONAL")
+  // The place a LOCAL or REGIONAL sponsorship is bought for (2026-10-02),
+  // as the advertiser typed it ("Portland, ME"). Until this column existed
+  // LOCAL was a tier NAME and not a place: every local sponsor shared one
+  // rotation and no per-city cap could exist (DESIGN_SYNC row 384 recorded
+  // the gap). Required for LOCAL, optional for REGIONAL, null for the national
+  // and global tiers. Delivery does not read it yet — the station still
+  // targets nobody by place — so it is the prerequisite for a cap, not the cap.
+  city                  String?
   // How this campaign was SOLD, which decides how it settles (2026-09-10).
   // SPONSORSHIP: a flat monthly term; impressions are the delivery report and
   // nothing meters `spentCents`, so an early cancellation refunds the unused

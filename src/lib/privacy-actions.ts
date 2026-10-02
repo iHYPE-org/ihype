@@ -383,6 +383,7 @@ export async function executeAccountErasure(
       stripeCustomerId: null,
       lastLoginCountry: null,
       lastLoginAt: null,
+      locale: null,
       adminDeviceTokenHash: null,
       adminDeviceSetAt: null,
       emailBounced: true,
