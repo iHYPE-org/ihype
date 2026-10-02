@@ -18,6 +18,12 @@ vi.mock('@/lib/audit', () => ({ recordAuditEvent: vi.fn().mockResolvedValue(unde
 vi.mock('@/lib/ad-campaign-notify', () => ({ notifyAdvertiser: vi.fn().mockResolvedValue(undefined) }));
 vi.mock('@/lib/defer-work', () => ({ deferWork: vi.fn() }));
 vi.mock('@/lib/runtime-flags', () => ({ isAdvertisingEnabledRuntime: vi.fn().mockResolvedValue(true) }));
+/* The upload-origin check needs a configured public base the test runner has
+   none of; the city rule under test sits behind it. */
+vi.mock('@/lib/object-storage', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/object-storage')>()),
+  isTrustedStorageUrl: () => true,
+}));
 vi.mock('@/lib/ad-vetting', () => ({
   vetAdvertisement: vi.fn(),
   vetAdAudioContent: vi.fn(),
@@ -36,6 +42,7 @@ vi.mock('@/lib/db', () => ({
       findMany: vi.fn().mockResolvedValue([]),
       update: vi.fn().mockResolvedValue({ id: 'ad-1' }),
     },
+    adSlot: { findFirst: vi.fn().mockResolvedValue(null) },
   },
 }));
 
@@ -96,5 +103,28 @@ describe('campaign routes inside the iOS and Android apps', () => {
     const res = await POST(request('POST', { title: 'Spot' }, SAFARI_UA));
     expect(res.status).not.toBe(403);
     expect(consumeRateLimit).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('the place a sponsorship is bought for', () => {
+  const spot = { title: 'Spot', audioUrl: 'https://ihype.org/cdn/ads/audio/spot.mp3', months: 1 };
+
+  it('refuses a LOCAL sponsorship with no city, by name', async () => {
+    const res = await POST(request('POST', { ...spot, scope: 'LOCAL' }, SAFARI_UA));
+    expect(res.status).toBe(400);
+    expect(((await res.json()) as { error: string }).error).toMatch(/city is required for a LOCAL sponsorship/);
+  });
+
+  it('refuses a LOCAL sponsorship whose city is whitespace', async () => {
+    const res = await POST(request('POST', { ...spot, scope: 'LOCAL', city: '   ' }, SAFARI_UA));
+    expect(res.status).toBe(400);
+  });
+
+  it('does not ask a NATIONAL sponsorship for a city', async () => {
+    const res = await POST(request('POST', { ...spot, scope: 'NATIONAL' }, SAFARI_UA));
+    /* The request gets past the city rule to the slot lookup, which this
+       harness answers with nothing — so whatever it says, it is not about a city. */
+    const body = (await res.json()) as { error?: string };
+    expect(body.error ?? '').not.toMatch(/city/i);
   });
 });

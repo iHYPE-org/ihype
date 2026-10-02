@@ -79,11 +79,16 @@ function metaText(meta: Record<string, unknown>, key: string) {
  * console shipping a hydration boundary to switch between server-rendered
  * panels pays twice for one job.
  *
- * Queries are still one `Promise.all` of independently-caught reads, so every
- * tab still pays for all of them. Making them per-tab is a real improvement
- * and a SEPARATE change: doing it in the same pass as a 748-line move would
- * have made the conservation check meaningless, and that check is the only
- * thing standing between this refactor and a silently deleted panel.
+ * Each tab pays for its OWN reads and nothing else. The move left queries as
+ * one `Promise.all` of independently-caught reads on purpose — gating them in
+ * the same pass as a 748-line move would have made the conservation check
+ * meaningless, and that check is the only thing standing between a refactor
+ * like this and a silently deleted panel. The follow-up is the `needs()`
+ * helper below: every read names the tabs whose panels render it, and
+ * `admin-tab-gates.test.ts` holds each gate to EXACTLY those tabs, in both
+ * directions, derived locals included. (Its first version checked one
+ * direction only, and Overview went on paying for `pendingVerifications` —
+ * read by a "Needs attention" panel deleted on 2026-09-05 — for weeks.)
  */
 const ADMIN_TABS = [
   { id: 'overview', label: 'Overview' },
@@ -122,15 +127,21 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
    * fallback otherwise, so every variable keeps its name, its type and its
    * shape and not one line of JSX changed.
    *
-   * `health` is the exception and always runs: it has no `.catch()` to borrow
-   * a fallback from, and three of the five tabs read it anyway.
+   * `health` is the exception and always runs. It is read by Overview (the
+   * reserved-orders alert) and System (the Launch health panel), but it has
+   * no `.catch()` to borrow a fallback from — `getHealthSnapshot()` answers
+   * `degraded` from inside its own try — and the System panel reads
+   * `health.status` directly, so a null stand-in on the other tabs would be a
+   * JSX change rather than a scheduling one. The guard records it as the one
+   * deliberate always-run.
    */
   const needs = (...owners: AdminTab[]) => owners.includes(tab);
   // Rendered on the server so the board is populated on first paint rather
   // than flashing empty while the first poll lands. Guarded like every other
   // read here: a snapshot that could not be built must not take the console
   // down with it, so the board simply does not mount.
-  const pulse = tab === 'overview' ? await getAdminPulse().catch(() => null) : null;
+  /* pulse */
+  const pulse = needs('overview') ? await getAdminPulse().catch(() => null) : null;
   const funnelSince = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   const [
     userCount,
@@ -205,8 +216,12 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
         take: 6
       }))
       : Promise.resolve(null),
+    /* Support's queue is the only reader. Overview's "Needs attention" panel
+       read it too until 2026-09-05, when that panel was folded into the
+       routine board (DESIGN_SYNC row 349); its gate outlived it by weeks
+       because the guard then checked under-gating only. */
     /* pendingVerifications */
-    needs('overview', 'support')
+    needs('support')
       ? readList(db.profile.findMany({
         where: { verificationStatus: 'PENDING', verificationRequested: true },
         orderBy: { verificationSubmittedAt: 'desc' },
@@ -425,7 +440,9 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
      and every flag after it would report its neighbour's state on four of
      the five tabs. There is no count to keep in step this way. */
   ] = await Promise.all([
+    /* inviteOnlySignupEnabled */
     needs('system') ? isInviteCodeRequiredRuntime() : Promise.resolve(false),
+    /* inviteCodeSharingEnabled */
     needs('system') ? isInviteCodeSharingEnabledRuntime() : Promise.resolve(false),
     /* Read through the SAME helper the upload route enforces with. The board
        used to call `getRuntimeFlag` here with its own fallback ("is R2
@@ -433,14 +450,23 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
        route's value was Off — a switch reporting a different fact than the
        one it flips. `runtime-flag-readers.test.ts` keeps inline
        `getRuntimeFlag` calls out of this file for that reason. */
+    /* databaseMediaFallbackEnabled */
     needs('system') ? areDatabaseMediaUploadsEnabledRuntime() : Promise.resolve(false),
+    /* registrationsEnabled */
     needs('system') ? areRegistrationsEnabledRuntime() : Promise.resolve(false),
+    /* uploadsEnabled */
     needs('system') ? areUploadsEnabledRuntime() : Promise.resolve(false),
+    /* outboundEmailEnabled */
     needs('system') ? isOutboundEmailEnabledRuntime() : Promise.resolve(false),
+    /* advertisingEnabled */
     needs('system') ? isAdvertisingEnabledRuntime() : Promise.resolve(false),
+    /* paymentsEnabled */
     needs('system') ? arePaymentsEnabledRuntime() : Promise.resolve(false),
+    /* ticketsEnabled */
     needs('system') ? isTicketingEnabledRuntime() : Promise.resolve(false),
+    /* radioEnabled */
     needs('system') ? isRadioEnabledRuntime() : Promise.resolve(false),
+    /* mapsEnabled */
     needs('system') ? areMapsEnabledRuntime() : Promise.resolve(false),
   ]);
   const featureFlags = [
@@ -456,7 +482,9 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
     { key: 'radio_enabled', label: 'Radio delivery (stations and the always-on station)', enabled: radioEnabled },
     { key: 'maps_enabled', label: 'Location map lookups', enabled: mapsEnabled },
   ];
+  /* rateLimitMetrics */
   const rateLimitMetrics = needs('system') ? await getRateLimitMetrics(10) : [];
+  /* betaMetrics */
   const betaMetrics = needs('system') ? await getBetaMetrics().catch(() => null) : null;
   /* `null` from `readValue()`/`readList()` is a FAILED read, and it stays null
      through every figure derived from it: a dash on the card, never a

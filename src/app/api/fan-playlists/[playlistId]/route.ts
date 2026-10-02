@@ -21,11 +21,18 @@ import { db } from '@/lib/db';
  * account's row even if the id is guessed, and a count of 0 is the 404.
  */
 
-const renameSchema = z.object({
-  /* Same bound as the collection route's create. Trimmed, and non-empty after
-     trimming: a playlist called " " is unaddressable in a list. */
-  name: z.string().trim().min(1).max(120),
-});
+const patchSchema = z
+  .object({
+    /* Same bound as the collection route's create. Trimmed, and non-empty after
+       trimming: a playlist called " " is unaddressable in a list. */
+    name: z.string().trim().min(1).max(120).optional(),
+    /* Whether anyone holding the id may open it (2026-10-02). Every playlist
+       used to be public to anyone with its id, with no way to say otherwise. */
+    isPublic: z.boolean().optional(),
+  })
+  .refine((body) => body.name !== undefined || body.isPublic !== undefined, {
+    message: 'Nothing to change',
+  });
 
 export async function PATCH(
   request: Request,
@@ -38,16 +45,16 @@ export async function PATCH(
 
   const { playlistId } = await params;
 
-  let name: string;
+  let changes: { name?: string; isPublic?: boolean };
   try {
-    ({ name } = renameSchema.parse(await request.json()));
+    changes = patchSchema.parse(await request.json());
   } catch {
-    return NextResponse.json({ error: 'A playlist needs a name of 1–120 characters' }, { status: 400 });
+    return NextResponse.json({ error: 'A playlist needs a name of 1–120 characters, or a public/private setting' }, { status: 400 });
   }
 
   const result = await db.fanPlaylist.updateMany({
     where: { id: playlistId, userId: session.user.id },
-    data: { name },
+    data: changes,
   });
 
   /* Not found and not yours are the SAME answer on purpose: a distinct 403
@@ -57,7 +64,7 @@ export async function PATCH(
     return NextResponse.json({ error: 'Playlist not found' }, { status: 404 });
   }
 
-  return NextResponse.json({ id: playlistId, name });
+  return NextResponse.json({ id: playlistId, ...changes });
 }
 
 export async function DELETE(

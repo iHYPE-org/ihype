@@ -31,6 +31,8 @@ export default async function MmmPlaylistPage({ params }: { params: Promise<{ id
     select: {
       id: true,
       name: true,
+      userId: true,
+      isPublic: true,
       user: { select: { username: true } },
       items: {
         orderBy: [{ position: 'asc' }, { createdAt: 'asc' }],
@@ -53,6 +55,11 @@ export default async function MmmPlaylistPage({ params }: { params: Promise<{ id
 
   // Returned, not thrown — see `MmmMissing`.
   if (!playlist) return <MmmMissing kind="playlist" />;
+  /* A private playlist is its owner's alone, and "private" and "does not
+     exist" are the SAME answer to everyone else on purpose: a distinct page
+     would confirm that an id a caller could only guess is real. */
+  const isOwner = playlist.userId === session.user.id;
+  if (!playlist.isPublic && !isOwner) return <MmmMissing kind="playlist" />;
 
   const t = await getServerT();
 
@@ -68,6 +75,10 @@ export default async function MmmPlaylistPage({ params }: { params: Promise<{ id
       <h1 className="mmm-show-title">{playlist.name}</h1>
       <div className="mmm-show-where">
         by @{playlist.user.username} · {playlist.items.length} {playlist.items.length === 1 ? 'track' : 'tracks'}
+        {!playlist.isPublic && (
+          /* Only the owner ever reaches this branch (see the gate above). */
+          <> · <span className="mmm-profile-badge">{t('mmmPlaylistPane.private', 'Private — only you can open this')}</span></>
+        )}
       </div>
 
       <section className="mmm-profile-section">

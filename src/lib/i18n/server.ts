@@ -1,5 +1,5 @@
 import { cookies } from 'next/headers';
-import { isSupportedLocale, LOCALE_COOKIE, type Locale } from '@/lib/i18n/locales';
+import { isSupportedLocale, LOCALE_COOKIE, type Locale, type LocaleSource } from '@/lib/i18n/locales';
 
 type Dictionary = Record<string, string>;
 
@@ -93,11 +93,51 @@ async function loadDictionary(locale: Locale): Promise<Dictionary> {
   return dict;
 }
 
-/** Reads the visitor's locale cookie in a server component. Defaults to English when unset (first visit — the client provider sets this cookie on its own first render, so it lands on the next navigation). */
-export async function getLocale(): Promise<Locale> {
+
+/**
+ * The request's locale and where it came from. The cookie wins when it is
+ * there — it IS the member's choice on this browser. With no cookie (a new
+ * device, a fresh browser, the native app after a reinstall) a signed-in
+ * member's STORED choice is honoured, so the first screen is already in their
+ * language and the client provider writes the cookie from it rather than
+ * guessing from the browser. Only with neither is the answer English.
+ *
+ * The account read is a dynamic import on purpose: this module is imported
+ * by every server page, and `@/lib/auth` must not become a static dependency
+ * of the i18n layer (tests import this file without a database). A failed
+ * read is a plain English first visit, never an error.
+ */
+export async function resolveLocale(): Promise<{ locale: Locale; source: LocaleSource }> {
   const store = await cookies();
   const value = store.get(LOCALE_COOKIE)?.value;
-  return isSupportedLocale(value) ? value : 'en';
+  if (isSupportedLocale(value)) return { locale: value, source: 'cookie' };
+  try {
+    const { auth } = await import('@/lib/auth');
+    const session = await auth();
+    if (session?.user?.id) {
+      const { db } = await import('@/lib/db');
+      const user = await db.user.findUnique({ where: { id: session.user.id }, select: { locale: true } });
+      if (isSupportedLocale(user?.locale)) return { locale: user.locale, source: 'account' };
+    }
+  } catch {
+    // A first visit in English; the member can still choose.
+  }
+  return { locale: 'en', source: 'default' };
+}
+
+/** Reads the request's locale in a server component — the cookie, else the signed-in member's stored choice, else English. */
+export async function getLocale(): Promise<Locale> {
+  return (await resolveLocale()).locale;
+}
+
+/**
+ * A `t(key, fallback)` bound to a locale the CALLER already holds — the
+ * member's stored `User.locale` when writing them an email, where there is no
+ * request and no cookie. Same resolution as `getServerT()`.
+ */
+export async function getTForLocale(locale: Locale | null | undefined): Promise<(key: string, fallback?: string) => string> {
+  const dict = await loadDictionary(isSupportedLocale(locale) ? locale : 'en');
+  return (key: string, fallback?: string): string => dict[key] ?? fallback ?? key;
 }
 
 /**
@@ -128,8 +168,8 @@ export async function getServerT(): Promise<(key: string, fallback?: string) => 
  * a formatter receives and the locale `t` resolves against must be the SAME
  * value, or a page can read "lun, 14 sept" under an English heading.
  */
-export async function getServerI18n(): Promise<{ locale: Locale; t: (key: string, fallback?: string) => string }> {
-  const locale = await getLocale();
+export async function getServerI18n(): Promise<{ locale: Locale; source: LocaleSource; t: (key: string, fallback?: string) => string }> {
+  const { locale, source } = await resolveLocale();
   const dict = await loadDictionary(locale);
-  return { locale, t: (key: string, fallback?: string): string => dict[key] ?? fallback ?? key };
+  return { locale, source, t: (key: string, fallback?: string): string => dict[key] ?? fallback ?? key };
 }

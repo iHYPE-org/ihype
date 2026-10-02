@@ -53,10 +53,11 @@ function CoverageBuilder() {
   const [months, setMonths] = useState<SponsorshipTermMonths>(3);
   const [title, setTitle] = useState('');
   const [clickUrl, setClickUrl] = useState('');
+  const [city, setCity] = useState('');
   const [submit, setSubmit] = useState<SubmitState>({ phase: 'idle' });
   const [audio, setAudio] = useState<{ phase: 'idle' | 'uploading' | 'done' | 'error'; url?: string; durationSecs?: number | null; fileName?: string; error?: string }>({ phase: 'idle' });
-  const draft = useMemo(() => ({ scope, months, title, clickUrl, audio }), [audio, clickUrl, months, scope, title]);
-  const draftDirty = Boolean(title.trim() || clickUrl.trim() || audio.phase === 'done' || scope !== 'REGIONAL' || months !== 3);
+  const draft = useMemo(() => ({ scope, months, title, clickUrl, city, audio }), [audio, city, clickUrl, months, scope, title]);
+  const draftDirty = Boolean(title.trim() || clickUrl.trim() || city.trim() || audio.phase === 'done' || scope !== 'REGIONAL' || months !== 3);
   const clearDraft = useFormDraft({
     dirty: draftDirty,
     key: 'ihype-draft-ad-campaign',
@@ -65,6 +66,7 @@ function CoverageBuilder() {
       if ((SPONSORSHIP_TERMS_MONTHS as readonly number[]).includes(saved.months)) setMonths(saved.months);
       setTitle(saved.title ?? '');
       setClickUrl(saved.clickUrl ?? '');
+      setCity(saved.city ?? '');
       if (saved.audio?.phase === 'done' && saved.audio.url) setAudio(saved.audio);
     },
     value: draft,
@@ -109,6 +111,10 @@ function CoverageBuilder() {
   const TEXT_INPUT_S: React.CSSProperties = { width: '100%', fontFamily: "var(--f-b,'Work Sans',sans-serif)", fontSize: '0.9375rem', color: 'var(--ink)', background: 'var(--bg-3)', border: '1px solid var(--line-2)', borderRadius: 9, padding: '11px 13px', outline: 'none' };
 
   async function handleSubmit() {
+    if (scope === 'LOCAL' && !city.trim()) {
+      setSubmit({ phase: 'error', error: t('advertisePage.errNoCity', 'Name the city a local sponsorship is for.') });
+      return;
+    }
     if (!title.trim()) {
       setSubmit({ phase: 'error', error: t('advertisePage.errNoTitle', 'Give your campaign a title or ad copy line first.') });
       return;
@@ -128,6 +134,7 @@ function CoverageBuilder() {
         vetting: { status: 'AWAITING_PAYMENT' | 'REJECTED' | 'PENDING'; reasoning: string; message: string };
       }>('/api/advertise/campaigns', {
         scope, months, title: title.trim(), clickUrl: clickUrl.trim(),
+        city: scope === 'LOCAL' || scope === 'REGIONAL' ? city.trim() : undefined,
         audioUrl: audio.url, audioDurationSecs: audio.durationSecs ?? undefined,
       });
       if (result.vetting.status === 'AWAITING_PAYMENT' && result.checkoutUrl) {
@@ -223,6 +230,19 @@ function CoverageBuilder() {
                 value={clickUrl}
                 onChange={e => setClickUrl(e.target.value)}
               />
+              {(scope === 'LOCAL' || scope === 'REGIONAL') && (
+                /* The place the spot is bought for. Required for LOCAL: a local
+                   sponsorship with no city is a tier name, not a place. */
+                <input
+                  aria-label={t('advertisePage.cityLabel', 'City or metro')}
+                  style={TEXT_INPUT_S}
+                  placeholder={scope === 'LOCAL' ? t('advertisePage.cityPlaceholder', 'City this sponsorship is for — e.g. "Portland, ME"') : t('advertisePage.metroPlaceholder', 'State or metro (optional) — e.g. "Southern Maine"')}
+                  value={city}
+                  onChange={e => setCity(e.target.value)}
+                  maxLength={80}
+                  required={scope === 'LOCAL'}
+                />
+              )}
               <div>
                 <label className="adv-btn-ghost adv-btn-sm" style={{ display: 'inline-flex', cursor: 'pointer' }}>
                   {audio.phase === 'uploading' ? t('advertisePage.uploading', 'Uploading…') : audio.phase === 'done' ? t('advertisePage.replaceAudio', 'Replace ad audio') : t('advertisePage.uploadAudio', 'Upload ad audio (required)')}

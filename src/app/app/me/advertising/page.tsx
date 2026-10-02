@@ -264,7 +264,7 @@ export default async function AdvertiserDashboard() {
             <div className="ad-dash-campaign-top">
               <div>
                 <div className="ad-dash-campaign-name">{campaign.title}</div>
-                <div className="meta">{campaign.slot?.name ?? t('advertiseDashboardPage.unknownSlot', 'Unknown slot')} · {t('advertiseDashboardPage.submitted', 'Submitted')} {formatDate(locale, new Date(campaign.createdAt), { year: 'numeric', month: 'numeric', day: 'numeric' })}</div>
+                <div className="meta">{campaign.slot?.name ?? t('advertiseDashboardPage.unknownSlot', 'Unknown slot')}{campaign.city ? ` · ${campaign.city}` : ''} · {t('advertiseDashboardPage.submitted', 'Submitted')} {formatDate(locale, new Date(campaign.createdAt), { year: 'numeric', month: 'numeric', day: 'numeric' })}</div>
                 {campaign.clickUrl && (
                   <div className="meta ad-dash-campaign-link">
                     <a className="mmm-standalone-link" href={campaign.clickUrl} target="_blank" rel="noreferrer noopener">{campaign.clickUrl}</a>

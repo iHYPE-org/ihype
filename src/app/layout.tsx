@@ -227,7 +227,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
      join CTA's "Join Beta" vs "Join free" copy and is read here rather than in
      HeaderAuthLinks because that is a client component and the flag lives in
      KV. The session seeds SessionProvider — see readLayoutSession below. */
-  const [nonce, { locale, t }, inviteOnly, requestHeaders, session] = await Promise.all([
+  const [nonce, { locale, source: localeSource, t }, inviteOnly, requestHeaders, session] = await Promise.all([
     getCspNonce(),
     getServerI18n(),
     isInviteCodeRequiredRuntime(),
@@ -288,7 +288,7 @@ try{var C=window.Capacitor;if(C&&C.getPlatform&&C.getPlatform()==='ios')d.classL
         />
       </head>
       <body>
-        <AppProviders initialLocale={locale} initialDictionary={dictionary} session={session}>
+        <AppProviders initialLocale={locale} initialLocaleSource={localeSource} initialDictionary={dictionary} session={session}>
           <AppSplash />
           <a href="#main-content" className="skip-to-content">{t('layout.skipToContent', 'Skip to main content')}</a>
           <WebVitals />

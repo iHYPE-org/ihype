@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { isSupportedLocale } from '@/lib/i18n/locales';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 
@@ -72,6 +73,7 @@ export async function PATCH(req: Request) {
 
   let body: {
     name?: string;
+    locale?: string;
     discoverable?: boolean;
     notificationPreference?: {
       newShows: boolean; milestones: boolean; weeklyDigest: boolean;
@@ -84,8 +86,13 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  const updates: { name?: string } = {};
+  const updates: { name?: string; locale?: string } = {};
   if (typeof body.name === 'string') updates.name = body.name.trim().slice(0, 100);
+  /* The language switcher posts the choice here so it follows the member to
+     their next device and into the mail that can be translated. An unsupported
+     value is ignored rather than refused: the cookie already holds the choice
+     for this browser, and a 400 here would make the switcher look broken. */
+  if (typeof body.locale === 'string' && isSupportedLocale(body.locale)) updates.locale = body.locale;
 
   await db.user.update({ where: { id: session.user.id }, data: updates });
 
