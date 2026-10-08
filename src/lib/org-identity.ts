@@ -87,7 +87,7 @@ export const ORG_IDENTITY: OrgIdentity = {
   displayName: 'iHYPE',
   taxStatus: '501(c)(3) nonprofit',
   contactEmail: 'admin@ihype.org',
-  phone: '(207) 400-7782',
+  phone: '(207) 805-4161',
   website: 'https://ihype.org',
   foundedIn: 'Portland, Maine',
   foundedYear: 2026,
