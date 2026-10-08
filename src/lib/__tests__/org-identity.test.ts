@@ -48,7 +48,7 @@ describe('organisation identity', () => {
     expect(isPublicIdentityComplete()).toBe(true);
     expect(ORG_IDENTITY.legalName).toBe('iHYPE');
     expect(ORG_IDENTITY.ein).toBe('42-2162562');
-    expect(ORG_IDENTITY.phone).toBe('(207) 400-7782');
+    expect(ORG_IDENTITY.phone).toBe('(207) 805-4161');
     expect(formatAddress(ORG_IDENTITY.address)).toBe(
       '443 Western Ave., #1176, South Portland, ME 04106, US',
     );
