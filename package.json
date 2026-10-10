@@ -99,7 +99,7 @@
     "bcryptjs": "^3.0.3",
     "jsqr": "^1.4.0",
     "maplibre-gl": "^6.11.2",
-    "next": "16.3.6",
+    "next": "16.4.0",
     "next-auth": "5.0.0-beta.32",
     "pg": "^8.23.0",
     "react": "^19.3.0",
@@ -111,7 +111,7 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
     "@capacitor/cli": "^8.5.2",
-    "@next/bundle-analyzer": "^16.3.6",
+    "@next/bundle-analyzer": "^16.4.0",
     "@playwright/test": "^1.62.1",
     "@types/node": "^26.6.3",
     "@types/pg": "^8.23.1",
@@ -139,7 +139,9 @@
     "minimatch": "^10.2.5",
     "next-auth": "5.0.0-beta.32",
     "@auth/prisma-adapter": "2.11.3",
-    "sharp": "^0.35.3",
+    "sharp": "^0.35.5",
+    "proxy-addr": "^2.0.8",
+    "source-map-js": "^1.2.2",
     "deepmerge-ts": "^8.0.2",
     "mysql2": "^3.24.3",
     "xcode": {
