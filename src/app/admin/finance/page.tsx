@@ -177,7 +177,7 @@ export default async function AdminFinancePage({
               </div>
               {payoutBank.state === 'connected' ? (
                 <>
-                  <strong style={{ display: 'block', marginTop: 10 }}>
+                  <strong style={{ display: 'block', marginTop: 12 }}>
                     {payoutBank.bankName ?? t('adminFinancePage.bankAccount', 'Bank account')} ···· {payoutBank.last4}
                   </strong>
                   <span className="meta" style={{ display: 'block', marginTop: 4 }}>
@@ -189,13 +189,13 @@ export default async function AdminFinancePage({
                   </span>
                 </>
               ) : (
-                <strong style={{ display: 'block', marginTop: 10 }}>
+                <strong style={{ display: 'block', marginTop: 12 }}>
                   {payoutBank.state === 'not_connected'
                     ? t('adminFinancePage.connectBankInStripe', 'Connect a bank account in Stripe before accepting paid transactions.')
                     : t('adminFinancePage.retryBankStatus', 'Stripe is not configured or could not be reached. No routing changes were made.')}
                 </strong>
               )}
-              <p className="meta" style={{ margin: '10px 0 0' }}>
+              <p className="meta" style={{ margin: '12px 0 0' }}>
                 {t('adminFinancePage.bankVisibilityNote', 'Read-only payout routing from Stripe. Crowded balances and transactions will appear after Crowded API access is approved.')}
               </p>
             </article>
