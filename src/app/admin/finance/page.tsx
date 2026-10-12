@@ -6,6 +6,7 @@ import { db } from '@/lib/db';
 import Link from 'next/link';
 import { getServerT } from '@/lib/i18n/server';
 import { readList, readValue } from '@/lib/read-list';
+import { readPlatformPayoutBankStatus } from '@/lib/platform-payout-bank';
 
 export const metadata = {
   title: 'Finance | Admin | iHYPE',
@@ -42,7 +43,7 @@ export default async function AdminFinancePage({
   const ticketWhere: Record<string, unknown> = {};
   if (ticketStatus) ticketWhere.status = ticketStatus;
 
-  const [monthlyOrders, payoutEntries, payoutTotal, payoutTotals, revenueAgg, ticketOrders, ticketOrderTotal] = await Promise.all([
+  const [monthlyOrders, payoutEntries, payoutTotal, payoutTotals, revenueAgg, ticketOrders, ticketOrderTotal, payoutBank] = await Promise.all([
     readList(db.ticketOrder.findMany({
       where: { status: 'CAPTURED', chargedAt: { gte: fromDate, lte: toDate } },
       select: { chargedAt: true, totalChargeCents: true },
@@ -83,6 +84,7 @@ export default async function AdminFinancePage({
       },
     })),
     readValue(db.ticketOrder.count({ where: ticketWhere })),
+    readPlatformPayoutBankStatus(),
   ]);
 
   const monthlyMap: Record<string, number> = {};
@@ -160,6 +162,43 @@ export default async function AdminFinancePage({
                 <article className="card admin-metric-card" key={label}><span>{label}</span><strong>{value}</strong></article>
               ))}
             </div>
+            <article className="card" style={{ marginBottom: 20 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'baseline', flexWrap: 'wrap' }}>
+                <h3 style={{ fontSize: '0.9375rem', margin: 0 }}>{t('adminFinancePage.crowdedBankHeading', 'Crowded payout connection')}</h3>
+                <span className="meta">
+                  {payoutBank.state === 'connected'
+                    ? (payoutBank.payoutsEnabled
+                      ? t('adminFinancePage.payoutsEnabled', 'Connected · payouts enabled')
+                      : t('adminFinancePage.payoutsPaused', 'Connected · payouts paused'))
+                    : payoutBank.state === 'not_connected'
+                      ? t('adminFinancePage.bankNotConnected', 'No payout bank found')
+                      : t('adminFinancePage.bankUnavailable', 'Status unavailable')}
+                </span>
+              </div>
+              {payoutBank.state === 'connected' ? (
+                <>
+                  <strong style={{ display: 'block', marginTop: 12 }}>
+                    {payoutBank.bankName ?? t('adminFinancePage.bankAccount', 'Bank account')} ···· {payoutBank.last4}
+                  </strong>
+                  <span className="meta" style={{ display: 'block', marginTop: 4 }}>
+                    {payoutBank.defaultForCurrency
+                      ? t('adminFinancePage.defaultPayoutAccount', 'Default {currency} payout account').replace('{currency}', payoutBank.currency)
+                      : t('adminFinancePage.payoutAccount', '{currency} payout account').replace('{currency}', payoutBank.currency)}
+                    {payoutBank.payoutInterval ? ` · ${payoutBank.payoutInterval}` : ''}
+                    {payoutBank.payoutDelayDays !== null ? ` · ${payoutBank.payoutDelayDays} ${t('adminFinancePage.dayDelay', 'day delay')}` : ''}
+                  </span>
+                </>
+              ) : (
+                <strong style={{ display: 'block', marginTop: 12 }}>
+                  {payoutBank.state === 'not_connected'
+                    ? t('adminFinancePage.connectBankInStripe', 'Connect a bank account in Stripe before accepting paid transactions.')
+                    : t('adminFinancePage.retryBankStatus', 'Stripe is not configured or could not be reached. No routing changes were made.')}
+                </strong>
+              )}
+              <p className="meta" style={{ margin: '12px 0 0' }}>
+                {t('adminFinancePage.bankVisibilityNote', 'Read-only payout routing from Stripe. Crowded balances and transactions will appear after Crowded API access is approved.')}
+              </p>
+            </article>
             <h3 style={{ fontSize: '0.9375rem', marginBottom: 8 }}>{t('adminFinancePage.monthlyRevenueHeading', 'Monthly revenue')} ({monthlyRows.length} {t('adminFinancePage.monthsInRange', 'months in range')})</h3>
             {monthlyOrders === null ? (
               <div className="empty" role="status">{unreadable}</div>
