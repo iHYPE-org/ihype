@@ -110,7 +110,7 @@ jobs:
 
       - name: Upload typecheck diagnostics
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: typecheck-diagnostics
           path: typecheck.log
@@ -432,7 +432,7 @@ jobs:
         # at never left the machine. Failure-only, so a green run uploads
         # nothing.
         if: failure()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: playwright-test-results
           path: test-results/
@@ -523,7 +523,7 @@ jobs:
 
       - name: Upload Workerd diagnostics
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: workerd-smoke-diagnostics
           path: workerd-*-smoke.log
@@ -531,7 +531,7 @@ jobs:
 
       - name: Upload Lighthouse report
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: lighthouse-budget-report
           path: lighthouse-budget-report.json
