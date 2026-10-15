@@ -48,7 +48,14 @@ describe('security-sensitive source policy', () => {
   it('scrubs request details and disables default PII in both Sentry runtimes', () => {
     for (const path of ['src/instrumentation-client.ts', 'worker.js']) {
       const source = readSource(path);
-      expect(source, path).toContain('sendDefaultPii: false');
+      expect(source, path).not.toContain('sendDefaultPii:');
+      for (const category of ['userInfo', 'cookies', 'urlQueryParams', 'databaseQueryData', 'queues', 'stackFrameVariables']) {
+        expect(source, path).toContain(`${category}: false`);
+      }
+      expect(source, path).toContain('httpHeaders: { request: false, response: false }');
+      expect(source, path).toContain('httpBodies: []');
+      expect(source, path).toContain('genAI: { inputs: false, outputs: false }');
+      expect(source, path).toContain('graphQL: { document: false, variables: false }');
       expect(source, path).toContain('delete event.request.cookies');
       expect(source, path).toContain('delete event.request.headers');
       expect(source, path).toContain('delete event.request.data');
