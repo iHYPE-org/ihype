@@ -29,6 +29,7 @@
  */
 import { copyFileSync, existsSync, mkdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
+import ts from 'typescript';
 
 export const MAPLIBRE_VENDOR_DIR = 'public/vendor/maplibre-gl';
 export const MAPLIBRE_WORKER_FILE = 'maplibre-gl-worker.mjs';
@@ -36,9 +37,27 @@ export const MAPLIBRE_WORKER_FILES = [MAPLIBRE_WORKER_FILE, 'maplibre-gl-shared.
 
 const SOURCE_DIR = 'node_modules/maplibre-gl/dist';
 
-/** Every `from "./x"` specifier in a module — the worker's dependencies. */
+/** Relative ESM imports, including re-exports and literal dynamic imports.
+ * v6.13 bundles the worker without imports; zero is a valid module graph.
+ * Parse syntax instead of assuming a quote/minifier format or import count.
+ */
 export function relativeImportsOf(source) {
-  return [...source.matchAll(/from\s*"(\.\/[^"]+)"/g)].map((m) => m[1].slice(2));
+  const file = ts.createSourceFile('worker.mjs', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
+  if (file.parseDiagnostics.length) throw new Error('Cannot parse MapLibre worker module');
+  const imports = new Set();
+  function visit(node) {
+    const specifier = (ts.isImportDeclaration(node) || ts.isExportDeclaration(node))
+      ? node.moduleSpecifier
+      : ts.isCallExpression(node) && node.expression.kind === ts.SyntaxKind.ImportKeyword
+        ? node.arguments[0] : undefined;
+    if (specifier && (ts.isStringLiteral(specifier) || ts.isNoSubstitutionTemplateLiteral(specifier))) {
+      if (specifier.text.startsWith('./')) imports.add(specifier.text.slice(2));
+      if (specifier.text.startsWith('../')) imports.add(specifier.text);
+    }
+    ts.forEachChild(node, visit);
+  }
+  visit(file);
+  return [...imports];
 }
 
 export function vendorMaplibreWorker({ root = process.cwd(), log = console.log } = {}) {

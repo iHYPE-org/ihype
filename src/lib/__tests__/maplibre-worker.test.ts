@@ -1,4 +1,5 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
@@ -8,6 +9,7 @@ import {
   MAPLIBRE_WORKER_FILE,
   MAPLIBRE_WORKER_FILES,
   relativeImportsOf,
+  vendorMaplibreWorker,
 } from '../../../scripts/vendor-maplibre-worker.mjs';
 
 /**
@@ -49,8 +51,36 @@ describe('the MapLibre worker URL', () => {
       expect(existsSync(path.join(dist, file)), `${file} is not in maplibre-gl/dist — the layout changed`).toBe(true);
     }
     const imports = relativeImportsOf(readFileSync(path.join(dist, MAPLIBRE_WORKER_FILE), 'utf8'));
-    expect(imports.length, 'the worker imports nothing? the parse is wrong').toBeGreaterThan(0);
     expect(imports.filter((f) => !MAPLIBRE_WORKER_FILES.includes(f))).toEqual([]);
+  });
+
+  it('parses module syntax independently of minifier formatting', () => {
+    expect(relativeImportsOf(`import{x}from"./double.mjs";
+      import './side-effect.mjs'; export {x} from './single.mjs';
+      import(\`./dynamic.mjs\`); export * from '../outside.mjs';
+      // import './comment.mjs';
+      const text = "from './not-an-import.mjs'";`)).toEqual([
+      'double.mjs', 'side-effect.mjs', 'single.mjs', 'dynamic.mjs', '../outside.mjs',
+    ]);
+    expect(relativeImportsOf('self.onmessage = () => {};')).toEqual([]);
+    expect(() => relativeImportsOf('import {')).toThrow('Cannot parse');
+  });
+
+  it('copies a standalone worker but rejects an unvendored dependency', () => {
+    const fixture = mkdtempSync(path.join(tmpdir(), 'maplibre-worker-'));
+    try {
+      const dist = path.join(fixture, 'node_modules/maplibre-gl/dist');
+      mkdirSync(dist, { recursive: true });
+      const source = 'self.onmessage = () => {};';
+      writeFileSync(path.join(dist, MAPLIBRE_WORKER_FILE), source);
+      writeFileSync(path.join(dist, 'maplibre-gl-shared.mjs'), '');
+      vendorMaplibreWorker({ root: fixture, log: () => {} });
+      expect(readFileSync(path.join(fixture, MAPLIBRE_VENDOR_DIR, MAPLIBRE_WORKER_FILE), 'utf8')).toBe(source);
+      writeFileSync(path.join(dist, MAPLIBRE_WORKER_FILE), "import './uncopied.mjs';");
+      expect(() => vendorMaplibreWorker({ root: fixture, log: () => {} })).toThrow('uncopied.mjs');
+    } finally {
+      rmSync(fixture, { recursive: true, force: true });
+    }
   });
 
   it('runs in every build path, so a fresh checkout cannot ship without it', () => {
