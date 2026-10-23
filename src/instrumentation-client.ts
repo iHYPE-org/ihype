@@ -75,7 +75,19 @@ function init(mod: SentryModule) {
     dsn,
     environment: process.env.NODE_ENV,
     release: process.env.NEXT_PUBLIC_APP_VERSION,
-    sendDefaultPii: false,
+    // Sentry 11 defaults to broader collection; keep sensitive categories off.
+    dataCollection: {
+      userInfo: false,
+      cookies: false,
+      httpHeaders: { request: false, response: false },
+      httpBodies: [],
+      urlQueryParams: false,
+      genAI: { inputs: false, outputs: false },
+      databaseQueryData: false,
+      queues: false,
+      graphQL: { document: false, variables: false },
+      stackFrameVariables: false,
+    },
     /* Explicit, so the chunk carries what is listed and nothing else. Each
        one is the browser SDK's own default minus the two named above, plus
        tracing for the navigation spans the sampler below prices. */

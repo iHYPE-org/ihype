@@ -6,6 +6,11 @@ updates:
       interval: "weekly"
     open-pull-requests-limit: 10
     groups:
+      # Browser and Worker SDKs share one compatibility/privacy migration.
+      # Keep major upgrades paired rather than creating incompatible halves.
+      sentry-sdk:
+        patterns:
+          - "@sentry/*"
       # 2026-07-21 incident: a single grouped PR bumped @prisma/client and
       # @prisma/adapter-pg (6.19.3 -> 7.9.0) and typescript (6.0.3 -> 7.0.2)
       # -- three major-version jumps in one routine-looking PR -- and merged
@@ -17,6 +22,8 @@ updates:
       # scrutiny (and can't slip past on autopilot) a major version deserves.
       production-dependencies:
         dependency-type: "production"
+        exclude-patterns:
+          - "@sentry/*"
         update-types:
           - "minor"
           - "patch"

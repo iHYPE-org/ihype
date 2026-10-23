@@ -116,7 +116,19 @@ export default Sentry.withSentry(
     dsn: env.SENTRY_DSN,
     environment: env.NODE_ENV,
     release: env.CF_VERSION_METADATA?.id,
-    sendDefaultPii: false,
+    // Match the browser's explicit privacy policy under Sentry 11.
+    dataCollection: {
+      userInfo: false,
+      cookies: false,
+      httpHeaders: { request: false, response: false },
+      httpBodies: [],
+      urlQueryParams: false,
+      genAI: { inputs: false, outputs: false },
+      databaseQueryData: false,
+      queues: false,
+      graphQL: { document: false, variables: false },
+      stackFrameVariables: false,
+    },
     tracesSampler(ctx) {
       if (ctx.parentSampled !== undefined) return ctx.parentSampled;
       const name = ctx.name ?? '';
