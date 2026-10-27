@@ -25,7 +25,10 @@ permissions:
 
 jobs:
   enable-automerge:
-    # Auto-merge is the DEFAULT for every pull request, not an opt-in label
+    # SECURITY UPDATE 2026-10-26: the historical policy below is superseded.
+    # Only Dependabot minor/patch dependency groups may auto-merge. Human
+    # changes, major upgrades, action upgrades and SDK groups need review.
+    # Historical rationale: Auto-merge was the DEFAULT for every pull request
     # (owner, 2026-08-26: "Can we setup automerge when it's green?" / "For all
     # future PRs?"). It was gated on an `automerge` label nobody applied, so it
     # did nothing for months while merged-by-hand was the real workflow.
@@ -64,12 +67,11 @@ jobs:
     if: >-
       github.event.pull_request.draft == false &&
       github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
       !contains(github.event.pull_request.labels.*.name, 'hold') &&
       (
-        github.event.pull_request.user.login != 'dependabot[bot]' ||
         startsWith(github.event.pull_request.head.ref, 'dependabot/npm_and_yarn/development-dependencies') ||
-        startsWith(github.event.pull_request.head.ref, 'dependabot/npm_and_yarn/production-dependencies') ||
-        startsWith(github.event.pull_request.head.ref, 'dependabot/github_actions/')
+        startsWith(github.event.pull_request.head.ref, 'dependabot/npm_and_yarn/production-dependencies')
       )
     runs-on: ubuntu-latest
     steps:
