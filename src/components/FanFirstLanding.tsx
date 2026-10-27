@@ -56,7 +56,7 @@ export async function FanFirstLanding({ stats }: { stats: ReactNode }) {
         </nav>
       </header>
 
-      <main className="fan-entry-main">
+      <div className="fan-entry-main">
         {/* ONE COLUMN, AND NO ARTWORK (2026-09-18, owner: "Do anything you
             think is necessary to … limit 'AI look'. It's our first big
             feedback item, and it was almost entirely universally stated by
@@ -182,7 +182,7 @@ export async function FanFirstLanding({ stats }: { stats: ReactNode }) {
             {' · © 2026 ihype.org'}
           </span>
         </footer>
-      </main>
+      </div>
     </div>
   );
 }

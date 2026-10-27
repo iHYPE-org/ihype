@@ -62,7 +62,8 @@ concurrency:
 jobs:
   nightly:
     name: Full audit set and the alpha acceptance walk
-    runs-on: [self-hosted, linux, x64, ihype-ci]
+    # Fresh hosted VM: never reuse the former public-PR runner for secrets.
+    runs-on: ubuntu-latest
     services:
       postgres:
         image: postgres:16
