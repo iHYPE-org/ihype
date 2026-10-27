@@ -21,11 +21,8 @@ permissions:
 jobs:
   check:
     name: Typecheck, lint, test, build, and browser smoke
-    # Our own runner (Azure, 4 vCPU, East US) — see
-    # docs/runbooks/ci-self-hosted-runner.md. Minutes here are free, which is
-    # the whole reason the gated stages below could come back: the org's
-    # Actions allowance was the constraint, never the workload.
-    runs-on: [self-hosted, linux, x64, ihype-ci]
+    # Public PR code must run on a fresh VM with no state from trusted jobs.
+    runs-on: ubuntu-latest
     services:
       postgres:
         image: postgres:16
@@ -79,9 +76,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          # Full history, not depth-1. The self-hosted runner reuses its
-          # workspace between runs, so this costs a fetch of what is new rather
-          # than a fresh clone — and several checks read git history.
+          # Several checks read git history; each hosted job starts clean.
           fetch-depth: 0
 
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0

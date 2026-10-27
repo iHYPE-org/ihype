@@ -46,7 +46,7 @@ export function AuthCardShell({
   return (
     <section className={`authcard-page authcard-page-${mode}`}>
       <div className="authcard-wrap">
-        <Link aria-label={t('fanFirstLanding.home', 'iHYPE home')} className="authcard-mark" href="/">
+        <Link className="authcard-mark" href="/">
           <b>iHYPE</b>
           <small>{t('authShared.tagline', 'Local signal')}</small>
         </Link>
