@@ -133,7 +133,8 @@
     "wrangler": "^4.152.0"
   },
   "overrides": {
-    "undici": "^7.29.1",
+    "undici": "^7.30.1",
+    "fast-uri": "^3.1.9",
     "postcss": {
       ".": "^8.5.18",
       "nanoid": "^3.3.17"

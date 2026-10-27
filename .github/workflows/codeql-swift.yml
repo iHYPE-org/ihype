@@ -1,0 +1,59 @@
+name: CodeQL security analysis
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-analysis:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [actions, javascript-typescript, java-kotlin]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: github/codeql-action/init@793b778da9c9275a0f276522b27cb5fc14bba279
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+      - uses: github/codeql-action/analyze@793b778da9c9275a0f276522b27cb5fc14bba279
+        with:
+          category: /language:${{ matrix.language }}
+  analyze:
+    name: Analyze Swift
+    runs-on: macos-26
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npx cap sync ios
+      - uses: github/codeql-action/init@793b778da9c9275a0f276522b27cb5fc14bba279
+        with:
+          languages: swift
+          build-mode: manual
+      - name: Build iOS for analysis
+        working-directory: ios/App
+        run: >-
+          xcodebuild -project App.xcodeproj -scheme App
+          -destination 'generic/platform=iOS Simulator'
+          -configuration Debug clean build CODE_SIGNING_ALLOWED=NO
+      - uses: github/codeql-action/analyze@793b778da9c9275a0f276522b27cb5fc14bba279
+        with:
+          category: /language:swift
