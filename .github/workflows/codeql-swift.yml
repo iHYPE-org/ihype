@@ -27,7 +27,7 @@ jobs:
         with:
           languages: ${{ matrix.language }}
           build-mode: none
-      - uses: github/codeql-action/analyze@793b778da9c9275a0f276522b27cb5fc14bba279
+      - uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370
         with:
           category: /language:${{ matrix.language }}
   analyze:
@@ -54,6 +54,6 @@ jobs:
           xcodebuild -project App.xcodeproj -scheme App
           -destination 'generic/platform=iOS Simulator'
           -configuration Debug clean build CODE_SIGNING_ALLOWED=NO
-      - uses: github/codeql-action/analyze@793b778da9c9275a0f276522b27cb5fc14bba279
+      - uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370
         with:
           category: /language:swift
