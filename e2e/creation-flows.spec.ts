@@ -124,6 +124,22 @@ test.describe('advertiser signup', () => {
 });
 
 test.describe('uploading a track', () => {
+  test('an unverified artist can leave the upload gate or start verification', async ({ context, page }) => {
+    await signIn(context, `e2e-create-unverified-${RUN}@ihype.org`, [
+      { type: 'ARTIST', name: 'E2E Unverified Artist' },
+    ]);
+    await page.goto('/app/me?role=artist&section=profiles');
+    const href = await page.locator('.mmm-me-section:visible a[href^="/app/artists/"]').first().getAttribute('href');
+    expect(href).toBeTruthy();
+    await page.goto(`${href}?tab=albums`);
+    const panel = page.locator('.artist-media-upload-panel:visible');
+    await expect(panel.getByText(/Submit identity evidence before uploading/i)).toBeVisible();
+    await expect(panel.getByRole('link', { name: /Back to my pages/i })).toHaveAttribute('href', '/app/me/profiles');
+    await panel.getByRole('link', { name: /Go to verification/i }).click();
+    await expect(page).toHaveURL(/\/verify\?profileId=/);
+    await expect(page.getByRole('heading', { name: /Verify your Artist page/i })).toBeVisible();
+  });
+
   test('an artist uploads a track from their own page and sees the scan verdict', async ({ context, page }) => {
     /* VERIFIED, because the gate is real: POST /api/artist-media 403s an
        UNVERIFIED profile ("Verify this page before uploading") — the run that
