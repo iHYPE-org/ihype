@@ -18,7 +18,7 @@ const BADGE_COLOR: Record<string, { bg: string; border: string; text: string }> 
   VENUE: { bg: 'rgba(var(--role-venue-rgb),.12)', border: 'rgba(var(--role-venue-rgb),.3)', text: 'var(--role-venue)' },
 };
 
-export default async function VerifyPage() {
+export default async function VerifyPage({ searchParams }: { searchParams: Promise<{ profileId?: string }> }) {
   const session = await auth();
   if (!session?.user?.id) redirect('/login?callbackUrl=/verify');
 
@@ -55,7 +55,8 @@ export default async function VerifyPage() {
     );
   }
 
-  const profile = profiles.find((p) => p.verificationStatus !== 'VERIFIED') ?? profiles[0];
+  const { profileId } = await searchParams;
+  const profile = profiles.find((p) => p.id === profileId) ?? profiles.find((p) => p.verificationStatus !== 'VERIFIED') ?? profiles[0];
 
   if (profile.verificationStatus === 'VERIFIED') {
     return (
