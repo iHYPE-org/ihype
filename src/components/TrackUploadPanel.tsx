@@ -1,7 +1,6 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useI18n } from '@/components/I18nProvider';
 import { measureFileLoudness } from '@/lib/measure-upload-loudness';
@@ -174,8 +173,8 @@ export function TrackUploadPanel({
               ? t('trackUploadPanel.verificationRejected', 'Your verification needs attention before you can upload. Visit verification to submit new evidence.')
               : t('trackUploadPanel.verificationRequired', 'Submit identity evidence before uploading. You can upload while your application is being reviewed.'))}
           </p>
-          <p><Link href={`/verify?profileId=${encodeURIComponent(profileId)}`}>{t('trackUploadPanel.goToVerification', 'Go to verification')}</Link></p>
-          <p><Link href="/app/me/profiles">{t('trackUploadPanel.backToProfiles', 'Back to my pages')}</Link></p>
+          <p><a href={`/verify?profileId=${encodeURIComponent(profileId)}`}>{t('trackUploadPanel.goToVerification', 'Go to verification')}</a></p>
+          <p><a href="/app/me/profiles">{t('trackUploadPanel.backToProfiles', 'Back to my pages')}</a></p>
         </div>
       ) : <div className="artist-media-upload-form">
         {error ? <p role="alert" className="meta" style={{ color: 'var(--danger)' }}>{error}</p> : null}
