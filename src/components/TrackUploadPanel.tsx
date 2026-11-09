@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useI18n } from '@/components/I18nProvider';
 import { measureFileLoudness } from '@/lib/measure-upload-loudness';
@@ -30,8 +31,10 @@ export function TrackUploadPanel({
   onUploaded,
   albums = [],
   fileMb = 60,
+  verificationStatus,
 }: {
   profileId: string;
+  verificationStatus?: string;
   onUploaded?: () => void;
   /** The artist's album folders, so a track can be filed at upload. */
   albums?: AlbumOption[];
@@ -53,6 +56,7 @@ export function TrackUploadPanel({
   const [albumId, setAlbumId] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [verificationRequired, setVerificationRequired] = useState(verificationStatus === 'UNVERIFIED' || verificationStatus === 'REJECTED');
   const [scanLayers, setScanLayers] = useState<ScanLayer[] | null>(null);
   const [revealed, setRevealed] = useState<Record<number, LayerRevealState>>({});
   const [finalMessage, setFinalMessage] = useState<string | null>(null);
@@ -130,6 +134,7 @@ export function TrackUploadPanel({
       const data = await response.json();
       if (!response.ok) {
         setError(data.error ?? t('trackUploadPanel.uploadErrorFallback', 'Could not upload this track.'));
+        if (data.verificationRequired) setVerificationRequired(true);
         setSubmitting(false);
         return;
       }
@@ -162,8 +167,18 @@ export function TrackUploadPanel({
         </div>
       </div>
 
-      <div className="artist-media-upload-form">
-        {error ? <p className="meta" style={{ color: 'var(--danger)' }}>{error}</p> : null}
+      {verificationRequired ? (
+        <div role="alert">
+          <p className="meta" style={{ color: 'var(--danger)' }}>
+            {error || (verificationStatus === 'REJECTED'
+              ? t('trackUploadPanel.verificationRejected', 'Your verification needs attention before you can upload. Visit verification to submit new evidence.')
+              : t('trackUploadPanel.verificationRequired', 'Submit identity evidence before uploading. You can upload while your application is being reviewed.'))}
+          </p>
+          <p><Link href={`/verify?profileId=${encodeURIComponent(profileId)}`}>{t('trackUploadPanel.goToVerification', 'Go to verification')}</Link></p>
+          <p><Link href="/app/me/profiles">{t('trackUploadPanel.backToProfiles', 'Back to my pages')}</Link></p>
+        </div>
+      ) : <div className="artist-media-upload-form">
+        {error ? <p role="alert" className="meta" style={{ color: 'var(--danger)' }}>{error}</p> : null}
         <input
           accept=".mp3,.m4a,.aac,.wav,.flac,audio/mpeg,audio/mp4,audio/x-m4a,audio/aac,audio/wav,audio/x-wav,audio/wave,audio/flac,audio/x-flac"
           aria-label={t('trackUploadPanel.audioFileLabel', 'Audio file')}
@@ -248,7 +263,7 @@ export function TrackUploadPanel({
         <button className="button small" disabled={submitting} onClick={submit} type="button">
           {submitting ? t('trackUploadPanel.uploadingButton', 'Uploading…') : submitLabel}
         </button>
-      </div>
+      </div>}
 
       {scanLayers && (
         <div className="track-scan-gate">
