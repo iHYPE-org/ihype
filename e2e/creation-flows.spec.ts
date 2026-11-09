@@ -123,6 +123,25 @@ test.describe('advertiser signup', () => {
   });
 });
 
+test.describe('profile verification navigation', () => {
+  test('artist and venue profiles can be selected and verification can be exited', async ({ context, page }) => {
+    await signIn(context, `e2e-verify-navigation-${RUN}@ihype.org`, [
+      { type: 'ARTIST', name: 'E2E Verify Artist' },
+      { type: 'VENUE', name: 'E2E Verify Venue' },
+    ]);
+    await page.goto('/verify');
+    const navigation = page.getByRole('navigation', { name: 'Verification navigation' });
+    await navigation.getByRole('link', { name: 'E2E Verify Venue · Venue' }).click();
+    await expect(page.getByRole('heading', { name: /Verify your Venue page/i })).toBeVisible();
+    await expect(page.locator('#verify-name')).toHaveValue('E2E Verify Venue');
+    await navigation.getByRole('link', { name: 'E2E Verify Artist · Artist' }).click();
+    await expect(page.getByRole('heading', { name: /Verify your Artist page/i })).toBeVisible();
+    await expect(page.locator('#verify-name')).toHaveValue('E2E Verify Artist');
+    await navigation.getByRole('link', { name: /Back to my pages/i }).click();
+    await expect(page).toHaveURL(/\/app\/me\/profiles/);
+  });
+});
+
 test.describe('uploading a track', () => {
   test('an unverified artist can leave the upload gate or start verification', async ({ context, page }) => {
     await signIn(context, `e2e-create-unverified-${RUN}@ihype.org`, [
