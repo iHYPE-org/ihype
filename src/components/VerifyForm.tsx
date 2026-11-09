@@ -57,6 +57,7 @@ export function VerifyForm({ profileId, type, initialName, initialCity, initialG
   const router = useRouter();
 
   async function submit() {
+    if (submitting) return;
     setSubmitting(true);
     setError(null);
     try {
@@ -156,7 +157,7 @@ export function VerifyForm({ profileId, type, initialName, initialCity, initialG
         placeholder={t('verifyForm.notesPlaceholder', 'Optional — any context that helps us verify faster.')}
       />
 
-      {error && <p style={{ color: 'var(--accent-text)', fontSize: '0.9375rem', marginBottom: 12 }}>{error}</p>}
+      {error && <p role="alert" style={{ color: 'var(--accent-text)', fontSize: '0.9375rem', marginBottom: 12 }}>{error}</p>}
 
       <button onClick={submit} disabled={submitting} className="ihype-btn-primary" style={{ width: '100%' }}>
         {submitting ? t('verifyForm.submitting', 'Submitting…') : t('verifyForm.submitForReview', 'Submit for review →')}

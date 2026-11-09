@@ -393,7 +393,7 @@ export default async function MmmArtistPage({
            are listed: the panel sits directly above the list it adds to, and a
            listener never sees it. */
         <ProfilePanel empty="" isEmpty={false} tabId="albums" title={t('artistPane.uploadTitle', 'Upload a track')}>
-          <TrackUploadPanel profileId={profile.id} />
+          <TrackUploadPanel profileId={profile.id} verificationStatus={profile.verificationStatus} />
         </ProfilePanel>
       )}
 
