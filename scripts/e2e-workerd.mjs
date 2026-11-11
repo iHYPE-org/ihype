@@ -115,7 +115,7 @@ const DEFAULT_TEST_SHARDS = [
   // The quick-start guide (row 526): the one dialog a new member sees first.
   ['e2e/getting-started.spec.ts'],
   ['e2e/responsive.spec.ts'],
-  ['e2e/public-smoke.spec.ts'],
+  ['e2e/public-smoke.spec.ts', 'e2e/support-dialog.spec.ts'],
   // ADDED 2026-09-15. These six existed and ran NOWHERE — not here, not in
   // the nightly, which only uses `--serve` to host the acceptance walk. Each
   // was written as the durable proof of a specific fix: the offline door (row

@@ -88,7 +88,7 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
       <h1 className="legal-h1">{tabLabel(activeIndex)}</h1>
       <p className="legal-standfirst">{t('infoPage.heading', 'How iHYPE works, in public.')}</p>
       <div className="legal-updated-row">
-        <p className="legal-updated">{t('legalPage.lastUpdated', 'Last updated: June 20, 2026 · iHYPE · Portland, ME')}</p>
+        {tab === 'terms' && <p className="legal-updated">{t('mmmLegal.lastUpdatedLabel', 'Last updated')} {formatDate(locale, new Date(`${LEGAL_LAST_UPDATED}T12:00:00Z`), { dateStyle: 'long', timeZone: 'UTC' })}</p>}
         <button className="legal-print-btn" onClick={() => window.print()} type="button">{t('legalPage.printButton', 'Print / Save as PDF')}</button>
       </div>
 
@@ -138,7 +138,6 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
             <p>{t('legalLanguageNotice.help', 'If you would like help understanding it in your language, write to')} <a href="mailto:admin@ihype.org">admin@ihype.org</a>.</p>
           </div>
         )}
-        <p className="legal-updated">{t('mmmLegal.lastUpdatedLabel', 'Last updated')} {formatDate(locale, new Date(`${LEGAL_LAST_UPDATED}T12:00:00Z`), { dateStyle: 'long', timeZone: 'UTC' })}</p>
         <h2 className="legal-part" id="legal-terms">{t('mmmLegal.partTerms', 'Terms of service')}</h2>
         {TERMS.map((clause, index) => (
           <section key={clause.heading}>
