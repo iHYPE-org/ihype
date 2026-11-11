@@ -108,7 +108,7 @@ for (const status of [200, 503]) {
     const dialog = page.getByRole('dialog', { name: 'Report a bug', exact: true });
     const description = dialog.getByRole('textbox', { name: 'Description', exact: true });
     await description.fill('First report');
-    await dialog.getByRole('button', { name: 'Send Report', exact: true }).click();
+    const submitClick = dialog.getByRole('button', { name: 'Send Report', exact: true }).click();
     await expect.poll(() => page.evaluate(() => (window as Window & { qaReportPending?: boolean }).qaReportPending)).toBe(true);
     await page.keyboard.press('Escape');
     await trigger.click();
@@ -118,6 +118,7 @@ for (const status of [200, 503]) {
       (window as Window & { qaFinishReport?: () => void }).qaFinishReport?.();
       await new Promise(resolve => setTimeout(resolve, 0));
     });
+    await submitClick;
     await expect(description).toHaveValue('New report draft');
     await expect(dialog.getByRole('alert')).toHaveCount(0);
     await expect(dialog).not.toContainText('Thanks — we logged it');

@@ -9,7 +9,7 @@ export default defineConfig({
   reporter: 'html',
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000',
-    trace: 'on-first-retry',
+    trace: 'retain-on-failure',
     /* A browser the environment already holds, in place of the build this
        @playwright/test version would download. A managed sandbox ships one
        Chromium under PLAYWRIGHT_BROWSERS_PATH and forbids `playwright

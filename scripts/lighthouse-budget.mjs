@@ -268,7 +268,7 @@ const RUNS_PER_PAGE = 5;
  * would make this an absolute measure rather than a relative one.
  */
 const ENFORCE = process.env.LIGHTHOUSE_BUDGET_ENFORCE === '1';
-const CHROME_FLAGS = ['--headless=new', '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage'];
+const CHROME_FLAGS = [...(process.env.DISPLAY ? [] : ['--headless=new']), '--no-sandbox', '--disable-dev-shm-usage', '--disable-background-timer-throttling', '--disable-backgrounding-occluded-windows', '--disable-renderer-backgrounding'];
 
 function launchAuditChrome(chromePath) {
   return launch({ chromePath, chromeFlags: CHROME_FLAGS });
