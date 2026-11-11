@@ -534,4 +534,6 @@ jobs:
           path: |
             lighthouse-budget-report.json
             lighthouse-failed-run.json
+            lighthouse-paint-evidence.json
+            lighthouse-control-evidence.json
           if-no-files-found: ignore
