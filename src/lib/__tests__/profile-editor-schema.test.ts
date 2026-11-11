@@ -36,6 +36,19 @@ for (const key of Object.keys(EDITOR_SELECT_FIELDS)) {
 }
 
 describe('profile-editor PATCH schema', () => {
+  it.each(['cabc123456789012345678901', 'ihype-preview-venue', '73f920f1-6acd-46b0-85bf-971a7fa05748'])(
+    'accepts existing profile ID %s in both venue setup saves', (profileId) => {
+      expect(editorSchema.safeParse({ profileId, name: 'iHYPE Preview (Venue)', city: 'Portland' }).success).toBe(true);
+      expect(editorSchema.safeParse({ profileId, capacity: 300, roomType: 'Standing room' }).success).toBe(true);
+    },
+  );
+
+  it.each([undefined, null, 123, '', ' ', 'venue/id', 'venue?id=1', 'a'.repeat(65)])(
+    'refuses malformed profile ID %s', (profileId) => {
+      expect(editorSchema.safeParse({ profileId, name: 'Venue' }).success).toBe(false);
+    },
+  );
+
   it('accepts a GET-shaped payload for a mostly-empty profile', () => {
     const result = editorSchema.safeParse(payload);
     expect(result.success ? null : result.error.issues.map((i) => i.path.join('.'))).toBe(null);
