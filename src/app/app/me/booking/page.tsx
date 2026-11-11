@@ -10,7 +10,7 @@ import type { Metadata } from 'next';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Book Artists · iHYPE',
+  title: 'Book Artists',
   description: 'Artists to book at your venue: what fans asked for first, then genre, locality and momentum.',
   robots: { index: false, follow: false },
 };

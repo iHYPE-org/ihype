@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { MmmAdvertiseLanding } from '@/components/mmm/MmmAdvertiseLanding';
 
 export const metadata: Metadata = {
-  title: 'Advertise · iHYPE',
+  title: 'Advertise',
   description: 'Reach music fans on iHYPE. Open to music-industry entities only — AI-vetted, transparent pricing.',
 };
 

@@ -62,10 +62,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     where: { slug },
     select: { name: true, genres: true, city: true, stateRegion: true, hypeCount: true },
   });
-  if (!profile) return { title: 'Fan · iHYPE' };
+  if (!profile) return { title: 'Fan' };
   // No location: fan profiles never publish one (public-location.ts).
   return {
-    title: `${profile.name} · iHYPE`,
+    title: `${profile.name}`,
     description: ['Fan', profile.genres.slice(0, 3).join(', ') || null].filter(Boolean).join(' · '),
   };
 }
