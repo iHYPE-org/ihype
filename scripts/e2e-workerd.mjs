@@ -88,6 +88,7 @@ const REQUESTED_TESTS = process.argv.slice(2).filter((argument) => argument !== 
 // launch checklist — the runbook cited it for weeks while neither the script
 // nor the spec existed. `npm run test:e2e:responsive` runs it alone.
 const DEFAULT_TEST_SHARDS = [
+  ['e2e/support-dialog.spec.ts'],
   ['e2e/accessibility.spec.ts'],
   // The SIGNED-IN half of the same question. `accessibility.spec.ts` covers
   // four signed-out pages; until 2026-09-15 no automated accessibility check
