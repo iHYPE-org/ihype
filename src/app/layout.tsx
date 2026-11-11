@@ -153,17 +153,17 @@ export const metadata: Metadata = {
     default: 'iHYPE.org',
     template: '%s · iHYPE'
   },
-  description: 'Completely free. Not-for-profit music discovery for artists, promoters, venues, and fans. 0% ticket fees.',
+  description: 'Completely free. Not-for-profit music discovery for artists, venues, and listeners. 0% ticket fees.',
   openGraph: {
     siteName: 'iHYPE',
     type: 'website',
     title: 'iHYPE — Independent music built for the scene',
-    description: 'Completely free. Not-for-profit music discovery for artists, promoters, venues, and fans. 0% ticket fees.',
+    description: 'Completely free. Not-for-profit music discovery for artists, venues, and listeners. 0% ticket fees.',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'iHYPE — Independent music built for the scene',
-    description: 'Completely free. Not-for-profit music discovery for artists, promoters, venues, and fans. 0% ticket fees.',
+    description: 'Completely free. Not-for-profit music discovery for artists, venues, and listeners. 0% ticket fees.',
   },
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_BASE_URL || 'https://ihype.org'
@@ -176,6 +176,13 @@ export const metadata: Metadata = {
    * the same as the document pointing at it.
    */
   manifest: '/manifest.json',
+  icons: {
+    icon: [
+      { url: '/icons/icon-96.png', sizes: '96x96', type: 'image/png' },
+      { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+    ],
+    apple: [{ url: '/icons/icon-180.png', sizes: '180x180', type: 'image/png' }],
+  },
   other: {
     'apple-mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-status-bar-style': 'black-translucent',
