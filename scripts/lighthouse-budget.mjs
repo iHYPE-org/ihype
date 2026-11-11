@@ -46,6 +46,7 @@ import { launch } from 'chrome-launcher';
 import lighthouse from 'lighthouse';
 import { appendFileSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:http';
+import { chromium } from '@playwright/test';
 import {
   checkBudget,
   confirmFailures,
@@ -318,7 +319,36 @@ async function auditControlPage(chromePort) {
     writeFileSync('lighthouse-control-evidence.json', JSON.stringify(evidence, null, 2));
     console.log(`[lighthouse-budget] plain HTML control: ${evidence.runtimeError?.code ?? 'paint measured'}`);
   } finally {
-    await new Promise(resolve => server.close(resolve));
+    const closed = new Promise(resolve => server.close(resolve));
+    // Chrome can leave speculative connections open after Lighthouse detaches.
+    // Close those too, before waiting for the diagnostic server to stop.
+    server.closeAllConnections();
+    await closed;
+  }
+}
+
+async function probePublicPage(baseUrl, chromePort) {
+  const browser = await chromium.connectOverCDP(`http://127.0.0.1:${chromePort}`);
+  try {
+    const context = browser.contexts()[0];
+    const page = await context.newPage();
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(baseUrl, { waitUntil: 'domcontentloaded', timeout: 45_000 });
+    await page.waitForFunction(() => performance.getEntriesByType('paint').length > 0, undefined, { timeout: 5000 })
+      .catch(() => {}); // A missing paint is evidence; still capture the DOM and screenshot.
+    const evidence = await page.evaluate(() => ({
+      readyState: document.readyState,
+      visibilityState: document.visibilityState,
+      bodyTextLength: document.body.innerText.length,
+      bodyDisplay: getComputedStyle(document.body).display,
+      bodyVisibility: getComputedStyle(document.body).visibility,
+      paints: performance.getEntriesByType('paint').map(entry => ({ name: entry.name, startTime: entry.startTime })),
+    }));
+    writeFileSync('lighthouse-browser-evidence.json', JSON.stringify(evidence, null, 2));
+    await page.screenshot({ path: 'lighthouse-public-page.png', timeout: 10_000 });
+    console.log(`[lighthouse-budget] direct Chrome probe: ${evidence.paints.length} paint entries, ${evidence.bodyTextLength} visible text characters`);
+  } finally {
+    await browser.close();
   }
 }
 
@@ -347,6 +377,12 @@ async function auditPageOnce(baseUrl, chromePort, page, authenticatedHeaders) {
     // silently entering the median() array would corrupt the whole result.
     writeFileSync('lighthouse-failed-run.json', JSON.stringify(lhr, null, 2));
     writeFileSync('lighthouse-paint-evidence.json', JSON.stringify(paintEvidence(result), null, 2));
+    // The public landing page contains no authenticated account data.
+    if (page.path === '/' && !page.authenticated) {
+      const frames = result.artifacts?.Trace?.traceEvents?.filter(event => event.name === 'Screenshot') ?? [];
+      const snapshot = frames.at(-1)?.args?.snapshot;
+      if (snapshot) writeFileSync('lighthouse-public-trace.jpg', Buffer.from(snapshot, 'base64'));
+    }
     const errors = Object.entries(lhr.audits ?? {}).filter(([, audit]) => audit.scoreDisplayMode === 'error')
       .map(([id, audit]) => `${id}: ${audit.errorMessage ?? audit.explanation ?? 'audit failed'}`);
     throw new Error(`Lighthouse returned a null performance score: ${lhr.runtimeError?.message ?? errors.join('; ') ?? 'unknown'}`);
@@ -586,6 +622,7 @@ export async function runLighthouseBudget({ baseUrl, chromePath, authenticatedHe
       try {
         const port = await restartChrome();
         await auditControlPage(port);
+        await probePublicPage(resolvedBaseUrl, port);
       } catch (controlError) {
         console.warn(`[lighthouse-budget] plain HTML control failed: ${controlError.message}`);
       }
