@@ -1,5 +1,8 @@
 import { expect, test } from '@playwright/test';
 
+// Network mocks must own these requests; offline behavior has its own suites.
+test.use({ serviceWorkers: 'block' });
+
 test.beforeEach(async ({ context }) => {
   await context.addInitScript(() => localStorage.setItem('ihype_cookie_consent', 'accepted'));
 });
@@ -96,16 +99,16 @@ for (const status of [200, 503]) {
     const dialog = page.getByRole('dialog', { name: 'Report a bug', exact: true });
     const description = dialog.getByRole('textbox', { name: 'Description', exact: true });
     await description.fill('First report');
-    const requested = page.waitForRequest('**/api/bug-report');
+    const requested = page.waitForRequest('**/api/bug-report', { timeout: 10_000 });
     await dialog.getByRole('button', { name: 'Send Report', exact: true }).click();
     await requested;
     await page.keyboard.press('Escape');
     await trigger.click();
     await expect(dialog.getByRole('button', { name: 'Send Report', exact: true })).toBeEnabled();
     await description.fill('New report draft');
-    const responded = page.waitForResponse('**/api/bug-report');
+    const responded = page.waitForResponse('**/api/bug-report', { timeout: 10_000 });
     release();
-    await responded;
+    await (await responded).finished();
     await expect(description).toHaveValue('New report draft');
     await expect(dialog.getByRole('alert')).toHaveCount(0);
     await expect(dialog).not.toContainText('Thanks — we logged it');
@@ -123,14 +126,14 @@ test('closing a pending privacy action ignores a late error after reopening', as
   const trigger = page.getByRole('button', { name: /Privacy Report a problem/i });
   await trigger.click();
   const dialog = page.getByRole('dialog', { name: 'Privacy & your data', exact: true });
-  const requested = page.waitForRequest('**/api/privacy/request');
+  const requested = page.waitForRequest('**/api/privacy/request', { timeout: 10_000 });
   await dialog.getByRole('button', { name: /Detach identity early/ }).click();
   await requested;
   await page.keyboard.press('Escape');
   await trigger.click();
   await expect(dialog.getByRole('button', { name: /Detach identity early/ })).toBeEnabled();
-  const responded = page.waitForResponse('**/api/privacy/request');
+  const responded = page.waitForResponse('**/api/privacy/request', { timeout: 10_000 });
   release();
-  await responded;
+  await (await responded).finished();
   await expect(dialog).not.toContainText('Old privacy request failed');
 });
