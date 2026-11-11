@@ -297,7 +297,10 @@ async function auditPageOnce(baseUrl, chromePort, page, authenticatedHeaders) {
     // trace-engine flake) rather than throwing. Treat it as a failed run —
     // the caller's retry logic already handles thrown errors, and a null
     // silently entering the median() array would corrupt the whole result.
-    throw new Error('Lighthouse returned a null performance score');
+    writeFileSync('lighthouse-failed-run.json', JSON.stringify(lhr, null, 2));
+    const errors = Object.entries(lhr.audits ?? {}).filter(([, audit]) => audit.scoreDisplayMode === 'error')
+      .map(([id, audit]) => `${id}: ${audit.errorMessage ?? audit.explanation ?? 'audit failed'}`);
+    throw new Error(`Lighthouse returned a null performance score: ${lhr.runtimeError?.message ?? errors.join('; ') ?? 'unknown'}`);
   }
   const metrics = {};
   for (const m of METRICS) {
