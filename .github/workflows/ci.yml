@@ -468,6 +468,8 @@ jobs:
           AUTH_SECRET: ci-only-e2e-workerd-secret-0123456789
           NEXTAUTH_SECRET: ci-only-e2e-workerd-secret-0123456789
           PLAYWRIGHT_AUTH_COOKIE_SECURE: 'true'
+          EMAIL_SINK_URL: http://127.0.0.1:8791/emails
+          EMAIL_FROM: admin@ihype.org
 
       - name: Cloudflare build
         run: npm run cf:build
@@ -529,5 +531,7 @@ jobs:
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: lighthouse-budget-report
-          path: lighthouse-budget-report.json
+          path: |
+            lighthouse-budget-report.json
+            lighthouse-failed-run.json
           if-no-files-found: ignore
