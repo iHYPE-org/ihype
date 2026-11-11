@@ -1,13 +1,15 @@
 import { expect, test } from '@playwright/test';
 
+test.beforeEach(async ({ context }) => {
+  await context.addInitScript(() => localStorage.setItem('ihype_cookie_consent', 'accepted'));
+});
+
 for (const sheet of [
   { trigger: /Report a Bug Something broken/i, title: 'Report a bug' },
   { trigger: /Privacy Report a problem/i, title: 'Privacy & your data' },
 ]) {
   test(`${sheet.title} traps focus and restores its opener`, async ({ page }) => {
     await page.goto('/support');
-    const cookies = page.getByRole('button', { name: 'Essential only', exact: true });
-    if (await cookies.isVisible()) await cookies.click();
     const trigger = page.getByRole('button', { name: sheet.trigger });
     await trigger.press('Space');
     const dialog = page.getByRole('dialog', { name: sheet.title, exact: true });
