@@ -79,3 +79,56 @@ test('bug report failure keeps the description and allows retry', async ({ page 
   await page.getByRole('button', { name: /Report a Bug Something broken/i }).click();
   await expect(description).toHaveValue('');
 });
+
+for (const status of [200, 503]) {
+  test(`closing a pending report ignores its late ${status} response after reopening`, async ({ page }) => {
+    let release!: () => void;
+    const pending = new Promise<void>(resolve => { release = resolve; });
+    await page.route('**/api/bug-report', async route => {
+      await pending;
+      await route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(status === 200 ? { ok: true } : { error: 'Old request failed' }) });
+    });
+    await page.goto('/support');
+    const trigger = page.getByRole('button', { name: /Report a Bug Something broken/i });
+    await trigger.click();
+    const dialog = page.getByRole('dialog', { name: 'Report a bug', exact: true });
+    const description = dialog.getByRole('textbox', { name: 'Description', exact: true });
+    await description.fill('First report');
+    const requested = page.waitForRequest('**/api/bug-report');
+    await dialog.getByRole('button', { name: 'Send Report', exact: true }).click();
+    await requested;
+    await page.keyboard.press('Escape');
+    await trigger.click();
+    await expect(dialog.getByRole('button', { name: 'Send Report', exact: true })).toBeEnabled();
+    await description.fill('New report draft');
+    const responded = page.waitForResponse('**/api/bug-report');
+    release();
+    await responded;
+    await expect(description).toHaveValue('New report draft');
+    await expect(dialog.getByRole('alert')).toHaveCount(0);
+    await expect(dialog).not.toContainText('Thanks — we logged it');
+  });
+}
+
+test('closing a pending privacy action ignores a late error after reopening', async ({ page }) => {
+  let release!: () => void;
+  const pending = new Promise<void>(resolve => { release = resolve; });
+  await page.route('**/api/privacy/request', async route => {
+    await pending;
+    await route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ error: 'Old privacy request failed' }) });
+  });
+  await page.goto('/support');
+  const trigger = page.getByRole('button', { name: /Privacy Report a problem/i });
+  await trigger.click();
+  const dialog = page.getByRole('dialog', { name: 'Privacy & your data', exact: true });
+  const requested = page.waitForRequest('**/api/privacy/request');
+  await dialog.getByRole('button', { name: /Detach identity early/ }).click();
+  await requested;
+  await page.keyboard.press('Escape');
+  await trigger.click();
+  await expect(dialog.getByRole('button', { name: /Detach identity early/ })).toBeEnabled();
+  const responded = page.waitForResponse('**/api/privacy/request');
+  release();
+  await responded;
+  await expect(dialog).not.toContainText('Old privacy request failed');
+});

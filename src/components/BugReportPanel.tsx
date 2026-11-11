@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
+import { FormEvent, useRef, useState } from 'react';
 import { SupportDialog } from '@/components/SupportDialog';
 import { useI18n } from '@/components/I18nProvider';
 import { createAlphaDiagnostics } from '@/lib/alpha-diagnostics';
@@ -32,8 +32,11 @@ export function BugReportPanel() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [sent, setSent] = useState(false);
+  const requestRef = useRef(0);
 
   function close() {
+    requestRef.current += 1;
+    setIsSubmitting(false);
     setOpen(false);
     setDescription('');
     setError('');
@@ -49,17 +52,20 @@ export function BugReportPanel() {
       return;
     }
 
+    const requestId = ++requestRef.current;
     setIsSubmitting(true);
     try {
       await postBugReport({
         description,
         diagnostics: createAlphaDiagnostics(),
       });
-      setSent(true);
+      if (requestId === requestRef.current) setSent(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('bugReportPanel.sendError', 'Could not send report.'));
+      if (requestId === requestRef.current) {
+        setError(err instanceof Error ? err.message : t('bugReportPanel.sendError', 'Could not send report.'));
+      }
     } finally {
-      setIsSubmitting(false);
+      if (requestId === requestRef.current) setIsSubmitting(false);
     }
   }
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { SupportDialog } from '@/components/SupportDialog';
 import { useI18n } from '@/components/I18nProvider';
@@ -26,14 +26,19 @@ export function SupportPrivacyPanel({ onReportProblem }: { onReportProblem: () =
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
+  const requestRef = useRef(0);
 
   function close() {
+    requestRef.current += 1;
+    setSubmitting(false);
+    setExporting(false);
     setOpen(false);
     setDone(null);
     setError(null);
   }
 
   async function submitKind(kind: Kind) {
+    const requestId = requestRef.current;
     setSubmitting(true);
     setError(null);
     try {
@@ -44,23 +49,25 @@ export function SupportPrivacyPanel({ onReportProblem }: { onReportProblem: () =
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setError(data.error ?? t('supportPrivacyPanel.requestFailed', 'Request failed'));
+        if (requestId === requestRef.current) setError(data.error ?? t('supportPrivacyPanel.requestFailed', 'Request failed'));
         return;
       }
-      setDone(kind);
+      if (requestId === requestRef.current) setDone(kind);
     } catch {
-      setError(t('supportPrivacyPanel.networkError', 'Network error'));
+      if (requestId === requestRef.current) setError(t('supportPrivacyPanel.networkError', 'Network error'));
     } finally {
-      setSubmitting(false);
+      if (requestId === requestRef.current) setSubmitting(false);
     }
   }
 
   async function downloadExport() {
+    const requestId = requestRef.current;
     setExporting(true);
     try {
       const res = await fetch('/api/privacy/export');
       if (!res.ok) throw new Error();
       const blob = await res.blob();
+      if (requestId !== requestRef.current) return;
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -68,9 +75,9 @@ export function SupportPrivacyPanel({ onReportProblem }: { onReportProblem: () =
       a.click();
       URL.revokeObjectURL(url);
     } catch {
-      setError(t('supportPrivacyPanel.exportFailed', 'Export failed — try again or contact support.'));
+      if (requestId === requestRef.current) setError(t('supportPrivacyPanel.exportFailed', 'Export failed — try again or contact support.'));
     } finally {
-      setExporting(false);
+      if (requestId === requestRef.current) setExporting(false);
     }
   }
 
