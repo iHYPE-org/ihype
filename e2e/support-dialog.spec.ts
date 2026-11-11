@@ -87,28 +87,37 @@ test('bug report failure keeps the description and allows retry', async ({ page 
 
 for (const status of [200, 503]) {
   test(`closing a pending report ignores its late ${status} response after reopening`, async ({ page }) => {
-    let release!: () => void;
-    const pending = new Promise<void>(resolve => { release = resolve; });
-    await page.route('**/api/bug-report', async route => {
-      await pending;
-      await route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(status === 200 ? { ok: true } : { error: 'Old request failed' }) });
-    });
+    await page.addInitScript(status => {
+      const state = window as Window & { qaReportPending?: boolean; qaFinishReport?: () => void };
+      const originalFetch = window.fetch.bind(window);
+      window.fetch = (...args) => {
+        if (args[0] === '/api/bug-report') {
+          state.qaReportPending = true;
+          return new Promise<Response>(resolve => {
+            state.qaFinishReport = () => resolve(new Response(JSON.stringify(
+              status === 200 ? { ok: true } : { error: 'Old request failed' },
+            ), { status, headers: { 'Content-Type': 'application/json' } }));
+          });
+        }
+        return originalFetch(...args);
+      };
+    }, status);
     await page.goto('/support');
     const trigger = page.getByRole('button', { name: /Report a Bug Something broken/i });
     await trigger.click();
     const dialog = page.getByRole('dialog', { name: 'Report a bug', exact: true });
     const description = dialog.getByRole('textbox', { name: 'Description', exact: true });
     await description.fill('First report');
-    const requested = page.waitForRequest('**/api/bug-report', { timeout: 10_000 });
     await dialog.getByRole('button', { name: 'Send Report', exact: true }).click();
-    await requested;
+    await expect.poll(() => page.evaluate(() => (window as Window & { qaReportPending?: boolean }).qaReportPending)).toBe(true);
     await page.keyboard.press('Escape');
     await trigger.click();
     await expect(dialog.getByRole('button', { name: 'Send Report', exact: true })).toBeEnabled();
     await description.fill('New report draft');
-    const responded = page.waitForResponse('**/api/bug-report', { timeout: 10_000 });
-    release();
-    await (await responded).finished();
+    await page.evaluate(async () => {
+      (window as Window & { qaFinishReport?: () => void }).qaFinishReport?.();
+      await new Promise(resolve => setTimeout(resolve, 0));
+    });
     await expect(description).toHaveValue('New report draft');
     await expect(dialog.getByRole('alert')).toHaveCount(0);
     await expect(dialog).not.toContainText('Thanks — we logged it');
