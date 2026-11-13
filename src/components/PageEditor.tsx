@@ -674,7 +674,7 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
             <h3 style={{ margin: '8px 0' }}>{data.name}</h3>
             <p style={{ color: preset.muted }}>{data.headline || 'Your music. Your identity.'}</p>
             <div style={{ background: backdropTone.hero ?? preset.hero, padding: 16, borderRadius: 12 }}>Music · Events · About</div>
-            <p style={{ fontSize: '0.8125rem' }}>This is a theme preview, not a full mobile/desktop page simulation.</p>
+            <p style={{ fontSize: '0.9375rem' }}>This is a theme preview, not a full mobile/desktop page simulation.</p>
           </div>
           <h3>Upload your own artwork</h3>
           <p>Use original artwork you own or have permission to publish. Recommended: wide hero banner 1920 × 640 px (3:1), square avatar/logo 1000 × 1000 px, and room/gallery image 1600 × 900 px. Keep text and faces away from the edges because mobile screens crop images.</p>
