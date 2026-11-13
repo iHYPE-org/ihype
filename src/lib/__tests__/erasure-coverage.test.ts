@@ -26,7 +26,7 @@ const ERASED = new Set([
   'PushSubscription', 'NativeDeviceToken', 'Notification', 'NotificationPreference', 'Seed',
   'FanFavoriteMedia', 'FanPlaylist', 'ShowRsvp', 'ShowAttendee', 'SetlistVote',
   'ShowComment', 'MediaListen', 'ShowListen', 'Badge', 'BookingRequest',
-  'AdvertiserAccount',
+  'AdvertiserAccount', 'MusicQuizResponse',
 ]);
 
 /** Rows kept, with the person's identity removed or the link to them cut. */

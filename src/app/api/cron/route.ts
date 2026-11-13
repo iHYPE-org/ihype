@@ -22,6 +22,37 @@ export async function GET(request: NextRequest) {
   const job = searchParams.get('job');
 
   switch (job) {
+    case 'music-quiz': {
+      // Explicitly scheduled by deployment cron. Never sends without opt-in.
+      const { db } = await import('@/lib/db');
+      const { sendPushToAllDevices } = await import('@/lib/notify');
+      const { MUSIC_QUIZZES } = await import('@/lib/music-quizzes');
+      const quiz = MUSIC_QUIZZES[0];
+      const link = '/app/music-quiz';
+      const type = `MUSIC_QUIZ_${quiz.id}`;
+      const recipients = await db.notificationPreference.findMany({
+        where: { musicQuizzes: true },
+        select: { userId: true },
+        take: 200,
+      });
+      let sent = 0;
+      for (const { userId } of recipients) {
+        // A quiz is announced at most once to each opted-in account.
+        const existing = await db.notification.findFirst({
+          where: { userId, type },
+          select: { id: true },
+        });
+        if (existing) continue;
+        await db.notification.create({
+          data: { userId, type, body: quiz.questions[0].text, link },
+        });
+        await sendPushToAllDevices(userId, {
+          title: 'iHYPE Music Trivia', body: quiz.questions[0].text, url: link,
+        });
+        sent++;
+      }
+      return NextResponse.json({ ok: true, sent, batchLimit: 200 });
+    }
     case 'digest': {
       const { sendDigestsToAllEligibleUsers } = await import('@/lib/email-digest');
       const summary = await sendDigestsToAllEligibleUsers();

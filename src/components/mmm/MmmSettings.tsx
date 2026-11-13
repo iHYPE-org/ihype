@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { clearPrivateCaches } from '@/lib/private-cache';
+import { QuizNotificationSetting } from '@/components/mmm/QuizNotificationSetting';
 import { unregisterNativePushDevice } from '@/lib/native-push-device';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -693,6 +694,7 @@ export function MmmSettings() {
               the member at the top of a long page to hunt for it. */}
           <div className="settings-section" id="notifications">
             <div className="settings-section-title">{t('settingsPage.notifications', 'Notifications')}</div>
+            <QuizNotificationSetting />
             <div className="settings-group">
               <Row action={<Toggle checked={prefs.newShows} label={t('settingsPage.ticketDrops', 'Ticket drops')} onChange={(v) => setPrefs((p) => ({ ...p, newShows: v }))} />} detail={t('settingsPage.ticketDropsDetail', 'When artists you follow announce shows')} label={t('settingsPage.ticketDrops', 'Ticket drops')} />
               <Row action={<Toggle checked={prefs.milestones} label={t('settingsPage.hypeMilestones', 'Hype milestones')} onChange={(v) => setPrefs((p) => ({ ...p, milestones: v }))} />} detail={t('settingsPage.hypeMilestonesDetail', 'When your tracks hit hype thresholds')} label={t('settingsPage.hypeMilestones', 'Hype milestones')} />
