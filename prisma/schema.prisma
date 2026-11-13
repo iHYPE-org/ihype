@@ -89,6 +89,7 @@ enum AccountsPayableStatus {
 }
 
 model User {
+  musicQuizResponses MusicQuizResponse[]
   id                      String                   @id @default(cuid())
   name                    String?
   email                   String?                  @unique
@@ -1680,4 +1681,19 @@ model NewsletterSubscription {
 
   @@unique([email, profileId])
   @@index([profileId])
+}
+
+ 
+/// Anonymous-to-the-public quiz participation. Never exposes member identities.
+model MusicQuizResponse {
+  id         String   @id @default(cuid())
+  userId     String
+  quizId     String
+  answers    Json
+  score      Int
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, quizId])
+  @@index([quizId, score])
 }
