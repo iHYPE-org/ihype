@@ -1,10 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useI18n } from '@/components/I18nProvider';
 
 type Quiz = { id: string; title: string; questions: { id: string; text: string; options: readonly string[] }[] };
 type Result = { score: number; total: number; participants: number; percentile: number; breakdown: { question: string; selected: string | null; correct: string; explanation: string }[] };
 export default function MusicQuizPage() {
+  const { t } = useI18n();
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [result, setResult] = useState<Result | null>(null);
@@ -60,11 +62,11 @@ export default function MusicQuizPage() {
     } catch (err) { if (!(err instanceof Error && err.name === 'AbortError')) setError('Could not share result.'); }
   }
   return <main style={{ maxWidth: 650, margin: '0 auto', padding: '24px 16px' }}>
-    <h1>Music trivia</h1>
-    <p>Just for fun. No public player profiles, leaderboards, or follower feeds.</p>
-    <label style={{ display: 'block', padding: '12px 0' }}><input type="checkbox" checked={optedIn} disabled={preferenceBusy} onChange={(event) => void setNotifications(event.target.checked)} /> Notify me when new music quizzes arrive (optional)</label>
+    <h1>{t('musicQuiz.heading', 'Music trivia')}</h1>
+    <p>{t('musicQuiz.intro', 'Just for fun. No public player profiles, leaderboards, or follower feeds.')}</p>
+    <label style={{ display: 'block', padding: '12px 0' }}><input type="checkbox" checked={optedIn} disabled={preferenceBusy} onChange={(event) => void setNotifications(event.target.checked)} /> {t('musicQuiz.notify', 'Notify me when new music quizzes arrive (optional)')}</label>
     {error && <p role="status">{error}</p>}
-    {!quiz && !error && <p>Loading quiz…</p>}
+    {!quiz && !error && <p>{t('musicQuiz.loading', 'Loading quiz…')}</p>}
     {quiz && <><h2>{quiz.title}</h2>
       {!result ? <>
         {quiz.questions.map((q, i) => <fieldset key={q.id} style={{ margin: '20px 0', padding: 16 }}>
@@ -80,8 +82,8 @@ export default function MusicQuizPage() {
       </> : <section aria-live="polite">
         <h2>{result.score} / {result.total} correct</h2>
         <p>{result.participants} participants · {result.percentile}th percentile (including ties).</p>
-        <button className="button" type="button" onClick={share}>Share my result</button>
-        <h3>Your answers</h3>
+        <button className="button" type="button" onClick={share}>{t('musicQuiz.share', 'Share my result')}</button>
+        <h3>{t('musicQuiz.answers', 'Your answers')}</h3>
         <ol>{result.breakdown.map((item, i) => <li key={i} style={{ marginBottom: 16 }}>
           <strong>{item.question}</strong><p>You answered: {item.selected}</p>
           <p>Correct answer: {item.correct}. {item.explanation}</p>
