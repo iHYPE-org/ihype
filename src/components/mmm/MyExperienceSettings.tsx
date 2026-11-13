@@ -30,7 +30,7 @@ export function MyExperienceSettings() {
     fetch('/api/me/experience', { cache: 'no-store' }).then(async (r) => {
       if (!r.ok) throw new Error('Unable to load your preferences.');
       return r.json();
-    }).then((v) => { if (active) setPrefs(v.preferences); }).catch(() => { if (active) setMessage('Could not load your saved preferences.'); }).finally(() => { if (active) setLoading(false); });
+    }).then((v) => { if (active) setPrefs(v.preferences); }).catch(() => { if (active) setMessage(t('myExperience.loadFailed', 'Could not load your saved preferences.')); }).finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, []);
   function applyPreset(id: ExperiencePreferences['preset']) {
@@ -49,44 +49,44 @@ export function MyExperienceSettings() {
       if (!r.ok) throw new Error('Unable to save your settings.');
       setPrefs(value);
       window.dispatchEvent(new Event('ihype-experience-updated'));
-      setMessage('Experience settings saved.');
-    } catch { setMessage('Could not save. Please try again.'); }
+      setMessage(t('myExperience.saved', 'Experience settings saved.'));
+    } catch { setMessage(t('myExperience.saveFailed', 'Could not save. Please try again.')); }
     finally { setSaving(false); }
   }
   return <main className="settings-page settings-col" style={{ maxWidth: 760, margin: '0 auto', padding: '24px 16px' }}>
     <Link href="/app/me/settings">← {t('myExperience.back', 'Settings')}</Link>
     <h1>{t('myExperience.title', 'Appearance & Experience')}</h1>
     <p>{t('myExperience.intro', 'Personalize only your own iHYPE interface. Nothing here changes your public identity or deletes your content.')}</p>
-    {loading ? <p role="status">Loading preferences…</p> : <>
-      <fieldset><legend>Choose your starting layout</legend>
+    {loading ? <p role="status">{t('myExperience.loading', 'Loading preferences…')}</p> : <>
+      <fieldset><legend>{t('myExperience.layout', 'Choose your starting layout')}</legend>
         {presets.map((item) => <label key={item.id} style={{ display: 'block', padding: 12 }}>
           <input type="radio" name="experience-preset" checked={prefs.preset === item.id} onChange={() => applyPreset(item.id)} />
-          <strong> {item.label}</strong> — {item.hint}
+          <strong> {t(`myExperience.preset.${item.id}`, item.label)}</strong> — {t(`myExperience.presetHint.${item.id}`, item.hint)}
         </label>)}
       </fieldset>
-      <fieldset><legend>Show these optional navigation sections</legend>
-        <p>Home, Me, Settings, tickets, purchases, security, privacy and important notices always remain accessible. Hiding a shortcut never deletes content.</p>
+      <fieldset><legend>{t('myExperience.sections', 'Show these optional navigation sections')}</legend>
+        <p>{t('myExperience.safety', 'Home, Me, Settings, tickets, purchases, security, privacy and important notices always remain accessible. Hiding a shortcut never deletes content.')}</p>
         {sections.map((item) => <label key={item.id} style={{ display: 'block', padding: 12 }}>
-          <input type="checkbox" checked={prefs.navigation[item.id]} onChange={(e) => setPrefs((p) => ({ ...p, navigation: { ...p.navigation, [item.id]: e.target.checked } }))} /> {item.label}
+          <input type="checkbox" checked={prefs.navigation[item.id]} onChange={(e) => setPrefs((p) => ({ ...p, navigation: { ...p.navigation, [item.id]: e.target.checked } }))} /> {t(`myExperience.section.${item.id}`, item.label)}
         </label>)}
       </fieldset>
-      <fieldset><legend>Display and accessibility</legend>
-        <label style={{ display: 'block', padding: 12 }}>Accent color <select value={prefs.accent} onChange={(e) => setPrefs((p) => ({ ...p, accent: e.target.value as ExperiencePreferences['accent'] }))}>
-          <option value="default">Default</option><option value="cyan">Cyan</option><option value="violet">Violet</option><option value="amber">Amber</option>
+      <fieldset><legend>{t('myExperience.display', 'Display and accessibility')}</legend>
+        <label style={{ display: 'block', padding: 12 }}>{t('myExperience.accent', 'Accent color')} <select value={prefs.accent} onChange={(e) => setPrefs((p) => ({ ...p, accent: e.target.value as ExperiencePreferences['accent'] }))}>
+          <option value="default">{t('myExperience.default', 'Default')}</option><option value="cyan">{t('myExperience.cyan', 'Cyan')}</option><option value="violet">{t('myExperience.violet', 'Violet')}</option><option value="amber">{t('myExperience.amber', 'Amber')}</option>
         </select></label>
-        <label style={{ display: 'block', padding: 12 }}>Layout density <select value={prefs.density} onChange={(e) => setPrefs((p) => ({ ...p, density: e.target.value as ExperiencePreferences['density'] }))}>
-          <option value="comfortable">Comfortable</option><option value="compact">Compact</option><option value="spacious">Spacious</option>
+        <label style={{ display: 'block', padding: 12 }}>{t('myExperience.density', 'Layout density')} <select value={prefs.density} onChange={(e) => setPrefs((p) => ({ ...p, density: e.target.value as ExperiencePreferences['density'] }))}>
+          <option value="comfortable">{t('myExperience.comfortable', 'Comfortable')}</option><option value="compact">{t('myExperience.compact', 'Compact')}</option><option value="spacious">{t('myExperience.spacious', 'Spacious')}</option>
         </select></label>
         {([['contrast', 'High contrast'], ['reducedMotion', 'Reduced motion'], ['largeText', 'Larger text']] as const).map(([key, label]) => <label key={key} style={{ display: 'block', padding: 12 }}>
-          <input type="checkbox" checked={prefs[key]} onChange={(e) => setPrefs((p) => ({ ...p, [key]: e.target.checked }))} /> {label}
+          <input type="checkbox" checked={prefs[key]} onChange={(e) => setPrefs((p) => ({ ...p, [key]: e.target.checked }))} /> {t(`myExperience.accessibility.${key}`, label)}
         </label>)}
       </fieldset>
-      <section aria-label="Navigation preview" style={{ border: '1px solid var(--hair-100)', padding: 16, borderRadius: 12 }}>
-        <h2>Navigation preview</h2><p>Home · {sections.filter((s) => prefs.navigation[s.id]).map((s) => s.label).join(' · ')} · Me · Settings</p>
+      <section aria-label={t('myExperience.preview', 'Navigation preview')} style={{ border: '1px solid var(--hair-100)', padding: 16, borderRadius: 12 }}>
+        <h2>{t('myExperience.preview', 'Navigation preview')}</h2><p>Home · {sections.filter((s) => prefs.navigation[s.id]).map((s) => s.label).join(' · ')} · Me · Settings</p>
       </section>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 16 }}>
-        <button type="button" className="settings-btn" disabled={saving} onClick={() => void save(prefs)}>{saving ? 'Saving…' : 'Save experience'}</button>
-        <button type="button" className="settings-btn settings-btn-ghost" disabled={saving} onClick={() => void save(defaultExperience)}>Restore default experience</button>
+        <button type="button" className="settings-btn" disabled={saving} onClick={() => void save(prefs)}>{saving ? t('myExperience.saving', 'Saving…') : t('myExperience.save', 'Save experience')}</button>
+        <button type="button" className="settings-btn settings-btn-ghost" disabled={saving} onClick={() => void save(defaultExperience)}>{t('myExperience.restore', 'Restore default experience')}</button>
       </div>
     </>}
     <p role="status" aria-live="polite">{message}</p>
