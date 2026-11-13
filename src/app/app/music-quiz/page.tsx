@@ -10,12 +10,31 @@ export default function MusicQuizPage() {
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [optedIn, setOptedIn] = useState(false);
+  const [preferenceBusy, setPreferenceBusy] = useState(false);
   useEffect(() => {
     fetch('/api/music-quizzes').then(async (res) => {
       if (!res.ok) throw new Error('Quiz unavailable');
       setQuiz(await res.json());
     }).catch(() => setError('Quiz unavailable. Try again later.'));
   }, []);
+  useEffect(() => {
+    fetch('/api/music-quizzes/preferences').then(async (res) => {
+      if (res.ok) setOptedIn((await res.json()).enabled === true);
+    }).catch(() => {});
+  }, []);
+  async function setNotifications(enabled: boolean) {
+    setPreferenceBusy(true); setError('');
+    try {
+      const res = await fetch('/api/music-quizzes/preferences', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled }),
+      });
+      if (!res.ok) throw new Error('Sign in to change notifications.');
+      setOptedIn(enabled);
+    } catch (err) { setError(err instanceof Error ? err.message : 'Could not save preference.'); }
+    finally { setPreferenceBusy(false); }
+  }
   async function submit() {
     if (!quiz || busy) return;
     setBusy(true); setError('');
@@ -43,6 +62,7 @@ export default function MusicQuizPage() {
   return <main style={{ maxWidth: 650, margin: '0 auto', padding: '24px 16px' }}>
     <h1>Music trivia</h1>
     <p>Just for fun. No public player profiles, leaderboards, or follower feeds.</p>
+    <label style={{ display: 'block', padding: '12px 0' }}><input type="checkbox" checked={optedIn} disabled={preferenceBusy} onChange={(event) => void setNotifications(event.target.checked)} /> Notify me when new music quizzes arrive (optional)</label>
     {error && <p role="status">{error}</p>}
     {!quiz && !error && <p>Loading quiz…</p>}
     {quiz && <><h2>{quiz.title}</h2>
