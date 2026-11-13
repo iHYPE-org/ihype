@@ -115,7 +115,7 @@ export function MyExperienceSettings() {
         <label style={{ display: 'block', padding: 12 }}>{t('myExperience.density', 'Layout density')} <select value={prefs.density} onChange={(e) => setPrefs((p) => ({ ...p, density: e.target.value as ExperiencePreferences['density'] }))}>
           <option value="comfortable">{t('myExperience.comfortable', 'Comfortable')}</option><option value="compact">{t('myExperience.compact', 'Compact')}</option><option value="spacious">{t('myExperience.spacious', 'Spacious')}</option>
         </select></label>
-        {([['contrast', 'High contrast'], ['reducedMotion', 'Reduced motion'], ['largeText', 'Larger text']] as const).map(([key, label]) => <label key={key} style={{ display: 'block', padding: 12 }}>
+        {([['contrast', 'High contrast'], ['reducedMotion', 'Reduced motion'], ['largeText', 'Larger text']] as const).map(([key]) => <label key={key} style={{ display: 'block', padding: 12 }}>
           <input type="checkbox" checked={prefs[key]} onChange={(e) => setPrefs((p) => ({ ...p, [key]: e.target.checked }))} /> {accessibilityLabel(t, key)}
         </label>)}
       </fieldset>
