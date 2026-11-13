@@ -94,6 +94,7 @@ model User {
   email                   String?                  @unique
   phone                   String?                  @unique
   username                String                   @unique
+  experiencePreferences   Json?
   isThirteenOrOlder       Boolean                  @default(true)
   emailVerified           DateTime?
   image                   String?
