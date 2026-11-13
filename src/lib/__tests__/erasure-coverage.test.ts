@@ -46,6 +46,7 @@ const SCRUBBED = new Set([
   see, and that is the owner's call, not a test's.
 */
 const RECORDED_GAPS = new Map<string, string>([
+  ['MusicQuizResponse', 'quiz answers are private personal activity; must be explicitly erased in the account-erasure workflow before launch'],
   ['HypeEvent', 'a hype is public and counted on a show; deleting it moves that count'],
   ['ProfileHypeEvent', 'the same, on a profile'],
   ['HypeLedgerEntry', 'the ledger behind those counts; deleting entries changes an artist total'],
