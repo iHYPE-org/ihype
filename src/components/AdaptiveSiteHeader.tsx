@@ -148,7 +148,8 @@ export function AdaptiveSiteHeader({
                 from and `aria-current` is what a reader hears; the e2e reads
                 both, because they have disagreed before. */}
             <nav aria-label={t('mmmNav.main', 'Main')} className="site-nav-links">
-              {MMM_NAV.filter((module) => module.id !== 'music' || experience.navigation.music || activeModule === 'music').map((module) => {
+              {MMM_NAV.map((module) => {
+                if (module.id === 'music' && !experience.navigation.music && activeModule !== 'music') return null;
                 const on = module.id === activeModule;
                 return (
                   <Link
