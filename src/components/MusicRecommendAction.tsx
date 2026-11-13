@@ -62,7 +62,7 @@ export function MusicRecommendAction({
     }
   }
   return (
-    <span className="music-recommend-action" style={{ display: 'inline-flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+    <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
       <button type="button" className="button small secondary" onClick={endorse} disabled={pending || done}
         aria-label={kind === 'track' ? `Hype ${title}` : `Recommend album ${title}`}>
         {pending ? 'Saving…' : done ? '✓ Recommended' : kind === 'track' ? 'Hype track' : 'Recommend album'}
