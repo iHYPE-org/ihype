@@ -647,48 +647,48 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
 
       {activeSection === 'appearance' && !isFan && (
         <div className="sub-panel">
-          <h2>Page Studio</h2>
-          <p>Customize your public creator page without changing its navigation or accessibility. Preview the design below, then use Save changes.</p>
-          <Field label="Choose a professionally designed theme">
+          <h2>{t('pageStudio.title', 'Page Studio')}</h2>
+          <p>{t('pageStudio.intro', 'Customize your public creator page without changing its navigation or accessibility. Preview the design below, then use Save changes.')}</p>
+          <Field label={t('pageStudio.theme', 'Choose a professionally designed theme')}>
             <select style={inputStyle} value={data.themePreset ?? 'midnight-neon'} onChange={(e) => set('themePreset', e.target.value)}>
               {profileDesignPresets.map((item) => <option key={item.id} value={item.id}>{item.label} — {item.description}</option>)}
             </select>
           </Field>
-          <Field label="Accent color">
+          <Field label={t('pageStudio.accent', 'Accent color')}>
             <select style={inputStyle} value={data.themeAccentTone ?? 'preset'} onChange={(e) => set('themeAccentTone', e.target.value)}>
               {profileAccentTones.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
             </select>
           </Field>
-          <Field label="Background style">
+          <Field label={t('pageStudio.background', 'Background style')}>
             <select style={inputStyle} value={data.themeBackdropTone ?? 'preset'} onChange={(e) => set('themeBackdropTone', e.target.value)}>
               {profileBackdropTones.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
             </select>
           </Field>
-          <Field label="Typography">
+          <Field label={t('pageStudio.typography', 'Typography')}>
             <select style={inputStyle} value={data.themeFontPreset ?? 'night-broadcast'} onChange={(e) => set('themeFontPreset', e.target.value)}>
               {profileFontPresets.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
             </select>
           </Field>
-          <div aria-label="Live theme preview" style={{ background: preset.surface, color: preset.text, border: `1px solid ${preset.border}`, borderRadius: 20, padding: 24, marginBottom: 24 }}>
-            <p style={{ color: accentTone.accent ?? preset.accent, fontWeight: 700 }}>iHYPE · Creator page preview</p>
+          <div aria-label={t('pageStudio.previewLabel', 'Live theme preview')} style={{ background: preset.surface, color: preset.text, border: `1px solid ${preset.border}`, borderRadius: 20, padding: 24, marginBottom: 24 }}>
+            <p style={{ color: accentTone.accent ?? preset.accent, fontWeight: 700 }}>{t('pageStudio.previewTitle', 'iHYPE · Creator page preview')}</p>
             <h3 style={{ margin: '8px 0' }}>{data.name}</h3>
-            <p style={{ color: preset.muted }}>{data.headline || 'Your music. Your identity.'}</p>
-            <div style={{ background: backdropTone.hero ?? preset.hero, padding: 16, borderRadius: 12 }}>Music · Events · About</div>
-            <p style={{ fontSize: '0.9375rem' }}>This is a theme preview, not a full mobile/desktop page simulation.</p>
+            <p style={{ color: preset.muted }}>{data.headline || t('pageStudio.previewHeadline', 'Your music. Your identity.')}</p>
+            <div style={{ background: backdropTone.hero ?? preset.hero, padding: 16, borderRadius: 12 }}>{t('pageStudio.previewTabs', 'Music · Events · About')}</div>
+            <p style={{ fontSize: '0.9375rem' }}>{t('pageStudio.previewNote', 'This is a theme preview, not a full mobile/desktop page simulation.')}</p>
           </div>
-          <h3>Upload your own artwork</h3>
-          <p>Use original artwork you own or have permission to publish. Recommended: wide hero banner 1920 × 640 px (3:1), square avatar/logo 1000 × 1000 px, and room/gallery image 1600 × 900 px. Keep text and faces away from the edges because mobile screens crop images.</p>
-          <p>Accepted formats: JPEG, PNG, GIF or WebP. Use sRGB and compress files for fast loading. The upload service validates file size and type; artwork may be cropped to fit the selected layout.</p>
-          <ImageField label="Hero banner (3:1 recommended)" value={data.heroImage} uploading={uploadingField === 'heroImage'} onUpload={(file) => uploadImage('heroImage', file)} onRemove={() => set('heroImage', null)} />
-          <ImageField label="Square avatar (1:1 recommended)" value={data.avatarImage} uploading={uploadingField === 'avatarImage'} onUpload={(file) => uploadImage('avatarImage', file)} onRemove={() => set('avatarImage', null)} />
-          <ImageField label="Logo (transparent PNG or WebP recommended)" value={data.logoImage} uploading={uploadingField === 'logoImage'} onUpload={(file) => uploadImage('logoImage', file)} onRemove={() => set('logoImage', null)} />
-          <h3>Ask AI to design your artwork</h3>
-          <p>Copy this ready-made prompt into your preferred image generator. Upload the resulting image above after checking it meets the specifications.</p>
-          <textarea readOnly aria-label="Suggested AI artwork prompt" rows={5} style={inputStyle} value={`Create an original 1920x640 pixel hero banner for an iHYPE creator page named "${data.name}". Style: ${preset.label}. Mood: ${data.headline || 'expressive, contemporary music'}. Make a cinematic composition with a clear center safe area for overlaid interface text. Do not include words, logos, celebrity likenesses or copyrighted characters. Use high contrast and accessible colors. Export as optimized sRGB WebP or PNG.`} />
+          <h3>{t('pageStudio.uploadTitle', 'Upload your own artwork')}</h3>
+          <p>{t('pageStudio.uploadGuide', 'Use original artwork you own or have permission to publish. Recommended: wide hero banner 1920 × 640 px (3:1), square avatar/logo 1000 × 1000 px, and room/gallery image 1600 × 900 px. Keep text and faces away from the edges because mobile screens crop images.')}</p>
+          <p>{t('pageStudio.uploadFormats', 'Accepted formats: JPEG, PNG, GIF or WebP. Use sRGB and compress files for fast loading. The upload service validates file size and type; artwork may be cropped to fit the selected layout.')}</p>
+          <ImageField label={t('pageStudio.hero', 'Hero banner (3:1 recommended)')} value={data.heroImage} uploading={uploadingField === 'heroImage'} onUpload={(file) => uploadImage('heroImage', file)} onRemove={() => set('heroImage', null)} />
+          <ImageField label={t('pageStudio.avatar', 'Square avatar (1:1 recommended)')} value={data.avatarImage} uploading={uploadingField === 'avatarImage'} onUpload={(file) => uploadImage('avatarImage', file)} onRemove={() => set('avatarImage', null)} />
+          <ImageField label={t('pageStudio.logo', 'Logo (transparent PNG or WebP recommended)')} value={data.logoImage} uploading={uploadingField === 'logoImage'} onUpload={(file) => uploadImage('logoImage', file)} onRemove={() => set('logoImage', null)} />
+          <h3>{t('pageStudio.aiTitle', 'Ask AI to design your artwork')}</h3>
+          <p>{t('pageStudio.aiGuide', 'Copy this ready-made prompt into your preferred image generator. Upload the resulting image above after checking it meets the specifications.')}</p>
+          <textarea readOnly aria-label={t('pageStudio.aiPrompt', 'Suggested AI artwork prompt')} rows={5} style={inputStyle} value={`Create an original 1920x640 pixel hero banner for an iHYPE creator page named "${data.name}". Style: ${preset.label}. Mood: ${data.headline || 'expressive, contemporary music'}. Make a cinematic composition with a clear center safe area for overlaid interface text. Do not include words, logos, celebrity likenesses or copyrighted characters. Use high contrast and accessible colors. Export as optimized sRGB WebP or PNG.`} />
           <button className="settings-btn settings-btn-ghost" type="button" onClick={() => {
             const prompt = `Create original 1920x640 hero artwork for ${data.name}. Style: ${preset.label}. Mood: ${data.headline || 'contemporary music'}. Keep center clear for readable overlay text; no words, logos, celebrities or copyrighted characters. Export optimized sRGB WebP or PNG.`;
             void navigator.clipboard.writeText(prompt).catch(() => setError('Clipboard unavailable. Select and copy the prompt above.'));
-          }}>Copy AI prompt</button>
+          }}>{t('pageStudio.copyPrompt', 'Copy AI prompt')}</button>
         </div>
       )}
 
