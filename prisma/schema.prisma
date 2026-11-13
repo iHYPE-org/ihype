@@ -1255,6 +1255,7 @@ model ShowRsvp {
 }
 
 model NotificationPreference {
+  musicQuizzes Boolean @default(false)
   id              String   @id @default(cuid())
   userId          String   @unique
   newShows        Boolean  @default(true)
