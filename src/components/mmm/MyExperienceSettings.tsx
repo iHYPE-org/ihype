@@ -19,6 +19,44 @@ const sections = [
   { id: 'creator', label: 'Creator tools' },
 ] as const;
 
+type Translate = ReturnType<typeof useI18n>['t'];
+function presetLabel(t: Translate, id: string): string {
+  switch (id) {
+    case 'standard': return t('myExperience.preset.standard', 'Standard');
+    case 'simple': return t('myExperience.preset.simple', 'Simple');
+    case 'music': return t('myExperience.preset.music', 'Music First');
+    case 'events': return t('myExperience.preset.events', 'Events First');
+    default: return '';
+  }
+}
+function presetHint(t: Translate, id: string): string {
+  switch (id) {
+    case 'standard': return t('myExperience.presetHint.standard', 'Everything in the familiar layout');
+    case 'simple': return t('myExperience.presetHint.simple', 'Less clutter and fewer optional sections');
+    case 'music': return t('myExperience.presetHint.music', 'Prioritize music and discovery');
+    case 'events': return t('myExperience.presetHint.events', 'Prioritize shows and venues');
+    default: return '';
+  }
+}
+function sectionLabel(t: Translate, id: string): string {
+  switch (id) {
+    case 'music': return t('myExperience.section.music', 'Music & artists');
+    case 'events': return t('myExperience.section.events', 'Shows & events');
+    case 'discover': return t('myExperience.section.discover', 'Discover');
+    case 'community': return t('myExperience.section.community', 'Community interactions');
+    case 'creator': return t('myExperience.section.creator', 'Creator tools');
+    default: return '';
+  }
+}
+function accessibilityLabel(t: Translate, id: string): string {
+  switch (id) {
+    case 'contrast': return t('myExperience.accessibility.contrast', 'High contrast');
+    case 'reducedMotion': return t('myExperience.accessibility.reducedMotion', 'Reduced motion');
+    case 'largeText': return t('myExperience.accessibility.largeText', 'Larger text');
+    default: return '';
+  }
+}
+
 export function MyExperienceSettings() {
   const { t } = useI18n();
   const [prefs, setPrefs] = useState<ExperiencePreferences>(defaultExperience);
@@ -61,13 +99,13 @@ export function MyExperienceSettings() {
       <fieldset><legend>{t('myExperience.layout', 'Choose your starting layout')}</legend>
         {presets.map((item) => <label key={item.id} style={{ display: 'block', padding: 12 }}>
           <input type="radio" name="experience-preset" checked={prefs.preset === item.id} onChange={() => applyPreset(item.id)} />
-          <strong> {t(`myExperience.preset.${item.id}`, item.label)}</strong> — {t(`myExperience.presetHint.${item.id}`, item.hint)}
+          <strong> {presetLabel(t, item.id)}</strong> — {presetHint(t, item.id)}
         </label>)}
       </fieldset>
       <fieldset><legend>{t('myExperience.sections', 'Show these optional navigation sections')}</legend>
         <p>{t('myExperience.safety', 'Home, Me, Settings, tickets, purchases, security, privacy and important notices always remain accessible. Hiding a shortcut never deletes content.')}</p>
         {sections.map((item) => <label key={item.id} style={{ display: 'block', padding: 12 }}>
-          <input type="checkbox" checked={prefs.navigation[item.id]} onChange={(e) => setPrefs((p) => ({ ...p, navigation: { ...p.navigation, [item.id]: e.target.checked } }))} /> {t(`myExperience.section.${item.id}`, item.label)}
+          <input type="checkbox" checked={prefs.navigation[item.id]} onChange={(e) => setPrefs((p) => ({ ...p, navigation: { ...p.navigation, [item.id]: e.target.checked } }))} /> {sectionLabel(t, item.id)}
         </label>)}
       </fieldset>
       <fieldset><legend>{t('myExperience.display', 'Display and accessibility')}</legend>
@@ -78,7 +116,7 @@ export function MyExperienceSettings() {
           <option value="comfortable">{t('myExperience.comfortable', 'Comfortable')}</option><option value="compact">{t('myExperience.compact', 'Compact')}</option><option value="spacious">{t('myExperience.spacious', 'Spacious')}</option>
         </select></label>
         {([['contrast', 'High contrast'], ['reducedMotion', 'Reduced motion'], ['largeText', 'Larger text']] as const).map(([key, label]) => <label key={key} style={{ display: 'block', padding: 12 }}>
-          <input type="checkbox" checked={prefs[key]} onChange={(e) => setPrefs((p) => ({ ...p, [key]: e.target.checked }))} /> {t(`myExperience.accessibility.${key}`, label)}
+          <input type="checkbox" checked={prefs[key]} onChange={(e) => setPrefs((p) => ({ ...p, [key]: e.target.checked }))} /> {accessibilityLabel(t, key)}
         </label>)}
       </fieldset>
       <section aria-label={t('myExperience.preview', 'Navigation preview')} style={{ border: '1px solid var(--hair-100)', padding: 16, borderRadius: 12 }}>
