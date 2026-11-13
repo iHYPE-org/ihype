@@ -497,6 +497,7 @@ export function MmmSettings() {
     <div className="settings-page settings-col">
       <Link className="mmm-charter-back" href="/app/me?panel=settings">‹ Me</Link>
       <h1>{t('settingsPage.title', 'Settings')}</h1>
+      <p><Link href="/app/me/settings/experience">{t('myExperience.title', 'Appearance & Experience')} →</Link></p>
 
       {loading ? (
         <p style={{ color: 'var(--ink-a65)', fontFamily: 'var(--font-mono)', fontSize: '0.9375rem' }}>{t('settingsPage.loading', 'Loading…')}</p>
