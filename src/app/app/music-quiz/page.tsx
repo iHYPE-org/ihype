@@ -18,7 +18,7 @@ export default function MusicQuizPage() {
     fetch('/api/music-quizzes').then(async (res) => {
       if (!res.ok) throw new Error('Quiz unavailable');
       setQuiz(await res.json());
-    }).catch(() => setError('Quiz unavailable. Try again later.'));
+    }).catch(() => setError(t('musicQuiz.unavailable', 'Quiz unavailable. Try again later.')));
   }, []);
   useEffect(() => {
     fetch('/api/music-quizzes/preferences').then(async (res) => {
@@ -32,9 +32,9 @@ export default function MusicQuizPage() {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ enabled }),
       });
-      if (!res.ok) throw new Error('Sign in to change notifications.');
+      if (!res.ok) throw new Error(t('musicQuiz.signIn', 'Sign in to change notifications.'));
       setOptedIn(enabled);
-    } catch (err) { setError(err instanceof Error ? err.message : 'Could not save preference.'); }
+    } catch (err) { setError(err instanceof Error ? err.message : t('musicQuiz.preferenceFailed', 'Could not save preference.')); }
     finally { setPreferenceBusy(false); }
   }
   async function submit() {
@@ -46,7 +46,7 @@ export default function MusicQuizPage() {
         body: JSON.stringify({ quizId: quiz.id, answers: quiz.questions.map((q) => answers[q.id]) }),
       });
       const body = await res.json();
-      if (!res.ok) throw new Error(body.error || 'Could not submit');
+      if (!res.ok) throw new Error(body.error || t('musicQuiz.submitFailed', 'Could not submit'));
       setResult(body);
     } catch (err) { setError(err instanceof Error ? err.message : 'Could not submit'); }
     finally { setBusy(false); }
@@ -57,9 +57,9 @@ export default function MusicQuizPage() {
     const text = `I scored ${result.score}/${result.total} on iHYPE Music Trivia! I ranked at the ${result.percentile}th percentile among ${result.participants} players. Try it: ${url}`;
     try {
       if (navigator.share) await navigator.share({ title: quiz.title, text, url });
-      else if (navigator.clipboard?.writeText) { await navigator.clipboard.writeText(text); setError('Result copied to clipboard.'); }
+      else if (navigator.clipboard?.writeText) { await navigator.clipboard.writeText(text); setError(t('musicQuiz.copied', 'Result copied to clipboard.')); }
       else setError(text);
-    } catch (err) { if (!(err instanceof Error && err.name === 'AbortError')) setError('Could not share result.'); }
+    } catch (err) { if (!(err instanceof Error && err.name === 'AbortError')) setError(t('musicQuiz.shareFailed', 'Could not share result.')); }
   }
   return <main style={{ maxWidth: 650, margin: '0 auto', padding: '24px 16px' }}>
     <h1>{t('musicQuiz.heading', 'Music trivia')}</h1>
@@ -77,16 +77,16 @@ export default function MusicQuizPage() {
           </label>)}
         </fieldset>)}
         <button className="button" type="button" disabled={busy || quiz.questions.some((q) => answers[q.id] === undefined)} onClick={submit}>
-          {busy ? 'Checking…' : 'See my results'}
+          {busy ? t('musicQuiz.checking', 'Checking…') : t('musicQuiz.results', 'See my results')}
         </button>
       </> : <section aria-live="polite">
-        <h2>{result.score} / {result.total} correct</h2>
+        <h2>{result.score} / {result.total} {t('musicQuiz.correct', 'correct')}</h2>
         <p>{result.participants} participants · {result.percentile}th percentile (including ties).</p>
         <button className="button" type="button" onClick={share}>{t('musicQuiz.share', 'Share my result')}</button>
         <h3>{t('musicQuiz.answers', 'Your answers')}</h3>
         <ol>{result.breakdown.map((item, i) => <li key={i} style={{ marginBottom: 16 }}>
-          <strong>{item.question}</strong><p>You answered: {item.selected}</p>
-          <p>Correct answer: {item.correct}. {item.explanation}</p>
+          <strong>{item.question}</strong><p>{t('musicQuiz.youAnswered', 'You answered:')} {item.selected}</p>
+          <p>{t('musicQuiz.correctAnswer', 'Correct answer:')} {item.correct}. {item.explanation}</p>
         </li>)}</ol>
       </section>}
     </>}
