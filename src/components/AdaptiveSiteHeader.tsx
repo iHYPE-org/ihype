@@ -11,6 +11,7 @@ import { SearchBar } from '@/components/SearchBar';
 import { useI18n } from '@/components/I18nProvider';
 import { MMM_NAV, moduleForPath } from '@/lib/mmm-nav';
 import { translateTabLabel } from '@/lib/mmm-shell-labels';
+import { defaultExperience, type ExperiencePreferences } from '@/lib/member-experience';
 
 /**
  * THE ONE HEADER, and since 2026-09-22 the whole of the signed-in navigation.
@@ -70,12 +71,21 @@ export function AdaptiveSiteHeader({
   const { status: sessionStatus } = useSession();
   const pathname = usePathname() ?? '/';
   const [scrolled, setScrolled] = useState(false);
+  const [experience, setExperience] = useState<ExperiencePreferences>(defaultExperience);
   const signedIn = sessionStatus === 'authenticated';
   /* The shell: the frame below is `position: fixed` and starts at the header's
      bottom edge, and the document is locked, so this header is the only thing
      above the panes. */
   const inShell = pathname === '/app' || pathname.startsWith('/app/');
   const activeModule = moduleForPath(pathname);
+  useEffect(() => {
+    if (sessionStatus !== 'authenticated') return;
+    let active = true;
+    const refresh = () => { void fetch('/api/me/experience', { cache: 'no-store' }).then((r) => r.ok ? r.json() : null).then((data) => { if (active && data?.preferences) setExperience(data.preferences); }).catch(() => {}); };
+    refresh();
+    window.addEventListener('ihype-experience-updated', refresh);
+    return () => { active = false; window.removeEventListener('ihype-experience-updated', refresh); };
+  }, [sessionStatus]);
 
   useEffect(() => {
     let scheduled = false;
@@ -138,7 +148,7 @@ export function AdaptiveSiteHeader({
                 from and `aria-current` is what a reader hears; the e2e reads
                 both, because they have disagreed before. */}
             <nav aria-label={t('mmmNav.main', 'Main')} className="site-nav-links">
-              {MMM_NAV.map((module) => {
+              {MMM_NAV.filter((module) => module.id !== 'music' || experience.navigation.music || activeModule === 'music').map((module) => {
                 const on = module.id === activeModule;
                 return (
                   <Link
