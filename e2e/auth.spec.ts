@@ -72,6 +72,28 @@ test.describe('Authentication', () => {
     await expect(page).toHaveURL(/\/login/, { timeout: 8000 });
   });
 
+  test('a signed-out newcomer is sent to login from protected member areas', async ({ page }) => {
+    // The first account journey must not expose private pages or dead-end on a
+    // protected URL when a member follows an invitation or a bookmarked link.
+    for (const route of ['/app/me', '/app/me/profiles', '/app/me/payouts', '/app/music/discover']) {
+      await page.goto(route);
+      await expect(page).toHaveURL(/\/login(?:\?|$)/, { timeout: 10_000 });
+      await expect(page.getByLabel(/email/i)).toBeVisible();
+      await expect(page.getByRole('button', { name: /^continue$/i })).toBeEnabled();
+    }
+  });
+
+  test('a newcomer can recover from the email confirmation by returning to login', async ({ page }) => {
+    await page.goto('/login');
+    await page.getByLabel(/email/i).fill(EMAIL);
+    await page.getByRole('button', { name: /^continue$/i }).click();
+    await expect(page.getByRole('heading', { name: /check your email/i })).toBeVisible({ timeout: 8_000 });
+    // A page refresh must never strand the user behind a private member gate.
+    await page.reload();
+    await expect(page.locator('body')).not.toContainText('Internal Server Error');
+    await expect(page).toHaveURL(/\/login/);
+  });
+
   test('Authenticated /login redirects to the app surface', async ({ page, context }) => {
     if (!canSeedSession()) {
       test.skip(true, 'Needs E2E_WORKERD_DATABASE_URL + AUTH_SECRET to seed a session.');
