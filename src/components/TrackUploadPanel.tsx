@@ -130,9 +130,12 @@ export function TrackUploadPanel({
       }
 
       const response = await fetch('/api/artist-media', { method: 'POST', body: formData });
-      const data = await response.json();
+      // Cloudflare or an upstream proxy can return an HTML error page instead of JSON.
+      // Keep the artist in the form with a useful retry message in that case.
+      const data: { error?: string; verificationRequired?: boolean; scan?: typeof scanLayers } =
+        await response.json().catch(() => ({}));
       if (!response.ok) {
-        setError(data.error ?? t('trackUploadPanel.uploadErrorFallback', 'Could not upload this track.'));
+        setError(data.error ?? t('trackUploadPanel.uploadErrorFallback', 'Could not upload this track. Please try again.'));
         if (data.verificationRequired) setVerificationRequired(true);
         setSubmitting(false);
         return;
