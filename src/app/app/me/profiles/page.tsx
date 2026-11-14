@@ -6,7 +6,7 @@ import { PagesHome } from '@/components/PagesHome';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Dashboard · iHYPE',
+  title: 'Dashboard',
   description: 'Your pages, creator tools, audience signal, and local music network.',
   robots: { index: false, follow: false },
 };

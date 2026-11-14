@@ -15,7 +15,7 @@ import { loadShowSettlement, statementFor } from '@/lib/settlement-statement-dat
 export const dynamic = 'force-dynamic';
 
 export async function generateMetadata(): Promise<Metadata> {
-  return { title: 'Settlement statement · iHYPE', robots: { index: false, follow: false } };
+  return { title: 'Settlement statement', robots: { index: false, follow: false } };
 }
 
 /**

@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const show = await db.show.findUnique({ where: { slug }, select: { title: true } });
   return {
-    title: show ? `Lineup offer · ${show.title} · iHYPE` : 'Lineup offer · iHYPE',
+    title: show ? `Lineup offer · ${show.title}` : 'Lineup offer',
     robots: { index: false, follow: false },
   };
 }

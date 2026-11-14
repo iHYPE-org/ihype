@@ -8,7 +8,7 @@ import { WORKBENCH_PATH } from '@/lib/auth-redirects';
 import { getServerT } from '@/lib/i18n/server';
 
 export const metadata: Metadata = {
-  title: 'Welcome · iHYPE',
+  title: 'Welcome',
   robots: { index: false, follow: false },
 };
 

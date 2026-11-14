@@ -13,7 +13,7 @@ import { payoutTabLabel } from '@/lib/i18n-enum-labels';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Payouts · iHYPE',
+  title: 'Payouts',
   robots: { index: false, follow: false },
 };
 

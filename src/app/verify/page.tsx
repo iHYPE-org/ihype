@@ -9,7 +9,7 @@ import { getServerT } from '@/lib/i18n/server';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Verification · iHYPE',
+  title: 'Verification',
   robots: { index: false, follow: false },
 };
 

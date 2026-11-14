@@ -5,7 +5,7 @@ import { getServerT } from '@/lib/i18n/server';
 import { SETTLEMENT_DAYS_AFTER_SHOW } from '@/lib/split-agreement';
 
 export const metadata: Metadata = {
-  title: 'For Venues · iHYPE',
+  title: 'For Venues',
   description: 'Every ticket sale in your own Stripe account, real demand data on who your city wants to see, and one booking inbox.',
 };
 

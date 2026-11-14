@@ -6,7 +6,7 @@ import { AdvertiserRegisterForm } from '@/components/AdvertiserRegisterForm';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Open a 3rd-Party Advertiser Account · iHYPE',
+  title: 'Open a 3rd-Party Advertiser Account',
   description: 'A self-serve account for music stores, merch printers, and live-production companies to manage ad campaigns on iHYPE — no artist, venue, or DJ account required.',
   robots: { index: false, follow: false },
 };
