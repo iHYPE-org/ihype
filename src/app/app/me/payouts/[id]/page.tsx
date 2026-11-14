@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     select: { title: true },
   });
   return {
-    title: show ? `Payout · ${show.title} · iHYPE` : 'Payout · iHYPE',
+    title: show ? `Payout · ${show.title}` : 'Payout',
     robots: { index: false, follow: false },
   };
 }

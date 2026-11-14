@@ -13,7 +13,7 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const { slug } = await params;
   const data = await getEarlyBelievers(slug, null);
-  if (!data) return { title: 'Early Believers · iHYPE' };
+  if (!data) return { title: 'Early Believers' };
   const title = `Early believers in ${data.artistName} · iHYPE`;
   const description = `${data.totalBelievers} people believed in ${data.artistName}. See who called it first.`;
   return {
