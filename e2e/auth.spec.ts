@@ -85,7 +85,7 @@ test.describe('Authentication', () => {
 
   test('a newcomer can recover from the email confirmation by returning to login', async ({ page }) => {
     await page.goto('/login');
-    await page.getByLabel(/email/i).fill(`e2e-new-member-${Date.now()}@example.com`);
+    await page.getByLabel(/email/i).fill(EMAIL);
     await page.getByRole('button', { name: /^continue$/i }).click();
     await expect(page.getByRole('heading', { name: /check your email/i })).toBeVisible({ timeout: 8_000 });
     // A page refresh must never strand the user behind a private member gate.
