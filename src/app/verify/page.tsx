@@ -18,7 +18,7 @@ const BADGE_COLOR: Record<string, { bg: string; border: string; text: string }> 
   VENUE: { bg: 'rgba(var(--role-venue-rgb),.12)', border: 'rgba(var(--role-venue-rgb),.3)', text: 'var(--role-venue)' },
 };
 
-export default async function VerifyPage() {
+export default async function VerifyPage({ searchParams }: { searchParams: Promise<{ profileId?: string }> }) {
   const session = await auth();
   if (!session?.user?.id) redirect('/login?callbackUrl=/verify');
 
@@ -30,7 +30,7 @@ export default async function VerifyPage() {
   };
 
   const NEXT_STEP: Record<string, { title: string; body: string; cta: string; href: string }> = {
-    ARTIST: { title: t('verifyPage.nextStepArtistTitle', 'Draft your artist page'), body: t('verifyPage.nextStepArtistBody', "Add a bio, pin a track, and set your genres now — it goes live the moment you're verified."), cta: t('verifyPage.nextStepArtistCta', 'Start your page'), href: '/app/me/profiles' },
+    ARTIST: { title: t('verifyPage.nextStepArtistTitle', 'Draft your artist page'), body: t('verifyPage.nextStepArtistBodyPending', 'Add a bio, set your genres, and upload tracks while your application is reviewed.'), cta: t('verifyPage.nextStepArtistCta', 'Start your page'), href: '/app/me/profiles' },
     VENUE: { title: t('verifyPage.nextStepVenueTitle', 'Set up your room'), body: t('verifyPage.nextStepVenueBody', "Add capacity, amenities, and photos so promoters and artists can find you the moment you're verified."), cta: t('verifyPage.nextStepVenueCta', 'Set up your venue'), href: '/app/me/profiles' },
   };
 
@@ -55,11 +55,33 @@ export default async function VerifyPage() {
     );
   }
 
-  const profile = profiles.find((p) => p.verificationStatus !== 'VERIFIED') ?? profiles[0];
+  const { profileId } = await searchParams;
+  const profile = profiles.find((p) => p.id === profileId) ?? profiles.find((p) => p.verificationStatus !== 'VERIFIED') ?? profiles[0];
+
+  const navigation = (
+    <nav aria-label={t('verifyPage.profileNavigation', 'Verification navigation')} style={{ textAlign: 'left', marginBottom: 24 }}>
+      <Link href="/app/me/profiles">{t('verifyPage.backToPages', '← Back to my pages')}</Link>
+      {profiles.length > 1 && (
+        <div style={{ marginTop: 16 }}>
+          <p>{t('verifyPage.chooseProfile', 'Choose a page to verify:')}</p>
+          <ul>
+            {profiles.map((item) => (
+              <li key={item.id}>
+                <Link aria-current={item.id === profile.id ? 'page' : undefined} href={`/verify?profileId=${encodeURIComponent(item.id)}`}>
+                  {item.name} · {TYPE_LABEL[item.type]}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </nav>
+  );
 
   if (profile.verificationStatus === 'VERIFIED') {
     return (
       <div style={{ maxWidth: 480, margin: '40px auto', padding: '0 24px 100px', textAlign: 'center' }}>
+        {navigation}
         <div style={{
           width: 56, height: 56, borderRadius: 16, margin: '0 auto 16px',
           background: 'rgba(var(--role-venue-rgb),.12)', border: '2px solid var(--role-venue)',
@@ -78,6 +100,7 @@ export default async function VerifyPage() {
     const nextStep = NEXT_STEP[profile.type];
     return (
       <div style={{ maxWidth: 480, margin: '40px auto', padding: '0 24px 100px', textAlign: 'center' }}>
+        {navigation}
         <div style={{
           width: 56, height: 56, borderRadius: 16, margin: '0 auto 16px',
           background: 'rgba(var(--role-venue-rgb),.12)', border: '2px solid var(--role-venue)',
@@ -87,7 +110,7 @@ export default async function VerifyPage() {
         </div>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.7rem', fontWeight: 800, marginBottom: 8 }}>{t('verifyPage.submittedHeading', 'Submitted.')}</h1>
         <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', maxWidth: '34ch', margin: '0 auto 24px', lineHeight: 1.65 }}>
-          {t('verifyPage.submittedBody', "We'll review your application within 48 hours and email you at the address on your account. While you wait, you can use iHYPE as a Fan.")}
+          {t('verifyPage.submittedBodyReview', "We'll review your application within 48 hours and email you at the address on your account.")}
         </p>
         <div style={{ display: 'flex', justifyContent: 'center', gap: 10, marginBottom: 24 }}>
           <span style={{
@@ -115,12 +138,15 @@ export default async function VerifyPage() {
 
   return (
     <div style={{ maxWidth: 480, margin: '40px auto', padding: '0 24px 100px' }}>
+      {navigation}
       <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--ink-a65)', marginBottom: 12 }}>{t('verifyPage.label', 'Verification')}</p>
       <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.7rem', fontWeight: 800, marginBottom: 8 }}>{t('verifyPage.verifyYourPagePrefix', 'Verify your')} {TYPE_LABEL[profile.type]} {t('verifyPage.verifyYourPageSuffix', 'page.')}</h1>
       <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', marginBottom: 24, lineHeight: 1.6 }}>
         {t('verifyPage.instantVsVerificationPayouts', 'Fan accounts are instant. Artist and Venue accounts require verification — it makes sure every ticket’s money reaches the people who earned it.')}
       </p>
+      <p style={{ marginBottom: 16 }}>{profile.name}</p>
       <VerifyForm
+        key={profile.id}
         profileId={profile.id}
         type={profile.type as 'ARTIST' | 'VENUE'}
         initialName={profile.name}

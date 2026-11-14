@@ -134,6 +134,7 @@ export function ArtistOnboardingWizard({
   return (
     <div className="aow-page">
       <div className="aow-card">
+        <Link href="/app/me/profiles">{t('artistOnboardingWizard.backToPages', '← Back to my pages')}</Link>
         <div className="aow-progress-track">
           <div className="aow-progress-fill" style={{ width: `${PROGRESS[step]}%` }} />
         </div>

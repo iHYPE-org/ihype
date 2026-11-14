@@ -147,6 +147,7 @@ export default function VenueOnboardingWizard({
 
   return (
     <div className="von-page">
+      <Link href="/app/me/profiles">{t('venueOnboardingWizard.backToPages', '← Back to my pages')}</Link>
       <div className="von-eyebrow">{t('venueOnboardingWizard.eyebrowStep', 'Step')} {Math.min(step + 1, 4)} {t('venueOnboardingWizard.eyebrowOf4', 'of 4 · Venue setup')}</div>
       <div className="von-progress">
         <div className="von-progress-fill" style={{ width: `${pct}%` }} />

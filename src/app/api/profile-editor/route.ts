@@ -135,6 +135,7 @@ export async function PATCH(request: Request) {
     themePreset: body.themePreset || undefined,
     themeAccentTone: emptyToNull(body.themeAccentTone),
     themeBackdropTone: emptyToNull(body.themeBackdropTone),
+    themeFontPreset: emptyToNull(body.themeFontPreset),
     fanShareEnabled: body.fanShareEnabled,
     discoverable: body.discoverable,
     capacity: body.capacity,
