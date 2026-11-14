@@ -2,7 +2,7 @@ import { LoginScreen } from '@/components/AuthScreens';
 import { loginLinkErrorFromCode } from '@/lib/login-link-error';
 
 export const metadata = {
-  title: 'Sign in | iHYPE.org',
+  title: 'Sign in',
   robots: { index: false, follow: false }
 };
 

@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { db } from '@/lib/db';
 import { getServerI18n } from '@/lib/i18n/server';
 
-export const metadata = { title: 'Journal · iHYPE' };
+export const metadata = { title: 'Journal' };
 export const dynamic = 'force-dynamic';
 
 type EditorialMeta = {

@@ -15,13 +15,13 @@ const PORTLAND = 'America/New_York';
 
 describe('formatDoorTime', () => {
   it('renders the venue night, not the Worker day', () => {
-    const utc = formatDoorTime('en', NINE_PM_SATURDAY_IN_PORTLAND, null, {
+    const utc = formatDoorTime('en', NINE_PM_SATURDAY_IN_PORTLAND, 'UTC', {
       weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
     });
     const venue = formatDoorTime('en', NINE_PM_SATURDAY_IN_PORTLAND, PORTLAND, {
       weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
     });
-    // The harness runs in UTC, which is what the Worker does.
+    // Name the Worker zone explicitly; the harness may run in any timezone.
     expect(utc).toBe('Sunday, March 15, 2026');
     expect(venue).toBe('Saturday, March 14, 2026');
   });

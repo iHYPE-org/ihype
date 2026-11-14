@@ -76,7 +76,7 @@ export async function generateMetadata(
   const { slug } = await params;
   const show = await getShowPage(slug);
 
-  if (!show) return { title: 'Show · iHYPE' };
+  if (!show) return { title: 'Show' };
 
   const locale = await getLocale();
   const dateStr = show.startsAt

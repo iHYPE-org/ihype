@@ -4,7 +4,7 @@ import { SupportPageClient } from '@/components/SupportPageClient';
 import { getServerT } from '@/lib/i18n/server';
 
 export const metadata: Metadata = {
-  title: 'Support · iHYPE',
+  title: 'Support',
   description: 'We read every message. Usually reply within 24h.'
 };
 

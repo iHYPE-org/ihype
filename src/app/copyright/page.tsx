@@ -1,7 +1,7 @@
 import { TrustPolicyPage } from '@/components/TrustPolicyPage';
 import { getServerT } from '@/lib/i18n/server';
 
-export const metadata = { title: 'Copyright | iHYPE.org' };
+export const metadata = { title: 'Copyright' };
 
 export default async function CopyrightPage() {
   const t = await getServerT();
