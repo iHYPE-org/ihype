@@ -159,6 +159,34 @@ test.describe('uploading a track', () => {
     await expect(page.getByRole('heading', { name: /Verify your Artist page/i })).toBeVisible();
   });
 
+  test('a temporary non-JSON upload failure leaves the form usable', async ({ context, page }) => {
+    await signIn(context, `e2e-upload-gateway-${RUN}@ihype.org`, [
+      { type: 'ARTIST', name: 'E2E Upload Gateway Artist', verified: true },
+    ]);
+    await page.goto('/app/me?role=artist&section=profiles');
+    const href = await page.locator('.mmm-me-section:visible a[href^="/app/artists/"]').first().getAttribute('href');
+    expect(href).toBeTruthy();
+    await page.goto(`${href}?tab=albums`);
+    const panel = page.locator('.artist-media-upload-panel:visible');
+    await expect(panel).toHaveCount(1, { timeout: 15_000 });
+
+    await page.route('**/api/artist-media', async (route) => {
+      if (route.request().method() === 'POST') {
+        await route.fulfill({ status: 502, contentType: 'text/html', body: '<h1>Bad Gateway</h1>' });
+      } else {
+        await route.continue();
+      }
+    });
+    await panel.locator('input[type="file"][accept*="audio/"]').setInputFiles({
+      name: 'gateway-test.mp3', mimeType: 'audio/mpeg', buffer: Buffer.from([0xff, 0xf3, 0x90, 0x64]),
+    });
+    await panel.getByPlaceholder(/Track title/i).fill('Gateway retry');
+    await panel.getByRole('button', { name: /Upload track/i }).click();
+    await expect(panel.getByRole('alert')).toContainText(/Could not upload this track/i);
+    await expect(panel.getByRole('button', { name: /Upload track/i })).toBeEnabled();
+    await expect(panel.getByPlaceholder(/Track title/i)).toHaveValue('Gateway retry');
+  });
+
   test('an artist uploads a track from their own page and sees the scan verdict', async ({ context, page }) => {
     /* VERIFIED, because the gate is real: POST /api/artist-media 403s an
        UNVERIFIED profile ("Verify this page before uploading") — the run that

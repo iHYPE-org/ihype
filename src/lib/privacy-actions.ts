@@ -202,6 +202,7 @@ export async function executeAccountErasure(
   await Promise.all([
     db.notification.deleteMany({ where: { userId } }),
     db.notificationPreference.deleteMany({ where: { userId } }),
+    db.musicQuizResponse.deleteMany({ where: { userId } }),
     db.seed.deleteMany({ where: { userId } }),
     db.fanFavoriteMedia.deleteMany({ where: { userId } }),
     db.fanPlaylist.deleteMany({ where: { userId } }),
