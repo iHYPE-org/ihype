@@ -53,6 +53,54 @@ async function signIn(
   return applySessionCookie(context, email, { profiles });
 }
 
+test.describe('profile permission boundaries', () => {
+  test('signed-out users cannot list artist uploads or complete onboarding', async ({ request }) => {
+    const media = await request.get('/api/artist-media?profileId=missing');
+    expect(media.status()).toBe(401);
+    const onboarding = await request.post('/api/profile/onboarding-complete', {
+      data: { profileId: 'missing' },
+    });
+    expect(onboarding.status()).toBe(401);
+  });
+
+  test('a different signed-in member cannot read uploads or finish another artist onboarding', async ({ browser }) => {
+    test.skip(!canSeedSession(), 'Requires isolated Workerd scratch database');
+    const ownerContext = await browser.newContext();
+    const visitorContext = await browser.newContext();
+    try {
+      const owner = await applySessionCookie(ownerContext, `e2e-permission-owner-${RUN}@ihype.org`, {
+        profiles: [{ type: 'ARTIST', name: 'Permission Boundary Artist', verified: true }],
+      });
+      await applySessionCookie(visitorContext, `e2e-permission-visitor-${RUN}@ihype.org`);
+      const profileId = owner.profiles[0].id;
+      const ownerRead = await ownerContext.request.get(`/api/artist-media?profileId=${profileId}`);
+      expect(ownerRead.status()).toBe(200);
+
+      const visitorRead = await visitorContext.request.get(`/api/artist-media?profileId=${profileId}`);
+      expect(visitorRead.status()).toBe(403);
+
+      const visitorWrite = await visitorContext.request.post('/api/profile/onboarding-complete', {
+        data: { profileId },
+      });
+      expect(visitorWrite.status()).toBe(403);
+
+      const ownerWrite = await ownerContext.request.post('/api/profile/onboarding-complete', {
+        data: { profileId },
+      });
+      expect(ownerWrite.status()).toBe(200);
+      expect((await ownerWrite.json()).ok).toBe(true);
+      const repeated = await ownerContext.request.post('/api/profile/onboarding-complete', {
+        data: { profileId },
+      });
+      expect(repeated.status()).toBe(200);
+      expect((await repeated.json()).alreadyOnboarded).toBe(true);
+    } finally {
+      await ownerContext.close();
+      await visitorContext.close();
+    }
+  });
+});
+
 test.describe('creating pages', () => {
   test('a fan creates an artist page through the page creator', async ({ context, page }) => {
     // A fresh address per concern: this user must START with no profiles, or
