@@ -15,7 +15,7 @@ export async function GET(request: Request) {
   if (!profileId) return NextResponse.json({ error: 'Select an artist or venue.' }, { status: 400 });
   const profile = await withDbRetry(() => db.profile.findUnique({
     where: { id: profileId },
-    select: { id: true, ownerId: true, slug: true, name: true, type: true, verificationStatus: true, siteConfig: true },
+    select: { id: true, ownerId: true, slug: true, name: true, type: true, headline: true, bio: true, heroImage: true, verificationStatus: true, siteConfig: true },
   }));
   if (!profile || !['ARTIST', 'VENUE'].includes(profile.type)) {
     return NextResponse.json({ error: 'Artist or venue not found.' }, { status: 404 });
@@ -24,7 +24,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Forbidden.' }, { status: 403 });
   }
   return NextResponse.json({
-    profile: { id: profile.id, slug: profile.slug, name: profile.name, type: profile.type, verificationStatus: profile.verificationStatus },
+    profile: { id: profile.id, slug: profile.slug, name: profile.name, type: profile.type, headline: profile.headline, bio: profile.bio, heroImage: profile.heroImage, verificationStatus: profile.verificationStatus },
     site: readProfileSiteConfig(profile.siteConfig),
   }, { headers: { 'Cache-Control': 'private, no-store' } });
 }
