@@ -21,7 +21,6 @@ vi.mock('@/lib/rate-limit', () => ({
 }));
 vi.mock('@/lib/mux-video', () => ({
   isVideoUploadEnabled: vi.fn(),
-  isR2VideoArchiveEnabled: vi.fn(),
   muxRequest: vi.fn(),
   MuxApiError: class MuxApiError extends Error {
     constructor(readonly status: number) { super(`Mux returned ${status}`); }
@@ -34,7 +33,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { consumeRateLimit } from '@/lib/rate-limit';
-import { isR2VideoArchiveEnabled, isVideoUploadEnabled, muxRequest } from '@/lib/mux-video';
+import { isVideoUploadEnabled, muxRequest } from '@/lib/mux-video';
 import { DEFAULT_SITE_CONFIG } from '@/lib/profile-site';
 
 const stub = (fn: unknown) => fn as ReturnType<typeof vi.fn>;
@@ -50,7 +49,6 @@ const signedIn = stub(auth);
 const ownerAllowed = stub(canManageOwnedResource);
 const rateLimit = stub(consumeRateLimit);
 const muxEnabled = stub(isVideoUploadEnabled);
-const archiveEnabled = stub(isR2VideoArchiveEnabled);
 const provider = stub(muxRequest);
 
 const profile = {
@@ -97,7 +95,6 @@ beforeEach(() => {
   videoList.mockResolvedValue([]);
   videoUpdateMany.mockResolvedValue({ count: 1 });
   muxEnabled.mockReturnValue(true);
-  archiveEnabled.mockReturnValue(false);
   provider.mockResolvedValue({
     id: 'mux-upload-1',
     url: 'https://storage.googleapis.com/mux-test-upload',
@@ -256,7 +253,7 @@ describe('Artist/venue site and video integration boundaries', () => {
     muxEnabled.mockReturnValue(false);
     const response = await getVideos(new Request('https://ihype.org/api/site-videos?profileId=profile-1'));
     expect(response.status).toBe(200);
-    expect(await response.json()).toMatchObject({ enabled: false, archiveEnabled: false, videos: [] });
+    expect(await response.json()).toMatchObject({ enabled: false, videos: [] });
     expect((await uploadVideo(requestForVideo())).status).toBe(503);
   });
 

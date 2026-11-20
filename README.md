@@ -103,9 +103,7 @@ show information, images and merchandise links. Contact details are opt-in.
 
 Mux Video (Basic tier, 1080p by default, optional 2160p/4K) is a separate,
 **disabled-by-default** integration. Users upload from the browser directly to
-Mux; nothing is publicly playable until the owner approves publishing. The
-existing Cloudflare R2 bucket can optionally archive source files privately in
-8 MiB parts. No live streaming, video proxying, or extra Worker storage secrets.
+Mux; nothing is publicly playable until the owner approves publishing. Video storage and playback are handled by Mux.
 
 See `docs/runbooks/profile-sites-mux-4k.md` for provider setup, secrets,
 webhook verification, nonprofit-credit requests, cost ceilings, phased QA,

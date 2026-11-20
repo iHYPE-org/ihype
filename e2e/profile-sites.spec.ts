@@ -166,66 +166,6 @@ test.describe('One-page site navigation and privacy', () => {
     await expect(page.locator('.ih-builder-note').filter({ hasText: /hidden from public discovery/i })).toBeVisible();
   });
 
-  test('owner can stop optional R2 archiving without losing the completed Mux upload', async ({ context, page }) => {
-    const artist = await signedIn(context, 'archive-stop', 'ARTIST', true);
-    let originalStopped = false;
-    await page.route(url => url.pathname === '/api/site-videos', async route => {
-      if (route.request().method() === 'GET') {
-        await route.fulfill({ status: 200, contentType: 'application/json',
-          body: JSON.stringify({ videos: [], enabled: true, archiveEnabled: true }) });
-      } else {
-        await route.fulfill({ status: 201, contentType: 'application/json',
-          body: JSON.stringify({
-            id: 'ci-video-1', uploadUrl: 'https://storage.googleapis.com/ihype-ci-only-upload',
-            maxFileBytes: 2 * 1024 ** 3,
-          }) });
-      }
-    });
-    await page.route('https://storage.googleapis.com/ihype-ci-only-upload', async route => {
-      await route.fulfill({
-        status: 200, body: '',
-        headers: {
-          'access-control-allow-origin': '*',
-          'access-control-allow-methods': 'PUT, OPTIONS',
-          'access-control-allow-headers': 'content-type',
-        },
-      });
-    });
-    await page.route(url => url.pathname === '/api/site-videos/archive', async route => {
-      const request = route.request();
-      if (request.method() === 'PUT') {
-        // Simulate a slow original-file upload. The UI must abort this fetch,
-        // clean up R2 multipart state, and leave the completed Mux upload intact.
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        await route.fulfill({ status: 200, contentType: 'application/json',
-          body: JSON.stringify({ partNumber: 1, etag: 'test-etag' }) }).catch(() => {});
-        return;
-      }
-      const body = JSON.parse(request.postData() || '{}') as { action?: string };
-      if (body.action === 'abort') originalStopped = true;
-      await route.fulfill({ status: 200, contentType: 'application/json',
-        body: JSON.stringify({ ok: true }) });
-    });
-
-    await page.goto(`/app/me/sites/${artist.id}`);
-    await expect(page.getByLabel('Save a private copy to Cloudflare R2')).toBeVisible();
-    await page.getByLabel('Save a private copy to Cloudflare R2').check();
-    await page.getByLabel('I have the rights and permission to upload this video').check();
-    await page.locator('#ih-video-file').setInputFiles({
-      name: 'short-ci-only.mp4', mimeType: 'video/mp4', buffer: Buffer.alloc(4096),
-    });
-    await page.getByRole('button', { name: 'Upload video', exact: true }).click();
-    const stopButton = page.getByRole('button', { name: /Stop saving original/i });
-    await expect(stopButton).toBeVisible({ timeout: 20_000 });
-    await stopButton.click();
-    await expect(page.getByText(/optional original-file archiving stopped; your video is intact/i))
-      .toBeVisible({ timeout: 20_000 });
-    expect(originalStopped).toBe(true);
-    await expect(page.getByRole('link', { name: /Back to profiles/i })).toBeVisible();
-    await page.getByRole('link', { name: /Back to profiles/i }).click();
-    await expect(page).toHaveURL(/\/app\/me\/profiles/);
-  });
-
   test('phone viewport keeps Website + video discoverable and actions on-screen', async ({ context, page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     const venue = await signedIn(context, 'venue-mobile', 'VENUE', true);

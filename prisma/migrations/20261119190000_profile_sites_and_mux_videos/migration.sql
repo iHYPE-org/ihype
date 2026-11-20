@@ -13,8 +13,6 @@ CREATE TABLE "ProfileVideo" (
   "quality" TEXT NOT NULL DEFAULT '1080p',
   "durationSecs" DOUBLE PRECISION,
   "isPublished" BOOLEAN NOT NULL DEFAULT false,
-  "archiveKey" TEXT,
-  "archiveUploadId" TEXT,
   "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "updatedAt" TIMESTAMP(3) NOT NULL,
   CONSTRAINT "ProfileVideo_pkey" PRIMARY KEY ("id")

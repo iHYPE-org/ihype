@@ -12,10 +12,10 @@ type OwnerProfile = {
 };
 type OwnerVideo = {
   id: string; title: string; quality: string; status: string; isPublished: boolean;
-  durationSecs: number | null; muxPlaybackId: string | null; archiveKey: string | null; archiveUploadId: string | null;
+  durationSecs: number | null; muxPlaybackId: string | null;
 };
 type SitePayload = { profile: OwnerProfile; site: SiteConfig };
-type VideoPayload = { videos: OwnerVideo[]; enabled: boolean; archiveEnabled: boolean };
+type VideoPayload = { videos: OwnerVideo[]; enabled: boolean };
 type SectionId = keyof SiteConfig['sections'];
 const sections: Array<{ id: SectionId; label: string; help: string }> = [
   { id: 'about', label: 'About', help: 'Your biography and story' },
@@ -32,17 +32,13 @@ export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
   const [profile, setProfile] = useState<OwnerProfile | null>(null);
   const [videos, setVideos] = useState<OwnerVideo[]>([]);
   const [enabled, setEnabled] = useState(false);
-  const [archiveEnabled, setArchiveEnabled] = useState(false);
-  const [archiveOriginal, setArchiveOriginal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [uploadPhase, setUploadPhase] = useState<'idle' | 'preparing' | 'transferring' | 'archiving'>('idle');
+  const [uploadPhase, setUploadPhase] = useState<'idle' | 'preparing' | 'transferring'>('idle');
   const xhrRef = useRef<XMLHttpRequest | null>(null);
   const activeUploadIdRef = useRef<string | null>(null);
   const cancelledRef = useRef(false);
-  const stopArchiveRef = useRef(false);
-  const archiveTransferRef = useRef<AbortController | null>(null);
   const [quality, setQuality] = useState<'1080p' | '2160p'>('1080p');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [rightsConfirmed, setRightsConfirmed] = useState(false);
@@ -59,7 +55,6 @@ export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
     if (!response.ok) throw new Error(json.error || 'Could not load video library.');
     setVideos(json.videos);
     setEnabled(json.enabled);
-    setArchiveEnabled(json.archiveEnabled);
   }, [profileId]);
 
   useEffect(() => {
@@ -107,68 +102,12 @@ export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
     setSite(current => ({ ...current, sections: { ...current.sections, [id]: checked } }));
   }
 
-  async function archiveFile(file: File, videoId: string) {
-    let started = false;
-    try {
-      const start = await fetch('/api/site-videos/archive', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'start', videoId, mimeType: file.type || 'video/mp4' }),
-      });
-      const startedResponse = await start.json() as { error?: string };
-      if (!start.ok) throw new Error(startedResponse.error || 'Could not start archive.');
-      started = true;
-      const partSize = 8 * 1024 * 1024;
-      const parts: Array<{ partNumber: number; etag: string }> = [];
-      for (let offset = 0, partNumber = 1; offset < file.size; offset += partSize, partNumber++) {
-        if (stopArchiveRef.current) throw new Error('Archive stop requested.');
-        const controller = new AbortController();
-        archiveTransferRef.current = controller;
-        let response: Response;
-        try {
-          response = await fetch(
-            `/api/site-videos/archive?videoId=${encodeURIComponent(videoId)}&part=${partNumber}`,
-            { method: 'PUT', body: file.slice(offset, offset + partSize),
-              headers: { 'Content-Type': 'application/octet-stream' }, signal: controller.signal },
-          );
-        } finally {
-          archiveTransferRef.current = null;
-        }
-        const result = await response.json() as { etag?: string; error?: string };
-        if (!response.ok || !result.etag) throw new Error(result.error || 'Archiving a video chunk failed.');
-        parts.push({ partNumber, etag: result.etag });
-        setMessage(`Mux upload complete. Archiving original: ${Math.min(100, Math.round(((offset + partSize) / file.size) * 100))}%`);
-      }
-      if (stopArchiveRef.current) throw new Error('Archive stop requested.');
-      const complete = await fetch('/api/site-videos/archive', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'complete', videoId, parts }),
-      });
-      const completed = await complete.json() as { error?: string };
-      if (!complete.ok) throw new Error(completed.error || 'Could not finish video archive.');
-    } catch (error) {
-      if (stopArchiveRef.current && started) {
-        // Only cancel the OPTIONAL original archive. Never delete the Mux
-        // upload that already completed successfully.
-        const abort = await fetch('/api/site-videos/archive', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'abort', videoId }),
-        });
-        if (!abort.ok) throw new Error('Could not confirm R2 archive cleanup. Discard the incomplete original in your library.');
-        throw new Error('Original-file archive stopped safely.');
-      }
-      throw error;
-    } finally {
-      archiveTransferRef.current = null;
-    }
-  }
-
   async function uploadVideo() {
     if (!selectedFile || !profile || !enabled || !rightsConfirmed) return;
     if (selectedFile.size > 2 * 1024 * 1024 * 1024) { setError('Maximum video size is 2 GiB during beta.'); return; }
     if (!selectedFile.type.startsWith('video/')) { setError('Choose a video file.'); return; }
     setError(''); setMessage('Preparing secure direct upload…'); setProgress(0);
     cancelledRef.current = false;
-    stopArchiveRef.current = false;
     activeUploadIdRef.current = null;
     setUploading(true); setUploadPhase('preparing');
     try {
@@ -203,22 +142,7 @@ export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
         xhr.send(selectedFile);
       });
       xhrRef.current = null;
-      // The Mux upload succeeded; a failure in optional source archival must
-      // not mislead the owner into uploading another billable copy.
-      let archiveWarning = '';
-      if (archiveOriginal && archiveEnabled) {
-        setUploadPhase('archiving');
-        try {
-          await archiveFile(selectedFile, upload.id);
-        } catch (err) {
-          archiveWarning = err instanceof Error ? err.message : 'R2 archival did not complete.';
-        }
-      }
-      setMessage(archiveWarning
-        ? archiveWarning === 'Original-file archive stopped safely.'
-          ? 'Video received by Mux. Optional original-file archiving stopped; your video is intact.'
-          : `Video received by Mux. Original-file archive incomplete: ${archiveWarning}. Use the library below to discard the unfinished archive.`
-        : 'Upload received. Video processing can take several minutes. Refresh status below to publish it.');
+      setMessage('Upload received. Video processing can take several minutes. Refresh status below to publish it.');
       setSelectedFile(null); setRightsConfirmed(false);
       if (fileRef.current) fileRef.current.value = '';
       await loadVideos();
@@ -246,7 +170,6 @@ export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
       xhrRef.current = null;
       activeUploadIdRef.current = null;
       cancelledRef.current = false;
-      stopArchiveRef.current = false;
       setUploading(false); setUploadPhase('idle');
     }
   }
@@ -258,30 +181,8 @@ export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
     setMessage('Canceling upload and cleaning up any reserved Mux upload…');
   }
 
-  function cancelOriginalArchive() {
-    if (uploadPhase !== 'archiving') return;
-    stopArchiveRef.current = true;
-    archiveTransferRef.current?.abort();
-    setMessage('Stopping optional R2 archival; the completed Mux video stays safe.');
-  }
-
-  async function discardArchive(video: OwnerVideo) {
-    setBusy(true); setError(''); setMessage('');
-    try {
-      const response = await fetch('/api/site-videos/archive', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'abort', videoId: video.id }),
-      });
-      const json = await response.json() as { error?: string };
-      if (!response.ok) throw new Error(json.error || 'Could not discard incomplete archive.');
-      setMessage('Incomplete R2 copy discarded.');
-      await loadVideos();
-    } catch (err) { setError(err instanceof Error ? err.message : 'Could not discard archive.'); }
-    finally { setBusy(false); }
-  }
-
   async function videoAction(video: OwnerVideo, action: 'publish' | 'unpublish' | 'delete') {
-    if (action === 'delete' && !window.confirm('Delete this video from Mux and its optional R2 original?')) return;
+    if (action === 'delete' && !window.confirm('Delete this video from Mux?')) return;
     setBusy(true); setError(''); setMessage('');
     try {
       const response = await fetch(`/api/site-videos/${video.id}`, {
@@ -394,7 +295,7 @@ export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
 
       <div className="ih-builder-video">
         <div className="ih-builder-step"><span>04</span><h2>{t("siteBuilder.uploadAndPublishVideos", "Upload and publish videos")}</h2></div>
-        <p>{t("siteBuilder.upload1080pOrTrue4K", "Upload 1080p or true 4K directly to Mux. Viewers get adaptive playback; the optional original archive stays private in Cloudflare R2.")}</p>
+        <p>{t("siteBuilder.upload1080pOrTrue4K", "Upload 1080p or true 4K directly to Mux. Viewers get adaptive playback.")}</p>
         {!enabled ? (
           <p className="ih-builder-note" role="status">{t("siteBuilder.videoUploadsWillBeAvailable", "Video uploads will be available once iHYPE configures its Mux API token, webhook and spending caps. Your website builder is available now.")}</p>
         ) : (
@@ -409,14 +310,6 @@ export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
               <option value="1080p">{t("siteBuilder.1080pRecommendedLowerStorageCosts", "1080p (recommended, lower storage costs)")}</option>
               <option value="2160p">{t("siteBuilder.4K2160pHigherStorageAnd", "4K / 2160p (higher storage and delivery costs)")}</option>
             </select>
-            {archiveEnabled && (
-              <label className="ih-builder-section">
-                <input type="checkbox" checked={archiveOriginal} disabled={uploading}
-                  onChange={e => setArchiveOriginal(e.target.checked)} />
-                <span><strong>{t("siteBuilder.saveAPrivateCopyTo", "Save a private copy to Cloudflare R2")}</strong>
-                  <small>{t("siteBuilder.optionalArchivalDoublesUploadTraffic", "Optional archival doubles upload traffic and adds storage costs. Never publicly served.")}</small></span>
-              </label>
-            )}
             <label className="ih-builder-section">
               <input type="checkbox" checked={rightsConfirmed} disabled={uploading}
                 onChange={e => setRightsConfirmed(e.target.checked)} />
@@ -426,16 +319,11 @@ export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
             <div className="ih-builder-save">
               <button type="button" className="ih-builder-primary" disabled={!selectedFile || !rightsConfirmed || uploading || busy}
                 onClick={uploadVideo}>{uploading
-                  ? uploadPhase === 'archiving' ? 'Archiving original…' : `Uploading… ${progress}%`
+                  ? `Uploading… ${progress}%`
                   : 'Upload video'}</button>
               {(uploadPhase === 'preparing' || uploadPhase === 'transferring') && (
                 <button type="button" onClick={cancelVideoTransfer} disabled={cancelledRef.current}>
                   {t('siteBuilder.cancelVideoUpload', 'Cancel upload')}
-                </button>
-              )}
-              {uploadPhase === 'archiving' && (
-                <button type="button" onClick={cancelOriginalArchive} disabled={stopArchiveRef.current}>
-                  {t('siteBuilder.stopSavingOriginal', 'Stop saving original')}
                 </button>
               )}
             </div>
@@ -456,7 +344,7 @@ export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
               <div className="ih-builder-video-row" key={video.id}>
                 <div>
                   <strong>{video.title}</strong>
-                  <small>{video.quality === '2160p' ? '4K' : '1080p'} · {video.status.toLowerCase()} · {video.isPublished ? 'Public' : 'Private'}{video.archiveKey ? (video.archiveUploadId ? ' · R2 archive pending' : ' · R2 original') : ''}</small>
+                  <small>{video.quality === '2160p' ? '4K' : '1080p'} · {video.status.toLowerCase()} · {video.isPublished ? 'Public' : 'Private'}</small>
                 </div>
                 <div className="ih-builder-video-actions">
                   {(video.isPublished || video.muxPlaybackId) ? (
@@ -470,8 +358,6 @@ export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
                         || profile.verificationStatus !== 'VERIFIED' || !profile.discoverable}
                       onClick={() => videoAction(video, 'publish')}>{t('siteBuilder.publishVideo', 'Publish')}</button>
                   )}
-                  {video.archiveKey && !video.archiveUploadId && <a href={`/api/site-videos/archive?videoId=${video.id}`}>{t("siteBuilder.getOriginal", "Get original")}</a>}
-                  {video.archiveUploadId && <button type="button" disabled={busy} onClick={() => discardArchive(video)}>{t("siteBuilder.discardUnfinishedArchive", "Discard unfinished archive")}</button>}
                   <button type="button" disabled={busy} onClick={() => videoAction(video, 'delete')}>{t("siteBuilder.delete", "Delete")}</button>
                 </div>
               </div>

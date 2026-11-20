@@ -495,8 +495,6 @@ model ProfileVideo {
   quality        String   @default("1080p")
   durationSecs   Float?
   isPublished    Boolean  @default(false)
-  archiveKey     String?
-  archiveUploadId String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   profile        Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)

@@ -45,7 +45,6 @@ const findVideo = db.profileVideo.findUnique as unknown as ReturnType<typeof vi.
 const originalVideo = {
   id: 'video-1', muxUploadId: 'upload-1', muxAssetId: 'asset-1',
   muxPlaybackId: 'playback-1', status: 'READY', isPublished: true,
-  archiveKey: null, archiveUploadId: null,
   profile: {
     ownerId: 'owner-1', type: 'ARTIST', verificationStatus: 'VERIFIED',
     discoverable: true, siteConfig: { ...DEFAULT_SITE_CONFIG, published: true },

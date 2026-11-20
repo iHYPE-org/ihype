@@ -125,8 +125,6 @@ describe('executeAccountErasure', () => {
     id: 'video-1',
     muxUploadId: 'mux-upload-1',
     muxAssetId: 'mux-asset-1',
-    archiveKey: 'video-originals/profile-1/video-1.mp4',
-    archiveUploadId: null,
   };
 
   it('removes external hosted videos before revoking credentials', async () => {

@@ -19,7 +19,7 @@ This repository contains a production-oriented Next.js app for local-music disco
 - ORM: Prisma
 - Database: PostgreSQL
 - Auth: Auth.js
-- Media: R2-backed audio, plus optional 4K on-demand Mux video hosting for artist and venue websites. No live streaming. Mux is always gated behind FEATURE_ENABLE_VIDEO_UPLOADS; private R2 originals are optional, never under /cdn.
+- Media: R2-backed audio, plus optional 4K on-demand Mux video hosting for artist and venue websites. No live streaming. Mux is always gated behind FEATURE_ENABLE_VIDEO_UPLOADS.
 - Profiles: artist, venue, listener, and private advertiser accounts only. DJ and promoter roles/profiles are retired and must not be reintroduced.
 - Hosting target: Cloudflare
 

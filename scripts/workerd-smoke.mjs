@@ -733,7 +733,7 @@ async function run() {
     check(
       'owner can view video library while new Mux uploads remain disabled',
       ownVideos.status === 200 && library?.enabled === false
-        && library?.archiveEnabled === false && Array.isArray(library?.videos),
+        && Array.isArray(library?.videos),
       `status=${ownVideos.status} enabled=${library?.enabled}`,
     );
     const uploadBlocked = await probe('/api/site-videos', {
@@ -745,9 +745,6 @@ async function run() {
     });
     check('video upload kill switch prevents billable Mux direct uploads',
       uploadBlocked.status === 503, `status=${uploadBlocked.status}`);
-    const privateOriginal = await probe('/cdn/video-originals/workerd-smoke/private.mp4');
-    check('private R2 video originals cannot be read through public CDN',
-      privateOriginal.status === 404, `status=${privateOriginal.status}`);
 
     // 12d. Real Web Crypto in Workerd, with a CI-only synthetic signing key.
     // Unknown asset IDs are acknowledged without publishing anything or

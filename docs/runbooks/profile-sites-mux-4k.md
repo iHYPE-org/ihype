@@ -1,4 +1,4 @@
-# Artist/Venue sites + Mux Basic 4K + optional private R2 originals
+# Artist/Venue sites + Mux Basic 4K
 
 **Status:** code guarded, not live until this checklist and an approved deploy.
 **Cost policy:** default 1080p, 4K explicitly chosen for each video; no live streams.
@@ -14,22 +14,15 @@
 - Videos use Mux Direct Uploads at the browser. Max 2 GiB/file, **15 minutes per video**, 12 videos/profile,
   max 8 new uploads/account/hour, 1080p default, 2160p opt-in. Mux `basic`
   with `max_resolution_tier: "2160p"` supports true 4K on demand.
-- The browser checks the 15-minute duration before uploading when local
-  video metadata can be read. The signed Mux asset-ready webhook is the
-  authoritative guard: videos over 15 minutes are blocked and their Mux assets
+- The signed Mux asset-ready webhook enforces the duration cap: videos over 15 minutes are blocked and their Mux assets
   deleted. Processing costs may already have been incurred before rejection.
 - An emergency upload kill switch must **not** block existing users from
-  unpublishing/deleting hosted videos or aborting in-progress private R2
-  archives. Provider credentials are still required for external deletion.
+  unpublishing or deleting hosted videos. Provider credentials are still required for external deletion.
 - Mux assets have **zero playback IDs** until the verified owner explicitly
   publishes the ready video. Publish adds a public playback ID; unpublish revokes
   it with Mux before clearing the app's published state.
 - Mux webhook HMAC-SHA256 is verified against the raw body with 5-minute drift.
   Never add a bypass for testing. Provider errors don't publish anything.
-- Optional R2 originals use the EXISTING Worker R2 binding (bucket `ihype-media`)
-  via multipart 8 MiB chunks and a private `video-originals/` prefix. The
-  public `/cdn/` handler must never allow that prefix. Only the owner can
-  download the original through the authenticated archive route.
 
 ## Account setup before activating
 
@@ -49,15 +42,9 @@
    - `MUX_TOKEN_ID`
    - `MUX_TOKEN_SECRET`
    - `MUX_WEBHOOK_SECRET` (webhook endpoint signing secret, not API token).
-4. Keep `FEATURE_ENABLE_VIDEO_UPLOADS = "false"` and
-   `FEATURE_ENABLE_R2_VIDEO_ARCHIVE = "false"` in wrangler.toml until
-   production smoke tests pass. The video-uploads flag also checks all three
-   secrets and refuses requests otherwise.
-5. The EXISTING `R2` Worker binding needs no API credentials. Before enabling
-   source archival, verify private bucket policy, retention, R2 quota and the
-   2 GiB multipart test. Enable only if preserving originals is worth the
-   additional storage expense. It is not required for Mux playback.
-6. The migration `20261119190000_profile_sites_and_mux_videos` must be
+4. Keep `FEATURE_ENABLE_VIDEO_UPLOADS = "false"` in wrangler.toml until
+   production smoke tests pass. Uploads also require all three Mux secrets.
+5. The migration `20261119190000_profile_sites_and_mux_videos` must be
    deployed through the existing migration workflow before the new routes
    are made available. A default draft is not persisted until the owner saves.
 
@@ -88,9 +75,6 @@
 - Unpublish and confirm revoked playback ID stops future playback, then test
   deletion, upload cancellation, malformed file inputs, large-file rejection,
   request limits, and mobile network interruption.
-- Optional R2 test: archive a > 8 MiB file in parts, download only when
-  signed in as owner, check that `/cdn/video-originals/...` returns 404,
-  cancel an unfinished archive, and delete a completed archive with its video.
 - Verify CSP permits Mux iframe player on `/site/*` and direct Google
   Cloud Storage transfer from the owner editor only.
 - Check on iPhone and desktop, with show/music/player controls, mobile nav,
@@ -104,17 +88,19 @@
 **Pilot:** free one-page sites; limit uploads as above (including 15-minute
 maximum duration), 1080p default,
 4K available deliberately, 12 video records/profile and 2 GiB/file.
-Keep original archiving disabled; let Mux retain what is needed for delivery.
+Start by onboarding artists and venues and publishing their first pages.
+Keep paid video uploads off until there is creator demand, a funded pilot,
+and time for two staff members to handle support and moderation. Creators
+should retain source files they want to keep.
 
 **Grow:** after measuring usage, increase upload quota by verified artist/venue
 tier, adopt the Mux resumable upload client to handle large unstable-network
 uploads, implement central video moderation/copyright scanning and automated
 takedown. Add custom domains only after SSR host validation and certificate
-provisioning are independently tested. Move archival to presigned R2
-multipart URLs if direct Worker chunks become expensive.
+provisioning are independently tested.
 
 **Controls:** use provider cost alerts, cap file count and size, periodically
-remove unneeded assets, make privacy/user deletion remove media from Mux and R2.
+remove unneeded assets, make privacy/user deletion remove videos from Mux.
 Video playback is public only after an owner publishes it. Mux Basic 4K
 delivery has higher per-minute rates than 1080p. Do not call the feature free
 or unlimited.
@@ -135,8 +121,7 @@ In Mux dashboard, verify:
   JS/TS, Swift, Java/Kotlin and Actions, authenticated Playwright, Workerd
   security smoke and Cloudflare build.
 - Code review fixed: undiscoverable/demo profile exposure, Mux video duration
-  and orphan-upload controls, privacy exports missing videos, R2 multipart
-  cleanup and unbounded chunk reads, and the emergency switch preventing
+  and orphan-upload controls, privacy exports missing videos, and the emergency switch preventing
   deletion/unpublishing.
 - The original Worker total was **8.91 MiB gzip against a 9 MiB internal
   budget**; future features need bundle-size reductions before expanding.
@@ -146,7 +131,7 @@ In Mux dashboard, verify:
   Reproduce and fix the measurement environment before claiming a performance
   pass for the new public sites.
 - This audit did **not** exercise real Mux credentials or paid asset ingest.
-  1080p, 2160p playback, webhook delivery, retention, spend caps and R2 billing
+  1080p, 2160p playback, webhook delivery, retention, and spend caps
   still need an approved staged provider test. Do not enable the feature flags
   solely because the unit tests are green.
 
@@ -160,8 +145,7 @@ In Mux dashboard, verify:
   button visibility. This spec is mandatory in the Workerd test allowlist.
 - iHYPE's owner editor provides **one** return action to Profiles. Profile
   action buttons wrap on phone widths; no hidden offscreen Website + video
-  link. Distinguish Mux transfer failure from optional R2 archive failure,
-  and permit canceling a transfer with provider cleanup.
+  link. Permit canceling a Mux transfer with provider cleanup.
 - Show dates use the `Show.timeZone` organizer/venue clock, never the
   Worker's UTC default, so a late-night venue show isn't misdated.
 - Mux has no direct-upload byte-size ceiling in the signed URL shown by the
@@ -183,8 +167,7 @@ In Mux dashboard, verify:
    database migration, Worker size and CodeQL checks at the **same head SHA**.
 2. Land the additive Prisma migration using the existing production pre-deploy
    backup and migration sequence; do not manually ALTER production tables.
-3. Deploy with `FEATURE_ENABLE_VIDEO_UPLOADS = "false"` and
-   `FEATURE_ENABLE_R2_VIDEO_ARCHIVE = "false"`. Confirm artist/venue builders
+3. Deploy with `FEATURE_ENABLE_VIDEO_UPLOADS = "false"`. Confirm artist/venue builders
    load, drafts are owner-only, and approved/discoverable published pages are
    reachable to signed-out guests.
 4. Verify the public `/site/<slug>` route remains depth-limited in middleware,
@@ -214,9 +197,7 @@ In Mux dashboard, verify:
   lie about uploaded byte size, so rate limits and post-ingest duration checks
   are **not** a hard pre-ingest storage/processing cost ceiling.
 - Only after provider tests and human moderation policy are approved, flip
-  `FEATURE_ENABLE_VIDEO_UPLOADS` with a separate reviewed change. Keep R2
-  original archival disabled unless its 8 MiB multipart/abort/recovery tests,
-  permissions and real cloud storage costs pass.
+  `FEATURE_ENABLE_VIDEO_UPLOADS` with a separate reviewed change.
 
 ### Privacy semantics
 
@@ -233,8 +214,7 @@ In Mux dashboard, verify:
 - An errored/overlong asset retains its provider playback ID for emergency
   cleanup if Mux deletion fails. The **Unpublish** action remains reachable
   even when uploads are disabled or the asset is not READY.
-- Disable flags must never remove owner's ability to unpublish, delete videos
-  or abort unfinished private R2 uploads.
+- Disabling uploads must preserve the owner's ability to unpublish and delete videos.
 
 ### Performance and budget evidence
 
@@ -252,7 +232,7 @@ In Mux dashboard, verify:
 
 ### Rollback and incident response
 
-- Video incident: immediately disable **new** Mux uploads and R2 archiving,
+- Video incident: immediately disable **new** Mux uploads,
   leave owner unpublish/delete available, revoke any published playback IDs,
   and review unprocessed signed webhooks. Keep provider secrets active until
   external assets are cleaned up; removing the token first strands cleanup.

@@ -187,7 +187,7 @@ export async function executeAccountErasure(
     throw new Error('Refusing to erase an ADMIN account — demote it first.');
   }
 
-  // 0. Remove hosted Mux video and private R2 originals before deleting
+  // 0. Remove hosted Mux videos before deleting
   // credentials. External providers do not cascade with the database.
   // A failed provider deletion leaves the DB row and login available for
   // an idempotent retry instead of claiming all personal data was erased.
@@ -195,7 +195,6 @@ export async function executeAccountErasure(
     where: { profile: { ownerId: userId } },
     select: {
       id: true, muxUploadId: true, muxAssetId: true,
-      archiveKey: true, archiveUploadId: true,
     },
   });
   for (const video of hostedVideos) {

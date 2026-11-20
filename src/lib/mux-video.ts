@@ -15,10 +15,6 @@ export function isVideoUploadEnabled(): boolean {
     && Boolean(readRuntimeEnv('MUX_TOKEN_ID') && readRuntimeEnv('MUX_TOKEN_SECRET') && readRuntimeEnv('MUX_WEBHOOK_SECRET'));
 }
 
-export function isR2VideoArchiveEnabled(): boolean {
-  return readRuntimeEnv('FEATURE_ENABLE_R2_VIDEO_ARCHIVE') === 'true';
-}
-
 export class MuxApiError extends Error {
   constructor(readonly status: number) { super(`Video provider returned status ${status}.`); }
 }

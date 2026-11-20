@@ -1,17 +1,14 @@
-import { readRuntimeBinding } from '@/lib/runtime-env';
 import { MuxApiError, muxRequest } from '@/lib/mux-video';
 
 /**
- * Deleting the database row does not delete an external Mux video or a private
- * R2 original. Keep this cleanup reusable by video-delete AND account-erasure.
+ * Deleting the database row does not delete an external Mux video.
+ * This cleanup is shared by video deletion and account erasure.
  * A provider failure is fatal: leave the DB row intact so the operation can
  * be retried without silently leaking private assets or storage charges.
  */
 export async function deleteHostedProfileVideo(video: {
   muxAssetId: string | null;
   muxUploadId: string;
-  archiveKey: string | null;
-  archiveUploadId: string | null;
 }): Promise<void> {
   if (video.muxAssetId) {
     try {
@@ -41,40 +38,5 @@ export async function deleteHostedProfileVideo(video: {
     } else if (upload && !['cancelled', 'errored', 'timed_out'].includes(upload.status)) {
       throw new Error('Video upload is still changing state. Retry later.');
     }
-  }
-
-  if (!video.archiveKey) return;
-  // This prefix is deliberately excluded from the public /cdn allowlist.
-  if (!video.archiveKey.startsWith('video-originals/')) {
-    throw new Error('Invalid private archive location.');
-  }
-  const bucket = readRuntimeBinding('R2') as {
-    delete?: (key: string) => Promise<unknown>;
-    head?: (key: string) => Promise<unknown | null>;
-    resumeMultipartUpload?: (key: string, id: string) => { abort: () => Promise<void> };
-  } | null;
-  if (video.archiveUploadId) {
-    const upload = bucket?.resumeMultipartUpload?.(video.archiveKey, video.archiveUploadId);
-    if (!upload) throw new Error('Private R2 archive is unavailable.');
-    try {
-      await upload.abort();
-    } catch (error) {
-      // A prior R2 complete() may have succeeded before the DB cleared
-      // archiveUploadId. Delete that real object, not only the stale upload.
-      const description = error instanceof Error ? error.message : String(error);
-      const code = typeof error === 'object' && error !== null && 'code' in error
-        ? String(error.code) : '';
-      const missing = code === 'NoSuchUpload'
-        || /NoSuchUpload|multipart upload does not exist/i.test(description);
-      if (!missing || !bucket?.head) throw error;
-      const completed = await bucket.head(video.archiveKey);
-      if (completed) {
-        if (!bucket.delete) throw new Error('Private R2 archive deletion is unavailable.');
-        await bucket.delete(video.archiveKey);
-      }
-    }
-  } else {
-    if (!bucket?.delete) throw new Error('Private R2 archive is unavailable.');
-    await bucket.delete(video.archiveKey);
   }
 }

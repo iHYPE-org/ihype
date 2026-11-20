@@ -5,7 +5,7 @@ import type { Session } from 'next-auth';
 import { db, withDbRetry } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { consumeRateLimit } from '@/lib/rate-limit';
-import { isR2VideoArchiveEnabled, isVideoUploadEnabled, muxRequest } from '@/lib/mux-video';
+import { isVideoUploadEnabled, muxRequest } from '@/lib/mux-video';
 import { isAllowedMuxDirectUploadUrl } from '@/lib/mux-upload-url';
 
 export const dynamic = 'force-dynamic';
@@ -42,10 +42,10 @@ export async function GET(request: Request) {
     orderBy: { createdAt: 'desc' },
     select: {
       id: true, title: true, quality: true, status: true, isPublished: true,
-      durationSecs: true, muxPlaybackId: true, createdAt: true, archiveKey: true, archiveUploadId: true,
+      durationSecs: true, muxPlaybackId: true, createdAt: true,
     },
   }));
-  return NextResponse.json({ videos, enabled: isVideoUploadEnabled(), archiveEnabled: isR2VideoArchiveEnabled() }, { headers: { 'Cache-Control': 'private, no-store' } });
+  return NextResponse.json({ videos, enabled: isVideoUploadEnabled() }, { headers: { 'Cache-Control': 'private, no-store' } });
 }
 
 export async function POST(request: Request) {
