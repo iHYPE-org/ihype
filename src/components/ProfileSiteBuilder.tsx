@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useI18n } from '@/components/I18nProvider';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { DEFAULT_SITE_CONFIG, siteThemes, type SiteConfig } from '@/lib/profile-site';
+import { profileMicrositeThemePalettes } from '@/lib/profile-design';
 
 type OwnerProfile = {
   id: string; slug: string; name: string; type: string; headline: string | null;
@@ -25,12 +26,6 @@ const sections: Array<{ id: SectionId; label: string; help: string }> = [
   { id: 'contact', label: 'Contact details', help: 'Publicly show the contact info from your profile' },
 ];
 
-const THEMES: Record<string, { background: string; color: string; accent: string }> = {
-  spotlight: { background: '#151620', color: '#fff', accent: '#e0263e' },
-  paper: { background: '#faf6ee', color: '#211d21', accent: '#a11f3b' },
-  electric: { background: '#101635', color: '#f3f7ff', accent: '#ff4b84' },
-};
-
 export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
   const { t } = useI18n();
   const [site, setSite] = useState<SiteConfig>({ ...DEFAULT_SITE_CONFIG, sections: { ...DEFAULT_SITE_CONFIG.sections } });
@@ -50,7 +45,7 @@ export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
   const [error, setError] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
   const publicUrl = profile ? `/site/${profile.slug}` : '';
-  const theme = THEMES[site.theme];
+  const theme = profileMicrositeThemePalettes[site.theme];
 
   const loadVideos = useCallback(async () => {
     const response = await fetch(`/api/site-videos?profileId=${encodeURIComponent(profileId)}`, { cache: 'no-store' });
@@ -231,6 +226,7 @@ export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
               <button
                 key={themeId} type="button"
                 className={`ih-builder-theme ih-builder-theme--${themeId} ${site.theme === themeId ? 'is-selected' : ''}`}
+                style={{ background: profileMicrositeThemePalettes[themeId].background, color: profileMicrositeThemePalettes[themeId].ink, borderColor: profileMicrositeThemePalettes[themeId].accent }}
                 aria-pressed={site.theme === themeId}
                 onClick={() => setSite(current => ({ ...current, theme: themeId }))}
               >{themeId === 'spotlight' ? 'Spotlight' : themeId === 'paper' ? 'Paper' : 'Electric'}</button>
