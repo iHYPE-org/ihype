@@ -7,13 +7,14 @@ import { canManageOwnedResource } from '@/lib/permissions';
 import { isVideoUploadEnabled, MuxApiError, muxRequest } from '@/lib/mux-video';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { deleteHostedProfileVideo } from '@/lib/delete-hosted-video';
+import { isPublicSiteEligible, readProfileSiteConfig } from '@/lib/profile-site';
 
 export const dynamic = 'force-dynamic';
 
 async function ownedVideo(session: Session | null, id: string) {
   const video = await withDbRetry(() => db.profileVideo.findUnique({
     where: { id },
-    include: { profile: { select: { ownerId: true, type: true, verificationStatus: true } } },
+    include: { profile: { select: { ownerId: true, type: true, verificationStatus: true, discoverable: true, siteConfig: true } } },
   }));
   return video && canManageOwnedResource(session, video.profile.ownerId)
     && ['ARTIST', 'VENUE'].includes(video.profile.type) ? video : null;
@@ -48,6 +49,11 @@ export async function PATCH(
     if (action === 'publish') {
       if (video.profile.verificationStatus !== 'VERIFIED') {
         return NextResponse.json({ error: 'Ownership verification must be approved to publish.' }, { status: 403 });
+      }
+      if (!isPublicSiteEligible(video.profile) || !readProfileSiteConfig(video.profile.siteConfig).published) {
+        return NextResponse.json({
+          error: 'Publish your discoverable artist or venue website before making a video publicly playable.',
+        }, { status: 403 });
       }
       if (video.isPublished && video.muxPlaybackId) return NextResponse.json({ ok: true });
       const playback = await muxRequest<{ id: string }>(
