@@ -4,9 +4,9 @@ import { auth } from '@/lib/auth';
 import type { Session } from 'next-auth';
 import { db, withDbRetry } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
-import { readRuntimeBinding } from '@/lib/runtime-env';
-import { isVideoUploadEnabled, MuxApiError, muxRequest } from '@/lib/mux-video';
+import { isVideoUploadEnabled, muxRequest } from '@/lib/mux-video';
 import { consumeRateLimit } from '@/lib/rate-limit';
+import { deleteHostedProfileVideo } from '@/lib/delete-hosted-video';
 
 export const dynamic = 'force-dynamic';
 
@@ -84,38 +84,7 @@ export async function DELETE(
   const limiter = await consumeRateLimit(`mux-video-delete:${session.user.id}`, { limit: 20, windowMs: 60 * 60 * 1000 });
   if (!limiter.allowed) return NextResponse.json({ error: 'Too many deletions.' }, { status: 429 });
   try {
-    if (video.muxAssetId) {
-      try { await muxRequest(`/assets/${video.muxAssetId}`, 'DELETE'); }
-      catch (err) { if (!(err instanceof MuxApiError && err.status === 404)) throw err; }
-    } else if (!video.muxUploadId.startsWith('pending_')) {
-      // Reconcile stale status before deleting, so an asset that was created
-      // while a webhook was late is not orphaned and billed indefinitely.
-      const upload = await muxRequest<{ status: string; asset_id?: string }>(
-        `/uploads/${video.muxUploadId}`, 'GET',
-      );
-      if (upload.asset_id) {
-        await muxRequest(`/assets/${upload.asset_id}`, 'DELETE');
-      } else if (upload.status === 'waiting') {
-        await muxRequest(`/uploads/${video.muxUploadId}/cancel`, 'PUT');
-      } else if (!['cancelled', 'errored', 'timed_out'].includes(upload.status)) {
-        throw new Error('Video upload is still changing state.');
-      }
-    }
-    // The R2 original is never public. Abort incomplete multipart copies.
-    if (video.archiveKey) {
-      const bucket = readRuntimeBinding('R2') as {
-        delete?: (key: string) => Promise<unknown>;
-        resumeMultipartUpload?: (key: string, id: string) => { abort: () => Promise<void> };
-      } | null;
-      if (video.archiveUploadId) {
-        const operation = bucket?.resumeMultipartUpload?.(video.archiveKey, video.archiveUploadId);
-        if (!operation) throw new Error('Private R2 archive is unavailable.');
-        await operation.abort();
-      } else {
-        if (!bucket?.delete) throw new Error('Private R2 archive is unavailable.');
-        await bucket.delete(video.archiveKey);
-      }
-    }
+    await deleteHostedProfileVideo(video);
     await db.profileVideo.delete({ where: { id: video.id } });
     return NextResponse.json({ ok: true });
   } catch {
