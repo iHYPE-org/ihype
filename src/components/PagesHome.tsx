@@ -520,10 +520,18 @@ export function PagesHome({
                       @{selectedProfile.owner?.username ?? selectedProfile.hexId} · iHYPE
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                  <div style={{
+                    display: 'flex', gap: 8, flexWrap: 'wrap',
+                    flexShrink: 1, minWidth: 0, maxWidth: '100%',
+                  }}>
                     <Link href={profileRoute(selectedProfile.type, selectedProfile.slug)} style={bGhost}>
                       {t('pagesHome.view', 'View')}
                     </Link>
+                    {(selectedProfile.type === 'ARTIST' || selectedProfile.type === 'VENUE') && (
+                      <Link href={`/app/me/sites/${selectedProfile.id}`} style={bGhost}>
+                        {t('pagesHome.websiteAndVideo', 'Website + video')}
+                      </Link>
+                    )}
                     <button onClick={() => setTab('creator')} style={bSolid} type="button">
                       {t('pagesHome.editPage', 'Edit page')}
                     </button>

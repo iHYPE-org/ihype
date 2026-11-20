@@ -87,6 +87,14 @@ describe('every model tied to a person is classified for erasure', () => {
     expect(claimed, 'ERASED names these, and privacy-actions.ts does not touch them').toEqual([]);
   });
 
+  it('exports owned video metadata without exposing provider identifiers', () => {
+    const route = readFileSync('src/app/api/privacy/export/route.ts', 'utf8');
+    expect(route).toContain('videos: {');
+    expect(route).toContain('durationSecs: true');
+    expect(route).not.toContain('muxUploadId: true');
+    expect(route).not.toContain('muxPlaybackId: true');
+  });
+
   it('the export carries the advertiser identity record, not only the campaigns', () => {
     /* `advertisedAds` was already exported, which is what made the omission
        easy to miss: the subject received everything they had bought and

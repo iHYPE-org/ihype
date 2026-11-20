@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
+import { LandingDiscovery } from '@/components/LandingDiscovery';
 import { FanFirstLanding } from '@/components/FanFirstLanding';
 import { LandingStats, LandingStatsFallback } from '@/components/LandingStats';
 import { getBaseUrl } from '@/lib/utils';
@@ -96,6 +97,7 @@ export default async function RootPage() {
   // depends on them, so they must not delay the hero. See LandingStats.tsx.
   return (
     <FanFirstLanding
+      discovery={<Suspense fallback={null}><LandingDiscovery /></Suspense>}
       stats={
         <Suspense fallback={<LandingStatsFallback t={await getServerT()} />}>
           <LandingStats />

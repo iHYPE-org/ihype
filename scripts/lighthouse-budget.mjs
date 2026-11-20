@@ -268,7 +268,19 @@ const RUNS_PER_PAGE = 5;
  * would make this an absolute measure rather than a relative one.
  */
 const ENFORCE = process.env.LIGHTHOUSE_BUDGET_ENFORCE === '1';
-const CHROME_FLAGS = [...(process.env.DISPLAY ? [] : ['--headless=new']), '--no-sandbox', '--disable-dev-shm-usage', '--disable-background-timer-throttling', '--disable-backgrounding-occluded-windows', '--disable-renderer-backgrounding'];
+// The CI job runs under xvfb-run, so DISPLAY is set even though there is no
+// foreground desktop. Chrome then launches headed into a virtual/occluded
+// window, which has produced repeatable Lighthouse NO_FCP (no first paint)
+// while Playwright successfully renders the same page. Always use modern
+// headless for the audit; opt into headed mode ONLY for local diagnostics.
+const CHROME_FLAGS = [
+  ...(process.env.LIGHTHOUSE_CHROME_HEADED === '1' ? [] : ['--headless=new']),
+  '--no-sandbox',
+  '--disable-dev-shm-usage',
+  '--disable-background-timer-throttling',
+  '--disable-backgrounding-occluded-windows',
+  '--disable-renderer-backgrounding',
+];
 
 function launchAuditChrome(chromePath) {
   return launch({ chromePath, chromeFlags: CHROME_FLAGS });

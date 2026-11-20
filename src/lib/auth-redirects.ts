@@ -195,7 +195,10 @@ const PUBLIC_PREFIXES: readonly string[] = [
  * costs nothing and means a future `/embed/<id>/admin` is protected the day it
  * is created rather than the day someone remembers.
  */
-const PUBLIC_SINGLE_SEGMENT: readonly string[] = ['/shows', '/h', '/invite', '/embed'];
+// Standalone artist/venue pages are intentionally shareable without login.
+// The page itself returns notFound() unless verified, discoverable and
+// explicitly published; only /site/<slug> is public, never nested editor routes.
+const PUBLIC_SINGLE_SEGMENT: readonly string[] = ['/shows', '/h', '/invite', '/embed', '/site'];
 
 /**
  * Exceptions one level deeper: metadata routes Next generates for a public

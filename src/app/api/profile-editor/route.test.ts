@@ -6,10 +6,15 @@ vi.mock('@/lib/db', () => ({
   withDbRetry: (operation: () => unknown) => operation(),
 }));
 vi.mock('@/lib/object-storage', () => ({ isStoredMediaUrl: vi.fn() }));
+vi.mock('@/lib/revoke-profile-videos', () => ({
+  revokeProfileVideoPlayback: vi.fn(),
+  VIDEO_REVOKE_WARNING: 'Some public video links could not be revoked.',
+}));
 
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { PATCH } from './route';
+import { revokeProfileVideoPlayback } from '@/lib/revoke-profile-videos';
 
 const profileId = 'ihype-preview-venue';
 const profile = {
@@ -25,6 +30,7 @@ beforeEach(() => {
   vi.mocked(auth).mockResolvedValue({ user: { id: 'owner', role: 'VENUE' } } as never);
   vi.mocked(db.profile.findUnique).mockResolvedValue(profile as never);
   vi.mocked(db.profile.update).mockResolvedValue({ id: profileId, slug: 'ihype-preview-venue', type: 'VENUE' } as never);
+  vi.mocked(revokeProfileVideoPlayback).mockResolvedValue({ failed: 0 });
 });
 
 describe('profile editor with existing opaque profile IDs', () => {
@@ -38,6 +44,21 @@ describe('profile editor with existing opaque profile IDs', () => {
     expect(db.profile.update).toHaveBeenCalledWith(expect.objectContaining({
       where: { id: profileId }, data: expect.objectContaining(fields),
     }));
+  });
+
+  it('revokes Mux video links after hiding a venue profile', async () => {
+    const response = await PATCH(request({ profileId, discoverable: false }));
+    expect(response.status).toBe(200);
+    expect(revokeProfileVideoPlayback).toHaveBeenCalledWith(profileId);
+  });
+
+  it('warns if the venue was hidden but Mux could not revoke all public video links', async () => {
+    vi.mocked(revokeProfileVideoPlayback).mockResolvedValueOnce({ failed: 1 });
+    const response = await PATCH(request({ profileId, discoverable: false }));
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      ok: true, warning: 'Some public video links could not be revoked.',
+    });
   });
 
   it('requires a signed-in session', async () => {

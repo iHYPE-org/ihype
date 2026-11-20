@@ -30,6 +30,17 @@ jobs:
       - uses: github/codeql-action/analyze@793b778da9c9275a0f276522b27cb5fc14bba279
         with:
           category: /language:${{ matrix.language }}
+          # Keep a short-lived private source-to-sink trace for CodeQL alert
+          # triage when the code-scanning API is unavailable to the app.
+          output: codeql-sarif-diagnostics
+      - name: Save JS/TS CodeQL traces for authorized security triage
+        if: ${{ matrix.language == 'javascript-typescript' && always() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: codeql-js-ts-sarif
+          path: codeql-sarif-diagnostics/
+          if-no-files-found: error
+          retention-days: 1
   analyze:
     name: Analyze Swift
     runs-on: macos-26

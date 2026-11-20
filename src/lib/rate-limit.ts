@@ -19,6 +19,8 @@ type RateLimitOptions = {
    * it through a single DO instance.
    */
   atomic?: boolean;
+  // Refuse the request when the serialized counter is unavailable.
+  requireAtomic?: boolean;
   /**
    * Override the Durable Object deadline for this bucket.
    *
@@ -280,7 +282,9 @@ async function consumeDurableObject(key: string, options: RateLimitOptions): Pro
     log.error(
       '[rate-limit]',
       error instanceof Error ? error : { error: String(error) },
-      timedOut
+      options.requireAtomic
+        ? 'atomic backend unavailable; denying request'
+        : timedOut
         ? `atomic backend timed out after ${getDoTimeoutMs(options.timeoutMs)}ms, falling back to KV at half limit`
         : 'atomic backend error, falling back to KV at half limit',
     );
@@ -321,6 +325,10 @@ export async function consumeRateLimit(key: string, options: RateLimitOptions): 
   const optedOut = options.atomic === false;
   const atomic: AtomicOutcome = optedOut ? { kind: 'unavailable' } : await consumeDurableObject(key, options);
   if (atomic.kind === 'ok') return atomic.result;
+
+  if (options.requireAtomic) {
+    return { allowed: false, remaining: 0, retryAfterSeconds: 60 };
+  }
 
   if (process.env.NODE_ENV === 'production') {
     // Degraded mode: a DO hiccup must not become a sitewide write outage.
