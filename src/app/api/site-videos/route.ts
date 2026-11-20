@@ -84,6 +84,7 @@ export async function POST(request: Request) {
     },
     select: { id: true },
   }));
+  let createdMuxUploadId: string | null = null;
   try {
     const upload = await muxRequest<{ id: string; url: string }>('/uploads', 'POST', {
       timeout: 3600,
@@ -95,6 +96,7 @@ export async function POST(request: Request) {
         meta: { title: body.title, external_id: video.id, creator_id: profile.id },
       },
     });
+    createdMuxUploadId = upload.id || null;
     if (!upload.id || !upload.url || !upload.url.startsWith('https://')) {
       throw new Error('Video provider did not return a valid upload URL.');
     }
@@ -107,7 +109,26 @@ export async function POST(request: Request) {
       message: 'Upload directly to Mux. The video will remain unpublished until you approve it.',
     }, { status: 201, headers: { 'Cache-Control': 'private, no-store' } });
   } catch {
-    await db.profileVideo.delete({ where: { id: video.id } }).catch(() => {});
-    return NextResponse.json({ error: 'Video host unavailable. Nothing was published.' }, { status: 502 });
+    // A Mux upload can exist even if our DB write or response fails. Cancel
+    // it rather than orphaning a potentially billable external resource.
+    let safelyCancelled = true;
+    if (createdMuxUploadId) {
+      try {
+        await muxRequest(`/uploads/${createdMuxUploadId}/cancel`, 'PUT');
+      } catch {
+        safelyCancelled = false;
+        // Keep the provider identifier for manual or owner-initiated cleanup.
+        await db.profileVideo.update({
+          where: { id: video.id },
+          data: { muxUploadId: createdMuxUploadId, status: 'ERROR' },
+        }).catch(() => {});
+      }
+    }
+    if (safelyCancelled) {
+      await db.profileVideo.delete({ where: { id: video.id } }).catch(() => {});
+    }
+    return NextResponse.json({
+      error: 'Video host unavailable. Nothing was published. Retry after checking your library.',
+    }, { status: 502 });
   }
 }
