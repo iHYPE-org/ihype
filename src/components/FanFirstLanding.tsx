@@ -3,11 +3,20 @@ import { NearbyShowsWidget } from '@/components/NearbyShowsWidget';
 import { IhypeMark } from '@/components/brand/IhypeMark';
 import Link from 'next/link';
 import { RequestBetaAccessForm } from '@/components/RequestBetaAccessForm';
+import { ShareButton } from '@/components/ShareButton';
+import './fan-first-landing.css';
 import { getServerT } from '@/lib/i18n/server';
 
-/** The public landing page keeps account requests available alongside guest discovery. */
 export async function FanFirstLanding({ stats, discovery }: { stats: ReactNode; discovery: ReactNode }) {
   const t = await getServerT();
+  const sections = [
+    ['mission', t('fanFirstLanding.mission', 'Mission')],
+    ['story', t('fanFirstLanding.story', 'Our story')],
+    ['discover', t('fanFirstLanding.discover', 'Discover')],
+    ['grow-your-scene', t('fanFirstLanding.growYourScene', 'Grow your scene')],
+    ['transparency', t('fanFirstLanding.transparency', 'Transparency')],
+  ] as const;
+
   return (
     <div className="fan-entry">
       <header aria-label="iHYPE" className="fan-entry-header">
@@ -16,103 +25,77 @@ export async function FanFirstLanding({ stats, discovery }: { stats: ReactNode; 
         </Link>
         <nav aria-label={t('fanFirstLanding.accountNav', 'Account')} className="fan-entry-nav">
           <Link className="fan-entry-signin" href="/login">{t('fanFirstLanding.signIn', 'Sign in')}</Link>
-          <a className="fan-entry-join" href="#discover">{t('fanFirstLanding.discoverLocalMusic', 'Discover local music')}</a>
+          <a className="fan-entry-join" href="#request-access">{t('fanFirstLanding.requestAccess', 'Request access')}</a>
         </nav>
       </header>
 
-      <div className="fan-entry-main">
-        <section className="fan-entry-hero">
-          <div className="fan-entry-copy">
-            {/* The city stays in English: it is a place, not a word. */}
-            <p className="fan-entry-kicker">{t('fanFirstLanding.kicker', 'Private alpha')} · Portland, ME</p>
-            <h1>{t('fanFirstLanding.headlineOne', 'The free app for')}<br /><span>{t('fanFirstLanding.headlineTwo', 'local music.')}</span></h1>
-            <p className="fan-entry-lead">
-              {t('fanFirstLanding.lead', 'Stream music from artists in your own city — all of it free, none of it behind a subscription. Find the shows they are playing this week, and HYPE the ones you want more people to hear.')}
-            </p>
+      <nav className="fan-entry-subnav" aria-label={t('fanFirstLanding.sectionNav', 'On this page')}>
+        <ul>
+          {sections.map(([id, label]) => <li key={id}><a href={`#${id}`}>{label}</a></li>)}
+        </ul>
+      </nav>
 
-            <div className="fan-entry-nav">
+      <div className="fan-entry-main">
+        <section id="mission" className="fan-entry-hero">
+          <div className="fan-entry-copy">
+            <p className="fan-entry-kicker">{t('fanFirstLanding.kicker', 'Private alpha')} · Portland, ME</p>
+            <h1>{t('fanFirstLanding.missionHeadline', 'Help your local music scene thrive.')}</h1>
+            <p className="fan-entry-lead">
+              {t('fanFirstLanding.missionBody', 'iHYPE is a free nonprofit platform that helps people discover local music, find live shows, and give independent artists and venues more ways to reach their community.')}
+            </p>
+            <div className="fan-entry-nav fan-entry-mission-actions">
               <a className="fan-entry-join" href="#discover">{t('fanFirstLanding.discoverLocalMusic', 'Discover local music')}</a>
-              <Link className="fan-entry-secondary" href="/for-artists">{t('fanFirstLanding.forArtists', 'For artists')}</Link>
-              <Link className="fan-entry-secondary" href="/for-venues">{t('fanFirstLanding.forVenues', 'For venues')}</Link>
+              <a className="fan-entry-secondary" href="#grow-your-scene">{t('fanFirstLanding.growYourScene', 'Grow your scene')}</a>
             </div>
           </div>
         </section>
 
-        <section id="discover" aria-label={t('fanFirstLanding.discoverLocalMusic', 'Discover local music')}>
+        <section id="story" className="fan-entry-section">
+          <h2>{t('fanFirstLanding.story', 'Our story')}</h2>
+          <p>{t('fanFirstLanding.storyBody', 'iHYPE starts in Portland, Maine, with a simple idea: the people who live in a place can help its music scene grow. We’re building one place to hear a local artist, find their next show, and bring a friend. What starts here can grow city by city, led by the people who know each scene best.')}</p>
+          <div className="fan-entry-nav">
+            <Link className="fan-entry-secondary" href="/for-artists">{t('fanFirstLanding.forArtists', 'For artists')}</Link>
+            <Link className="fan-entry-secondary" href="/for-venues">{t('fanFirstLanding.forVenues', 'For venues')}</Link>
+          </div>
+        </section>
+
+        <section id="discover" className="fan-entry-section">
+          <h2>{t('fanFirstLanding.discoverLocalMusic', 'Discover local music')}</h2>
           {discovery}
           <NearbyShowsWidget />
         </section>
 
-        <section className="fan-entry-hero">
-          <div className="fan-entry-copy">
-            <div className="fan-entry-actions" id="request-access">
-              <div className="fan-entry-request">
-                <p className="fan-entry-request-lead">
-                  {t('fanFirstLanding.requestLead', 'We are opening the app city by city. Leave your email and we will send you an invite when we reach yours.')}
-                </p>
-                <RequestBetaAccessForm defaultOpen />
-              </div>
-            </div>
-
-            <p className="fan-entry-secondary-line">
-              {t('fanFirstLanding.alreadyInvited', 'Already invited?')} <Link className="fan-entry-secondary" href="/login">{t('fanFirstLanding.signIn', 'Sign in')}</Link>
-            </p>
-
-            {/* This line used to read "No ads between songs", which was false
-                and is the one claim on this page the product contradicts
-                directly: show-composer.ts injects `kind: 'AD'` breaks into a
-                a show's sequence every `advertising.frequency` tracks, and
-                ShowSequencePlayer plays them. Ads are how the platform is
-                funded — the charter takes 0% of a ticket — so denying them on
-                the front page misstated the business model, not a detail.
-
-                The model is a radio one, and the copy now says so. Two facts
-                back it: the spots are audio only (the banner-ad system was
-                retired outright — see the AdSubmission row in CLAUDE.md), and
-                every advertiser category on offer is music-industry —
-                AdvertiserCategory is LABEL, VENUE_PROMOTER, GEAR, TICKETING,
-                MERCH, TOUR and nothing else.
-
-                Note the column is nullable, so "music-only" describes what
-                signup offers rather than a constraint the database enforces.
-                If that ever needs to be a promise rather than a practice, make
-                the field required before strengthening this line. */}
-            <p className="fan-entry-assurance">
-              {t('fanFirstLanding.assuranceFree', 'Free forever')} <i aria-hidden="true">·</i> {t('fanFirstLanding.assuranceAds', 'Funded like radio, with music-only ads')} <i aria-hidden="true">·</i> {t('fanFirstLanding.assuranceData', 'We never sell your data')}
-            </p>
+        <section id="grow-your-scene" className="fan-entry-section">
+          <h2>{t('fanFirstLanding.growYourScene', 'Grow your scene')}</h2>
+          <p>{t('fanFirstLanding.growYourSceneBody', 'You can help whether you’re a listener, an artist, or a venue. HYPE the artists and shows you genuinely want more people to find. Do it often: every HYPE helps show what your community is excited about. Share iHYPE with friends, local bands, and the venues you love. Send someone a link, then make a plan to catch a show together.')}</p>
+          <div className="fan-entry-nav">
+            <ShareButton path="/" title="iHYPE" includeReferral={false} label={t('fanFirstLanding.shareApp', 'Share iHYPE')} />
+            <a className="fan-entry-secondary" href="#request-access">{t('fanFirstLanding.requestAccess', 'Request access')}</a>
           </div>
-
         </section>
 
-        <section aria-label={t('fanFirstLanding.statsLabel', 'Live iHYPE platform statistics')} className="fan-entry-stats">
-          {stats}
+        <section id="transparency" className="fan-entry-section">
+          <h2>{t('fanFirstLanding.transparency', 'Transparency')}</h2>
+          <p>{t('fanFirstLanding.transparencyBody', 'Listening, publishing, and using iHYPE are free. Music-related, radio-style advertising is our only paid service. iHYPE takes no platform cut of ticket sales and never sells your data.')}</p>
+          <div aria-label={t('fanFirstLanding.statsLabel', 'Live iHYPE platform statistics')} className="fan-entry-stats">
+            {stats}
+          </div>
+          <Link className="fan-entry-secondary" href="/info?tab=transparency">{t('fanFirstLanding.readPublicRecord', 'See our nonprofit details and public record')}</Link>
         </section>
 
-        {/* The obligations, and they are obligations rather than decoration:
-            the App Store and Play listings both require a policy URL that
-            resolves without an account, and a consent link nobody can open is
-            not consent. They used to ride on the sitewide `SiteFooter`, which
-            was old-design chrome on every page; this is the logged-out front
-            door, so they live here now. A signed-in member reaches the same
-            destinations through ME. */}
+        <section id="request-access" className="fan-entry-section">
+          <h2>{t('fanFirstLanding.requestAccess', 'Request access')}</h2>
+          <div className="fan-entry-request">
+            <p className="fan-entry-request-lead">
+              {t('fanFirstLanding.requestLead', 'We are opening the app city by city. Leave your email and we will send you an invite when we reach yours.')}
+            </p>
+            <RequestBetaAccessForm defaultOpen />
+          </div>
+        </section>
+
         <footer aria-label={t('fanFirstLanding.footerLabel', 'Site information')} className="fan-entry-legal">
-          {/* ONE LINK INTO /info, AND IT IS THE 501(c)(3) CLAIM (owner, with a
-              screenshot: "Remove transparency and info & legal now that A
-              501c3 link has all that"). A separate "Info & legal" and
-              "Transparency" pair sat above it pointing at the same hub, so the
-              row read as three doors into one room.
-              Nothing became unreachable: the claim lands on the transparency
-              tab, and `/info`'s own tab strip carries Trust & Safety, Privacy,
-              Terms, the Charter and DMCA from there. Consent does not depend on
-              this row either — signup links Terms and Privacy directly, and so
-              does the cookie banner. */}
           <Link href="/support">{t('fanFirstLanding.support', 'Support')}</Link>
           <Link href="/advertise">{t('fanFirstLanding.advertise', 'Advertise')}</Link>
-          {/* "501(c)(3)" is a US tax designation and `ihype.org` is the one
-              domain this product may name; both stay verbatim in every locale.
-              The claim LINKS to where it is backed: a tax status asserted in a
-              footer with nothing behind it is the same defect as a control
-              nothing reads. */}
           <span>
             <Link href="/info?tab=transparency">{t('fanFirstLanding.nonprofit', 'A 501(c)(3) nonprofit')}</Link>
             {' · © 2026 ihype.org'}
