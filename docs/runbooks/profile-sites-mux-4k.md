@@ -11,9 +11,16 @@
 - The owner opens Website + video from `/app/me/profiles`, edits a strict JSON
   theme/section config, previews instantly, saves drafts, or publishes after
   identity/ownership verification. No HTML, scripts, or external embeds accepted.
-- Videos use Mux Direct Uploads at the browser. Max 2 GiB/file, 12 videos/profile,
+- Videos use Mux Direct Uploads at the browser. Max 2 GiB/file, **15 minutes per video**, 12 videos/profile,
   max 8 new uploads/account/hour, 1080p default, 2160p opt-in. Mux `basic`
   with `max_resolution_tier: "2160p"` supports true 4K on demand.
+- The browser checks the 15-minute duration before uploading when local
+  video metadata can be read. The signed Mux asset-ready webhook is the
+  authoritative guard: videos over 15 minutes are blocked and their Mux assets
+  deleted. Processing costs may already have been incurred before rejection.
+- An emergency upload kill switch must **not** block existing users from
+  unpublishing/deleting hosted videos or aborting in-progress private R2
+  archives. Provider credentials are still required for external deletion.
 - Mux assets have **zero playback IDs** until the verified owner explicitly
   publishes the ready video. Publish adds a public playback ID; unpublish revokes
   it with Mux before clearing the app's published state.
@@ -65,6 +72,8 @@
 - Check contact information is OFF in defaults and hidden from public pages
   unless owner enables it; public site 404s if unpublished.
 - Send a signed Mux test event and check raw-body signature verification;
+  check the 15-minute boundary, out-of-order events, unknown assets and
+  non-owner/anonymous operations. The unit tests cover these cases;
   reject invalid signatures, expired timestamps, replayed state regressions.
 - Upload short 1080p and 2160p samples by direct signed upload URL from browser.
   Wait for webhook READY, then publish and play on `/site/[slug]`.
@@ -86,7 +95,8 @@
 
 ## Rollout and scale plan
 
-**Pilot:** free one-page sites; limit uploads as above, 1080p default,
+**Pilot:** free one-page sites; limit uploads as above (including 15-minute
+maximum duration), 1080p default,
 4K available deliberately, 12 video records/profile and 2 GiB/file.
 Keep original archiving disabled; let Mux retain what is needed for delivery.
 
@@ -111,3 +121,25 @@ In Mux dashboard, verify:
 - Direct upload and first Mux asset are ready.
 - 4K file is encoded with max_resolution_tier 2160p.
 - Billing and storage totals agree with the expected usage.
+
+
+## Audit notes — 2026-11-20
+
+- Original PR head passed full CI (2,124 unit tests in 254 files), CodeQL for
+  JS/TS, Swift, Java/Kotlin and Actions, authenticated Playwright, Workerd
+  security smoke and Cloudflare build.
+- Code review fixed: undiscoverable/demo profile exposure, Mux video duration
+  and orphan-upload controls, privacy exports missing videos, R2 multipart
+  cleanup and unbounded chunk reads, and the emergency switch preventing
+  deletion/unpublishing.
+- The original Worker total was **8.91 MiB gzip against a 9 MiB internal
+  budget**; future features need bundle-size reductions before expanding.
+- The original Lighthouse run returned **NO_FCP** on all attempts. CI's
+  performance step reported this warning but did not measure a performance
+  score. Treat Lighthouse performance as **UNVERIFIED**, even though CI passed.
+  Reproduce and fix the measurement environment before claiming a performance
+  pass for the new public sites.
+- This audit did **not** exercise real Mux credentials or paid asset ingest.
+  1080p, 2160p playback, webhook delivery, retention, spend caps and R2 billing
+  still need an approved staged provider test. Do not enable the feature flags
+  solely because the unit tests are green.
