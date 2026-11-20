@@ -173,3 +173,92 @@ In Mux dashboard, verify:
 - A signed Mux asset error now hides a previously-public video and attempts
   to revoke its public playback ID. A failed public-ID database save triggers
   compensating deletion of the newly-issued public ID. Both retry on errors.
+
+
+## Final release gates (updated 2026-11-20)
+
+### Safe deployment without video activation
+
+1. The feature branch must pass **all** mandatory CI, Workerd security, browser,
+   database migration, Worker size and CodeQL checks at the **same head SHA**.
+2. Land the additive Prisma migration using the existing production pre-deploy
+   backup and migration sequence; do not manually ALTER production tables.
+3. Deploy with `FEATURE_ENABLE_VIDEO_UPLOADS = "false"` and
+   `FEATURE_ENABLE_R2_VIDEO_ARCHIVE = "false"`. Confirm artist/venue builders
+   load, drafts are owner-only, and approved/discoverable published pages are
+   reachable to signed-out guests.
+4. Verify the public `/site/<slug>` route remains depth-limited in middleware,
+   a hidden or unpublished page cannot leak its title/contact/video, and a
+   non-owner never receives the editor content (including in streamed 200/404
+   responses). The Workerd integration suite asserts these.
+5. Existing iHYPE audio, ticketing, profile editing and core MMM navigation
+   must still pass the production smoke and mobile fit checks.
+
+### Mandatory provider activation (separate, explicit operator gate)
+
+- **Rotate exposed Mux credentials.** API and webhook signing values previously
+  shared in an interactive channel must be regenerated before production use.
+  Add their replacements directly as encrypted Worker secrets; never use
+  `NEXT_PUBLIC_`, `wrangler.toml`, CI test variables, or repository content.
+- Verify Mux webhook environment/destination and subscriptions, API permission
+  scope, nonprofit credits, provider cost alerts/limits and consent/rights
+  attestation. A data/environment key is not an API credential.
+- Create a free Mux test asset in a dedicated test environment and validate
+  direct upload, HMAC delivery, completed processing and playback-ID lifecycle.
+  Then perform **approved** real 1080p and source-4K/2160p samples in staging,
+  recording billable ingest, storage and playback minutes. No automatic live
+  test should spend money or use the user's shared chat credentials.
+- Test phone interruption/retry, 2 GiB boundary, 15-minute-duration rejection,
+  owner/cross-owner permissions, abuse handling, copyright takedown, and
+  published-video deletion after a provider outage. A malicious browser can
+  lie about uploaded byte size, so rate limits and post-ingest duration checks
+  are **not** a hard pre-ingest storage/processing cost ceiling.
+- Only after provider tests and human moderation policy are approved, flip
+  `FEATURE_ENABLE_VIDEO_UPLOADS` with a separate reviewed change. Keep R2
+  original archival disabled unless its 8 MiB multipart/abort/recovery tests,
+  permissions and real cloud storage costs pass.
+
+### Privacy semantics
+
+- Mux public playback IDs are issued **only** after the verified profile is
+  discoverable and the website itself is published. A conditional database
+  update fences a simultaneous unpublish so a late Mux response cannot create
+  an orphaned public ID.
+- Unpublishing the website hides the page in Prisma immediately, then attempts
+  to revoke all linked public playback IDs. Turning off discoverability via
+  ME > Settings or the profile editor uses the same revocation helper.
+  On provider failure, the public page stays hidden and the old playback ID is
+  retained for retry; a visible warning says that direct Mux URLs could still
+  be playable. Never claim full revocation until Mux confirms.
+- An errored/overlong asset retains its provider playback ID for emergency
+  cleanup if Mux deletion fails. The **Unpublish** action remains reachable
+  even when uploads are disabled or the asset is not READY.
+- Disable flags must never remove owner's ability to unpublish, delete videos
+  or abort unfinished private R2 uploads.
+
+### Performance and budget evidence
+
+- The first full green integration CI reported ~8.92 MiB gzip Worker size
+  against iHYPE's 9 MiB internal budget (10 MiB Cloudflare hard limit). Bundle
+  headroom is <0.1 MiB and must be watched on every commit.
+- Lighthouse repeatedly produced `NO_FCP` under headed Chrome in xvfb,
+  although public Playwright rendered the same pages. The audit now defaults
+  to `--headless=new` even if DISPLAY exists. **Do not** mark performance
+  verified until a run produces actual numeric scores; the existing
+  performance job is reporting-only, not a blocking budget gate.
+- No GitHub-only test proves external Mux credentials work or verifies real
+  user playback cost. Those provider checks stay explicitly UNVERIFIED until
+  performed against the intended Cloudflare/Mux accounts.
+
+### Rollback and incident response
+
+- Video incident: immediately disable **new** Mux uploads and R2 archiving,
+  leave owner unpublish/delete available, revoke any published playback IDs,
+  and review unprocessed signed webhooks. Keep provider secrets active until
+  external assets are cleaned up; removing the token first strands cleanup.
+- Website incident: stop new publications while preserving owner access to
+  hidden drafts; use a separate reviewed release if further site changes are
+  required. The migration is additive and should not be rolled back by
+  dropping columns containing user content.
+- Operator verifies provider asset count, old public playback URLs, data
+  deletion retries, 4K billable minutes and Cloudflare usage before re-enable.
