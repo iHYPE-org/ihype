@@ -6,6 +6,7 @@ export function mmmMeBackTarget(pathname: string | null | undefined): string | n
     pathname === '/app/me/accessibility' ||
     pathname === '/app/me/advertising' ||
     pathname === '/app/me/notifications' ||
+    /^\\/app\\/me\\/sites\\/[^/]+$/.test(pathname) || // The builder already links back to Profiles.
     pathname.startsWith('/app/me/info/') ||
     pathname.startsWith('/app/me/support/tickets') ||
     /^\/app\/me\/venues\/[^/]+\/(calendar|booking-inbox)$/.test(pathname) ||
