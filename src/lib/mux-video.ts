@@ -14,7 +14,7 @@ export class MuxApiError extends Error {
 }
 
 /** Server-side only. Never return bearer credentials to the browser. */
-export async function muxRequest<T>(path: string, method: 'GET' | 'POST' | 'DELETE', body?: unknown): Promise<T> {
+export async function muxRequest<T>(path: string, method: 'GET' | 'POST' | 'PUT' | 'DELETE', body?: unknown): Promise<T> {
   const id = readRuntimeEnv('MUX_TOKEN_ID');
   const secret = readRuntimeEnv('MUX_TOKEN_SECRET');
   if (!id || !secret) throw new MuxApiError(503);
