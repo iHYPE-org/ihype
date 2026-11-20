@@ -1,9 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { isVideoUploadEnabled, verifyMuxWebhookSignature } from '@/lib/mux-video';
+import { isVideoUploadEnabled, isWithinPilotVideoDuration, MAX_VIDEO_DURATION_SECS, verifyMuxWebhookSignature } from '@/lib/mux-video';
 
 describe('Mux video security', () => {
   it('is off unless explicitly configured', () => {
     expect(isVideoUploadEnabled()).toBe(false);
+  });
+  it('rejects overlong and unknown video durations to protect Mux spending', () => {
+    expect(MAX_VIDEO_DURATION_SECS).toBe(900);
+    expect(isWithinPilotVideoDuration(900)).toBe(true);
+    expect(isWithinPilotVideoDuration(901)).toBe(false);
+    expect(isWithinPilotVideoDuration(0)).toBe(false);
+    expect(isWithinPilotVideoDuration(Number.NaN)).toBe(false);
+    expect(isWithinPilotVideoDuration(undefined)).toBe(false);
   });
   it('rejects missing, stale, and malformed signatures', async () => {
     expect(await verifyMuxWebhookSignature('{}', null, 'secret', 1700000000)).toBe(false);
