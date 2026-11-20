@@ -26,6 +26,33 @@ const sections: Array<{ id: SectionId; label: string; help: string }> = [
   { id: 'contact', label: 'Contact details', help: 'Publicly show the contact info from your profile' },
 ];
 
+/**
+ * Browser metadata is an early cost-saving check, not a trust boundary.
+ * Mux's signed asset.ready webhook independently enforces the 15-minute cap.
+ */
+async function localVideoDuration(file: File): Promise<number | null> {
+  return new Promise(resolve => {
+    const objectUrl = URL.createObjectURL(file);
+    const video = document.createElement('video');
+    let finished = false;
+    const complete = (duration: number | null) => {
+      if (finished) return;
+      finished = true;
+      clearTimeout(timeout);
+      video.onloadedmetadata = null;
+      video.onerror = null;
+      video.removeAttribute('src');
+      URL.revokeObjectURL(objectUrl);
+      resolve(duration);
+    };
+    video.preload = 'metadata';
+    video.onloadedmetadata = () => complete(Number.isFinite(video.duration) ? video.duration : null);
+    video.onerror = () => complete(null);
+    const timeout = setTimeout(() => complete(null), 5000);
+    video.src = objectUrl;
+  });
+}
+
 export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
   const { t } = useI18n();
   const [site, setSite] = useState<SiteConfig>({ ...DEFAULT_SITE_CONFIG, sections: { ...DEFAULT_SITE_CONFIG.sections } });
@@ -132,6 +159,10 @@ export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
     if (!selectedFile.type.startsWith('video/')) { setError('Choose a video file.'); return; }
     setError(''); setMessage('Preparing secure direct upload…'); setProgress(0); setUploading(true);
     try {
+      const duration = await localVideoDuration(selectedFile);
+      if (duration !== null && duration > 15 * 60) {
+        throw new Error('Pilot videos must be 15 minutes or shorter. Trim this clip before uploading.');
+      }
       const create = await fetch('/api/site-videos', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -296,9 +327,10 @@ export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
           <p className="ih-builder-note" role="status">{t("siteBuilder.videoUploadsWillBeAvailable", "Video uploads will be available once iHYPE configures its Mux API token, webhook and spending caps. Your website builder is available now.")}</p>
         ) : (
           <div className="ih-builder-upload-form">
-            <label className="ih-builder-field" htmlFor="ih-video-file">{t("siteBuilder.videoFileMaximum2GiB", "Video file (maximum 2 GiB during beta)")}</label>
+            <label className="ih-builder-field" htmlFor="ih-video-file">{t("siteBuilder.videoFileMaximum2GiB", "Video file (max 2 GiB / 15 minutes during beta)")}</label>
             <input id="ih-video-file" type="file" accept="video/*" ref={fileRef} disabled={uploading}
               onChange={e => setSelectedFile(e.target.files?.[0] || null)} />
+            <small>{t('siteBuilder.betaDurationLimit', 'Pilot videos are limited to 15 minutes. Longer clips are rejected by Mux processing rules.')}</small>
             <label className="ih-builder-field" htmlFor="ih-video-quality">{t("siteBuilder.maximumPlaybackQuality", "Maximum playback quality")}</label>
             <select id="ih-video-quality" value={quality} disabled={uploading}
               onChange={e => setQuality(e.target.value as '1080p' | '2160p')}>
