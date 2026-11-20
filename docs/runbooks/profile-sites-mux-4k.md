@@ -91,13 +91,20 @@ service. iHYPE covers its own media hosting and delivery costs.
 
 ## Rollout and scale plan
 
-**Pilot:** free one-page sites; limit uploads as above (including 15-minute
-maximum duration), 1080p default,
-4K available deliberately, 12 video records/profile and 2 GiB/file.
-Start by onboarding artists and venues and publishing their first pages.
-Keep Mux video uploads off until there is creator demand, a funded pilot,
-and time for two staff members to handle support and moderation. Creators
-should retain source files they want to keep.
+**Launch:** Include artist and venue sites, direct video uploads, 1080p and
+4K playback, publishing, unpublishing, and deletion in the launch scope.
+Keep uploads disabled during deployment and enable them for public launch
+after staging QA, credential rotation, and cost controls pass. Access and
+publishing remain free.
+
+Use 1080p as the default and offer 4K as an explicit choice. Apply the same
+launch quotas to eligible creators and keep the 15-minute cap. Before enabling
+uploads, agree on a monthly provider budget and confirm which limits Mux
+can enforce. Set alerts below that budget and use a conservative global
+upload allowance alongside per-profile limits. Treat alerts as notifications.
+Pausing new uploads does not stop charges from retained assets or playback.
+If a strict ceiling is required, verify controls for those costs before
+launch and record what staff should do when a threshold is reached.
 
 **Grow:** after measuring usage, adjust upload quotas for verified artists and venues within the operating
 budget, adopt the Mux resumable upload client to handle large unstable-network
