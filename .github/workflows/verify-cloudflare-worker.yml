@@ -1,0 +1,56 @@
+name: Verify Cloudflare Worker configuration
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  verify:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: Production – ihype
+    steps:
+      - name: Check iHYPE Worker bindings
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$CLOUDFLARE_API_TOKEN" || ! "$CLOUDFLARE_ACCOUNT_ID" =~ ^[0-9a-fA-F]{32}$ ]]; then
+            echo "::error::Cloudflare credentials are missing or the account ID is invalid."
+            exit 1
+          fi
+
+          response="$(mktemp)"
+          trap 'rm -f "$response"' EXIT
+          status="$(curl --silent --show-error --max-time 30 \
+            --output "$response" --write-out '%{http_code}' \
+            --header "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/ihype/settings")"
+          if [[ "$status" != 200 ]] || ! jq -e '.success == true and (.result.bindings | type == "array")' "$response" >/dev/null; then
+            echo "::error::Cloudflare Worker settings check failed (HTTP $status)."
+            exit 1
+          fi
+
+          failed=0
+          check_binding() {
+            local name="$1" predicate="$2"
+            if jq -e --arg name "$name" \
+              ".result.bindings | any(.name == \$name and ($predicate))" "$response" >/dev/null; then
+              echo "$name: verified"
+            else
+              echo "::error::$name is missing or differs from the expected configuration."
+              failed=1
+            fi
+          }
+
+          for secret in MUX_TOKEN_ID MUX_TOKEN_SECRET MUX_WEBHOOK_SECRET; do
+            check_binding "$secret" '.type == "secret_text"'
+          done
+          check_binding R2 '.type == "r2_bucket" and .bucket_name == "ihype-media"'
+          for flag in FEATURE_ENABLE_VIDEO_UPLOADS FEATURE_ENABLE_R2_VIDEO_ARCHIVE; do
+            check_binding "$flag" '.type == "plain_text" and .text == "false"'
+          done
+          exit "$failed"
