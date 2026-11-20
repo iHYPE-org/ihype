@@ -28,7 +28,7 @@ function sentryIngestOrigin() {
   return cachedSentryOrigin;
 }
 
-function buildContentSecurityPolicy(nonce: string, allowEmbedding: boolean, allowSceneMap: boolean) {
+function buildContentSecurityPolicy(nonce: string, allowEmbedding: boolean, allowSceneMap: boolean, allowMuxPlayer = false, allowMuxUploader = false) {
   const developmentEval = process.env.NODE_ENV === 'production' ? '' : " 'unsafe-eval'";
   // One map, one tile host: src/components/mmm/MmmMap.tsx draws CartoDB
   // raster tiles, and MAP_TILE_HOSTS in csp-routes.ts is the list. There used
@@ -41,6 +41,7 @@ function buildContentSecurityPolicy(nonce: string, allowEmbedding: boolean, allo
   // above does not cover this and reading it as though it did is what makes
   // the failure look like a rendering bug instead of a policy one.
   const sceneMapConnect = allowSceneMap ? ` ${MAP_TILE_HOSTS.join(' ')}` : '';
+  const videoUploadConnect = allowMuxUploader ? ' https://storage.googleapis.com https://*.mux.com' : '';
   return [
     "default-src 'self'",
     "base-uri 'self'",
@@ -56,8 +57,8 @@ function buildContentSecurityPolicy(nonce: string, allowEmbedding: boolean, allo
     "font-src 'self' data: https:",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     `script-src 'self' 'nonce-${nonce}' 'wasm-unsafe-eval' https://challenges.cloudflare.com https://js.stripe.com${developmentEval}`,
-    `connect-src 'self' https://challenges.cloudflare.com https://api.stripe.com${sceneMapConnect}${sentryIngestOrigin()}`,
-    "frame-src 'self' https://challenges.cloudflare.com https://js.stripe.com",
+    `connect-src 'self' https://challenges.cloudflare.com https://api.stripe.com${sceneMapConnect}${videoUploadConnect}${sentryIngestOrigin()}`,
+    `frame-src 'self' https://challenges.cloudflare.com https://js.stripe.com${allowMuxPlayer ? ' https://player.mux.com' : ''}`,
     ...(allowSceneMap ? ["worker-src 'self' blob:", "child-src 'self' blob:"] : []),
     'upgrade-insecure-requests',
   ].join('; ');
@@ -81,7 +82,11 @@ function applySecurityHeaders(response: NextResponse, nonce: string, pathname: s
   response.headers.set('X-Content-Type-Options', 'nosniff');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   response.headers.set('Permissions-Policy', permissionsPolicyFor(pathname));
-  response.headers.set('Content-Security-Policy', buildContentSecurityPolicy(nonce, allowEmbedding, allowSceneMap));
+  response.headers.set('Content-Security-Policy', buildContentSecurityPolicy(
+    nonce, allowEmbedding, allowSceneMap,
+    pathname.startsWith('/site/'), // Public Mux video embeds only.
+    pathname.startsWith('/app/me/sites/'), // Owner's browser uploads directly to Mux.
+  ));
   return response;
 }
 
