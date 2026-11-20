@@ -8,7 +8,7 @@ vi.mock('@/lib/db', () => ({
     profile: { findUnique: vi.fn(), update: vi.fn() },
     profileVideo: {
       count: vi.fn(), create: vi.fn(), update: vi.fn(),
-      delete: vi.fn(), findMany: vi.fn(),
+      delete: vi.fn(), findMany: vi.fn(), updateMany: vi.fn(),
     },
   },
   withDbRetry: (call: () => Promise<unknown>) => call(),
@@ -23,6 +23,9 @@ vi.mock('@/lib/mux-video', () => ({
   isVideoUploadEnabled: vi.fn(),
   isR2VideoArchiveEnabled: vi.fn(),
   muxRequest: vi.fn(),
+  MuxApiError: class MuxApiError extends Error {
+    constructor(readonly status: number) { super(`Mux returned ${status}`); }
+  },
 }));
 
 import { GET as getSite, PATCH as saveSite } from '@/app/api/site-builder/route';
@@ -42,6 +45,7 @@ const videoCount = stub(db.profileVideo.count);
 const videoUpdate = stub(db.profileVideo.update);
 const videoDelete = stub(db.profileVideo.delete);
 const videoList = stub(db.profileVideo.findMany);
+const videoUpdateMany = stub(db.profileVideo.updateMany);
 const signedIn = stub(auth);
 const ownerAllowed = stub(canManageOwnedResource);
 const rateLimit = stub(consumeRateLimit);
@@ -91,6 +95,7 @@ beforeEach(() => {
   videoUpdate.mockResolvedValue({});
   videoDelete.mockResolvedValue({});
   videoList.mockResolvedValue([]);
+  videoUpdateMany.mockResolvedValue({ count: 1 });
   muxEnabled.mockReturnValue(true);
   archiveEnabled.mockReturnValue(false);
   provider.mockResolvedValue({
@@ -126,6 +131,38 @@ describe('Artist/venue site and video integration boundaries', () => {
     profileFind.mockResolvedValueOnce({ ...profile, discoverable: false });
     expect((await saveSite(requestForSite(true))).status).toBe(403);
     expect(profileUpdate).not.toHaveBeenCalled();
+  });
+
+  it('hides a website and revokes every previously published Mux playback ID', async () => {
+    videoList.mockResolvedValueOnce([{
+      id: 'video-1', muxAssetId: 'asset-1', muxPlaybackId: 'public-1',
+    }]);
+    const response = await saveSite(requestForSite(false));
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      site: { published: false }, url: null, ok: true,
+    });
+    expect(profileUpdate).toHaveBeenCalledWith(expect.objectContaining({
+      data: { siteConfig: expect.objectContaining({ published: false }) },
+    }));
+    expect(provider).toHaveBeenCalledWith('/assets/asset-1/playback-ids/public-1', 'DELETE');
+    expect(videoUpdateMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: 'video-1', muxPlaybackId: 'public-1' },
+      data: { muxPlaybackId: null, isPublished: false },
+    }));
+  });
+
+  it('hides the site but warns if Mux is unavailable, retaining the playback cleanup ID', async () => {
+    videoList.mockResolvedValueOnce([{
+      id: 'video-1', muxAssetId: 'asset-1', muxPlaybackId: 'public-1',
+    }]);
+    provider.mockRejectedValueOnce(new Error('Mux offline'));
+    const response = await saveSite(requestForSite(false));
+    expect(response.status).toBe(200);
+    const result = await response.json();
+    expect(result.site.published).toBe(false);
+    expect(result.warning).toMatch(/previously public video links/);
+    expect(videoUpdateMany).not.toHaveBeenCalled();
   });
 
   it('publishes an approved, discoverable artist page to its own URL', async () => {
