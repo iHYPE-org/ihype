@@ -108,9 +108,12 @@ export async function DELETE(
         resumeMultipartUpload?: (key: string, id: string) => { abort: () => Promise<void> };
       } | null;
       if (video.archiveUploadId) {
-        await bucket?.resumeMultipartUpload?.(video.archiveKey, video.archiveUploadId).abort();
+        const operation = bucket?.resumeMultipartUpload?.(video.archiveKey, video.archiveUploadId);
+        if (!operation) throw new Error('Private R2 archive is unavailable.');
+        await operation.abort();
       } else {
-        await bucket?.delete?.(video.archiveKey);
+        if (!bucket?.delete) throw new Error('Private R2 archive is unavailable.');
+        await bucket.delete(video.archiveKey);
       }
     }
     await db.profileVideo.delete({ where: { id: video.id } });
