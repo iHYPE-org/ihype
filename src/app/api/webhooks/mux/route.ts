@@ -94,13 +94,20 @@ export async function POST(request: Request) {
           where: { id: video.id, status: { not: 'DELETED' } },
           data: {
             muxAssetId: data.id, durationSecs: data.duration,
-            status: 'TOO_LONG', isPublished: false, muxPlaybackId: null,
+            status: 'TOO_LONG', isPublished: false,
+            // Do NOT clear muxPlaybackId before Mux confirms deletion. If
+            // provider cleanup fails, retain the ID for owner recovery and
+            // signed-webhook retry; otherwise the old public URL is orphaned.
           },
         });
         try { await muxRequest(`/assets/${data.id}`, 'DELETE'); }
         catch (error) {
           if (!(error instanceof MuxApiError && error.status === 404)) throw error;
         }
+        await db.profileVideo.updateMany({
+          where: { id: video.id, muxAssetId: data.id, status: 'TOO_LONG' },
+          data: { muxPlaybackId: null },
+        });
       }
       // If Mux doesn't supply a trustworthy duration, keep it processing.
       // No route permits publishing an asset before it passes this guard.
