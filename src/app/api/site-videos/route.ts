@@ -6,6 +6,7 @@ import { db, withDbRetry } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { isR2VideoArchiveEnabled, isVideoUploadEnabled, muxRequest } from '@/lib/mux-video';
+import { isAllowedMuxDirectUploadUrl } from '@/lib/mux-upload-url';
 
 export const dynamic = 'force-dynamic';
 
@@ -97,7 +98,7 @@ export async function POST(request: Request) {
       },
     });
     createdMuxUploadId = upload.id || null;
-    if (!upload.id || !upload.url || !upload.url.startsWith('https://')) {
+    if (!upload.id || !isAllowedMuxDirectUploadUrl(upload.url)) {
       throw new Error('Video provider did not return a valid upload URL.');
     }
     await withDbRetry(() => db.profileVideo.update({

@@ -1,7 +1,34 @@
 import { describe, expect, it } from 'vitest';
 import { isVideoUploadEnabled, isWithinPilotVideoDuration, MAX_VIDEO_DURATION_SECS, verifyMuxWebhookSignature } from '@/lib/mux-video';
+import { isAllowedMuxDirectUploadUrl } from '@/lib/mux-upload-url';
 
 describe('Mux video security', () => {
+  it('accepts only the documented HTTPS Mux direct upload hosts', () => {
+    for (const url of [
+      'https://storage.googleapis.com/video-uploads/signed',
+      'https://uploads.mux.com/direct/signed',
+      'https://regional-upload.mux.com/upload?signature=fixture',
+    ]) {
+      expect(isAllowedMuxDirectUploadUrl(url)).toBe(true);
+    }
+  });
+  it('rejects deceptive hosts, credentials in URLs, and non-HTTPS schemes', () => {
+    for (const url of [
+      'https://storage.googleapis.com.attacker.example/file',
+      'https://uploads.mux.com.attacker.example/file',
+      'https://attacker.example/redirect/https://uploads.mux.com',
+      'https://uploads.mux.com@attacker.example/file',
+      'https://attacker.example@uploads.mux.com/file',
+      'https://mux.com/file',
+      'http://uploads.mux.com/file',
+      'javascript:alert(1)',
+      'not-a-url',
+      '',
+      null,
+    ]) {
+      expect(isAllowedMuxDirectUploadUrl(url)).toBe(false);
+    }
+  });
   it('is off unless explicitly configured', () => {
     expect(isVideoUploadEnabled()).toBe(false);
   });

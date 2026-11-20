@@ -204,6 +204,28 @@ describe('Artist/venue site and video integration boundaries', () => {
     }));
   });
 
+  it('accepts the newer Mux-hosted direct upload endpoint', async () => {
+    provider.mockResolvedValueOnce({
+      id: 'mux-upload-1', url: 'https://uploads.mux.com/signed-direct-upload',
+    });
+    const response = await uploadVideo(requestForVideo());
+    expect(response.status).toBe(201);
+    expect(await response.json()).toMatchObject({
+      uploadUrl: 'https://uploads.mux.com/signed-direct-upload',
+    });
+  });
+
+  it('cancels a reserved provider upload and deletes the draft if its URL points to an untrusted host', async () => {
+    provider.mockResolvedValueOnce({
+      id: 'mux-upload-1', url: 'https://uploads.mux.com.attacker.example/file',
+    }).mockResolvedValueOnce({});
+    const response = await uploadVideo(requestForVideo());
+    expect(response.status).toBe(502);
+    expect(provider).toHaveBeenCalledWith('/uploads/mux-upload-1/cancel', 'PUT');
+    expect(videoUpdate).not.toHaveBeenCalled();
+    expect(videoDelete).toHaveBeenCalledWith({ where: { id: 'video-1' } });
+  });
+
   it('defaults new uploads to lower-cost 1080p unless the owner chooses 4K', async () => {
     const response = await uploadVideo(requestForVideo({ quality: undefined }));
     expect(response.status).toBe(201);
