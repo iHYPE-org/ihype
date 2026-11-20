@@ -78,10 +78,27 @@ describe('signed Mux asset lifecycle', () => {
     expect(response.status).toBe(200);
     expect(mockedUpdate).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({
-        status: 'TOO_LONG', isPublished: false, muxPlaybackId: null,
+        status: 'TOO_LONG', isPublished: false,
       }),
     }));
     expect(mockedMux).toHaveBeenCalledWith('/assets/mux-asset-1', 'DELETE');
+    expect(mockedUpdate).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: 'ihype-video-1', muxAssetId: 'mux-asset-1', status: 'TOO_LONG' },
+      data: { muxPlaybackId: null },
+    }));
+  });
+
+  it('retains the public cleanup handle until an overlong Mux asset is actually deleted', async () => {
+    mockedMux.mockRejectedValueOnce(new Error('Mux storage unavailable'));
+    await expect(POST(await signedMuxEvent({ ...assetData, duration: 901 })))
+      .rejects.toThrow('Mux storage unavailable');
+    expect(mockedUpdate).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ status: 'TOO_LONG', isPublished: false }),
+    }));
+    expect(mockedUpdate).not.toHaveBeenCalledWith(expect.objectContaining({
+      data: { muxPlaybackId: null },
+    }));
+    // Mux will retry this signed webhook; a new delivery can finish cleanup.
   });
 
   it('does not mark a video READY without verified duration', async () => {
