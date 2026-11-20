@@ -83,18 +83,24 @@
   audio/profile behavior is unaffected; only then explicitly enable it in a
   reviewed config change after the account's costs and webhooks are confirmed.
 
+## Access and revenue
+
+iHYPE is free for every user. Publishing, accessing, and playing content on
+iHYPE are free. Music-related, radio-style advertising is iHYPE’s only paid
+service. iHYPE covers its own media hosting and delivery costs.
+
 ## Rollout and scale plan
 
 **Pilot:** free one-page sites; limit uploads as above (including 15-minute
 maximum duration), 1080p default,
 4K available deliberately, 12 video records/profile and 2 GiB/file.
 Start by onboarding artists and venues and publishing their first pages.
-Keep paid video uploads off until there is creator demand, a funded pilot,
+Keep Mux video uploads off until there is creator demand, a funded pilot,
 and time for two staff members to handle support and moderation. Creators
 should retain source files they want to keep.
 
-**Grow:** after measuring usage, increase upload quota by verified artist/venue
-tier, adopt the Mux resumable upload client to handle large unstable-network
+**Grow:** after measuring usage, adjust upload quotas for verified artists and venues within the operating
+budget, adopt the Mux resumable upload client to handle large unstable-network
 uploads, implement central video moderation/copyright scanning and automated
 takedown. Add custom domains only after SSR host validation and certificate
 provisioning are independently tested.
@@ -102,8 +108,8 @@ provisioning are independently tested.
 **Controls:** use provider cost alerts, cap file count and size, periodically
 remove unneeded assets, make privacy/user deletion remove videos from Mux.
 Video playback is public only after an owner publishes it. Mux Basic 4K
-delivery has higher per-minute rates than 1080p. Do not call the feature free
-or unlimited.
+delivery has higher per-minute provider costs than 1080p. Pilot limits keep
+those costs manageable while access stays free.
 
 ## Manual validation (provider credentials required)
 
