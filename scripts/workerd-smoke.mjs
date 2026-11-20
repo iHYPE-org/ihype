@@ -579,10 +579,21 @@ async function run() {
     const otherBuilder = await probe(`/app/me/sites/${FIXTURE.profileId}`, {
       headers: { cookie: outsiderCookie },
     });
+    // In streamed Next.js App Router responses, a late notFound() can yield
+    // HTTP 200 with an embedded 404 marker. Verify the actual security boundary:
+    // no private builder component, never just trust the HTTP status.
+    const outsiderNotFound = otherBuilder.status === 404 || (
+      otherBuilder.status === 200
+      && /NEXT_HTTP_ERROR_FALLBACK;404|This page could not be found/i.test(otherBuilder.text)
+    );
+    const outsiderBuilderLeaked =
+      otherBuilder.text.includes('Loading your website builder')
+      || otherBuilder.text.includes('One-page website and video creator')
+      || otherBuilder.text.includes('Smoke-only website draft');
     check(
-      'a fan cannot navigate to another profile owner\'s builder',
-      otherBuilder.status === 404,
-      `status=${otherBuilder.status}`,
+      'a fan sees only Not Found and no private owner website builder',
+      outsiderNotFound && !outsiderBuilderLeaked,
+      `status=${otherBuilder.status} notFound=${outsiderNotFound} leaked=${outsiderBuilderLeaked} markup=${otherBuilder.text.slice(0, 160)}`,
     );
     const anonymousSiteSettings = await probe(`/api/site-builder?profileId=${FIXTURE.profileId}`);
     check('website settings API rejects anonymous users', anonymousSiteSettings.status === 401,
@@ -624,8 +635,13 @@ async function run() {
       `status=${publishSite.status}`);
     const unpublishedPage = await probe('/site/smoke-artist');
     const publicCsp = unpublishedPage.headers.get('content-security-policy') ?? '';
-    check('unpublished artist microsite is not publicly navigable', unpublishedPage.status === 404,
-      `status=${unpublishedPage.status}`);
+    const unpublishedNotFound = unpublishedPage.status === 404 || (
+      unpublishedPage.status === 200
+      && /NEXT_HTTP_ERROR_FALLBACK;404|This page could not be found/i.test(unpublishedPage.text)
+    );
+    check('unpublished artist microsite shows only Not Found to a stranger',
+      unpublishedNotFound && !unpublishedPage.text.includes('Smoke-only website draft'),
+      `status=${unpublishedPage.status} notFound=${unpublishedNotFound}`);
     check(
       'Mux iframe CSP applies only to public microsite routes',
       publicCsp.includes('https://player.mux.com') && !editorCsp.includes('https://player.mux.com'),
