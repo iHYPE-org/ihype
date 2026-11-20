@@ -20,7 +20,7 @@ export function SiteVideoPlayer({ title, playbackId }: { title: string; playback
     />
   ) : (
     <button type="button" className="ih-site-video-play" aria-label={`Play ${title}`} onClick={() => setActive(true)}>
-      <span aria-hidden="true">▶</span>
+      <span aria-hidden="true">▶︎</span>
     </button>
   );
 }
