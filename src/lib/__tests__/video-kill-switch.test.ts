@@ -29,6 +29,8 @@ vi.mock('@/lib/delete-hosted-video', () => ({
 }));
 
 import { PATCH, DELETE } from '@/app/api/site-videos/[id]/route';
+import { auth } from '@/lib/auth';
+import { canManageOwnedResource } from '@/lib/permissions';
 import { db } from '@/lib/db';
 import { isVideoUploadEnabled, muxRequest } from '@/lib/mux-video';
 import { deleteHostedProfileVideo } from '@/lib/delete-hosted-video';
@@ -71,6 +73,25 @@ describe('video emergency disable switch', () => {
     }), params);
     expect(response.status).toBe(503);
     expect(muxRequest).not.toHaveBeenCalled();
+  });
+
+  it('rejects other owners without contacting Mux', async () => {
+    vi.mocked(canManageOwnedResource).mockReturnValueOnce(false);
+    const response = await PATCH(new Request('https://ihype.org/api/site-videos/video-1', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'unpublish' }),
+    }), params);
+    expect(response.status).toBe(404);
+    expect(muxRequest).not.toHaveBeenCalled();
+  });
+
+  it('rejects anonymous deletion even when uploads are disabled', async () => {
+    vi.mocked(auth).mockResolvedValueOnce(null);
+    const response = await DELETE(
+      new Request('https://ihype.org/api/site-videos/video-1', { method: 'DELETE' }), params,
+    );
+    expect(response.status).toBe(401);
+    expect(deleteHostedProfileVideo).not.toHaveBeenCalled();
   });
 
   it('still removes video from external providers and database after disabling uploads', async () => {
