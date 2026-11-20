@@ -55,7 +55,7 @@ export default async function ProfileSite({
       where: {
         OR: profile.type === 'VENUE'
           ? [{ venueProfileId: profile.id }]
-          : [{ headlinerProfileId: profile.id }, { lineupSlots: { some: { artistProfileId: profile.id } } }],
+          : [{ headlinerProfileId: profile.id }, { lineupSlots: { some: { profileId: profile.id, status: 'ACCEPTED' } } }],
         status: { in: ['SCHEDULED', 'LIVE'] },
         moderationStatus: 'APPROVED',
         startsAt: { gte: now },
