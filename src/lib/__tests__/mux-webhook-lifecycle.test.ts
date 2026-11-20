@@ -4,6 +4,7 @@ vi.mock('@/lib/db', () => ({
   db: {
     profileVideo: {
       findFirst: vi.fn(),
+      findMany: vi.fn().mockResolvedValue([]),
       updateMany: vi.fn().mockResolvedValue({ count: 1 }),
     },
   },
@@ -22,6 +23,7 @@ import { muxRequest } from '@/lib/mux-video';
 
 const mockedFind = db.profileVideo.findFirst as unknown as ReturnType<typeof vi.fn>;
 const mockedUpdate = db.profileVideo.updateMany as unknown as ReturnType<typeof vi.fn>;
+const mockedFindMany = db.profileVideo.findMany as unknown as ReturnType<typeof vi.fn>;
 const mockedMux = muxRequest as unknown as ReturnType<typeof vi.fn>;
 
 async function signedMuxEvent(data: Record<string, unknown>, type = 'video.asset.ready') {
@@ -49,6 +51,7 @@ describe('signed Mux asset lifecycle', () => {
     vi.clearAllMocks();
     mockedFind.mockResolvedValue({ id: 'ihype-video-1', muxAssetId: null, status: 'PROCESSING' });
     mockedUpdate.mockResolvedValue({ count: 1 });
+    mockedFindMany.mockResolvedValue([]);
     mockedMux.mockResolvedValue({});
   });
 
@@ -86,6 +89,37 @@ describe('signed Mux asset lifecycle', () => {
     expect(response.status).toBe(200);
     expect(mockedUpdate).not.toHaveBeenCalled();
     expect(mockedMux).not.toHaveBeenCalled();
+  });
+
+  it('revokes a live public playback ID after a signed provider error', async () => {
+    mockedFindMany.mockResolvedValueOnce([{
+      id: 'ihype-video-1', muxAssetId: 'mux-asset-1', muxPlaybackId: 'public-1',
+    }]);
+    const response = await POST(await signedMuxEvent(assetData, 'video.asset.errored'));
+    expect(response.status).toBe(200);
+    expect(mockedUpdate).toHaveBeenCalledWith(expect.objectContaining({
+      data: { status: 'ERROR', isPublished: false },
+    }));
+    expect(mockedMux).toHaveBeenCalledWith('/assets/mux-asset-1/playback-ids/public-1', 'DELETE');
+    expect(mockedUpdate).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: 'ihype-video-1', muxPlaybackId: 'public-1' },
+      data: { muxPlaybackId: null },
+    }));
+  });
+
+  it('retains a public playback ID for webhook retry if provider deletion fails', async () => {
+    mockedFindMany.mockResolvedValueOnce([{
+      id: 'ihype-video-1', muxAssetId: 'mux-asset-1', muxPlaybackId: 'public-1',
+    }]);
+    mockedMux.mockRejectedValueOnce(new Error('Mux unavailable'));
+    await expect(POST(await signedMuxEvent(assetData, 'video.asset.errored')))
+      .rejects.toThrow('Mux unavailable');
+    expect(mockedUpdate).toHaveBeenCalledWith(expect.objectContaining({
+      data: { status: 'ERROR', isPublished: false },
+    }));
+    expect(mockedUpdate).not.toHaveBeenCalledWith(expect.objectContaining({
+      data: { muxPlaybackId: null },
+    }));
   });
 
   it('ignores unrelated assets in a shared Mux environment', async () => {
