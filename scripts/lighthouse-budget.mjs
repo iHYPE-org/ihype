@@ -45,6 +45,8 @@
 import { launch } from 'chrome-launcher';
 import lighthouse from 'lighthouse';
 import { appendFileSync, writeFileSync } from 'node:fs';
+import { createServer } from 'node:http';
+import puppeteer from 'puppeteer-core';
 import {
   checkBudget,
   confirmFailures,
@@ -274,7 +276,84 @@ function launchAuditChrome(chromePath) {
   return launch({ chromePath, chromeFlags: CHROME_FLAGS });
 }
 
+// Keep diagnostic artifacts free of request headers, cookies, query strings,
+// and page content. A failed LHR alone discards the evidence needed to tell
+// a blank application response from a browser that never reports a paint.
+function paintEvidence(result) {
+  const artifacts = result.artifacts ?? {};
+  const trace = artifacts.Trace ?? artifacts.TraceError;
+  const events = trace?.traceEvents ?? [];
+  const log = artifacts.DevtoolsLog ?? artifacts.DevtoolsLogError ?? [];
+  return {
+    runtimeError: result.lhr.runtimeError ?? null,
+    browser: result.lhr.environment?.hostUserAgent,
+    traceEventCount: events.length,
+    paints: events.filter(e => /^(firstPaint|firstContentfulPaint|largestContentfulPaint::Candidate|navigationStart)$/.test(e.name))
+      .map(e => ({ name: e.name, timestamp: e.ts, frame: e.args?.frame ?? e.args?.data?.frame })),
+    screenshotCount: events.filter(e => e.name === 'Screenshot').length,
+    responses: log.filter(e => e.method === 'Network.responseReceived').map(e => {
+      const response = e.params.response;
+      let path;
+      try { path = new URL(response.url).pathname; } catch { path = '[invalid URL]'; }
+      return { path, status: response.status, mimeType: response.mimeType, type: e.params.type };
+    }),
+    failedRequests: log.filter(e => e.method === 'Network.loadingFailed')
+      .map(e => ({ type: e.params.type, error: e.params.errorText, canceled: e.params.canceled ?? false })),
+  };
+}
+
+async function auditControlPage(chromePort) {
+  const server = createServer((_request, response) => {
+    response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
+    response.end('<!doctype html><html lang="en"><title>Paint control</title><h1>Paint control</h1></html>');
+  });
+  try {
+    await new Promise((resolve, reject) => {
+      server.once('error', reject);
+      server.listen(0, '127.0.0.1', resolve);
+    });
+    const result = await lighthouse(`http://127.0.0.1:${server.address().port}/`, {
+      port: chromePort, output: 'json', logLevel: 'error', onlyCategories: ['performance'],
+    });
+    const evidence = paintEvidence(result);
+    writeFileSync('lighthouse-control-evidence.json', JSON.stringify(evidence, null, 2));
+    console.log(`[lighthouse-budget] plain HTML control: ${evidence.runtimeError?.code ?? 'paint measured'}`);
+  } finally {
+    const closed = new Promise(resolve => server.close(resolve));
+    // Chrome can leave speculative connections open after Lighthouse detaches.
+    // Close those too, before waiting for the diagnostic server to stop.
+    server.closeAllConnections();
+    await closed;
+  }
+}
+
+async function capturePublicPage(page) {
+  const evidence = await page.evaluate(() => ({
+    readyState: document.readyState,
+    visibilityState: document.visibilityState,
+    bodyTextLength: document.body.innerText.length,
+    bodyDisplay: getComputedStyle(document.body).display,
+    bodyVisibility: getComputedStyle(document.body).visibility,
+    paints: performance.getEntriesByType('paint').map(entry => ({ name: entry.name, startTime: entry.startTime })),
+  }));
+  writeFileSync('lighthouse-browser-evidence.json', JSON.stringify(evidence, null, 2));
+  await page.screenshot({ path: 'lighthouse-public-page.png' });
+  console.log(`[lighthouse-budget] audited page: ${evidence.paints.length} paint entries, ${evidence.bodyTextLength} visible text characters`);
+}
+
 async function auditPageOnce(baseUrl, chromePort, page, authenticatedHeaders) {
+  const browser = await puppeteer.connect({ browserURL: `http://127.0.0.1:${chromePort}`, defaultViewport: null });
+  let target;
+  try {
+    target = await browser.newPage();
+    await target.bringToFront();
+    return await auditForegroundPage(baseUrl, chromePort, page, authenticatedHeaders, target);
+  } finally {
+    try { await target?.close(); } finally { await browser.disconnect(); }
+  }
+}
+
+async function auditForegroundPage(baseUrl, chromePort, page, authenticatedHeaders, target) {
   const result = await lighthouse(
     `${baseUrl}${page.path}`,
     {
@@ -286,7 +365,9 @@ async function auditPageOnce(baseUrl, chromePort, page, authenticatedHeaders) {
       screenEmulation: { mobile: true, width: 390, height: 844, deviceScaleFactor: 2, disabled: false },
       throttlingMethod: 'simulate',
       ...(page.authenticated && authenticatedHeaders ? { extraHeaders: authenticatedHeaders } : {})
-    }
+    },
+    undefined,
+    target
   );
 
   const lhr = result.lhr;
@@ -297,7 +378,26 @@ async function auditPageOnce(baseUrl, chromePort, page, authenticatedHeaders) {
     // trace-engine flake) rather than throwing. Treat it as a failed run —
     // the caller's retry logic already handles thrown errors, and a null
     // silently entering the median() array would corrupt the whole result.
-    writeFileSync('lighthouse-failed-run.json', JSON.stringify(lhr, null, 2));
+    const diagnosticLhr = {
+      ...lhr,
+      configSettings: {
+        ...lhr.configSettings,
+        extraHeaders: lhr.configSettings.extraHeaders
+          ? Object.fromEntries(Object.keys(lhr.configSettings.extraHeaders).map(name => [name, '[redacted]']))
+          : null,
+      },
+    };
+    writeFileSync('lighthouse-failed-run.json', JSON.stringify(diagnosticLhr, null, 2));
+    writeFileSync('lighthouse-paint-evidence.json', JSON.stringify(paintEvidence(result), null, 2));
+    // The public landing page contains no authenticated account data.
+    if (page.path === '/' && !page.authenticated) {
+      const frames = result.artifacts?.Trace?.traceEvents?.filter(event => event.name === 'Screenshot') ?? [];
+      const snapshot = frames.at(-1)?.args?.snapshot ?? frames.at(-1)?.args?.data?.snapshot;
+      if (snapshot) writeFileSync('lighthouse-public-trace.jpg', Buffer.from(snapshot, 'base64'));
+      try { await capturePublicPage(target); } catch (error) {
+        console.warn(`[lighthouse-budget] page capture failed: ${error.message}`);
+      }
+    }
     const errors = Object.entries(lhr.audits ?? {}).filter(([, audit]) => audit.scoreDisplayMode === 'error')
       .map(([id, audit]) => `${id}: ${audit.errorMessage ?? audit.explanation ?? 'audit failed'}`);
     throw new Error(`Lighthouse returned a null performance score: ${lhr.runtimeError?.message ?? errors.join('; ') ?? 'unknown'}`);
@@ -533,6 +633,14 @@ export async function runLighthouseBudget({ baseUrl, chromePath, authenticatedHe
   } catch (error) {
     infrastructureError = error;
     console.error(`[lighthouse-budget] measurement infrastructure failed: ${error.message}`);
+    if (chrome) {
+      try {
+        const port = await restartChrome();
+        await auditControlPage(port);
+      } catch (controlError) {
+        console.warn(`[lighthouse-budget] plain HTML control failed: ${controlError.message}`);
+      }
+    }
   } finally {
     if (chrome) {
       try {
