@@ -86,7 +86,7 @@ describe('video emergency disable switch', () => {
   });
 
   it('rejects anonymous deletion even when uploads are disabled', async () => {
-    vi.mocked(auth).mockResolvedValueOnce(null);
+    (auth as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(null);
     const response = await DELETE(
       new Request('https://ihype.org/api/site-videos/video-1', { method: 'DELETE' }), params,
     );
