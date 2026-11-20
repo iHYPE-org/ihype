@@ -77,6 +77,15 @@ export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
     return () => { active = false; };
   }, [profileId, loadVideos]);
 
+  async function copyPublicLink() {
+    try {
+      await navigator.clipboard.writeText(new URL(publicUrl, window.location.origin).href);
+      setMessage(t('siteBuilder.linkCopied', 'Website link copied.'));
+    } catch {
+      setMessage(t('siteBuilder.copyLinkManually', 'Open your website and copy the address from your browser.'));
+    }
+  }
+
   async function saveSite(published: boolean) {
     if (!profile) return;
     setBusy(true); setError(''); setMessage('');
@@ -220,7 +229,10 @@ export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
       {message && <p role="status" className="ih-builder-success">{message}</p>}
       {busy && <p className="ih-builder-note" role="status">{t('siteBuilder.savingChanges', 'Saving changes…')}</p>}
       {site.published && publicUrl && !busy && !uploading && (
-        <p className="ih-builder-live">{t("siteBuilder.websiteLive", "Website live:")}<a href={publicUrl} rel="noopener noreferrer" target="_blank">{publicUrl}</a></p>
+        <div className="ih-builder-live">
+          <a href={publicUrl} rel="noopener noreferrer" target="_blank">{publicUrl}</a>
+          <button type="button" onClick={copyPublicLink}>{t('siteBuilder.copyLink', 'Copy link')}</button>
+        </div>
       )}
       <div className="ih-builder-grid">
         <div className="ih-builder-editor">
@@ -289,7 +301,7 @@ export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
             <div className="ih-builder-preview-foot">{t("siteBuilder.madeWithIHYPE", "Made with iHYPE")}</div>
           </div>
           <small>{t("siteBuilder.previewUpdatesImmediatelyPressSave", "Preview updates immediately. Press Save to keep changes.")}</small>
-          {site.published && <a href={publicUrl} className="ih-builder-secondary" target="_blank" rel="noopener noreferrer">{t("siteBuilder.openPublishedWebsite", "Open published website ↗")}</a>}
+
         </aside>
       </div>
 

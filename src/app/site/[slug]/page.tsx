@@ -8,6 +8,7 @@ import { notFound } from 'next/navigation';
 import { db } from '@/lib/db';
 import { readProfileSiteConfig, isSafeSiteUrl, isPublicSiteEligible } from '@/lib/profile-site';
 import { shouldHideDemoContent, isDemoUser } from '@/lib/runtime-flags';
+import { SiteVideoPlayer } from './SiteVideoPlayer';
 import './site.css';
 
 export const dynamic = 'force-dynamic';
@@ -167,14 +168,7 @@ export default async function ProfileSite({
             <div className="ih-site-video-grid">
               {videos.map(video => (
                 <figure className="ih-site-video" key={video.id}>
-                  <iframe
-                    title={video.title}
-                    src={`https://player.mux.com/${video.muxPlaybackId}`}
-                    loading="lazy"
-                    allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen"
-                    allowFullScreen
-                    referrerPolicy="strict-origin-when-cross-origin"
-                  />
+                  {video.muxPlaybackId && <SiteVideoPlayer title={video.title} playbackId={video.muxPlaybackId} />}
                   <figcaption>{video.title}</figcaption>
                 </figure>
               ))}

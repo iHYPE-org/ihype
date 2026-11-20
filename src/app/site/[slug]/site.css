@@ -45,7 +45,9 @@
 .ih-site-track audio { width: 100%; }
 .ih-site-video-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr)); gap: 16px; }
 .ih-site-video { margin: 0; background: var(--site-card); padding: 8px; border-radius: 16px; }
-.ih-site-video iframe { width: 100%; aspect-ratio: 16 / 9; height: auto; border: 0; border-radius: 8px; display: block; }
+.ih-site-video iframe, .ih-site-video-play { width: 100%; aspect-ratio: 16 / 9; height: auto; border: 0; border-radius: 8px; display: block; }
+.ih-site-video-play { background: var(--site-bg); color: var(--site-ink); cursor: pointer; font: inherit; font-size: 1.6rem; }
+.ih-site-video-play:focus-visible { outline: 2px solid var(--site-accent); outline-offset: 2px; }
 .ih-site-video figcaption { padding: 12px 4px 4px; color: var(--site-muted); }
 .ih-site-contact { text-align: center; }
 .ih-site-contact .ih-site-copy { margin: 0 auto 24px; }

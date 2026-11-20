@@ -50,7 +50,7 @@ test.describe('One-page site navigation and privacy', () => {
     expect((await request.delete('/api/site-videos/not-mine')).status()).toBe(401);
   });
 
-  test('verified artist navigates from My Page to editor, previews, publishes and returns', async ({ page, context }) => {
+  test('verified artist navigates from My Page to editor, previews, publishes and returns', async ({ page, context, browser }) => {
     const artist = await signedIn(context, 'artist-owner', 'ARTIST', true);
     const privateEmail = `private-booking-${RUN}@example.test`;
     await setProfileFields(artist.id, { contactInfo: privateEmail });
@@ -78,6 +78,23 @@ test.describe('One-page site navigation and privacy', () => {
     await page.getByRole('button', { name: /Publish website/i }).click();
     await expect(page.locator('.ih-builder-success')).toContainText(/website published/i);
     await expect(page.locator(`.ih-builder-live a[href="/site/${artist.slug}"]:visible`)).toBeVisible();
+    await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+    await page.getByRole('button', { name: 'Copy link' }).click();
+    const sharedUrl = await page.evaluate(() => navigator.clipboard.readText());
+    const guest = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true });
+    try {
+      const phone = await guest.newPage();
+      const connection = await guest.newCDPSession(phone);
+      await connection.send('Network.emulateNetworkConditions', {
+        offline: false, latency: 150, downloadThroughput: 200_000, uploadThroughput: 90_000,
+      });
+      await phone.goto(sharedUrl, { waitUntil: 'domcontentloaded' });
+      await expect(phone.locator('.ih-site h1')).toHaveText(artist.name);
+      await expect(phone.locator('#contact')).toHaveCount(0);
+      await phone.waitForFunction(() => performance.getEntriesByName('first-contentful-paint').length > 0);
+    } finally {
+      await guest.close();
+    }
     await page.goto(`/site/${artist.slug}`);
     await expect(page.locator('.ih-site h1:visible')).toHaveText(artist.name);
     await expect(page.locator('.ih-site:visible')).toContainText('A new sound. Every night.');

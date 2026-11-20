@@ -5,42 +5,8 @@ import Link from 'next/link';
 import { RequestBetaAccessForm } from '@/components/RequestBetaAccessForm';
 import { getServerT } from '@/lib/i18n/server';
 
-/**
- * The public front door at `/`.
- *
- * Two product decisions shape everything here, both explicit:
- *
- * 1. **It says what the app IS: a free app for local music.** The previous copy
- *    ("Listen. Engage. HYPE local.") named the verbs but never the thing, so a
- *    first-time visitor could not tell whether iHYPE was a streaming service, a
- *    ticketing site or a social network. Every line now answers "what is this"
- *    before it answers "what can I do".
- *
- * 2. **It does not pitch artists or venues.** They understand the offer without
- *    being sold, and the recruiting pages (`/for-artists`, `/for-venues`) exist
- *    for the moment they want detail. A landing page that argues three
- *    audiences at once convinces none of them. This page speaks to the person
- *    who wants to hear music from their own city.
- *
- * ## Access is by request, not by signup
- *
- * There is no "Join free" anywhere on this page, and that is deliberate rather
- * than an omission: the product is pre-beta, and a button promising instant
- * signup is a promise the invite gate then breaks. The primary action is
- * `RequestBetaAccessForm`, which already existed for exactly this — it posts to
- * `/api/beta-access-request` (rate limited, honeypot, written to the audit log,
- * emailed to the admin recipients). Nothing new was built for it.
- *
- * **This page is not the gate.** The server-side gate is the
- * `invite_only_signup` runtime flag read by `isInviteCodeRequiredRuntime()`;
- * with that flag off, `/register` still accepts anyone who reaches it directly.
- * Removing the link is presentation. Keep the flag on while access is by
- * request, or the two disagree and the URL wins.
- *
- * `stats` is a slot, not data: the caller passes a Suspense boundary so the
- * hero can paint before the counters' query resolves. See LandingStats.tsx.
- */
-export async function FanFirstLanding({ stats }: { stats: ReactNode }) {
+/** The public landing page keeps account requests available alongside guest discovery. */
+export async function FanFirstLanding({ stats, discovery }: { stats: ReactNode; discovery: ReactNode }) {
   const t = await getServerT();
   return (
     <div className="fan-entry">
@@ -50,39 +16,11 @@ export async function FanFirstLanding({ stats }: { stats: ReactNode }) {
         </Link>
         <nav aria-label={t('fanFirstLanding.accountNav', 'Account')} className="fan-entry-nav">
           <Link className="fan-entry-signin" href="/login">{t('fanFirstLanding.signIn', 'Sign in')}</Link>
-          {/* An in-page anchor, not /register: the header must not offer a door
-              that is currently closed. */}
-          <a className="fan-entry-join" href="#request-access">{t('fanFirstLanding.requestAccess', 'Request access')}</a>
+          <a className="fan-entry-join" href="#discover">{t('fanFirstLanding.discoverLocalMusic', 'Discover local music')}</a>
         </nav>
       </header>
 
       <div className="fan-entry-main">
-        {/* ONE COLUMN, AND NO ARTWORK (2026-09-18, owner: "Do anything you
-            think is necessary to … limit 'AI look'. It's our first big
-            feedback item, and it was almost entirely universally stated by
-            users").
-
-            The right-hand column used to carry `ihype-icon-master-2026.png`
-            at 42vw, under a blurred two-colour "stage light" — so the single
-            largest thing on the front door was a 1MB raster of distressed
-            brush type over a crowd silhouette and orange embers, which is the
-            most generic live-music image there is, in a colour scheme two
-            grounds out of date. `IhypeMark.tsx`'s own header records the four
-            measured objections to that file; they apply with more force at
-            610px than at 54px, and it made no sense to remove it from the app
-            chrome and leave it as the hero.
-
-            Nothing replaced it, deliberately. This page's whole job is to say
-            what iHYPE is and take an email address while access is by
-            request; a decorative second column is what pushes that job into
-            half the width. A single measured column also drops ~1MB off the
-            LCP element this component's own comment names.
-
-            The honest replacement is a photograph of a room with people in
-            it, and the product does not have one — see the closing paragraph
-            of CLAUDE.md's "less AI-generated" row. Commission that before
-            putting anything back in this slot; another piece of generated
-            artwork is the problem, not the fix. */}
         <section className="fan-entry-hero">
           <div className="fan-entry-copy">
             {/* The city stays in English: it is a place, not a word. */}
@@ -92,6 +30,21 @@ export async function FanFirstLanding({ stats }: { stats: ReactNode }) {
               {t('fanFirstLanding.lead', 'Stream music from artists in your own city — all of it free, none of it behind a subscription. Find the shows they are playing this week, and HYPE the ones you want more people to hear.')}
             </p>
 
+            <div className="fan-entry-nav">
+              <a className="fan-entry-join" href="#discover">{t('fanFirstLanding.discoverLocalMusic', 'Discover local music')}</a>
+              <Link className="fan-entry-secondary" href="/for-artists">{t('fanFirstLanding.forArtists', 'For artists')}</Link>
+              <Link className="fan-entry-secondary" href="/for-venues">{t('fanFirstLanding.forVenues', 'For venues')}</Link>
+            </div>
+          </div>
+        </section>
+
+        <section id="discover" aria-label={t('fanFirstLanding.discoverLocalMusic', 'Discover local music')}>
+          {discovery}
+          <NearbyShowsWidget />
+        </section>
+
+        <section className="fan-entry-hero">
+          <div className="fan-entry-copy">
             <div className="fan-entry-actions" id="request-access">
               <div className="fan-entry-request">
                 <p className="fan-entry-request-lead">
@@ -130,23 +83,6 @@ export async function FanFirstLanding({ stats }: { stats: ReactNode }) {
           </div>
 
         </section>
-
-        {/* What the app does, in the order you would do it. Named as concrete
-            capabilities rather than the old one-word verbs, which read as a
-            brand slogan rather than a description of software. */}
-        <section aria-label={t('fanFirstLanding.stepsLabel', 'What iHYPE does')} className="fan-entry-steps">
-          <article><div><strong>{t('fanFirstLanding.step1Title', 'Listen free')}</strong><p>{t('fanFirstLanding.step1Body', 'Full tracks from artists near you. No subscription, no paywall.')}</p></div></article>
-          <article><div><strong>{t('fanFirstLanding.step2Title', 'Find the show')}</strong><p>{t('fanFirstLanding.step2Body', 'Who is playing this week, at which room, for how much.')}</p></div></article>
-          <article><div><strong>{t('fanFirstLanding.step3Title', 'HYPE it')}</strong><p>{t('fanFirstLanding.step3Body', 'Your HYPE moves an artist up your city’s chart. That is the whole ranking.')}</p></div></article>
-        </section>
-
-        {/* What is actually on, near whoever is reading. The signed-in answer
-            is the map and the map is behind auth, so before this a visitor
-            could read three sentences about finding local shows and not be
-            shown one. Renders a single opt-in line until they ask — no
-            geolocation is requested on load, and a refusal renders nothing
-            rather than an error. */}
-        <NearbyShowsWidget />
 
         <section aria-label={t('fanFirstLanding.statsLabel', 'Live iHYPE platform statistics')} className="fan-entry-stats">
           {stats}

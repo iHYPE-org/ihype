@@ -29,6 +29,10 @@ export async function checkBrowserFirstPaint({ baseUrl, pages = PAINT_PAGES } = 
       });
       try {
         const page = await context.newPage();
+        const connection = await context.newCDPSession(page);
+        await connection.send('Network.emulateNetworkConditions', {
+          offline: false, latency: 150, downloadThroughput: 200_000, uploadThroughput: 90_000,
+        });
         const response = await page.goto(`${baseUrl}${path}`, {
           waitUntil: 'domcontentloaded', timeout: 30_000,
         });
