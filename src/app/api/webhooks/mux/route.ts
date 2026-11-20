@@ -48,9 +48,44 @@ async function markVideoProviderError(where: {
   }
 }
 
+const MAX_MUX_WEBHOOK_BODY_BYTES = 100_000;
+
+/** Mux's signed payload is small; refuse huge unsigned requests before
+ * buffering them in the Worker, not after request.text() allocates them. */
+async function boundedSignedBody(request: Request): Promise<string | null> {
+  const lengthHeader = request.headers.get('content-length');
+  if (lengthHeader && Number.isFinite(Number(lengthHeader))
+      && Number(lengthHeader) > MAX_MUX_WEBHOOK_BODY_BYTES) return null;
+  const reader = request.body?.getReader();
+  if (!reader) return '';
+  const chunks: Uint8Array[] = [];
+  let length = 0;
+  try {
+    while (true) {
+      const part = await reader.read();
+      if (part.done) break;
+      length += part.value.byteLength;
+      if (length > MAX_MUX_WEBHOOK_BODY_BYTES) {
+        await reader.cancel().catch(() => {});
+        return null;
+      }
+      chunks.push(part.value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  const collected = new Uint8Array(length);
+  let offset = 0;
+  for (const chunk of chunks) {
+    collected.set(chunk, offset);
+    offset += chunk.length;
+  }
+  return new TextDecoder().decode(collected);
+}
+
 export async function POST(request: Request) {
-  const body = await request.text();
-  if (body.length > 100_000) return NextResponse.json({ error: 'Payload too large.' }, { status: 413 });
+  const body = await boundedSignedBody(request);
+  if (body === null) return NextResponse.json({ error: 'Payload too large.' }, { status: 413 });
   if (!await verifyMuxWebhookSignature(
     body, request.headers.get('mux-signature'), readRuntimeEnv('MUX_WEBHOOK_SECRET'),
   )) {
