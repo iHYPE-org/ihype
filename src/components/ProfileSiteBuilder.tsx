@@ -286,18 +286,25 @@ export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
   if (!profile) return <div className="ih-builder" role="alert">{error || 'Artist or venue not found.'}</div>;
 
   return (
-    <section className="ih-builder" aria-label={t("siteBuilder.onepageWebsiteAndVideoCreator", "One-page website and video creator")}>
+    <section className="ih-builder" aria-busy={busy || uploading} aria-label={t("siteBuilder.onepageWebsiteAndVideoCreator", "One-page website and video creator")}>
       <div className="ih-builder-head">
         <div>
           <div className="ih-builder-eyebrow">MY PAGES / SITE CREATOR</div>
           <h1>{profile.name}: Website + Video</h1>
           <p>{t("siteBuilder.buildAFreeMobilefriendlyOnepage", "Build a free, mobile-friendly one-page website. Everything stays linked to your iHYPE profile.")}</p>
         </div>
-        <Link href={`/app/me/profiles?profile=${profile.id}`} className="ih-builder-secondary">{t("siteBuilder.backToProfiles", "Back to profiles")}</Link>
+        {busy || uploading ? (
+          <span className="ih-builder-secondary" aria-disabled="true">
+            {t("siteBuilder.finishActionBeforeLeaving", "Finish or cancel your current action before leaving")}
+          </span>
+        ) : (
+          <Link href={`/app/me/profiles?profile=${profile.id}`} className="ih-builder-secondary">{t("siteBuilder.backToProfiles", "Back to profiles")}</Link>
+        )}
       </div>
       {error && <p role="alert" className="ih-builder-alert">{error}</p>}
       {message && <p role="status" className="ih-builder-success">{message}</p>}
-      {site.published && publicUrl && (
+      {busy && <p className="ih-builder-note" role="status">{t('siteBuilder.savingChanges', 'Saving changes…')}</p>}
+      {site.published && publicUrl && !busy && !uploading && (
         <p className="ih-builder-live">{t("siteBuilder.websiteLive", "Website live:")}<a href={publicUrl} rel="noopener noreferrer" target="_blank">{publicUrl}</a></p>
       )}
       <div className="ih-builder-grid">
