@@ -534,4 +534,5 @@ jobs:
           path: |
             lighthouse-budget-report.json
             lighthouse-failed-run.json
+            playwright-first-paint-report.json
           if-no-files-found: ignore

@@ -1,4 +1,6 @@
 import { db } from '@/lib/db';
+import { Prisma } from '@prisma/client';
+import { deleteHostedProfileVideo } from '@/lib/delete-hosted-video';
 import { recordAuditEvent } from '@/lib/audit';
 import { deleteMediaFile } from '@/lib/object-storage';
 import { deauthorizeStripeConnectAccount, isStripeConfigured } from '@/lib/stripe';
@@ -185,6 +187,21 @@ export async function executeAccountErasure(
     throw new Error('Refusing to erase an ADMIN account — demote it first.');
   }
 
+  // 0. Remove hosted Mux videos before deleting
+  // credentials. External providers do not cascade with the database.
+  // A failed provider deletion leaves the DB row and login available for
+  // an idempotent retry instead of claiming all personal data was erased.
+  const hostedVideos = await db.profileVideo.findMany({
+    where: { profile: { ownerId: userId } },
+    select: {
+      id: true, muxUploadId: true, muxAssetId: true,
+    },
+  });
+  for (const video of hostedVideos) {
+    await deleteHostedProfileVideo(video);
+    await db.profileVideo.delete({ where: { id: video.id } });
+  }
+
   // 1. Hype votes first (needs the userId link that later steps sever).
   await executeHypeWipe(userId, actorUserId);
 
@@ -361,6 +378,7 @@ export async function executeAccountErasure(
         upcomingContent: null,
         previousShowHighlights: null,
         fanShareEnabled: false,
+        siteConfig: Prisma.DbNull, // Unpublish any previously shared microsite.
         ...(connectAccountCleared
           ? { stripeConnectAccountId: null, stripeConnectOnboarded: false }
           : {}),
@@ -402,6 +420,7 @@ export async function executeAccountErasure(
     metadata: {
       profilesAnonymized: profiles.length,
       mediaAssetsDeleted,
+      hostedVideosDeleted: hostedVideos.length,
       ticketOrdersScrubbed: orders.count,
       ticketsScrubbed,
       stripeConnectDeauthorized,

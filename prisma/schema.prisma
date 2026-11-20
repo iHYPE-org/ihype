@@ -330,6 +330,8 @@ model Profile {
   venueSplitAgreements          ShowSplitAgreement[]        @relation("VenueSplitAgreements")
   artistSplitAgreements         ShowSplitAgreement[]        @relation("ArtistSplitAgreements")
   mediaUploads                  ArtistMediaAsset[]
+  videos                        ProfileVideo[]
+  siteConfig                    Json?
   profileHypes                  ProfileHypeEvent[]
   venueConnectionRequests       VenueConnectionRequest[]    @relation("VenueConnectionRequests")
   recommendedConnectionRequests VenueConnectionRequest[]    @relation("RecommendedProfileConnectionRequests")
@@ -478,6 +480,27 @@ model Like {
 
   @@unique([userId, targetType, targetId])
   @@index([targetType, targetId])
+}
+
+/// Video belongs to an owned artist/venue page. Mux serves published playback;
+/// optional originals remain PRIVATE in the existing Cloudflare R2 bucket.
+model ProfileVideo {
+  id             String   @id @default(cuid())
+  profileId      String
+  title          String
+  muxUploadId    String   @unique
+  muxAssetId     String?  @unique
+  muxPlaybackId  String?
+  status         String   @default("WAITING")
+  quality        String   @default("1080p")
+  durationSecs   Float?
+  isPublished    Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  profile        Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId, createdAt])
+  @@index([profileId, isPublished, status])
 }
 
 model ArtistMediaAsset {

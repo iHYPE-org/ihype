@@ -327,15 +327,25 @@ export function MmmSettings() {
     const prev = discoverable;
     setDiscoverable(next);
     setSavingDiscoverable(true);
+    setError(null);
     try {
       const res = await fetch('/api/me', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ discoverable: next }),
       });
-      if (!res.ok) setDiscoverable(prev);
+      const result = await res.json() as { error?: string; warning?: string };
+      if (!res.ok) {
+        setDiscoverable(prev);
+        setError(result.error || t('settingsPage.saveFailed', 'Failed to save'));
+      } else if (result.warning) {
+        // Profile visibility was saved; retain the hidden toggle, but report
+        // any Mux playback IDs that still need external cleanup.
+        setError(result.warning);
+      }
     } catch {
       setDiscoverable(prev);
+      setError(t('settingsPage.networkError', 'Network error'));
     } finally {
       setSavingDiscoverable(false);
     }

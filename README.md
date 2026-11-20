@@ -94,6 +94,22 @@ openssl rand -hex 16
 
 Production uploads require configured object storage. Temporary database-backed media storage is disabled by default. Artist uploads are limited by file size, request rate, track count, and cumulative profile storage.
 
+## Artist and venue one-page sites / on-demand 4K video
+
+Owners of artist and venue profiles can open **Website + video** from their
+profile page. Drafts stay private; verified owners can publish a standalone
+one-page website at `/site/<slug>`, styled using the existing profile's music,
+show information, images and merchandise links. Contact details are opt-in.
+
+Mux Video (Basic tier, 1080p by default, optional 2160p/4K) is a separate,
+**disabled-by-default** integration. Users upload from the browser directly to
+Mux; nothing is publicly playable until the owner approves publishing. Video storage and playback are handled by Mux.
+
+See `docs/runbooks/profile-sites-mux-4k.md` for provider setup, secrets,
+webhook verification, nonprofit-credit requests, cost ceilings, phased QA,
+migration and release checklist. This code does not create a Mux account or
+turn on paid provider usage.
+
 ## Security posture
 
 - Authentication sessions are tied to a user security version and expire after 12 hours.
