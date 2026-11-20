@@ -5,7 +5,8 @@ import { micrositeThemeVars } from '@/lib/profile-design';
 import { getLocale } from '@/lib/i18n/server';
 import { notFound } from 'next/navigation';
 import { db } from '@/lib/db';
-import { readProfileSiteConfig, isSafeSiteUrl } from '@/lib/profile-site';
+import { readProfileSiteConfig, isSafeSiteUrl, isPublicSiteEligible } from '@/lib/profile-site';
+import { shouldHideDemoContent, isDemoUser } from '@/lib/runtime-flags';
 import './site.css';
 
 export const dynamic = 'force-dynamic';
@@ -17,12 +18,14 @@ async function getPublishedSite(slug: string) {
       id: true, slug: true, name: true, type: true, headline: true, bio: true,
       aboutContent: true, city: true, stateRegion: true, heroImage: true,
       avatarImage: true, contactInfo: true, merchUrl: true, merchContent: true,
-      siteConfig: true, verificationStatus: true,
+      siteConfig: true, verificationStatus: true, discoverable: true,
+      owner: { select: { email: true, username: true } },
     },
   });
   if (!profile || !['ARTIST', 'VENUE'].includes(profile.type)) return null;
   const site = readProfileSiteConfig(profile.siteConfig);
-  if (!site.published || profile.verificationStatus !== 'VERIFIED') return null;
+  if (!site.published || !isPublicSiteEligible(profile)) return null;
+  if (shouldHideDemoContent() && isDemoUser(profile.owner)) return null;
   return { profile, site };
 }
 
