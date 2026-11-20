@@ -11,6 +11,7 @@ import { isAllowedMuxDirectUploadUrl } from '@/lib/mux-upload-url';
 export const dynamic = 'force-dynamic';
 
 const MAX_VIDEO_BYTES = 2 * 1024 * 1024 * 1024; // initial cost/abuse guard
+const MONTHLY_UPLOAD_ATTEMPTS = 20;
 const MAX_VIDEOS_PER_PROFILE = 12; // raise after nonprofit credits are verified
 
 const createSchema = z.object({
@@ -76,6 +77,22 @@ export async function POST(request: Request) {
   const origin = request.headers.get('origin');
   if (origin && origin !== base) {
     return NextResponse.json({ error: 'Cross-origin uploads are not allowed.' }, { status: 403 });
+  }
+
+  // Count reservations before calling Mux, including failed and canceled uploads.
+  // Deleting a video does not restore its reservation.
+  const now = new Date();
+  const month = now.toISOString().slice(0, 7);
+  const nextMonth = Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1);
+  const allowance = await consumeRateLimit(`mux-video-sitewide:${month}`, {
+    limit: MONTHLY_UPLOAD_ATTEMPTS,
+    windowMs: nextMonth - now.getTime(),
+    requireAtomic: true,
+  });
+  if (!allowance.allowed) {
+    return NextResponse.json({ error: 'New video uploads are temporarily unavailable.' }, {
+      status: 429, headers: { 'Retry-After': String(allowance.retryAfterSeconds) },
+    });
   }
 
   const video = await withDbRetry(() => db.profileVideo.create({

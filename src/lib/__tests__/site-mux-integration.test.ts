@@ -176,6 +176,20 @@ describe('Artist/venue site and video integration boundaries', () => {
     expect(profileUpdate).not.toHaveBeenCalled();
   });
 
+  it('refuses new Mux uploads when the sitewide allowance is exhausted', async () => {
+    rateLimit.mockResolvedValueOnce({ allowed: true });
+    rateLimit.mockResolvedValueOnce({ allowed: false, remaining: 0, retryAfterSeconds: 120 });
+
+    const response = await uploadVideo(requestForVideo());
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get('Retry-After')).toBe('120');
+    expect(rateLimit).toHaveBeenNthCalledWith(2, expect.stringMatching(/^mux-video-sitewide:\d{4}-\d{2}$/),
+      expect.objectContaining({ limit: 20, requireAtomic: true }));
+    expect(videoCreate).not.toHaveBeenCalled();
+    expect(provider).not.toHaveBeenCalled();
+  });
+
   it('creates a private, 4K-capable Mux direct upload without a playback ID', async () => {
     const response = await uploadVideo(requestForVideo());
     expect(response.status).toBe(201);
