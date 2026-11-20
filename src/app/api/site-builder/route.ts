@@ -5,7 +5,7 @@ import { db, withDbRetry } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { isPublicSiteEligible, readProfileSiteConfig, siteConfigSchema } from '@/lib/profile-site';
 import { consumeRateLimit } from '@/lib/rate-limit';
-import { MuxApiError, muxRequest } from '@/lib/mux-video';
+import { revokeProfileVideoPlayback, VIDEO_REVOKE_WARNING } from '@/lib/revoke-profile-videos';
 
 export const dynamic = 'force-dynamic';
 
@@ -80,35 +80,8 @@ export async function PATCH(request: Request) {
   let warning: string | null = null;
   if (!body.site.published) {
     try {
-      const publicVideos = await withDbRetry(() => db.profileVideo.findMany({
-        where: { profileId: profile.id, muxPlaybackId: { not: null } },
-        select: { id: true, muxAssetId: true, muxPlaybackId: true },
-      }));
-      const revokeResults = await Promise.all(publicVideos.map(async video => {
-        if (!video.muxPlaybackId || !video.muxAssetId) return false;
-        try {
-          try {
-            await muxRequest(
-              `/assets/${video.muxAssetId}/playback-ids/${video.muxPlaybackId}`,
-              'DELETE',
-            );
-          } catch (error) {
-            if (!(error instanceof MuxApiError && error.status === 404)) throw error;
-          }
-          await withDbRetry(() => db.profileVideo.updateMany({
-            where: { id: video.id, muxPlaybackId: video.muxPlaybackId },
-            data: { muxPlaybackId: null, isPublished: false },
-          }));
-          return true;
-        } catch {
-          // The website is already hidden; an external URL may still work.
-          // Do not discard its Mux playback ID until the provider confirms.
-          return false;
-        }
-      }));
-      if (revokeResults.includes(false)) {
-        warning = 'Your website is hidden, but some previously public video links could not be revoked. Use Unpublish in the video library and retry when Mux is available.';
-      }
+      const revoked = await revokeProfileVideoPlayback(profile.id);
+      if (revoked.failed) warning = VIDEO_REVOKE_WARNING;
     } catch {
       warning = 'Your website is hidden, but video playback cleanup could not be checked. Retry Save draft / Unpublish to revoke any previously shared video links.';
     }
