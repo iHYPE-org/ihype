@@ -79,6 +79,15 @@ export async function GET() {
       profiles: {
         include: {
           mediaUploads: true,
+          // Owner-visible metadata only. No Mux provider identifiers,
+          // unpublished playback URLs or private R2 object keys in exports.
+          videos: {
+            select: {
+              id: true, title: true, quality: true, status: true,
+              isPublished: true, durationSecs: true, createdAt: true,
+              updatedAt: true,
+            },
+          },
           accountsPayableEntries: true,
           setlistTemplates: true,
           availabilityDates: true,
