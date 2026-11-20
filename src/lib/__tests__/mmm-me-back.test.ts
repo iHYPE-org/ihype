@@ -36,6 +36,7 @@ describe('MMM Me subpage backstop', () => {
       '/app/me/venues/example/booking-inbox',
       '/app/me/shows/example/lineup',
       '/app/me/shows/example/edit',
+      '/app/me/sites/private-profile-id', // Builder provides Back to profiles.
     ]) expect(mmmMeBackTarget(path), path).toBeNull();
   });
 
