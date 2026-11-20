@@ -42,6 +42,17 @@ export function readProfileSiteConfig(raw: unknown): SiteConfig {
   };
 }
 
+/** A standalone page is never a way to bypass existing profile privacy. */
+export function isPublicSiteEligible(profile: {
+  type: string;
+  verificationStatus: string;
+  discoverable: boolean;
+}): boolean {
+  return (profile.type === 'ARTIST' || profile.type === 'VENUE')
+    && profile.verificationStatus === 'VERIFIED'
+    && profile.discoverable === true;
+}
+
 export function isSafeSiteUrl(value: string | null | undefined): value is string {
   if (!value) return false;
   try {
