@@ -28,6 +28,7 @@ import { join } from 'node:path';
 import { Client } from 'pg';
 import { encode } from 'next-auth/jwt';
 import { runLighthouseBudget } from './lighthouse-budget.mjs';
+import { checkBrowserFirstPaint } from './playwright-paint-budget.mjs';
 
 const PORT = Number(process.env.WORKERD_SMOKE_PORT || 8787);
 const BASE = `http://127.0.0.1:${PORT}`;
@@ -806,6 +807,20 @@ async function run() {
         }
         console.log('[workerd-smoke] set LIGHTHOUSE_BUDGET_ENFORCE=1 to make this gate the build');
       }
+      // Independent, *mandatory* real browser FCP evidence, even if
+      // Lighthouse's trace pipeline returns NO_FCP. Broad 20s headroom
+      // distinguishes a blank/hung page from noisy CI mobile scores.
+      const paint = await checkBrowserFirstPaint({ baseUrl: BASE });
+      for (const item of paint.results) {
+        console.log(`[paint-budget] ${item.path}: ${item.ok ? 'PASS' : 'FAIL'} fcp=${item.fcpMs ?? 'unavailable'}ms status=${item.status ?? '?'}`);
+      }
+      check(
+        'Playwright browser real first-contentful paint budget',
+        paint.ok,
+        paint.results.filter(item => !item.ok).map(item =>
+          `${item.path}: status=${item.status ?? '?'} fcp=${item.fcpMs ?? '?'} ${item.error ?? ''}`,
+        ).join('; '),
+      );
     } else if (!RUN_LIGHTHOUSE_BUDGET) {
       console.log('[workerd-smoke] mode=security — skipping performance budget');
     } else {
