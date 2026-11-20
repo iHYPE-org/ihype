@@ -648,6 +648,54 @@ async function run() {
       `public frame allowed=${publicCsp.includes('https://player.mux.com')}`,
     );
 
+    // 12b.1. A genuine approved/discoverable artist can go live and then
+    // unpublish. This is an integration fixture in scratch Postgres only; the
+    // production ownership-verification workflow is not bypassed.
+    const siteFixtureDb = new Client({ connectionString: DB_URL });
+    await siteFixtureDb.connect();
+    try {
+      await siteFixtureDb.query(
+        `UPDATE "Profile"
+         SET "verificationStatus" = 'VERIFIED'::"OwnershipVerificationStatus",
+             "discoverable" = true
+         WHERE "id" = $1`,
+        [FIXTURE.profileId],
+      );
+    } finally {
+      await siteFixtureDb.end();
+    }
+    const publishApproved = await probe('/api/site-builder', {
+      method: 'PATCH', headers: { cookie: creatorCookie, 'content-type': 'application/json' },
+      body: JSON.stringify({ profileId: FIXTURE.profileId, site: { ...draftSite, published: true } }),
+    });
+    check('verified artist can publish a one-page website through its real owner API',
+      publishApproved.status === 200 && parseJson(publishApproved.text)?.url === '/site/smoke-artist',
+      `status=${publishApproved.status} body=${publishApproved.text.slice(0, 120)}`);
+    const publishedPage = await probe('/site/smoke-artist');
+    check(
+      'published artist website opens signed out with the correct public content',
+      publishedPage.status === 200
+        && publishedPage.text.includes('Smoke Artist')
+        && publishedPage.text.includes('Smoke-only website draft')
+        && !publishedPage.text.includes(FIXTURE.privateMessage),
+      `status=${publishedPage.status} body=${publishedPage.text.slice(0, 120)}`,
+    );
+    const unpublishApproved = await probe('/api/site-builder', {
+      method: 'PATCH', headers: { cookie: creatorCookie, 'content-type': 'application/json' },
+      body: JSON.stringify({ profileId: FIXTURE.profileId, site: draftSite }),
+    });
+    const siteAfterUnpublish = await probe('/site/smoke-artist');
+    const noLongerVisible = siteAfterUnpublish.status === 404 || (
+      siteAfterUnpublish.status === 200
+      && /NEXT_HTTP_ERROR_FALLBACK;404|This page could not be found/i.test(siteAfterUnpublish.text)
+    );
+    check(
+      'owner unpublishing removes the once-public artist website immediately',
+      unpublishApproved.status === 200 && noLongerVisible
+        && !siteAfterUnpublish.text.includes('Smoke-only website draft'),
+      `unpublish=${unpublishApproved.status} public=${siteAfterUnpublish.status}`,
+    );
+
     // 12c. Feature disabled means no paid provider requests, but existing
     // owner library access and private R2 isolation must remain functional.
     const anonymousVideos = await probe(`/api/site-videos?profileId=${FIXTURE.profileId}`);
