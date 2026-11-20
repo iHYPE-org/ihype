@@ -63,10 +63,24 @@ export async function PATCH(
       let persisted = false;
       try {
         const updated = await db.profileVideo.updateMany({
-          where: { id: video.id, isPublished: false, muxPlaybackId: null, status: 'READY' },
+          where: {
+            id: video.id, isPublished: false, muxPlaybackId: null, status: 'READY',
+            // Atomic database eligibility check closes a publish/unpublish
+            // race: only persist a new public ID while the website is still
+            // published, discoverable and fully verified. A failed claim
+            // causes the external playback ID to be deleted in finally.
+            profile: {
+              is: {
+                discoverable: true,
+                verificationStatus: 'VERIFIED',
+                siteConfig: { path: ['published'], equals: true },
+              },
+            },
+          },
           data: { muxPlaybackId: playback.id, isPublished: true },
         });
         persisted = updated.count > 0;
+        if (!persisted) throw new Error('Website changed before publication could finish.');
       } finally {
         // Avoid exposing an orphaned PUBLIC playback ID if Prisma errors or
         // a concurrent publisher already claimed the record.
