@@ -15,6 +15,39 @@ type MuxWebhook = {
   };
 };
 
+/**
+ * Mux can report a processing failure after a video's public playback ID was
+ * issued. Hide it first, then revoke the external ID. On provider failure the
+ * signed webhook returns 500 for retry and the identifier remains in Prisma
+ * so the owner can retry unpublishing rather than losing the cleanup handle.
+ */
+async function markVideoProviderError(where: {
+  OR?: Array<{ muxAssetId?: string; muxUploadId?: string }>;
+  muxUploadId?: string;
+}) {
+  await db.profileVideo.updateMany({
+    where: { ...where, status: { notIn: ['DELETED', 'TOO_LONG'] } },
+    data: { status: 'ERROR', isPublished: false },
+  });
+  const affected = await db.profileVideo.findMany({
+    where: { ...where, status: 'ERROR', muxPlaybackId: { not: null } },
+    select: { id: true, muxAssetId: true, muxPlaybackId: true },
+    take: 25,
+  });
+  for (const video of affected) {
+    if (!video.muxAssetId || !video.muxPlaybackId) continue;
+    try {
+      await muxRequest(`/assets/${video.muxAssetId}/playback-ids/${video.muxPlaybackId}`, 'DELETE');
+    } catch (error) {
+      if (!(error instanceof MuxApiError && error.status === 404)) throw error;
+    }
+    await db.profileVideo.updateMany({
+      where: { id: video.id, muxPlaybackId: video.muxPlaybackId },
+      data: { muxPlaybackId: null },
+    });
+  }
+}
+
 export async function POST(request: Request) {
   const body = await request.text();
   if (body.length > 100_000) return NextResponse.json({ error: 'Payload too large.' }, { status: 413 });
@@ -83,15 +116,11 @@ export async function POST(request: Request) {
       data: { muxAssetId: data.id, status: 'READY', durationSecs: data.duration },
     });
   } else if (event.type === 'video.asset.errored' && data.id) {
-    await db.profileVideo.updateMany({
-      where: { OR: [{ muxAssetId: data.id }, ...(data.upload_id ? [{ muxUploadId: data.upload_id }] : [])] },
-      data: { status: 'ERROR', isPublished: false },
+    await markVideoProviderError({
+      OR: [{ muxAssetId: data.id }, ...(data.upload_id ? [{ muxUploadId: data.upload_id }] : [])],
     });
   } else if (event.type === 'video.upload.errored' && data.id) {
-    await db.profileVideo.updateMany({
-      where: { muxUploadId: data.id },
-      data: { status: 'ERROR', isPublished: false },
-    });
+    await markVideoProviderError({ muxUploadId: data.id });
   } else if (event.type === 'video.asset.deleted' && data.id) {
     await db.profileVideo.updateMany({
       where: { muxAssetId: data.id, status: { not: 'TOO_LONG' } },
