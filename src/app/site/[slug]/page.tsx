@@ -1,5 +1,7 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import type { CSSProperties } from 'react';
+import { micrositeThemeVars } from '@/lib/profile-design';
 import { notFound } from 'next/navigation';
 import { db } from '@/lib/db';
 import { readProfileSiteConfig, isSafeSiteUrl } from '@/lib/profile-site';
@@ -84,7 +86,7 @@ export default async function ProfileSite({
   const merchUrl = isSafeSiteUrl(profile.merchUrl) ? profile.merchUrl : null;
 
   return (
-    <main className={`ih-site ih-site--${site.theme}`}>
+    <main className={`ih-site ih-site--${site.theme}`} style={micrositeThemeVars(site.theme) as CSSProperties}>
       <div className="ih-site-inner">
         <nav className="ih-site-nav" aria-label="Website navigation">
           <Link href="/" className="ih-site-brand">iHYPE<span> / Sites</span></Link>
