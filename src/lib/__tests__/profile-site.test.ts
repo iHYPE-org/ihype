@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_SITE_CONFIG, isSafeSiteUrl, readProfileSiteConfig, siteConfigSchema } from '@/lib/profile-site';
+import { DEFAULT_SITE_CONFIG, isPublicSiteEligible, isSafeSiteUrl, readProfileSiteConfig, siteConfigSchema } from '@/lib/profile-site';
 
 describe('artist and venue public sites', () => {
   it('starts unpublished with contact hidden', () => {
@@ -13,6 +13,20 @@ describe('artist and venue public sites', () => {
   it('accepts explicit theme and section choices', () => {
     const config = siteConfigSchema.parse({ ...DEFAULT_SITE_CONFIG, theme: 'paper', published: true });
     expect(config.published).toBe(true);
+  });
+  it('never publishes an undiscoverable or unverified identity', () => {
+    expect(isPublicSiteEligible({
+      type: 'ARTIST', verificationStatus: 'VERIFIED', discoverable: true,
+    })).toBe(true);
+    expect(isPublicSiteEligible({
+      type: 'VENUE', verificationStatus: 'VERIFIED', discoverable: false,
+    })).toBe(false);
+    expect(isPublicSiteEligible({
+      type: 'ARTIST', verificationStatus: 'PENDING', discoverable: true,
+    })).toBe(false);
+    expect(isPublicSiteEligible({
+      type: 'LISTENER', verificationStatus: 'VERIFIED', discoverable: true,
+    })).toBe(false);
   });
   it('allows only absolute https merchandise links', () => {
     expect(isSafeSiteUrl('https://example.com/merch')).toBe(true);
