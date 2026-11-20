@@ -216,7 +216,7 @@ export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
       {error && <p role="alert" className="ih-builder-alert">{error}</p>}
       {message && <p role="status" className="ih-builder-success">{message}</p>}
       {site.published && publicUrl && (
-        <p className="ih-builder-live">{t("siteBuilder.websiteLive", "Website live:")}<a href={publicUrl} rel="noopener noreferrer" target="_blank">{typeof window === 'undefined' ? publicUrl : window.location.origin + publicUrl}</a></p>
+        <p className="ih-builder-live">{t("siteBuilder.websiteLive", "Website live:")}<a href={publicUrl} rel="noopener noreferrer" target="_blank">{publicUrl}</a></p>
       )}
       <div className="ih-builder-grid">
         <div className="ih-builder-editor">
