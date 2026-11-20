@@ -23,6 +23,11 @@ vi.mock('@/lib/rate-limit', () => ({
 vi.mock('@/lib/mux-video', () => ({
   isVideoUploadEnabled: vi.fn().mockReturnValue(false),
   muxRequest: vi.fn().mockResolvedValue({}),
+  MuxApiError: class MuxApiError extends Error {
+    constructor(readonly status: number) {
+      super(`Provider returned HTTP ${status}`);
+    }
+  },
 }));
 vi.mock('@/lib/delete-hosted-video', () => ({
   deleteHostedProfileVideo: vi.fn().mockResolvedValue(undefined),
@@ -92,6 +97,39 @@ describe('video emergency disable switch', () => {
     );
     expect(response.status).toBe(401);
     expect(deleteHostedProfileVideo).not.toHaveBeenCalled();
+  });
+
+  it('allows unpublishing an ERROR state asset with an existing public playback ID', async () => {
+    findVideo.mockResolvedValueOnce({ ...originalVideo, status: 'ERROR' });
+    const response = await PATCH(new Request('https://ihype.org/api/site-videos/video-1', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'unpublish' }),
+    }), params);
+    expect(response.status).toBe(200);
+    expect(muxRequest).toHaveBeenCalledWith(
+      '/assets/asset-1/playback-ids/playback-1', 'DELETE',
+    );
+  });
+
+  it('revokes a newly issued public ID if persisting publication fails', async () => {
+    vi.mocked(isVideoUploadEnabled).mockReturnValueOnce(true);
+    findVideo.mockResolvedValueOnce({
+      ...originalVideo, isPublished: false, muxPlaybackId: null,
+    });
+    vi.mocked(db.profileVideo.updateMany).mockRejectedValueOnce(new Error('database write failed'));
+    const host = muxRequest as unknown as ReturnType<typeof vi.fn>;
+    host.mockResolvedValueOnce({ id: 'new-public-playback' }).mockResolvedValueOnce({});
+    const response = await PATCH(new Request('https://ihype.org/api/site-videos/video-1', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'publish' }),
+    }), params);
+    expect(response.status).toBe(502);
+    expect(host).toHaveBeenNthCalledWith(
+      1, '/assets/asset-1/playback-ids', 'POST', { policy: 'public' },
+    );
+    expect(host).toHaveBeenNthCalledWith(
+      2, '/assets/asset-1/playback-ids/new-public-playback', 'DELETE',
+    );
   });
 
   it('still removes video from external providers and database after disabling uploads', async () => {
