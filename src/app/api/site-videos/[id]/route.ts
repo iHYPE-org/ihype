@@ -4,7 +4,7 @@ import { auth } from '@/lib/auth';
 import { db, withDbRetry } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { readRuntimeBinding } from '@/lib/runtime-env';
-import { isVideoUploadEnabled, muxRequest } from '@/lib/mux-video';
+import { isVideoUploadEnabled, MuxApiError, muxRequest } from '@/lib/mux-video';
 import { consumeRateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
@@ -84,15 +84,33 @@ export async function DELETE(
   if (!limiter.allowed) return NextResponse.json({ error: 'Too many deletions.' }, { status: 429 });
   try {
     if (video.muxAssetId) {
-      await muxRequest(`/assets/${video.muxAssetId}`, 'DELETE');
+      try { await muxRequest(`/assets/${video.muxAssetId}`, 'DELETE'); }
+      catch (err) { if (!(err instanceof MuxApiError && err.status === 404)) throw err; }
     } else if (!video.muxUploadId.startsWith('pending_')) {
-      await muxRequest(`/uploads/${video.muxUploadId}/cancel`, 'PUT');
+      // Reconcile stale status before deleting, so an asset that was created
+      // while a webhook was late is not orphaned and billed indefinitely.
+      const upload = await muxRequest<{ status: string; asset_id?: string }>(
+        `/uploads/${video.muxUploadId}`, 'GET',
+      );
+      if (upload.asset_id) {
+        await muxRequest(`/assets/${upload.asset_id}`, 'DELETE');
+      } else if (upload.status === 'waiting') {
+        await muxRequest(`/uploads/${video.muxUploadId}/cancel`, 'PUT');
+      } else if (!['cancelled', 'errored', 'timed_out'].includes(upload.status)) {
+        throw new Error('Video upload is still changing state.');
+      }
     }
-    // Original archival keys are not on /cdn; private R2 binding only.
+    // The R2 original is never public. Abort incomplete multipart copies.
     if (video.archiveKey) {
-      const binding = readRuntimeBinding('R2');
-      const bucket = binding as { delete?: (key: string) => Promise<unknown> } | null;
-      await bucket?.delete?.(video.archiveKey);
+      const bucket = readRuntimeBinding('R2') as {
+        delete?: (key: string) => Promise<unknown>;
+        resumeMultipartUpload?: (key: string, id: string) => { abort: () => Promise<void> };
+      } | null;
+      if (video.archiveUploadId) {
+        await bucket?.resumeMultipartUpload?.(video.archiveKey, video.archiveUploadId).abort();
+      } else {
+        await bucket?.delete?.(video.archiveKey);
+      }
     }
     await db.profileVideo.delete({ where: { id: video.id } });
     return NextResponse.json({ ok: true });
