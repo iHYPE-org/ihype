@@ -32,10 +32,10 @@
 .ih-site-hero p { font-size: clamp(1rem, 2.2vw, 1.45rem); max-width: 750px; margin: 0; line-height: 1.5; }
 .ih-site-hero-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 24px; }
 .ih-site-button { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; border: 2px solid var(--site-accent); border-radius: 12px; background: var(--site-accent); color: var(--site-accent-ink) !important; padding: 8px 16px; font-weight: 750; font-size: .94rem; text-decoration: none; }
-.ih-site-button--outline { background: transparent; border-color: var(--site-hero-ink); }
-.ih-site-section { padding: clamp(40px, 6vw, 88px) 0; border-bottom: 1px solid color-mix(in srgb, var(--site-ink) 18%, transparent); scroll-margin-top: 40px; }
+.ih-site-button--outline { background: transparent; border-color: var(--site-hero-ink); color: var(--site-hero-ink) !important; }
+.ih-site-section { padding: clamp(30px, 5vw, 64px) 0; border-bottom: 1px solid color-mix(in srgb, var(--site-ink) 18%, transparent); scroll-margin-top: 40px; }
 .ih-site-section h2 { font-size: clamp(1.9rem, 4.2vw, 3.1rem); letter-spacing: -.04em; line-height: 1.16; margin: 0 0 24px; }
-.ih-site-copy { max-width: 780px; line-height: 1.8; white-space: pre-line; color: var(--site-muted); font-size: 1.04rem; }
+.ih-site-copy { max-width: 780px; line-height: 1.8; white-space: pre-line; overflow-wrap: anywhere; color: var(--site-muted); font-size: 1.04rem; }
 .ih-site-show-list { display: grid; gap: 8px; }
 .ih-site-show { display: grid; grid-template-columns: minmax(110px, .6fr) 3fr 24px; align-items: center; gap: 20px; background: var(--site-card); padding: 16px 20px; border-radius: 12px; font-weight: 750; text-decoration: none; }
 .ih-site-show:hover, .ih-site-show:focus-visible { outline: 2px solid var(--site-accent); outline-offset: 1px; }
@@ -54,7 +54,10 @@
 @media (max-width: 640px) {
  .ih-site-nav { align-items: flex-start; flex-direction: column; }
  .ih-site-nav-links { gap: 12px 16px; }
- .ih-site-hero { min-height: 350px; }
+ .ih-site-hero { min-height: 300px; }
+ .ih-site-nav { gap: 8px; padding: 12px 0; }
+ .ih-site-nav-links a { display: inline-flex; align-items: center; min-height: 44px; }
+ .ih-site-hero-actions:empty { display: none; }
  .ih-site-show { grid-template-columns: 1fr 24px; gap: 4px 8px; }
  .ih-site-show-date { grid-column: 1 / 3; font-size: .94rem; }
 }

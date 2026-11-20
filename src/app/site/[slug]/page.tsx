@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import type { CSSProperties } from 'react';
+import { cache, type CSSProperties } from 'react';
 import { micrositeThemeVars } from '@/lib/profile-design';
 import { getLocale } from '@/lib/i18n/server';
 import { formatDoorTime } from '@/lib/format-locale';
@@ -12,13 +12,14 @@ import './site.css';
 
 export const dynamic = 'force-dynamic';
 
-async function getPublishedSite(slug: string) {
+// Share the eligibility lookup between metadata and rendering within a request.
+const getPublishedSite = cache(async (slug: string) => {
   const profile = await db.profile.findUnique({
     where: { slug },
     select: {
       id: true, slug: true, name: true, type: true, headline: true, bio: true,
       aboutContent: true, city: true, stateRegion: true, heroImage: true,
-      avatarImage: true, contactInfo: true, merchUrl: true, merchContent: true,
+      contactInfo: true, merchUrl: true, merchContent: true,
       siteConfig: true, verificationStatus: true, discoverable: true,
       owner: { select: { email: true, username: true } },
     },
@@ -28,7 +29,7 @@ async function getPublishedSite(slug: string) {
   if (!site.published || !isPublicSiteEligible(profile)) return null;
   if (shouldHideDemoContent() && isDemoUser(profile.owner)) return null;
   return { profile, site };
-}
+});
 
 export async function generateMetadata({
   params,
@@ -56,9 +57,8 @@ export default async function ProfileSite({
   if (!result) notFound();
   const { profile, site } = result;
   const now = new Date();
-  const locale = await getLocale();
-
-  const [shows, tracks, videos] = await Promise.all([
+  const [locale, shows, tracks, videos] = await Promise.all([
+    getLocale(),
     site.sections.shows ? db.show.findMany({
       where: {
         OR: profile.type === 'VENUE'
@@ -71,13 +71,13 @@ export default async function ProfileSite({
       },
       orderBy: { startsAt: 'asc' },
       take: 8,
-      select: { id: true, slug: true, title: true, startsAt: true, timeZone: true, posterImage: true },
+      select: { id: true, slug: true, title: true, startsAt: true, timeZone: true },
     }) : Promise.resolve([]),
     site.sections.music && profile.type === 'ARTIST' ? db.artistMediaAsset.findMany({
       where: { profileId: profile.id, isPublished: true, OR: [{ publishAt: null }, { publishAt: { lte: now } }] },
       orderBy: { createdAt: 'desc' },
       take: 6,
-      select: { hexId: true, title: true, artworkUrl: true },
+      select: { hexId: true, title: true },
     }) : Promise.resolve([]),
     site.sections.videos ? db.profileVideo.findMany({
       where: { profileId: profile.id, status: 'READY', isPublished: true, muxPlaybackId: { not: null } },
@@ -87,6 +87,7 @@ export default async function ProfileSite({
     }) : Promise.resolve([]),
   ]);
 
+  const about = site.sections.about ? profile.aboutContent || profile.bio : null;
   const tagline = site.tagline || profile.headline;
   const location = [profile.city, profile.stateRegion].filter(Boolean).join(', ');
   const merchUrl = isSafeSiteUrl(profile.merchUrl) ? profile.merchUrl : null;
@@ -95,9 +96,9 @@ export default async function ProfileSite({
     <main className={`ih-site ih-site--${site.theme}`} style={micrositeThemeVars(site.theme) as CSSProperties}>
       <div className="ih-site-inner">
         <nav className="ih-site-nav" aria-label="Website navigation">
-          <Link href="/" className="ih-site-brand">iHYPE<span> / Sites</span></Link>
+          <Link prefetch={false} href="/" className="ih-site-brand">iHYPE<span> / Sites</span></Link>
           <div className="ih-site-nav-links">
-            {site.sections.about && <a href="#about">About</a>}
+            {about && <a href="#about">About</a>}
             {site.sections.shows && shows.length > 0 && <a href="#shows">Shows</a>}
             {site.sections.music && tracks.length > 0 && <a href="#music">Music</a>}
             {site.sections.videos && videos.length > 0 && <a href="#videos">Videos</a>}
@@ -106,7 +107,7 @@ export default async function ProfileSite({
         </nav>
 
         <header className="ih-site-hero">
-          {profile.heroImage && <img className="ih-site-hero-image" src={profile.heroImage} alt="" />}
+          {profile.heroImage && <img className="ih-site-hero-image" src={profile.heroImage} alt="" fetchPriority="high" />}
           <div className="ih-site-hero-shade" />
           <div className="ih-site-hero-text">
             <span className="ih-site-eyebrow">{profile.type === 'VENUE' ? 'Live music venue' : 'Independent artist'}{location ? ` · ${location}` : ''}</span>
@@ -120,21 +121,21 @@ export default async function ProfileSite({
           </div>
         </header>
 
-        {site.sections.about && (profile.aboutContent || profile.bio) && (
+        {about && (
           <section id="about" className="ih-site-section">
-            <span className="ih-site-eyebrow">The story</span>
+
             <h2>About {profile.name}</h2>
-            <p className="ih-site-copy">{profile.aboutContent || profile.bio}</p>
+            <p className="ih-site-copy">{about}</p>
           </section>
         )}
 
         {site.sections.shows && shows.length > 0 && (
           <section id="shows" className="ih-site-section">
-            <span className="ih-site-eyebrow">Catch it live</span>
+
             <h2>Upcoming shows</h2>
             <div className="ih-site-show-list">
               {shows.map(show => (
-                <Link href={`/shows/${show.slug}`} className="ih-site-show" key={show.id}>
+                <Link prefetch={false} href={`/shows/${show.slug}`} className="ih-site-show" key={show.id}>
                   <span className="ih-site-show-date">{formatDoorTime(locale, show.startsAt, show.timeZone, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                   <span>{show.title}</span>
                   <span aria-hidden="true">↗</span>
@@ -146,7 +147,7 @@ export default async function ProfileSite({
 
         {site.sections.music && tracks.length > 0 && (
           <section id="music" className="ih-site-section">
-            <span className="ih-site-eyebrow">From the artist</span>
+
             <h2>Music</h2>
             <div className="ih-site-track-list">
               {tracks.map(track => (
@@ -161,7 +162,7 @@ export default async function ProfileSite({
 
         {site.sections.videos && videos.length > 0 && (
           <section id="videos" className="ih-site-section">
-            <span className="ih-site-eyebrow">Behind the sound</span>
+
             <h2>Videos</h2>
             <div className="ih-site-video-grid">
               {videos.map(video => (
@@ -196,8 +197,8 @@ export default async function ProfileSite({
           </section>
         )}
         <footer className="ih-site-footer">
-          <span>Made with iHYPE · Independent music, together.</span>
-          <Link href="/">Discover iHYPE</Link>
+          <span>Made with iHYPE</span>
+          <Link prefetch={false} href="/">Discover iHYPE</Link>
         </footer>
       </div>
     </main>
