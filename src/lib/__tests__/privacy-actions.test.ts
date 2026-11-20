@@ -28,6 +28,7 @@ vi.mock('@/lib/db', () => {
 
 vi.mock('@/lib/audit', () => ({ recordAuditEvent: vi.fn().mockResolvedValue(undefined) }));
 vi.mock('@/lib/object-storage', () => ({ deleteMediaFile: vi.fn().mockResolvedValue(undefined) }));
+vi.mock('@/lib/delete-hosted-video', () => ({ deleteHostedProfileVideo: vi.fn().mockResolvedValue(undefined) }));
 vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), info: vi.fn(), warn: vi.fn() } }));
 vi.mock('@/lib/stripe', () => ({
   deauthorizeStripeConnectAccount: vi.fn().mockResolvedValue(undefined),
@@ -37,6 +38,7 @@ vi.mock('@/lib/stripe', () => ({
 import { db } from '@/lib/db';
 import { recordAuditEvent } from '@/lib/audit';
 import { deauthorizeStripeConnectAccount, isStripeConfigured } from '@/lib/stripe';
+import { deleteHostedProfileVideo } from '@/lib/delete-hosted-video';
 import {
   executeAccountErasure,
   executeHypeWipe,
@@ -119,6 +121,36 @@ describe('executeHypeWipe', () => {
 });
 
 describe('executeAccountErasure', () => {
+  const storedVideo = {
+    id: 'video-1',
+    muxUploadId: 'mux-upload-1',
+    muxAssetId: 'mux-asset-1',
+    archiveKey: 'video-originals/profile-1/video-1.mp4',
+    archiveUploadId: null,
+  };
+
+  it('removes external hosted videos before revoking credentials', async () => {
+    mockDb.user.findUnique.mockResolvedValueOnce({ id: 'user-video', email: null, role: 'ARTIST' });
+    mockDb.profileVideo.findMany.mockResolvedValueOnce([storedVideo]);
+    mockDb.profileVideo.delete = vi.fn().mockResolvedValue({});
+    await executeAccountErasure('user-video', 'user-video');
+    expect(deleteHostedProfileVideo).toHaveBeenCalledWith(storedVideo);
+    expect(mockDb.profileVideo.delete).toHaveBeenCalledWith({ where: { id: storedVideo.id } });
+    expect(mockDb.session.deleteMany).toHaveBeenCalledWith({ where: { userId: 'user-video' } });
+    const videoCleanupOrder = vi.mocked(deleteHostedProfileVideo).mock.invocationCallOrder[0];
+    const sessionWipeOrder = mockDb.session.deleteMany.mock.invocationCallOrder[0];
+    expect(videoCleanupOrder).toBeLessThan(sessionWipeOrder);
+  });
+
+  it('refuses erasure without completing provider video deletion, allowing retry', async () => {
+    mockDb.user.findUnique.mockResolvedValueOnce({ id: 'user-video', email: null, role: 'ARTIST' });
+    mockDb.profileVideo.findMany.mockResolvedValueOnce([storedVideo]);
+    vi.mocked(deleteHostedProfileVideo).mockRejectedValueOnce(new Error('Mux unavailable'));
+    await expect(executeAccountErasure('user-video', 'user-video')).rejects.toThrow('Mux unavailable');
+    expect(mockDb.session.deleteMany).not.toHaveBeenCalled();
+    expect(mockDb.user.update).not.toHaveBeenCalled();
+  });
+
   it('refuses to erase an ADMIN account', async () => {
     mockDb.user.findUnique.mockResolvedValueOnce({ id: 'a1', email: 'x@y.z', role: 'ADMIN' });
     await expect(executeAccountErasure('a1', 'admin-2')).rejects.toThrow(/ADMIN/);
@@ -169,6 +201,7 @@ describe('executeAccountErasure', () => {
     expect(profileUpdate.data.name).toBe('Deleted account');
     expect(profileUpdate.data.slug).toBe('deleted-abc123');
     expect(profileUpdate.data.pressKitContent).toBeNull();
+    expect(profileUpdate.data).toHaveProperty('siteConfig'); // The public website must be unpublished.
     // Never a profile.delete — shows and payout records must survive.
     expect(mockDb.profile).not.toHaveProperty('delete');
   });
