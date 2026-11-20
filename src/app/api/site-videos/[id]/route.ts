@@ -4,7 +4,7 @@ import { auth } from '@/lib/auth';
 import type { Session } from 'next-auth';
 import { db, withDbRetry } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
-import { isVideoUploadEnabled, muxRequest } from '@/lib/mux-video';
+import { isVideoUploadEnabled, MuxApiError, muxRequest } from '@/lib/mux-video';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { deleteHostedProfileVideo } from '@/lib/delete-hosted-video';
 
@@ -36,8 +36,13 @@ export async function PATCH(
   if (!video) return NextResponse.json({ error: 'Video unavailable.' }, { status: 404 });
   const limiter = await consumeRateLimit(`mux-video-action:${session.user.id}`, { limit: 30, windowMs: 60 * 60 * 1000 });
   if (!limiter.allowed) return NextResponse.json({ error: 'Too many video changes.' }, { status: 429 });
-  if (!video.muxAssetId || video.status !== 'READY') {
+  if (action === 'publish' && (!video.muxAssetId || video.status !== 'READY')) {
     return NextResponse.json({ error: 'Video is still processing or failed.' }, { status: 409 });
+  }
+  if (action === 'unpublish' && !video.muxAssetId && video.muxPlaybackId) {
+    return NextResponse.json({
+      error: 'Video playback needs provider reconciliation before it can be revoked.',
+    }, { status: 409 });
   }
   try {
     if (action === 'publish') {
@@ -49,18 +54,28 @@ export async function PATCH(
         `/assets/${video.muxAssetId}/playback-ids`, 'POST', { policy: 'public' },
       );
       if (!playback.id) throw new Error('No Mux playback ID');
-      const updated = await db.profileVideo.updateMany({
-        where: { id: video.id, isPublished: false, muxPlaybackId: null, status: 'READY' },
-        data: { muxPlaybackId: playback.id, isPublished: true },
-      });
-      // A concurrent publish won the race: revoke the redundant public ID.
-      if (!updated.count) {
-        await muxRequest(`/assets/${video.muxAssetId}/playback-ids/${playback.id}`, 'DELETE');
+      let persisted = false;
+      try {
+        const updated = await db.profileVideo.updateMany({
+          where: { id: video.id, isPublished: false, muxPlaybackId: null, status: 'READY' },
+          data: { muxPlaybackId: playback.id, isPublished: true },
+        });
+        persisted = updated.count > 0;
+      } finally {
+        // Avoid exposing an orphaned PUBLIC playback ID if Prisma errors or
+        // a concurrent publisher already claimed the record.
+        if (!persisted) {
+          await muxRequest(`/assets/${video.muxAssetId}/playback-ids/${playback.id}`, 'DELETE');
+        }
       }
     } else {
       if (video.muxPlaybackId) {
         // Never claim privacy while the old public playback ID still works.
-        await muxRequest(`/assets/${video.muxAssetId}/playback-ids/${video.muxPlaybackId}`, 'DELETE');
+        try {
+          await muxRequest(`/assets/${video.muxAssetId}/playback-ids/${video.muxPlaybackId}`, 'DELETE');
+        } catch (error) {
+          if (!(error instanceof MuxApiError && error.status === 404)) throw error;
+        }
       }
       await db.profileVideo.update({
         where: { id: video.id },
