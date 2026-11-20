@@ -1,5 +1,15 @@
 import { readRuntimeEnv } from '@/lib/runtime-env';
 
+// Initial nonprofit-cost guard. Mux bills by video minutes, not by file size;
+// a 2 GiB file can contain many hours of low-bitrate footage.
+export const MAX_VIDEO_DURATION_SECS = 15 * 60;
+
+export function isWithinPilotVideoDuration(seconds: unknown): seconds is number {
+  return typeof seconds === 'number'
+    && Number.isFinite(seconds) && seconds > 0
+    && seconds <= MAX_VIDEO_DURATION_SECS;
+}
+
 export function isVideoUploadEnabled(): boolean {
   return readRuntimeEnv('FEATURE_ENABLE_VIDEO_UPLOADS') === 'true'
     && Boolean(readRuntimeEnv('MUX_TOKEN_ID') && readRuntimeEnv('MUX_TOKEN_SECRET') && readRuntimeEnv('MUX_WEBHOOK_SECRET'));
