@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { isVideoUploadEnabled, isWithinPilotVideoDuration, MAX_VIDEO_DURATION_SECS, verifyMuxWebhookSignature } from '@/lib/mux-video';
 import { isAllowedMuxDirectUploadUrl } from '@/lib/mux-upload-url';
@@ -27,6 +28,45 @@ describe('Mux video security', () => {
       null,
     ]) {
       expect(isAllowedMuxDirectUploadUrl(url)).toBe(false);
+    }
+  });
+  it('keeps both video rollout flags explicitly disabled in production configuration', () => {
+    const wrangler = readFileSync(new URL('../../../wrangler.toml', import.meta.url), 'utf8');
+    const vars = wrangler.split(/^\\[vars\\]\\s*$/m)[1]?.split(/^\\[/m)[0] ?? '';
+    for (const key of ['FEATURE_ENABLE_VIDEO_UPLOADS', 'FEATURE_ENABLE_R2_VIDEO_ARCHIVE']) {
+      const matches = [...vars.matchAll(new RegExp(`^${key}\\s*=\\s*"([^"]+)"\\s*import { describe, expect, it } from 'vitest';
+import { isVideoUploadEnabled, isWithinPilotVideoDuration, MAX_VIDEO_DURATION_SECS, verifyMuxWebhookSignature } from '@/lib/mux-video';
+import { isAllowedMuxDirectUploadUrl } from '@/lib/mux-upload-url';
+
+describe('Mux video security', () => {
+  it('accepts only the documented HTTPS Mux direct upload hosts', () => {
+    for (const url of [
+      'https://storage.googleapis.com/video-uploads/signed',
+      'https://uploads.mux.com/direct/signed',
+      'https://regional-upload.mux.com/upload?signature=fixture',
+    ]) {
+      expect(isAllowedMuxDirectUploadUrl(url)).toBe(true);
+    }
+  });
+  it('rejects deceptive hosts, credentials in URLs, and non-HTTPS schemes', () => {
+    for (const url of [
+      'https://storage.googleapis.com.attacker.example/file',
+      'https://uploads.mux.com.attacker.example/file',
+      'https://attacker.example/redirect/https://uploads.mux.com',
+      'https://uploads.mux.com@attacker.example/file',
+      'https://attacker.example@uploads.mux.com/file',
+      'https://mux.com/file',
+      'http://uploads.mux.com/file',
+      'javascript:alert(1)',
+      'not-a-url',
+      '',
+      null,
+    ]) {
+      expect(isAllowedMuxDirectUploadUrl(url)).toBe(false);
+    }
+  });
+, 'gm'))];
+      expect(matches.map(match => match[1]), `${key} must be explicitly disabled exactly once`).toEqual(['false']);
     }
   });
   it('is off unless explicitly configured', () => {
