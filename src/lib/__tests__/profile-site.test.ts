@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { formatDoorTime } from '@/lib/format-locale';
 import { DEFAULT_SITE_CONFIG, isPublicSiteEligible, isSafeSiteUrl, readProfileSiteConfig, siteConfigSchema } from '@/lib/profile-site';
 
 describe('artist and venue public sites', () => {
@@ -28,6 +30,20 @@ describe('artist and venue public sites', () => {
       type: 'LISTENER', verificationStatus: 'VERIFIED', discoverable: true,
     })).toBe(false);
   });
+  it('formats upcoming-show calendar dates in venue local time', () => {
+    const instant = new Date('2026-03-15T01:00:00.000Z');
+    const venueDay = formatDoorTime('en', instant, 'America/New_York', {
+      month: 'short', day: 'numeric', year: 'numeric',
+    });
+    const utcDay = formatDoorTime('en', instant, 'UTC', {
+      month: 'short', day: 'numeric', year: 'numeric',
+    });
+    expect(venueDay).toBe('Mar 14, 2026');
+    expect(utcDay).toBe('Mar 15, 2026');
+    const publicSite = readFileSync('src/app/site/[slug]/page.tsx', 'utf8');
+    expect(publicSite).toContain('formatDoorTime(locale, show.startsAt, show.timeZone');
+  });
+
   it('allows only absolute https merchandise links', () => {
     expect(isSafeSiteUrl('https://example.com/merch')).toBe(true);
     expect(isSafeSiteUrl('javascript:alert(1)')).toBe(false);
