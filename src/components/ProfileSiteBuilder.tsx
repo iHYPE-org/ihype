@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useI18n } from '@/components/I18nProvider';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { DEFAULT_SITE_CONFIG, siteThemes, type SiteConfig } from '@/lib/profile-site';
 
@@ -31,6 +32,7 @@ const THEMES: Record<string, { background: string; color: string; accent: string
 };
 
 export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
+  const { t } = useI18n();
   const [site, setSite] = useState<SiteConfig>({ ...DEFAULT_SITE_CONFIG, sections: { ...DEFAULT_SITE_CONFIG.sections } });
   const [profile, setProfile] = useState<OwnerProfile | null>(null);
   const [videos, setVideos] = useState<OwnerVideo[]>([]);
@@ -203,27 +205,27 @@ export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
     finally { setBusy(false); }
   }
 
-  if (loading) return <div className="ih-builder" role="status">Loading your website builder…</div>;
+  if (loading) return <div className="ih-builder" role="status">{t("siteBuilder.loadingYourWebsiteBuilder", "Loading your website builder…")}</div>;
   if (!profile) return <div className="ih-builder" role="alert">{error || 'Artist or venue not found.'}</div>;
 
   return (
-    <section className="ih-builder" aria-label="One-page website and video creator">
+    <section className="ih-builder" aria-label={t("siteBuilder.onepageWebsiteAndVideoCreator", "One-page website and video creator")}>
       <div className="ih-builder-head">
         <div>
           <div className="ih-builder-eyebrow">MY PAGES / SITE CREATOR</div>
           <h1>{profile.name}: Website + Video</h1>
-          <p>Build a free, mobile-friendly one-page website. Everything stays linked to your iHYPE profile.</p>
+          <p>{t("siteBuilder.buildAFreeMobilefriendlyOnepage", "Build a free, mobile-friendly one-page website. Everything stays linked to your iHYPE profile.")}</p>
         </div>
-        <Link href={`/app/me/profiles?profile=${profile.id}`} className="ih-builder-secondary">Back to profiles</Link>
+        <Link href={`/app/me/profiles?profile=${profile.id}`} className="ih-builder-secondary">{t("siteBuilder.backToProfiles", "Back to profiles")}</Link>
       </div>
       {error && <p role="alert" className="ih-builder-alert">{error}</p>}
       {message && <p role="status" className="ih-builder-success">{message}</p>}
       {site.published && publicUrl && (
-        <p className="ih-builder-live">Website live: <a href={publicUrl} rel="noopener noreferrer" target="_blank">{typeof window === 'undefined' ? publicUrl : window.location.origin + publicUrl}</a></p>
+        <p className="ih-builder-live">{t("siteBuilder.websiteLive", "Website live:")}<a href={publicUrl} rel="noopener noreferrer" target="_blank">{typeof window === 'undefined' ? publicUrl : window.location.origin + publicUrl}</a></p>
       )}
       <div className="ih-builder-grid">
         <div className="ih-builder-editor">
-          <div className="ih-builder-step"><span>01</span><h2>Choose your look</h2></div>
+          <div className="ih-builder-step"><span>01</span><h2>{t("siteBuilder.chooseYourLook", "Choose your look")}</h2></div>
           <div className="ih-builder-themes">
             {siteThemes.map(themeId => (
               <button
@@ -235,14 +237,14 @@ export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
             ))}
           </div>
 
-          <div className="ih-builder-step"><span>02</span><h2>Write a short introduction</h2></div>
-          <label className="ih-builder-field" htmlFor="ih-builder-tagline">Headline or tagline</label>
+          <div className="ih-builder-step"><span>02</span><h2>{t("siteBuilder.writeAShortIntroduction", "Write a short introduction")}</h2></div>
+          <label className="ih-builder-field" htmlFor="ih-builder-tagline">{t("siteBuilder.headlineOrTagline", "Headline or tagline")}</label>
           <input id="ih-builder-tagline" maxLength={180} value={site.tagline}
             onChange={e => setSite(current => ({ ...current, tagline: e.target.value }))}
-            placeholder="A new sound for the next generation…" />
-          <small>Leave blank to use your iHYPE profile headline.</small>
+            placeholder={t("siteBuilder.aNewSoundForThe", "A new sound for the next generation…")} />
+          <small>{t("siteBuilder.leaveBlankToUseYour", "Leave blank to use your iHYPE profile headline.")}</small>
 
-          <div className="ih-builder-step"><span>03</span><h2>Choose your sections</h2></div>
+          <div className="ih-builder-step"><span>03</span><h2>{t("siteBuilder.chooseYourSections", "Choose your sections")}</h2></div>
           <div className="ih-builder-section-list">
             {sections.filter(s => !(profile.type === 'VENUE' && s.id === 'music')).map(section => (
               <label key={section.id} className="ih-builder-section">
@@ -252,26 +254,26 @@ export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
               </label>
             ))}
           </div>
-          <p className="ih-builder-note">Photos, music, shows and merchandise reuse your iHYPE profile. Contact details stay hidden unless you explicitly turn them on.</p>
+          <p className="ih-builder-note">{t("siteBuilder.photosMusicShowsAndMerchandise", "Photos, music, shows and merchandise reuse your iHYPE profile. Contact details stay hidden unless you explicitly turn them on.")}</p>
           <div className="ih-builder-save">
-            <button disabled={busy || uploading} type="button" onClick={() => saveSite(false)}>Save draft / Unpublish</button>
+            <button disabled={busy || uploading} type="button" onClick={() => saveSite(false)}>{t("siteBuilder.saveDraftUnpublish", "Save draft / Unpublish")}</button>
             <button disabled={busy || uploading || profile.verificationStatus !== 'VERIFIED'} type="button"
               className="ih-builder-primary" onClick={() => saveSite(true)}>
               {site.published ? 'Save & keep published' : 'Publish website'}
             </button>
           </div>
           {profile.verificationStatus !== 'VERIFIED' && (
-            <p className="ih-builder-note">You can save and customize right now. Ownership verification must be approved before publishing a public website.</p>
+            <p className="ih-builder-note">{t("siteBuilder.youCanSaveAndCustomize", "You can save and customize right now. Ownership verification must be approved before publishing a public website.")}</p>
           )}
         </div>
-        <aside className="ih-builder-preview" aria-label="Live design preview">
-          <div className="ih-builder-step"><span>PREVIEW</span><h2>Your one-page website</h2></div>
+        <aside className="ih-builder-preview" aria-label={t("siteBuilder.liveDesignPreview", "Live design preview")}>
+          <div className="ih-builder-step"><span>PREVIEW</span><h2>{t("siteBuilder.yourOnepageWebsite", "Your one-page website")}</h2></div>
           <div className="ih-builder-preview-page" style={{ background: theme.background, color: theme.color }}>
             <div className="ih-builder-preview-hero" style={profile.heroImage ? { backgroundImage: `linear-gradient(0deg,#000b,#0007),url("${profile.heroImage}")` } : {}}>
               <strong className="ih-builder-preview-brand">iHYPE / {profile.type === 'ARTIST' ? 'Artist' : 'Venue'}</strong>
               <h3>{profile.name}</h3>
               <p>{site.tagline || profile.headline || 'Your music. Your story. Your stage.'}</p>
-              <span className="ih-builder-preview-cta" style={{ background: theme.accent }}>Explore</span>
+              <span className="ih-builder-preview-cta" style={{ background: theme.accent }}>{t("siteBuilder.explore", "Explore")}</span>
             </div>
             {sections.filter(s => site.sections[s.id] && !(profile.type === 'VENUE' && s.id === 'music')).map(s => (
               <div className="ih-builder-preview-section" key={s.id}>
@@ -279,52 +281,52 @@ export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
                 <small>{s.id === 'about' ? (profile.bio || 'Your story and biography from iHYPE.') : s.help}</small>
               </div>
             ))}
-            <div className="ih-builder-preview-foot">Made with iHYPE</div>
+            <div className="ih-builder-preview-foot">{t("siteBuilder.madeWithIHYPE", "Made with iHYPE")}</div>
           </div>
-          <small>Preview updates immediately. Press Save to keep changes.</small>
-          {site.published && <a href={publicUrl} className="ih-builder-secondary" target="_blank" rel="noopener noreferrer">Open published website ↗</a>}
+          <small>{t("siteBuilder.previewUpdatesImmediatelyPressSave", "Preview updates immediately. Press Save to keep changes.")}</small>
+          {site.published && <a href={publicUrl} className="ih-builder-secondary" target="_blank" rel="noopener noreferrer">{t("siteBuilder.openPublishedWebsite", "Open published website ↗")}</a>}
         </aside>
       </div>
 
       <div className="ih-builder-video">
-        <div className="ih-builder-step"><span>04</span><h2>Upload and publish videos</h2></div>
-        <p>Upload 1080p or true 4K directly to Mux. Viewers get adaptive playback; the optional original archive stays private in Cloudflare R2.</p>
+        <div className="ih-builder-step"><span>04</span><h2>{t("siteBuilder.uploadAndPublishVideos", "Upload and publish videos")}</h2></div>
+        <p>{t("siteBuilder.upload1080pOrTrue4K", "Upload 1080p or true 4K directly to Mux. Viewers get adaptive playback; the optional original archive stays private in Cloudflare R2.")}</p>
         {!enabled ? (
-          <p className="ih-builder-note" role="status">Video uploads will be available once iHYPE configures its Mux API token, webhook and spending caps. Your website builder is available now.</p>
+          <p className="ih-builder-note" role="status">{t("siteBuilder.videoUploadsWillBeAvailable", "Video uploads will be available once iHYPE configures its Mux API token, webhook and spending caps. Your website builder is available now.")}</p>
         ) : (
           <div className="ih-builder-upload-form">
-            <label className="ih-builder-field" htmlFor="ih-video-file">Video file (maximum 2 GiB during beta)</label>
+            <label className="ih-builder-field" htmlFor="ih-video-file">{t("siteBuilder.videoFileMaximum2GiB", "Video file (maximum 2 GiB during beta)")}</label>
             <input id="ih-video-file" type="file" accept="video/*" ref={fileRef} disabled={uploading}
               onChange={e => setSelectedFile(e.target.files?.[0] || null)} />
-            <label className="ih-builder-field" htmlFor="ih-video-quality">Maximum playback quality</label>
+            <label className="ih-builder-field" htmlFor="ih-video-quality">{t("siteBuilder.maximumPlaybackQuality", "Maximum playback quality")}</label>
             <select id="ih-video-quality" value={quality} disabled={uploading}
               onChange={e => setQuality(e.target.value as '1080p' | '2160p')}>
-              <option value="1080p">1080p (recommended, lower storage costs)</option>
-              <option value="2160p">4K / 2160p (higher storage and delivery costs)</option>
+              <option value="1080p">{t("siteBuilder.1080pRecommendedLowerStorageCosts", "1080p (recommended, lower storage costs)")}</option>
+              <option value="2160p">{t("siteBuilder.4K2160pHigherStorageAnd", "4K / 2160p (higher storage and delivery costs)")}</option>
             </select>
             {archiveEnabled && (
               <label className="ih-builder-section">
                 <input type="checkbox" checked={archiveOriginal} disabled={uploading}
                   onChange={e => setArchiveOriginal(e.target.checked)} />
-                <span><strong>Save a private copy to Cloudflare R2</strong>
-                  <small>Optional archival doubles upload traffic and adds storage costs. Never publicly served.</small></span>
+                <span><strong>{t("siteBuilder.saveAPrivateCopyTo", "Save a private copy to Cloudflare R2")}</strong>
+                  <small>{t("siteBuilder.optionalArchivalDoublesUploadTraffic", "Optional archival doubles upload traffic and adds storage costs. Never publicly served.")}</small></span>
               </label>
             )}
             <label className="ih-builder-section">
               <input type="checkbox" checked={rightsConfirmed} disabled={uploading}
                 onChange={e => setRightsConfirmed(e.target.checked)} />
-              <span><strong>I have the rights and permission to upload this video</strong>
-                <small>Only upload content you own or are licensed to use; publish after review.</small></span>
+              <span><strong>{t("siteBuilder.iHaveTheRightsAnd", "I have the rights and permission to upload this video")}</strong>
+                <small>{t("siteBuilder.onlyUploadContentYouOwn", "Only upload content you own or are licensed to use; publish after review.")}</small></span>
             </label>
             <button type="button" className="ih-builder-primary" disabled={!selectedFile || !rightsConfirmed || uploading || busy}
               onClick={uploadVideo}>{uploading ? `Uploading… ${progress}%` : 'Upload video'}</button>
-            {uploading && <progress value={progress} max={100} aria-label="Video upload progress" />}
+            {uploading && <progress value={progress} max={100} aria-label={t("siteBuilder.videoUploadProgress", "Video upload progress")} />}
           </div>
         )}
 
-        <div className="ih-builder-step"><span>LIBRARY</span><h3>Your videos</h3></div>
-        <button type="button" className="ih-builder-secondary" onClick={() => loadVideos().catch(e => setError(String(e)))} disabled={uploading || busy}>Refresh processing status</button>
-        {videos.length === 0 ? <p>No videos yet. Published videos appear automatically on your one-page site.</p> : (
+        <div className="ih-builder-step"><span>LIBRARY</span><h3>{t("siteBuilder.yourVideos", "Your videos")}</h3></div>
+        <button type="button" className="ih-builder-secondary" onClick={() => loadVideos().catch(e => setError(String(e)))} disabled={uploading || busy}>{t("siteBuilder.refreshProcessingStatus", "Refresh processing status")}</button>
+        {videos.length === 0 ? <p>{t("siteBuilder.noVideosYetPublishedVideos", "No videos yet. Published videos appear automatically on your one-page site.")}</p> : (
           <div className="ih-builder-video-list">
             {videos.map(video => (
               <div className="ih-builder-video-row" key={video.id}>
@@ -339,9 +341,9 @@ export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
                       {video.isPublished ? 'Unpublish' : 'Publish'}
                     </button>
                   )}
-                  {video.archiveKey && !video.archiveUploadId && <a href={`/api/site-videos/archive?videoId=${video.id}`}>Get original</a>}
-                  {video.archiveUploadId && <button type="button" disabled={busy} onClick={() => discardArchive(video)}>Discard unfinished archive</button>}
-                  <button type="button" disabled={busy} onClick={() => videoAction(video, 'delete')}>Delete</button>
+                  {video.archiveKey && !video.archiveUploadId && <a href={`/api/site-videos/archive?videoId=${video.id}`}>{t("siteBuilder.getOriginal", "Get original")}</a>}
+                  {video.archiveUploadId && <button type="button" disabled={busy} onClick={() => discardArchive(video)}>{t("siteBuilder.discardUnfinishedArchive", "Discard unfinished archive")}</button>}
+                  <button type="button" disabled={busy} onClick={() => videoAction(video, 'delete')}>{t("siteBuilder.delete", "Delete")}</button>
                 </div>
               </div>
             ))}
