@@ -10,9 +10,10 @@ type ShareButtonProps = {
   label?: string;
   /** Referral code to attach as ?ref=. If omitted, fetched lazily from /api/referral on share. */
   refCode?: string;
+  includeReferral?: boolean;
 };
 
-export function ShareButton({ path, title, className, label, refCode }: ShareButtonProps) {
+export function ShareButton({ path, title, className, label, refCode, includeReferral = true }: ShareButtonProps) {
   const { t } = useI18n();
   const [status, setStatus] = useState<'idle' | 'done'>('idle');
   const resolvedLabel = label ?? t('shareButton.defaultLabel', 'Share');
@@ -21,7 +22,7 @@ export function ShareButton({ path, title, className, label, refCode }: ShareBut
     const url = new URL(path, window.location.origin);
 
     let code = refCode;
-    if (!code) {
+    if (!code && includeReferral) {
       try {
         const res = await fetch('/api/referral');
         if (res.ok) {
