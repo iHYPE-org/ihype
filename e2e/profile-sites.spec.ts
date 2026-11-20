@@ -76,7 +76,7 @@ test.describe('One-page site navigation and privacy', () => {
     await expect(page.getByLabel('Headline or tagline')).toHaveValue('A new sound. Every night.');
 
     await page.getByRole('button', { name: /Publish website/i }).click();
-    await expect(page.locator('a[href="' + '/site/' + artist.slug + '"]')).toBeVisible();
+    await expect(page.locator(`.ih-builder-live a[href="/site/${artist.slug}"]:visible`)).toBeVisible();
     await page.goto(`/site/${artist.slug}`);
     await expect(page.locator('.ih-site h1:visible')).toHaveText(artist.name);
     await expect(page.locator('.ih-site')).toContainText('A new sound. Every night.');
@@ -121,8 +121,12 @@ test.describe('One-page site navigation and privacy', () => {
       expect(visitorRead.status()).toBe(403);
       const visitorVideos = await visitorContext.request.get(`/api/site-videos?profileId=${venue.id}`);
       expect(visitorVideos.status()).toBe(404);
-      const visitorEditor = await visitorContext.request.get(`/app/me/sites/${venue.id}`);
-      expect([403, 404]).toContain(visitorEditor.status());
+      // Next.js may stream a not-found page with a 200 HTTP status. The
+      // security assertion must inspect the rendered surface, not status alone.
+      const visitorPage = await visitorContext.newPage();
+      await visitorPage.goto(`/app/me/sites/${venue.id}`);
+      await expect(visitorPage.locator('.ih-builder-editor')).toHaveCount(0);
+      await visitorPage.close();
       const visitorWrite = await visitorContext.request.patch('/api/site-builder', {
         data: {
           profileId: venue.id,
@@ -133,8 +137,10 @@ test.describe('One-page site navigation and privacy', () => {
         },
       });
       expect(visitorWrite.status()).toBe(403);
-      const publicPage = await venueContext.request.get(`/site/${venue.slug}`);
-      expect(publicPage.status()).toBeGreaterThanOrEqual(400);
+      const unverifiedPublicPage = await venueContext.newPage();
+      await unverifiedPublicPage.goto(`/site/${venue.slug}`);
+      await expect(unverifiedPublicPage.locator('.ih-site')).toHaveCount(0);
+      await unverifiedPublicPage.close();
     } finally {
       await venueContext.close();
       await visitorContext.close();
