@@ -39,13 +39,17 @@ import { canManageOwnedResource } from '@/lib/permissions';
 import { db } from '@/lib/db';
 import { isVideoUploadEnabled, muxRequest } from '@/lib/mux-video';
 import { deleteHostedProfileVideo } from '@/lib/delete-hosted-video';
+import { DEFAULT_SITE_CONFIG } from '@/lib/profile-site';
 
 const findVideo = db.profileVideo.findUnique as unknown as ReturnType<typeof vi.fn>;
 const originalVideo = {
   id: 'video-1', muxUploadId: 'upload-1', muxAssetId: 'asset-1',
   muxPlaybackId: 'playback-1', status: 'READY', isPublished: true,
   archiveKey: null, archiveUploadId: null,
-  profile: { ownerId: 'owner-1', type: 'ARTIST', verificationStatus: 'VERIFIED' },
+  profile: {
+    ownerId: 'owner-1', type: 'ARTIST', verificationStatus: 'VERIFIED',
+    discoverable: true, siteConfig: { ...DEFAULT_SITE_CONFIG, published: true },
+  },
 };
 const params = { params: Promise.resolve({ id: 'video-1' }) };
 
@@ -109,6 +113,29 @@ describe('video emergency disable switch', () => {
     expect(muxRequest).toHaveBeenCalledWith(
       '/assets/asset-1/playback-ids/playback-1', 'DELETE',
     );
+  });
+
+  it('refuses to create public playback IDs on hidden or unpublished websites', async () => {
+    vi.mocked(isVideoUploadEnabled).mockReturnValue(true);
+    findVideo.mockResolvedValueOnce({
+      ...originalVideo, isPublished: false, muxPlaybackId: null,
+      profile: { ...originalVideo.profile, siteConfig: DEFAULT_SITE_CONFIG },
+    });
+    const unpublished = await PATCH(new Request('https://ihype.org/api/site-videos/video-1', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'publish' }),
+    }), params);
+    expect(unpublished.status).toBe(403);
+    findVideo.mockResolvedValueOnce({
+      ...originalVideo, isPublished: false, muxPlaybackId: null,
+      profile: { ...originalVideo.profile, discoverable: false },
+    });
+    const hidden = await PATCH(new Request('https://ihype.org/api/site-videos/video-1', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'publish' }),
+    }), params);
+    expect(hidden.status).toBe(403);
+    expect(muxRequest).not.toHaveBeenCalled();
   });
 
   it('revokes a newly issued public ID if persisting publication fails', async () => {
