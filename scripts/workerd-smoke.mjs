@@ -39,6 +39,8 @@ const AUTH_SECRET =
 const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET || AUTH_SECRET;
 const RESEND_WEBHOOK_KEY = Buffer.from('ihype-workerd-resend-smoke-key-32b');
 const RESEND_WEBHOOK_SECRET = `whsec_${RESEND_WEBHOOK_KEY.toString('base64')}`;
+// CI-only signing secret for Mux HMAC runtime tests; never a live credential.
+const MUX_SMOKE_WEBHOOK_SECRET = 'ci-only-mux-workerd-webhook-secret';
 const BOOT_TIMEOUT_MS = 120_000;
 const SHUTDOWN_TIMEOUT_MS = 5_000;
 const TMP_CONFIG = '.wrangler-workerd-smoke.toml';
@@ -109,6 +111,7 @@ function writeStrippedConfig() {
     AUTH_SECRET,
     NEXTAUTH_SECRET,
     RESEND_WEBHOOK_SECRET,
+    MUX_WEBHOOK_SECRET: MUX_SMOKE_WEBHOOK_SECRET,
   })) {
     varsSection = upsertTomlVariable(varsSection, name, value);
   }
@@ -546,6 +549,160 @@ async function run() {
       embedCsp.includes('frame-ancestors *') && !embed.headers.has('x-frame-options'),
       `status=${embed.status} csp=${embedCsp}`,
     );
+
+    // 12b. Actual Workerd + real scratch Postgres contract for the new
+    // artist/venue site builder. Verify routing with real Auth.js cookies and
+    // isolation of the owner, outsider, anonymous viewer and public page.
+    const anonymousBuilder = await probe(`/app/me/sites/${FIXTURE.profileId}`);
+    check(
+      'artist site editor redirects anonymous visitors to login',
+      [302, 303, 307, 308].includes(anonymousBuilder.status)
+        && (anonymousBuilder.headers.get('location') ?? '').includes('/login'),
+      `status=${anonymousBuilder.status} location=${anonymousBuilder.headers.get('location')}`,
+    );
+    const ownerBuilder = await probe(`/app/me/sites/${FIXTURE.profileId}`, {
+      headers: { cookie: creatorCookie },
+    });
+    check(
+      'verified session can navigate to its own artist site editor',
+      ownerBuilder.status === 200,
+      `status=${ownerBuilder.status} body=${ownerBuilder.text.slice(0, 100)}`,
+    );
+    const editorCsp = ownerBuilder.headers.get('content-security-policy') ?? '';
+    check(
+      'site editor CSP allows signed direct Mux transfer to GCS only in owner editor',
+      editorCsp.includes('connect-src')
+        && editorCsp.includes('https://storage.googleapis.com')
+        && !editorCsp.includes('frame-src https://player.mux.com'),
+      `status=${ownerBuilder.status} CSP scoped=${editorCsp.includes('https://storage.googleapis.com')}`,
+    );
+    const otherBuilder = await probe(`/app/me/sites/${FIXTURE.profileId}`, {
+      headers: { cookie: outsiderCookie },
+    });
+    check(
+      'a fan cannot navigate to another profile owner\'s builder',
+      otherBuilder.status === 404,
+      `status=${otherBuilder.status}`,
+    );
+    const anonymousSiteSettings = await probe(`/api/site-builder?profileId=${FIXTURE.profileId}`);
+    check('website settings API rejects anonymous users', anonymousSiteSettings.status === 401,
+      `status=${anonymousSiteSettings.status}`);
+    const otherSiteSettings = await probe(`/api/site-builder?profileId=${FIXTURE.profileId}`, {
+      headers: { cookie: outsiderCookie },
+    });
+    check('website settings API rejects other owners', otherSiteSettings.status === 403,
+      `status=${otherSiteSettings.status}`);
+    const ownSiteSettings = await probe(`/api/site-builder?profileId=${FIXTURE.profileId}`, {
+      headers: { cookie: creatorCookie },
+    });
+    const siteSettings = parseJson(ownSiteSettings.text);
+    check(
+      'unverified artists can open unpublished drafts without exposing contact',
+      ownSiteSettings.status === 200
+        && siteSettings?.site?.published === false
+        && siteSettings?.site?.sections?.contact === false,
+      `status=${ownSiteSettings.status} published=${siteSettings?.site?.published}`,
+    );
+    const draftSite = {
+      published: false, theme: 'spotlight', tagline: 'Smoke-only website draft',
+      sections: { about: true, shows: true, music: true, videos: true, merch: false, contact: false },
+    };
+    const draftSave = await probe('/api/site-builder', {
+      method: 'PATCH', headers: { cookie: creatorCookie, 'content-type': 'application/json' },
+      body: JSON.stringify({ profileId: FIXTURE.profileId, site: draftSite }),
+    });
+    check(
+      'unverified artist can save a draft through the real Worker and database',
+      draftSave.status === 200 && parseJson(draftSave.text)?.site?.published === false,
+      `status=${draftSave.status} body=${draftSave.text.slice(0, 150)}`,
+    );
+    const publishSite = await probe('/api/site-builder', {
+      method: 'PATCH', headers: { cookie: creatorCookie, 'content-type': 'application/json' },
+      body: JSON.stringify({ profileId: FIXTURE.profileId, site: { ...draftSite, published: true } }),
+    });
+    check('unverified artist cannot publish a public website', publishSite.status === 403,
+      `status=${publishSite.status}`);
+    const unpublishedPage = await probe('/site/smoke-artist');
+    const publicCsp = unpublishedPage.headers.get('content-security-policy') ?? '';
+    check('unpublished artist microsite is not publicly navigable', unpublishedPage.status === 404,
+      `status=${unpublishedPage.status}`);
+    check(
+      'Mux iframe CSP applies only to public microsite routes',
+      publicCsp.includes('https://player.mux.com') && !editorCsp.includes('https://player.mux.com'),
+      `public frame allowed=${publicCsp.includes('https://player.mux.com')}`,
+    );
+
+    // 12c. Feature disabled means no paid provider requests, but existing
+    // owner library access and private R2 isolation must remain functional.
+    const anonymousVideos = await probe(`/api/site-videos?profileId=${FIXTURE.profileId}`);
+    check('video library refuses anonymous requests', anonymousVideos.status === 401,
+      `status=${anonymousVideos.status}`);
+    const otherVideos = await probe(`/api/site-videos?profileId=${FIXTURE.profileId}`, {
+      headers: { cookie: outsiderCookie },
+    });
+    check('video library refuses another profile owner', otherVideos.status === 404,
+      `status=${otherVideos.status}`);
+    const ownVideos = await probe(`/api/site-videos?profileId=${FIXTURE.profileId}`, {
+      headers: { cookie: creatorCookie },
+    });
+    const library = parseJson(ownVideos.text);
+    check(
+      'owner can view video library while new Mux uploads remain disabled',
+      ownVideos.status === 200 && library?.enabled === false
+        && library?.archiveEnabled === false && Array.isArray(library?.videos),
+      `status=${ownVideos.status} enabled=${library?.enabled}`,
+    );
+    const uploadBlocked = await probe('/api/site-videos', {
+      method: 'POST', headers: { cookie: creatorCookie, 'content-type': 'application/json' },
+      body: JSON.stringify({
+        profileId: FIXTURE.profileId, title: 'Smoke Video', quality: '1080p',
+        fileSizeBytes: 512, rightsConfirmed: true,
+      }),
+    });
+    check('video upload kill switch prevents billable Mux direct uploads',
+      uploadBlocked.status === 503, `status=${uploadBlocked.status}`);
+    const privateOriginal = await probe('/cdn/video-originals/workerd-smoke/private.mp4');
+    check('private R2 video originals cannot be read through public CDN',
+      privateOriginal.status === 404, `status=${privateOriginal.status}`);
+
+    // 12d. Real Web Crypto in Workerd, with a CI-only synthetic signing key.
+    // Unknown asset IDs are acknowledged without publishing anything or
+    // connecting to Mux, proving the external webhook boundary works safely.
+    const muxTime = String(Math.floor(Date.now() / 1000));
+    const muxBody = JSON.stringify({
+      type: 'video.asset.ready',
+      data: { id: 'nonexistent-smoke-mux-asset', duration: 7 },
+    });
+    const muxSig = createHmac('sha256', MUX_SMOKE_WEBHOOK_SECRET)
+      .update(`${muxTime}.${muxBody}`).digest('hex');
+    const signedHeaders = {
+      'content-type': 'application/json',
+      'mux-signature': `t=${muxTime},v1=${muxSig}`,
+    };
+    const webhookOK = await probe('/api/webhooks/mux', {
+      method: 'POST', headers: signedHeaders, body: muxBody,
+    });
+    check(
+      'Mux webhook verifies CI-signed HMAC on actual Cloudflare Worker',
+      webhookOK.status === 200 && parseJson(webhookOK.text)?.received === true,
+      `status=${webhookOK.status}`,
+    );
+    const webhookTampered = await probe('/api/webhooks/mux', {
+      method: 'POST', headers: signedHeaders, body: muxBody + ' ',
+    });
+    check('Mux webhook refuses tampered signed payload',
+      webhookTampered.status === 401, `status=${webhookTampered.status}`);
+    const staleTime = String(Number(muxTime) - 600);
+    const staleSig = createHmac('sha256', MUX_SMOKE_WEBHOOK_SECRET)
+      .update(`${staleTime}.${muxBody}`).digest('hex');
+    const webhookOld = await probe('/api/webhooks/mux', {
+      method: 'POST',
+      headers: { ...signedHeaders, 'mux-signature': `t=${staleTime},v1=${staleSig}` },
+      body: muxBody,
+    });
+    check('Mux webhook rejects stale signed payloads',
+      webhookOld.status === 401, `status=${webhookOld.status}`);
+
     } else {
       console.log('[workerd-smoke] mode=performance — skipping security checks');
     }
