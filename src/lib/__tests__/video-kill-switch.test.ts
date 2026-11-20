@@ -159,6 +159,33 @@ describe('video emergency disable switch', () => {
     );
   });
 
+  it('revokes Mux public ID when a simultaneous website-unpublish wins the database claim', async () => {
+    vi.mocked(isVideoUploadEnabled).mockReturnValueOnce(true);
+    findVideo.mockResolvedValueOnce({
+      ...originalVideo, isPublished: false, muxPlaybackId: null,
+    });
+    const provider = muxRequest as unknown as ReturnType<typeof vi.fn>;
+    provider.mockResolvedValueOnce({ id: 'race-public-id' }).mockResolvedValueOnce({});
+    vi.mocked(db.profileVideo.updateMany).mockResolvedValueOnce({ count: 0 });
+    const response = await PATCH(new Request('https://ihype.org/api/site-videos/video-1', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'publish' }),
+    }), params);
+    expect(response.status).toBe(502);
+    expect(db.profileVideo.updateMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({
+        profile: { is: {
+          discoverable: true,
+          verificationStatus: 'VERIFIED',
+          siteConfig: { path: ['published'], equals: true },
+        } },
+      }),
+    }));
+    expect(provider).toHaveBeenNthCalledWith(
+      2, '/assets/asset-1/playback-ids/race-public-id', 'DELETE',
+    );
+  });
+
   it('still removes video from external providers and database after disabling uploads', async () => {
     const response = await DELETE(
       new Request('https://ihype.org/api/site-videos/video-1', { method: 'DELETE' }), params,
