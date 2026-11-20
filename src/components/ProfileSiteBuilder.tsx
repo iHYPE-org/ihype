@@ -116,12 +116,14 @@ export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ profileId, site: { ...site, published } }),
       });
-      const json = await response.json() as { error?: string };
+      const json = await response.json() as { error?: string; warning?: string };
       if (!response.ok) throw new Error(json.error || 'Could not save website.');
       setSite(current => ({ ...current, published }));
       setMessage(published
         ? 'Website published! The public link is ready to share.'
         : 'Draft saved. Your website is not publicly visible.');
+      if (json.warning) setError(json.warning);
+      if (!published) await loadVideos();
     } catch (err) { setError(err instanceof Error ? err.message : 'Could not save website.'); }
     finally { setBusy(false); }
   }
@@ -424,6 +426,11 @@ export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
           </div>
         )}
 
+        {enabled && !site.published && (
+          <p className="ih-builder-note" role="status">
+            Publish your website before making any video publicly playable. Uploading and reviewing private videos is still available.
+          </p>
+        )}
         <div className="ih-builder-step"><span>LIBRARY</span><h3>{t("siteBuilder.yourVideos", "Your videos")}</h3></div>
         <button type="button" className="ih-builder-secondary" onClick={() => loadVideos().catch(e => setError(String(e)))} disabled={uploading || busy}>{t("siteBuilder.refreshProcessingStatus", "Refresh processing status")}</button>
         {videos.length === 0 ? <p>{t("siteBuilder.noVideosYetPublishedVideos", "No videos yet. Published videos appear automatically on your one-page site.")}</p> : (
@@ -435,11 +442,16 @@ export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
                   <small>{video.quality === '2160p' ? '4K' : '1080p'} · {video.status.toLowerCase()} · {video.isPublished ? 'Public' : 'Private'}{video.archiveKey ? (video.archiveUploadId ? ' · R2 archive pending' : ' · R2 original') : ''}</small>
                 </div>
                 <div className="ih-builder-video-actions">
-                  {video.status === 'READY' && (
-                    <button type="button" disabled={busy || profile.verificationStatus !== 'VERIFIED'}
-                      onClick={() => videoAction(video, video.isPublished ? 'unpublish' : 'publish')}>
-                      {video.isPublished ? 'Unpublish' : 'Publish'}
-                    </button>
+                  {(video.isPublished || video.muxPlaybackId) ? (
+                    // Keep the emergency revoke control visible even after a
+                    // Mux processing error or when new uploads are disabled.
+                    <button type="button" disabled={busy || uploading}
+                      onClick={() => videoAction(video, 'unpublish')}>Unpublish</button>
+                  ) : video.status === 'READY' && (
+                    <button type="button"
+                      disabled={busy || uploading || !enabled || !site.published
+                        || profile.verificationStatus !== 'VERIFIED' || !profile.discoverable}
+                      onClick={() => videoAction(video, 'publish')}>Publish</button>
                   )}
                   {video.archiveKey && !video.archiveUploadId && <a href={`/api/site-videos/archive?videoId=${video.id}`}>{t("siteBuilder.getOriginal", "Get original")}</a>}
                   {video.archiveUploadId && <button type="button" disabled={busy} onClick={() => discardArchive(video)}>{t("siteBuilder.discardUnfinishedArchive", "Discard unfinished archive")}</button>}
