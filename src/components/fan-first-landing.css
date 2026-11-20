@@ -1,0 +1,73 @@
+.fan-entry .fan-entry-subnav ul,
+.fan-entry .fan-entry-section {
+  max-width: 1600px;
+  box-sizing: border-box;
+  margin: 0 auto;
+  padding-inline: clamp(18px, 6vw, 100px);
+}
+
+.fan-entry .fan-entry-subnav {
+  border-bottom: 1px solid var(--hair-100);
+}
+
+.fan-entry .fan-entry-subnav ul {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: clamp(12px, 3vw, 32px);
+  list-style: none;
+}
+
+.fan-entry .fan-entry-subnav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--ink);
+  text-underline-offset: 4px;
+}
+
+.fan-entry .fan-entry-subnav a:focus-visible,
+.fan-entry .fan-entry-subnav a:hover {
+  color: var(--fan-entry-orange-text);
+}
+
+.fan-entry #mission {
+  min-height: 0;
+}
+
+.fan-entry #mission h1 {
+  max-width: 17ch;
+  line-height: 1;
+}
+
+.fan-entry .fan-entry-mission-actions {
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+
+.fan-entry .fan-entry-section {
+  padding-block: clamp(24px, 5vw, 56px);
+  border-top: 1px solid var(--hair-100);
+  scroll-margin-top: 16px;
+}
+
+.fan-entry .fan-entry-section h2 {
+  margin: 0 0 12px;
+  font: 800 clamp(1.55rem, 4vw, 2.65rem)/1.12 var(--f-d);
+}
+
+.fan-entry .fan-entry-section > p {
+  max-width: 64ch;
+  color: var(--ink-a72);
+  line-height: 1.6;
+}
+
+.fan-entry .fan-entry-section .fan-entry-stats,
+.fan-entry .fan-entry-section .fan-entry-steps,
+.fan-entry .fan-entry-section .nearby-shows {
+  padding-inline: 0;
+  margin-inline: 0;
+}
+
+.fan-entry .fan-entry-section .fan-entry-nav {
+  flex-wrap: wrap;
+}
