@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import type { CSSProperties } from 'react';
 import { micrositeThemeVars } from '@/lib/profile-design';
 import { getLocale } from '@/lib/i18n/server';
+import { formatDoorTime } from '@/lib/format-locale';
 import { notFound } from 'next/navigation';
 import { db } from '@/lib/db';
 import { readProfileSiteConfig, isSafeSiteUrl, isPublicSiteEligible } from '@/lib/profile-site';
@@ -70,7 +71,7 @@ export default async function ProfileSite({
       },
       orderBy: { startsAt: 'asc' },
       take: 8,
-      select: { id: true, slug: true, title: true, startsAt: true, posterImage: true },
+      select: { id: true, slug: true, title: true, startsAt: true, timeZone: true, posterImage: true },
     }) : Promise.resolve([]),
     site.sections.music && profile.type === 'ARTIST' ? db.artistMediaAsset.findMany({
       where: { profileId: profile.id, isPublished: true, OR: [{ publishAt: null }, { publishAt: { lte: now } }] },
@@ -134,7 +135,7 @@ export default async function ProfileSite({
             <div className="ih-site-show-list">
               {shows.map(show => (
                 <Link href={`/shows/${show.slug}`} className="ih-site-show" key={show.id}>
-                  <span className="ih-site-show-date">{new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' }).format(show.startsAt)}</span>
+                  <span className="ih-site-show-date">{formatDoorTime(locale, show.startsAt, show.timeZone, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                   <span>{show.title}</span>
                   <span aria-hidden="true">↗</span>
                 </Link>
