@@ -10,7 +10,7 @@ type OwnerProfile = {
 };
 type OwnerVideo = {
   id: string; title: string; quality: string; status: string; isPublished: boolean;
-  durationSecs: number | null; muxPlaybackId: string | null; archiveKey: string | null;
+  durationSecs: number | null; muxPlaybackId: string | null; archiveKey: string | null; archiveUploadId: string | null;
 };
 type SitePayload = { profile: OwnerProfile; site: SiteConfig };
 type VideoPayload = { videos: OwnerVideo[]; enabled: boolean; archiveEnabled: boolean };
@@ -172,6 +172,21 @@ export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
     } finally { setUploading(false); }
   }
 
+  async function discardArchive(video: OwnerVideo) {
+    setBusy(true); setError(''); setMessage('');
+    try {
+      const response = await fetch('/api/site-videos/archive', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'abort', videoId: video.id }),
+      });
+      const json = await response.json() as { error?: string };
+      if (!response.ok) throw new Error(json.error || 'Could not discard incomplete archive.');
+      setMessage('Incomplete R2 copy discarded.');
+      await loadVideos();
+    } catch (err) { setError(err instanceof Error ? err.message : 'Could not discard archive.'); }
+    finally { setBusy(false); }
+  }
+
   async function videoAction(video: OwnerVideo, action: 'publish' | 'unpublish' | 'delete') {
     if (action === 'delete' && !window.confirm('Delete this video from Mux and its optional R2 original?')) return;
     setBusy(true); setError(''); setMessage('');
@@ -315,7 +330,7 @@ export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
               <div className="ih-builder-video-row" key={video.id}>
                 <div>
                   <strong>{video.title}</strong>
-                  <small>{video.quality === '2160p' ? '4K' : '1080p'} · {video.status.toLowerCase()} · {video.isPublished ? 'Public' : 'Private'}{video.archiveKey ? ' · R2 original' : ''}</small>
+                  <small>{video.quality === '2160p' ? '4K' : '1080p'} · {video.status.toLowerCase()} · {video.isPublished ? 'Public' : 'Private'}{video.archiveKey ? (video.archiveUploadId ? ' · R2 archive pending' : ' · R2 original') : ''}</small>
                 </div>
                 <div className="ih-builder-video-actions">
                   {video.status === 'READY' && (
@@ -324,7 +339,8 @@ export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
                       {video.isPublished ? 'Unpublish' : 'Publish'}
                     </button>
                   )}
-                  {video.archiveKey && <a href={`/api/site-videos/archive?videoId=${video.id}`}>Get original</a>}
+                  {video.archiveKey && !video.archiveUploadId && <a href={`/api/site-videos/archive?videoId=${video.id}`}>Get original</a>}
+                  {video.archiveUploadId && <button type="button" disabled={busy} onClick={() => discardArchive(video)}>Discard unfinished archive</button>}
                   <button type="button" disabled={busy} onClick={() => videoAction(video, 'delete')}>Delete</button>
                 </div>
               </div>
