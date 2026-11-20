@@ -100,6 +100,9 @@ const DEFAULT_TEST_SHARDS = [
   // workerd per shard keeps it clear of the per-request PrismaClient memory
   // growth that long shards accumulate.
   ['e2e/creation-flows.spec.ts'],
+  // The new artist and venue website builder must be reachable, owner-only,
+  // mobile-safe and publish only with the explicit privacy gates.
+  ['e2e/profile-sites.spec.ts'],
   // Alpha list step 5: playlist rename/two-tap delete and the ownership
   // boundary. Destructive paths, so they get their own shard and their own
   // fresh database rows per test address.
