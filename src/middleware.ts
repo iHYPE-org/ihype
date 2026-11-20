@@ -81,6 +81,12 @@ function applySecurityHeaders(response: NextResponse, nonce: string, pathname: s
   else response.headers.delete('X-Frame-Options');
   response.headers.set('X-Content-Type-Options', 'nosniff');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  // This SSR editor reads ownership and draft metadata. Even if Next streams a
+  // Not Found with HTTP 200 for a non-owner, never allow an intermediary to
+  // store or replay a member's private page across sessions.
+  if (pathname.startsWith('/app/me/sites/')) {
+    response.headers.set('Cache-Control', 'private, no-store');
+  }
   response.headers.set('Permissions-Policy', permissionsPolicyFor(pathname));
   response.headers.set('Content-Security-Policy', buildContentSecurityPolicy(
     nonce, allowEmbedding, allowSceneMap,
