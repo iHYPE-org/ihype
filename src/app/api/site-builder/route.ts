@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { db, withDbRetry } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
-import { readProfileSiteConfig, siteConfigSchema } from '@/lib/profile-site';
+import { isPublicSiteEligible, readProfileSiteConfig, siteConfigSchema } from '@/lib/profile-site';
 import { consumeRateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
@@ -15,7 +15,7 @@ export async function GET(request: Request) {
   if (!profileId) return NextResponse.json({ error: 'Select an artist or venue.' }, { status: 400 });
   const profile = await withDbRetry(() => db.profile.findUnique({
     where: { id: profileId },
-    select: { id: true, ownerId: true, slug: true, name: true, type: true, headline: true, bio: true, heroImage: true, verificationStatus: true, siteConfig: true },
+    select: { id: true, ownerId: true, slug: true, name: true, type: true, headline: true, bio: true, heroImage: true, verificationStatus: true, discoverable: true, siteConfig: true },
   }));
   if (!profile || !['ARTIST', 'VENUE'].includes(profile.type)) {
     return NextResponse.json({ error: 'Artist or venue not found.' }, { status: 404 });
@@ -24,7 +24,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Forbidden.' }, { status: 403 });
   }
   return NextResponse.json({
-    profile: { id: profile.id, slug: profile.slug, name: profile.name, type: profile.type, headline: profile.headline, bio: profile.bio, heroImage: profile.heroImage, verificationStatus: profile.verificationStatus },
+    profile: { id: profile.id, slug: profile.slug, name: profile.name, type: profile.type, headline: profile.headline, bio: profile.bio, heroImage: profile.heroImage, verificationStatus: profile.verificationStatus, discoverable: profile.discoverable },
     site: readProfileSiteConfig(profile.siteConfig),
   }, { headers: { 'Cache-Control': 'private, no-store' } });
 }
@@ -45,7 +45,7 @@ export async function PATCH(request: Request) {
 
   const profile = await withDbRetry(() => db.profile.findUnique({
     where: { id: body.profileId },
-    select: { id: true, slug: true, ownerId: true, type: true, verificationStatus: true },
+    select: { id: true, slug: true, ownerId: true, type: true, verificationStatus: true, discoverable: true },
   }));
   if (!profile || !['ARTIST', 'VENUE'].includes(profile.type)) {
     return NextResponse.json({ error: 'Artist or venue not found.' }, { status: 404 });
@@ -59,6 +59,12 @@ export async function PATCH(request: Request) {
     return NextResponse.json({
       error: 'Save as a draft for now. Your artist or venue verification must be approved before publishing.',
       verificationRequired: true,
+    }, { status: 403 });
+  }
+
+  if (body.site.published && !isPublicSiteEligible(profile)) {
+    return NextResponse.json({
+      error: 'Make this profile discoverable in its settings before publishing a public website.',
     }, { status: 403 });
   }
 
