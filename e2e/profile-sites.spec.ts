@@ -70,7 +70,7 @@ test.describe('One-page site navigation and privacy', () => {
     await page.getByRole('button', { name: 'Paper', exact: true }).click();
     await page.getByLabel('Headline or tagline').fill('A new sound. Every night.');
     await page.getByRole('button', { name: /Save draft \/ Unpublish/i }).click();
-    await expect(page.getByRole('status')).toContainText(/draft saved/i);
+    await expect(page.locator('.ih-builder-success')).toContainText(/draft saved/i);
     await page.reload();
     await expect(page.getByRole('button', { name: 'Paper', exact: true })).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByLabel('Headline or tagline')).toHaveValue('A new sound. Every night.');
@@ -115,7 +115,7 @@ test.describe('One-page site navigation and privacy', () => {
       await expect(page.getByRole('heading', { name: /Website \+ Video/i })).toBeVisible();
       await expect(page.getByRole('button', { name: /Publish website/i })).toBeDisabled();
       await page.getByRole('button', { name: /Save draft \/ Unpublish/i }).click();
-      await expect(page.getByRole('status')).toContainText(/draft saved/i);
+      await expect(page.locator('.ih-builder-success')).toContainText(/draft saved/i);
 
       const visitorRead = await visitorContext.request.get(`/api/site-builder?profileId=${venue.id}`);
       expect(visitorRead.status()).toBe(403);
@@ -153,7 +153,7 @@ test.describe('One-page site navigation and privacy', () => {
     await expect(page.locator('.ih-site')).toHaveCount(0);
     await page.goto(`/app/me/sites/${artist.id}`);
     await expect(page.getByRole('button', { name: /Save & keep published/i })).toBeDisabled();
-    await expect(page.locator('.ih-builder-note')).toContainText(/hidden from public discovery/i);
+    await expect(page.locator('.ih-builder-note').filter({ hasText: /hidden from public discovery/i })).toBeVisible();
   });
 
   test('phone viewport keeps Website + video discoverable and actions on-screen', async ({ context, page }) => {
