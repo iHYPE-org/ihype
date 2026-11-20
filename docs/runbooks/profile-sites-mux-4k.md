@@ -75,6 +75,12 @@
   check the 15-minute boundary, out-of-order events, unknown assets and
   non-owner/anonymous operations. The unit tests cover these cases;
   reject invalid signatures, expired timestamps, replayed state regressions.
+- Start with a **Mux Test Asset** via a separately configured non-production
+  environment and `test: true` on a test Direct Upload, if available. Mux
+  documents that these are free, watermarked, limited to 10 seconds, and
+  deleted automatically after 24 hours. They check API wiring but do not
+  establish billing or long-form 4K delivery cost. Never enable `test: true`
+  on ordinary member uploads in production.
 - Upload short 1080p and 2160p samples by direct signed upload URL from browser.
   Wait for webhook READY, then publish and play on `/site/[slug]`.
   Verify selecting 2160p actually makes a 4K rendition available when the
@@ -143,3 +149,27 @@ In Mux dashboard, verify:
   1080p, 2160p playback, webhook delivery, retention, spend caps and R2 billing
   still need an approved staged provider test. Do not enable the feature flags
   solely because the unit tests are green.
+
+
+## Navigation/security acceptance (additional checks)
+
+- Browser tests exercise My Page -> Website + video -> Edit theme -> Save
+  draft -> Publish -> public site -> Contact opt-in -> Unpublish -> Back to
+  Profiles for a verified artist, and draft-only workflow for an unverified
+  venue. They also assert cross-owner/anonymous authorization and mobile
+  button visibility. This spec is mandatory in the Workerd test allowlist.
+- iHYPE's owner editor provides **one** return action to Profiles. Profile
+  action buttons wrap on phone widths; no hidden offscreen Website + video
+  link. Distinguish Mux transfer failure from optional R2 archive failure,
+  and permit canceling a transfer with provider cleanup.
+- Show dates use the `Show.timeZone` organizer/venue clock, never the
+  Worker's UTC default, so a late-night venue show isn't misdated.
+- Mux has no direct-upload byte-size ceiling in the signed URL shown by the
+  Direct Upload API, so the 2 GiB check remains a browser-validated pilot
+  limit, **not a hard server-side cap**. A malicious client can misreport
+  size. The trusted ready-webhook duration ceiling runs after Mux ingest and
+  can incur processing cost before rejection. Operator spend monitoring and
+  further abusive-upload protections are mandatory before launch.
+- A signed Mux asset error now hides a previously-public video and attempts
+  to revoke its public playback ID. A failed public-ID database save triggers
+  compensating deletion of the newly-issued public ID. Both retry on errors.
