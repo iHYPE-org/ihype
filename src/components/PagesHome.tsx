@@ -526,7 +526,7 @@ export function PagesHome({
                     </Link>
                     {(selectedProfile.type === 'ARTIST' || selectedProfile.type === 'VENUE') && (
                       <Link href={`/app/me/sites/${selectedProfile.id}`} style={bGhost}>
-                        Website + video
+                        {t('pagesHome.websiteAndVideo', 'Website + video')}
                       </Link>
                     )}
                     <button onClick={() => setTab('creator')} style={bSolid} type="button">
