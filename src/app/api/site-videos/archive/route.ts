@@ -7,6 +7,7 @@ import { canManageOwnedResource } from '@/lib/permissions';
 import { isR2VideoArchiveEnabled } from '@/lib/mux-video';
 import { readRuntimeBinding } from '@/lib/runtime-env';
 import { readMediaBucket, serveR2Object } from '@/lib/r2-object-response';
+import { consumeRateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 const CHUNK_BYTES = 8 * 1024 * 1024;
@@ -22,6 +23,8 @@ type R2Multipart = {
 type ArchiveBucket = {
   createMultipartUpload(key: string, options?: { httpMetadata?: { contentType?: string } }): Promise<R2Multipart>;
   resumeMultipartUpload(key: string, uploadId: string): R2Multipart;
+  head?(key: string): Promise<{ size?: number } | null>;
+  delete?(key: string): Promise<unknown>;
 };
 function archiveBucket(): ArchiveBucket | null {
   const bucket = readRuntimeBinding('R2') as ArchiveBucket | null;
@@ -52,6 +55,47 @@ const abortSchema = z.object({
 }).strict();
 const postSchema = z.discriminatedUnion('action', [startSchema, completeSchema, abortSchema]);
 
+/** Reject oversized uploads while reading, not after buffering the entire body. */
+async function boundedArchivePart(request: Request): Promise<ArrayBuffer | null> {
+  const reader = request.body?.getReader();
+  if (!reader) return null;
+  const chunks: Uint8Array[] = [];
+  let bytes = 0;
+  try {
+    while (true) {
+      const result = await reader.read();
+      if (result.done) break;
+      bytes += result.value.byteLength;
+      if (bytes > CHUNK_BYTES) {
+        await reader.cancel().catch(() => {});
+        return null;
+      }
+      chunks.push(result.value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  if (!bytes) return null;
+  const output = new Uint8Array(bytes);
+  let offset = 0;
+  for (const chunk of chunks) {
+    output.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return output.buffer;
+}
+
+/**
+ * An R2 multipart completion can succeed before Prisma updates its record.
+ * R2 then reports the upload no longer exists; a completed object still does.
+ */
+function isMissingMultipartUpload(error: unknown): boolean {
+  const description = error instanceof Error ? error.message : String(error);
+  const code = typeof error === 'object' && error !== null
+    && 'code' in error ? String(error.code) : '';
+  return code === 'NoSuchUpload' || /NoSuchUpload|multipart upload does not exist/i.test(description);
+}
+
 export async function POST(request: Request) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: 'Login required.' }, { status: 401 });
@@ -64,6 +108,10 @@ export async function POST(request: Request) {
   const video = await ownedVideo(body.videoId, session);
   if (!video) return NextResponse.json({ error: 'Video unavailable.' }, { status: 404 });
   if (body.action === 'start') {
+    const limit = await consumeRateLimit(`r2-original-start:${session.user.id}`, {
+      limit: 12, windowMs: 60 * 60 * 1000,
+    });
+    if (!limit.allowed) return NextResponse.json({ error: 'Too many archive attempts.' }, { status: 429 });
     if (video.archiveKey || video.archiveUploadId) {
       return NextResponse.json({ error: 'An original archive already exists. Abort an incomplete archive first.' }, { status: 409 });
     }
@@ -75,10 +123,16 @@ export async function POST(request: Request) {
     const key = `video-originals/${video.profileId}/${video.id}.${extension}`;
     // This namespace is intentionally NOT present in PUBLIC_CDN_PREFIXES.
     const multipart = await bucket.createMultipartUpload(key, { httpMetadata: { contentType: body.mimeType } });
-    const claim = await db.profileVideo.updateMany({
-      where: { id: video.id, archiveKey: null, archiveUploadId: null },
-      data: { archiveKey: key, archiveUploadId: multipart.uploadId },
-    });
+    let claim: { count: number };
+    try {
+      claim = await db.profileVideo.updateMany({
+        where: { id: video.id, archiveKey: null, archiveUploadId: null },
+        data: { archiveKey: key, archiveUploadId: multipart.uploadId },
+      });
+    } catch {
+      await multipart.abort().catch(() => {});
+      return NextResponse.json({ error: 'Could not save original-file archive state.' }, { status: 502 });
+    }
     if (!claim.count) {
       await multipart.abort().catch(() => {});
       return NextResponse.json({ error: 'Archive already started.' }, { status: 409 });
@@ -88,7 +142,18 @@ export async function POST(request: Request) {
   if (!video.archiveKey || !video.archiveUploadId) return NextResponse.json({ error: 'No archive is in progress.' }, { status: 409 });
   const multipart = bucket.resumeMultipartUpload(video.archiveKey, video.archiveUploadId);
   if (body.action === 'abort') {
-    await multipart.abort();
+    try {
+      await multipart.abort();
+    } catch (error) {
+      if (!isMissingMultipartUpload(error) || !bucket.head) throw error;
+      // If completion succeeded before the DB update, remove the finished
+      // object rather than leaving the original public account's storage.
+      const completed = await bucket.head(video.archiveKey);
+      if (completed) {
+        if (!bucket.delete) throw error;
+        await bucket.delete(video.archiveKey);
+      }
+    }
     await db.profileVideo.update({
       where: { id: video.id }, data: { archiveKey: null, archiveUploadId: null },
     });
@@ -99,7 +164,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Missing or unordered original-file chunks.' }, { status: 400 });
   }
   try {
-    await multipart.complete(body.parts);
+    try {
+      await multipart.complete(body.parts);
+    } catch (error) {
+      if (!isMissingMultipartUpload(error) || !bucket.head
+          || !await bucket.head(video.archiveKey)) throw error;
+      // Completed in R2, but the previous DB write failed. Reconcile.
+    }
     await db.profileVideo.update({
       where: { id: video.id }, data: { archiveUploadId: null },
     });
@@ -129,11 +200,12 @@ export async function PUT(request: Request) {
   if (!video || !video.archiveKey || !video.archiveUploadId) {
     return NextResponse.json({ error: 'No authorized archive.' }, { status: 404 });
   }
-  // Bounded 8MiB chunk; never buffer an entire 4K video in a Worker.
-  const bytes = await request.arrayBuffer();
-  if (bytes.byteLength < 1 || bytes.byteLength > CHUNK_BYTES) {
-    return NextResponse.json({ error: 'Invalid chunk size.' }, { status: 413 });
-  }
+  const limiter = await consumeRateLimit(`r2-original-chunk:${session.user.id}:${video.id}`, {
+    limit: 320, windowMs: 24 * 60 * 60 * 1000,
+  });
+  if (!limiter.allowed) return NextResponse.json({ error: 'Original-file chunk limit reached.' }, { status: 429 });
+  const bytes = await boundedArchivePart(request);
+  if (!bytes) return NextResponse.json({ error: 'Invalid chunk size.' }, { status: 413 });
   try {
     const uploaded = await bucket.resumeMultipartUpload(video.archiveKey, video.archiveUploadId).uploadPart(part, bytes);
     return NextResponse.json({ partNumber: uploaded.partNumber, etag: uploaded.etag });
