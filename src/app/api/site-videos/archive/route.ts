@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
+import type { Session } from 'next-auth';
 import { db, withDbRetry } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { isR2VideoArchiveEnabled } from '@/lib/mux-video';
@@ -27,7 +28,7 @@ function archiveBucket(): ArchiveBucket | null {
   return bucket && typeof bucket.createMultipartUpload === 'function'
     && typeof bucket.resumeMultipartUpload === 'function' ? bucket : null;
 }
-async function ownedVideo(videoId: string, session: Awaited<ReturnType<typeof auth>>) {
+async function ownedVideo(videoId: string, session: Session | null) {
   const video = await withDbRetry(() => db.profileVideo.findUnique({
     where: { id: videoId },
     include: { profile: { select: { ownerId: true, type: true } } },
