@@ -55,6 +55,17 @@ describe('signed Mux asset lifecycle', () => {
     mockedMux.mockResolvedValue({});
   });
 
+  it('limits an oversized unsigned webhook before any database operation', async () => {
+    const huge = new Request('https://ihype.org/api/webhooks/mux', {
+      method: 'POST', body: 'x'.repeat(100_001),
+    });
+    const response = await POST(huge);
+    expect(response.status).toBe(413);
+    expect(mockedFind).not.toHaveBeenCalled();
+    expect(mockedUpdate).not.toHaveBeenCalled();
+    expect(mockedMux).not.toHaveBeenCalled();
+  });
+
   it('rejects unsigned events before touching a video', async () => {
     const response = await POST(new Request('https://ihype.org/api/webhooks/mux', {
       method: 'POST', body: JSON.stringify({ type: 'video.asset.ready', data: assetData }),
