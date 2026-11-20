@@ -99,12 +99,17 @@ function isMissingMultipartUpload(error: unknown): boolean {
 export async function POST(request: Request) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: 'Login required.' }, { status: 401 });
-  if (!isR2VideoArchiveEnabled()) return NextResponse.json({ error: 'Original-file archiving is disabled.' }, { status: 503 });
+
   const bucket = archiveBucket();
   if (!bucket) return NextResponse.json({ error: 'R2 archive storage is unavailable.' }, { status: 503 });
   let body: z.infer<typeof postSchema>;
   try { body = postSchema.parse(await request.json()); }
   catch { return NextResponse.json({ error: 'Invalid archive request.' }, { status: 400 }); }
+  // A kill switch must stop new uploads, not strand existing multipart
+  // originals. Owners may always abort an incomplete R2 archive.
+  if (body.action !== 'abort' && !isR2VideoArchiveEnabled()) {
+    return NextResponse.json({ error: 'Original-file archiving is paused.' }, { status: 503 });
+  }
   const video = await ownedVideo(body.videoId, session);
   if (!video) return NextResponse.json({ error: 'Video unavailable.' }, { status: 404 });
   if (body.action === 'start') {
