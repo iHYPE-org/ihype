@@ -23,7 +23,7 @@ export async function LandingDiscovery() {
         hexId: true, title: true,
         profile: {
           select: {
-            id: true, name: true, slug: true, discoverable: true, verificationStatus: true,
+            id: true, name: true, slug: true, type: true, discoverable: true, verificationStatus: true,
             siteConfig: true, owner: { select: { email: true, username: true } },
           },
         },
