@@ -8,7 +8,7 @@ import { profileMicrositeThemePalettes } from '@/lib/profile-design';
 
 type OwnerProfile = {
   id: string; slug: string; name: string; type: string; headline: string | null;
-  bio: string | null; heroImage: string | null; verificationStatus: string;
+  bio: string | null; heroImage: string | null; verificationStatus: string; discoverable: boolean;
 };
 type OwnerVideo = {
   id: string; title: string; quality: string; status: string; isPublished: boolean;
@@ -253,11 +253,16 @@ export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
           <p className="ih-builder-note">{t("siteBuilder.photosMusicShowsAndMerchandise", "Photos, music, shows and merchandise reuse your iHYPE profile. Contact details stay hidden unless you explicitly turn them on.")}</p>
           <div className="ih-builder-save">
             <button disabled={busy || uploading} type="button" onClick={() => saveSite(false)}>{t("siteBuilder.saveDraftUnpublish", "Save draft / Unpublish")}</button>
-            <button disabled={busy || uploading || profile.verificationStatus !== 'VERIFIED'} type="button"
+            <button disabled={busy || uploading || profile.verificationStatus !== 'VERIFIED' || !profile.discoverable} type="button"
               className="ih-builder-primary" onClick={() => saveSite(true)}>
               {site.published ? 'Save & keep published' : 'Publish website'}
             </button>
           </div>
+          {!profile.discoverable && (
+            <p className="ih-builder-note" role="status">
+              Your profile is hidden from public discovery. Enable discoverability in profile settings before publishing this website.
+            </p>
+          )}
           {profile.verificationStatus !== 'VERIFIED' && (
             <p className="ih-builder-note">{t("siteBuilder.youCanSaveAndCustomize", "You can save and customize right now. Ownership verification must be approved before publishing a public website.")}</p>
           )}
