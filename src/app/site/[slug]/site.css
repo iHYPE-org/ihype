@@ -1,5 +1,14 @@
 /* Opt-in public artist/venue site surface. No app-shell design changes. */
 .ih-site {
+  /* Safe fallbacks for the shell token validator; inline member-selected
+     microsite palette variables override these on each published site. */
+  --site-bg: var(--bg);
+  --site-card: var(--bg-2);
+  --site-ink: var(--ink);
+  --site-muted: var(--ink-a65);
+  --site-accent: var(--accent);
+  --site-hero-ink: var(--ink-on-accent);
+  --site-accent-ink: var(--ink-on-accent);
   min-height: 100vh;
   background: var(--site-bg);
   color: var(--site-ink);
