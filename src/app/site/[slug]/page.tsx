@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import type { CSSProperties } from 'react';
 import { micrositeThemeVars } from '@/lib/profile-design';
+import { getLocale } from '@/lib/i18n/server';
 import { notFound } from 'next/navigation';
 import { db } from '@/lib/db';
 import { readProfileSiteConfig, isSafeSiteUrl } from '@/lib/profile-site';
@@ -51,6 +52,7 @@ export default async function ProfileSite({
   if (!result) notFound();
   const { profile, site } = result;
   const now = new Date();
+  const locale = await getLocale();
 
   const [shows, tracks, videos] = await Promise.all([
     site.sections.shows ? db.show.findMany({
@@ -129,7 +131,7 @@ export default async function ProfileSite({
             <div className="ih-site-show-list">
               {shows.map(show => (
                 <Link href={`/shows/${show.slug}`} className="ih-site-show" key={show.id}>
-                  <span className="ih-site-show-date">{new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' }).format(show.startsAt)}</span>
+                  <span className="ih-site-show-date">{new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' }).format(show.startsAt)}</span>
                   <span>{show.title}</span>
                   <span aria-hidden="true">↗</span>
                 </Link>
