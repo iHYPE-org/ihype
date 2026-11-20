@@ -524,6 +524,11 @@ export function PagesHome({
                     <Link href={profileRoute(selectedProfile.type, selectedProfile.slug)} style={bGhost}>
                       {t('pagesHome.view', 'View')}
                     </Link>
+                    {(selectedProfile.type === 'ARTIST' || selectedProfile.type === 'VENUE') && (
+                      <Link href={`/app/me/sites/${selectedProfile.id}`} style={bGhost}>
+                        Website + video
+                      </Link>
+                    )}
                     <button onClick={() => setTab('creator')} style={bSolid} type="button">
                       {t('pagesHome.editPage', 'Edit page')}
                     </button>
