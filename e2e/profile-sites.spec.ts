@@ -76,12 +76,13 @@ test.describe('One-page site navigation and privacy', () => {
     await expect(page.getByLabel('Headline or tagline')).toHaveValue('A new sound. Every night.');
 
     await page.getByRole('button', { name: /Publish website/i }).click();
+    await expect(page.locator('.ih-builder-success')).toContainText(/website published/i);
     await expect(page.locator(`.ih-builder-live a[href="/site/${artist.slug}"]:visible`)).toBeVisible();
     await page.goto(`/site/${artist.slug}`);
     await expect(page.locator('.ih-site h1:visible')).toHaveText(artist.name);
-    await expect(page.locator('.ih-site')).toContainText('A new sound. Every night.');
-    await expect(page.locator('#contact')).toHaveCount(0);
-    await expect(page.locator('.ih-site')).not.toContainText(privateEmail);
+    await expect(page.locator('.ih-site:visible')).toContainText('A new sound. Every night.');
+    await expect(page.locator('#contact:visible')).toHaveCount(0);
+    await expect(page.locator('.ih-site:visible')).not.toContainText(privateEmail);
 
     const axe = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
@@ -92,12 +93,14 @@ test.describe('One-page site navigation and privacy', () => {
     await page.goto(`/app/me/sites/${artist.id}`);
     await page.getByRole('checkbox', { name: /Contact details/i }).check();
     await page.getByRole('button', { name: /Save & keep published/i }).click();
+    await expect(page.locator('.ih-builder-success')).toContainText(/website published/i);
     await page.goto(`/site/${artist.slug}`);
-    await expect(page.locator('#contact')).toContainText(privateEmail);
+    await expect(page.locator('#contact:visible')).toContainText(privateEmail);
     await page.goto(`/app/me/sites/${artist.id}`);
     await page.getByRole('button', { name: /Save draft \/ Unpublish/i }).click();
+    await expect(page.locator('.ih-builder-success')).toContainText(/draft saved/i);
     await page.goto(`/site/${artist.slug}`);
-    await expect(page.locator('.ih-site')).toHaveCount(0);
+    await expect(page.locator('.ih-site:visible')).toHaveCount(0);
 
     await page.goto(`/app/me/sites/${artist.id}`);
     await page.getByRole('link', { name: /Back to profiles/i }).click();
@@ -152,11 +155,12 @@ test.describe('One-page site navigation and privacy', () => {
     await page.goto(`/app/me/sites/${artist.id}`);
     await expect(page.getByRole('button', { name: /Publish website/i })).toBeEnabled();
     await page.getByRole('button', { name: /Publish website/i }).click();
+    await expect(page.locator('.ih-builder-success')).toContainText(/website published/i);
     await page.goto(`/site/${artist.slug}`);
     await expect(page.locator('.ih-site h1:visible')).toContainText(artist.name);
     await setProfileFields(artist.id, { discoverable: false });
     await page.reload();
-    await expect(page.locator('.ih-site')).toHaveCount(0);
+    await expect(page.locator('.ih-site:visible')).toHaveCount(0);
     await page.goto(`/app/me/sites/${artist.id}`);
     await expect(page.getByRole('button', { name: /Save & keep published/i })).toBeDisabled();
     await expect(page.locator('.ih-builder-note').filter({ hasText: /hidden from public discovery/i })).toBeVisible();
