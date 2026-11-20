@@ -136,6 +136,15 @@ function parseJson(text) {
   }
 }
 
+// Check complete CSP source expressions within the intended directive, not
+// substrings of the whole header (which accept lookalike hosts or wrong directives).
+function cspHasSource(policy, directive, source) {
+  const sources = policy.split(';')
+    .map((entry) => entry.trim().split(/\s+/))
+    .find((tokens) => tokens[0] === directive);
+  return sources?.slice(1).includes(source) ?? false;
+}
+
 function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -332,6 +341,16 @@ async function run() {
     await waitForBoot(child);
 
     if (RUN_SECURITY_CHECKS) {
+    // Regression: a substring anywhere in a CSP header is NOT proof that
+    // the intended directive allows precisely the requested origin.
+    check(
+      'CSP source assertions reject lookalike hosts and wrong directives',
+      cspHasSource("connect-src 'self' https://storage.googleapis.com; frame-src 'self'", 'connect-src', 'https://storage.googleapis.com')
+        && !cspHasSource("connect-src 'self' https://storage.googleapis.com.attacker.invalid", 'connect-src', 'https://storage.googleapis.com')
+        && !cspHasSource("img-src https://player.mux.com; frame-src 'self'", 'frame-src', 'https://player.mux.com')
+        && cspHasSource("frame-src 'self' https://player.mux.com", 'frame-src', 'https://player.mux.com'),
+      'CSP sources must match exactly inside the intended directive',
+    );
     // 1. Anonymous health is deliberately a low-information liveness probe.
     // It must stay useful to load balancers without leaking dependency state.
     const liveness = await probe('/api/health', { headers: { accept: 'application/json' } });
@@ -572,10 +591,9 @@ async function run() {
     const editorCsp = ownerBuilder.headers.get('content-security-policy') ?? '';
     check(
       'site editor CSP allows signed direct Mux transfer to GCS only in owner editor',
-      editorCsp.includes('connect-src')
-        && editorCsp.includes('https://storage.googleapis.com')
-        && !editorCsp.includes('frame-src https://player.mux.com'),
-      `status=${ownerBuilder.status} CSP scoped=${editorCsp.includes('https://storage.googleapis.com')}`,
+      cspHasSource(editorCsp, 'connect-src', 'https://storage.googleapis.com')
+        && !cspHasSource(editorCsp, 'frame-src', 'https://player.mux.com'),
+      `status=${ownerBuilder.status} CSP scoped=${cspHasSource(editorCsp, 'connect-src', 'https://storage.googleapis.com')}`,
     );
     const otherBuilder = await probe(`/app/me/sites/${FIXTURE.profileId}`, {
       headers: { cookie: outsiderCookie },
@@ -645,8 +663,9 @@ async function run() {
       `status=${unpublishedPage.status} notFound=${unpublishedNotFound}`);
     check(
       'Mux iframe CSP applies only to public microsite routes',
-      publicCsp.includes('https://player.mux.com') && !editorCsp.includes('https://player.mux.com'),
-      `public frame allowed=${publicCsp.includes('https://player.mux.com')}`,
+      cspHasSource(publicCsp, 'frame-src', 'https://player.mux.com')
+        && !cspHasSource(editorCsp, 'frame-src', 'https://player.mux.com'),
+      `public frame allowed=${cspHasSource(publicCsp, 'frame-src', 'https://player.mux.com')}`,
     );
 
     // 12b.1. A genuine approved/discoverable artist can go live and then
