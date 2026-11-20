@@ -50,12 +50,29 @@ export async function deleteHostedProfileVideo(video: {
   }
   const bucket = readRuntimeBinding('R2') as {
     delete?: (key: string) => Promise<unknown>;
+    head?: (key: string) => Promise<unknown | null>;
     resumeMultipartUpload?: (key: string, id: string) => { abort: () => Promise<void> };
   } | null;
   if (video.archiveUploadId) {
     const upload = bucket?.resumeMultipartUpload?.(video.archiveKey, video.archiveUploadId);
     if (!upload) throw new Error('Private R2 archive is unavailable.');
-    await upload.abort();
+    try {
+      await upload.abort();
+    } catch (error) {
+      // A prior R2 complete() may have succeeded before the DB cleared
+      // archiveUploadId. Delete that real object, not only the stale upload.
+      const description = error instanceof Error ? error.message : String(error);
+      const code = typeof error === 'object' && error !== null && 'code' in error
+        ? String(error.code) : '';
+      const missing = code === 'NoSuchUpload'
+        || /NoSuchUpload|multipart upload does not exist/i.test(description);
+      if (!missing || !bucket?.head) throw error;
+      const completed = await bucket.head(video.archiveKey);
+      if (completed) {
+        if (!bucket.delete) throw new Error('Private R2 archive deletion is unavailable.');
+        await bucket.delete(video.archiveKey);
+      }
+    }
   } else {
     if (!bucket?.delete) throw new Error('Private R2 archive is unavailable.');
     await bucket.delete(video.archiveKey);
