@@ -477,14 +477,17 @@ export function resolveProfileThemeVars(profile: {
  */
 export const profileMicrositeThemePalettes = {
   spotlight: {
+    previewShade: 'linear-gradient(0deg,rgba(0,0,0,.75),rgba(0,0,0,.45))',
     background: '#101116', card: '#1b1d26', ink: '#f9f7f2',
     muted: '#d4d0cf', accent: '#e0263e', heroInk: '#ffffff', accentInk: '#ffffff',
   },
   paper: {
+    previewShade: 'linear-gradient(0deg,rgba(0,0,0,.75),rgba(0,0,0,.45))',
     background: '#faf6ee', card: '#fffdf7', ink: '#201d21',
     muted: '#514e51', accent: '#a11f3b', heroInk: '#ffffff', accentInk: '#ffffff',
   },
   electric: {
+    previewShade: 'linear-gradient(0deg,rgba(0,0,0,.75),rgba(0,0,0,.45))',
     background: '#0b0e23', card: '#1c2340', ink: '#f3f7ff',
     muted: '#c8d5f5', accent: '#ff4b84', heroInk: '#ffffff', accentInk: '#ffffff',
   },
