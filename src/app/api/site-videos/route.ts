@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
+import type { Session } from 'next-auth';
 import { db, withDbRetry } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { consumeRateLimit } from '@/lib/rate-limit';
@@ -19,7 +20,7 @@ const createSchema = z.object({
   rightsConfirmed: z.literal(true),
 }).strict();
 
-async function ownedProfile(session: Awaited<ReturnType<typeof auth>>, profileId: string) {
+async function ownedProfile(session: Session | null, profileId: string) {
   const profile = await withDbRetry(() => db.profile.findUnique({
     where: { id: profileId },
     select: { id: true, ownerId: true, type: true, verificationStatus: true },
