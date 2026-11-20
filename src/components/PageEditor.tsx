@@ -502,7 +502,11 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
         const d = await res.json().catch(() => ({}));
         setError(d.error ?? t('pageEditor.saveFailed', 'Failed to save.'));
       } else {
+        const saved = await res.json() as { warning?: string };
         setSavedAt(Date.now());
+        // The profile is hidden even if provider cleanup fails. Explain that
+        // an old Mux public playback ID may still require manual revocation.
+        if (saved.warning) setError(saved.warning);
       }
     } catch {
       setError(t('pageEditor.networkError', 'Network error — try again.'));
