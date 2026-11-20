@@ -33,7 +33,7 @@
 .ih-site-hero-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 24px; }
 .ih-site-button { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; border: 2px solid var(--site-accent); border-radius: 12px; background: var(--site-accent); color: var(--site-accent-ink) !important; padding: 8px 16px; font-weight: 750; font-size: .94rem; text-decoration: none; }
 .ih-site-button--outline { background: transparent; border-color: var(--site-hero-ink); color: var(--site-hero-ink) !important; }
-.ih-site-section { padding: clamp(30px, 5vw, 64px) 0; border-bottom: 1px solid color-mix(in srgb, var(--site-ink) 18%, transparent); scroll-margin-top: 40px; }
+.ih-site-section { padding: clamp(32px, 5vw, 64px) 0; border-bottom: 1px solid color-mix(in srgb, var(--site-ink) 18%, transparent); scroll-margin-top: 40px; }
 .ih-site-section h2 { font-size: clamp(1.9rem, 4.2vw, 3.1rem); letter-spacing: -.04em; line-height: 1.16; margin: 0 0 24px; }
 .ih-site-copy { max-width: 780px; line-height: 1.8; white-space: pre-line; overflow-wrap: anywhere; color: var(--site-muted); font-size: 1.04rem; }
 .ih-site-show-list { display: grid; gap: 8px; }

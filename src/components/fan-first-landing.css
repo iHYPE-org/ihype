@@ -3,7 +3,7 @@
   max-width: 1600px;
   box-sizing: border-box;
   margin: 0 auto;
-  padding-inline: clamp(18px, 6vw, 100px);
+  padding-inline: clamp(16px, 6vw, 100px);
 }
 
 .fan-entry .fan-entry-subnav {
