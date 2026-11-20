@@ -104,9 +104,8 @@ SENTRY_DSN = "https://6fcca4160df1fe7b0d5e3aa4b7a73f44@o4511334761103360.ingest.
 # fault because nothing is faulty. It cost nothing only because live Stripe
 # held zero PaymentIntents. Those five weeks were not evidence of safety.
 FEATURE_ENABLE_TICKET_PAYMENTS = "true"
-# Production rollout safety: Mux ingest and the retired optional R2-original
-# archive remain explicitly disabled until separately approved staging QA,
-# verified Cloudflare secrets, credential rotation and provider spend controls.
+
+# Paid video stays disabled until the Mux and R2 release checks pass.
 FEATURE_ENABLE_VIDEO_UPLOADS = "false"
 FEATURE_ENABLE_R2_VIDEO_ARCHIVE = "false"
 
