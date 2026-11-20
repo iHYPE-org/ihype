@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
+import type { Session } from 'next-auth';
 import { db, withDbRetry } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { readRuntimeBinding } from '@/lib/runtime-env';
@@ -9,7 +10,7 @@ import { consumeRateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
-async function ownedVideo(session: Awaited<ReturnType<typeof auth>>, id: string) {
+async function ownedVideo(session: Session | null, id: string) {
   const video = await withDbRetry(() => db.profileVideo.findUnique({
     where: { id },
     include: { profile: { select: { ownerId: true, type: true, verificationStatus: true } } },
