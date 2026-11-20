@@ -64,6 +64,10 @@ export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadPhase, setUploadPhase] = useState<'idle' | 'preparing' | 'transferring' | 'archiving'>('idle');
+  const xhrRef = useRef<XMLHttpRequest | null>(null);
+  const activeUploadIdRef = useRef<string | null>(null);
+  const cancelledRef = useRef(false);
   const [quality, setQuality] = useState<'1080p' | '2160p'>('1080p');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [rightsConfirmed, setRightsConfirmed] = useState(false);
@@ -157,7 +161,10 @@ export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
     if (!selectedFile || !profile || !enabled || !rightsConfirmed) return;
     if (selectedFile.size > 2 * 1024 * 1024 * 1024) { setError('Maximum video size is 2 GiB during beta.'); return; }
     if (!selectedFile.type.startsWith('video/')) { setError('Choose a video file.'); return; }
-    setError(''); setMessage('Preparing secure direct upload…'); setProgress(0); setUploading(true);
+    setError(''); setMessage('Preparing secure direct upload…'); setProgress(0);
+    cancelledRef.current = false;
+    activeUploadIdRef.current = null;
+    setUploading(true); setUploadPhase('preparing');
     try {
       const duration = await localVideoDuration(selectedFile);
       if (duration !== null && duration > 15 * 60) {
@@ -172,11 +179,15 @@ export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
       });
       const upload = await create.json() as { id?: string; uploadUrl?: string; error?: string };
       if (!create.ok || !upload.uploadUrl || !upload.id) throw new Error(upload.error || 'Could not create a video upload.');
+      activeUploadIdRef.current = upload.id;
+      if (cancelledRef.current) throw new Error('Upload canceled.');
 
       // Avoid proxying large files through the Cloudflare Worker. The Mux
       // signed URL sends the original directly from this browser to Mux.
       await new Promise<void>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
+        xhrRef.current = xhr;
+        setUploadPhase('transferring');
         xhr.open('PUT', upload.uploadUrl!, true);
         xhr.setRequestHeader('Content-Type', selectedFile.type);
         xhr.upload.onprogress = evt => {
@@ -188,16 +199,56 @@ export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
           ? resolve() : reject(new Error(`Video transfer failed (HTTP ${xhr.status}).`));
         xhr.send(selectedFile);
       });
+      xhrRef.current = null;
+      // The Mux upload succeeded; a failure in optional source archival must
+      // not mislead the owner into uploading another billable copy.
+      let archiveWarning = '';
       if (archiveOriginal && archiveEnabled) {
-        await archiveFile(selectedFile, upload.id);
+        setUploadPhase('archiving');
+        try {
+          await archiveFile(selectedFile, upload.id);
+        } catch (err) {
+          archiveWarning = err instanceof Error ? err.message : 'R2 archival did not complete.';
+        }
       }
-      setMessage('Upload received. Video processing can take several minutes. Refresh status below to publish it.');
+      setMessage(archiveWarning
+        ? `Video received by Mux. Original-file archive incomplete: ${archiveWarning}. Use the library below to discard the unfinished archive.`
+        : 'Upload received. Video processing can take several minutes. Refresh status below to publish it.');
       setSelectedFile(null); setRightsConfirmed(false);
       if (fileRef.current) fileRef.current.value = '';
       await loadVideos();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Video upload failed.');
-    } finally { setUploading(false); }
+      if (cancelledRef.current) {
+        const activeId = activeUploadIdRef.current;
+        let cancelledSuccessfully = false;
+        if (activeId) {
+          try {
+            const response = await fetch(`/api/site-videos/${activeId}`, { method: 'DELETE' });
+            cancelledSuccessfully = response.ok;
+          } catch { /* Surface cleanup failure below. */ }
+        } else {
+          cancelledSuccessfully = true;
+        }
+        setMessage(cancelledSuccessfully
+          ? 'Upload canceled. Nothing from this transfer was published.'
+          : 'Transfer stopped. Could not confirm cleanup at Mux; check your video library for a pending upload.');
+        await loadVideos().catch(() => {});
+      } else {
+        setError(err instanceof Error ? err.message : 'Video upload failed.');
+        await loadVideos().catch(() => {});
+      }
+    } finally {
+      xhrRef.current = null;
+      activeUploadIdRef.current = null;
+      cancelledRef.current = false;
+      setUploading(false); setUploadPhase('idle');
+    }
+  }
+
+  function cancelVideoTransfer() {
+    if (uploadPhase !== 'transferring' || !xhrRef.current) return;
+    cancelledRef.current = true;
+    xhrRef.current.abort();
   }
 
   async function discardArchive(video: OwnerVideo) {
@@ -351,8 +402,17 @@ export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
               <span><strong>{t("siteBuilder.iHaveTheRightsAnd", "I have the rights and permission to upload this video")}</strong>
                 <small>{t("siteBuilder.onlyUploadContentYouOwn", "Only upload content you own or are licensed to use; publish after review.")}</small></span>
             </label>
-            <button type="button" className="ih-builder-primary" disabled={!selectedFile || !rightsConfirmed || uploading || busy}
-              onClick={uploadVideo}>{uploading ? `Uploading… ${progress}%` : 'Upload video'}</button>
+            <div className="ih-builder-save">
+              <button type="button" className="ih-builder-primary" disabled={!selectedFile || !rightsConfirmed || uploading || busy}
+                onClick={uploadVideo}>{uploading
+                  ? uploadPhase === 'archiving' ? 'Archiving original…' : `Uploading… ${progress}%`
+                  : 'Upload video'}</button>
+              {uploadPhase === 'transferring' && (
+                <button type="button" onClick={cancelVideoTransfer}>
+                  {t('siteBuilder.cancelVideoUpload', 'Cancel upload')}
+                </button>
+              )}
+            </div>
             {uploading && <progress value={progress} max={100} aria-label={t("siteBuilder.videoUploadProgress", "Video upload progress")} />}
           </div>
         )}
