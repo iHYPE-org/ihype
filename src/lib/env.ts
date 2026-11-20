@@ -29,7 +29,8 @@ const envSchema = z.object({
      would have left the building. Any non-loopback value is ignored — see
      `emailSinkUrl()` in mailer.ts. */
   EMAIL_SINK_URL: optStr,
-  // Video-provider configuration is intentionally absent: iHYPE hosts audio only.
+  // Mux secrets intentionally use readRuntimeEnv() directly in server-only
+  // video helpers, not this mailer-scoped schema.
 });
 
 /** The single mailbox every operational alert reaches. */

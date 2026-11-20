@@ -7,7 +7,7 @@ import { ShareButton } from '@/components/ShareButton';
 import './fan-first-landing.css';
 import { getServerT } from '@/lib/i18n/server';
 
-export async function FanFirstLanding({ stats }: { stats: ReactNode }) {
+export async function FanFirstLanding({ stats, discovery }: { stats: ReactNode; discovery: ReactNode }) {
   const t = await getServerT();
   const sections = [
     ['mission', t('fanFirstLanding.mission', 'Mission')],
@@ -61,6 +61,7 @@ export async function FanFirstLanding({ stats }: { stats: ReactNode }) {
 
         <section id="discover" className="fan-entry-section">
           <h2>{t('fanFirstLanding.discoverLocalMusic', 'Discover local music')}</h2>
+          {discovery}
           <NearbyShowsWidget />
         </section>
 
