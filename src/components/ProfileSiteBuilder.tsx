@@ -68,6 +68,8 @@ export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
   const xhrRef = useRef<XMLHttpRequest | null>(null);
   const activeUploadIdRef = useRef<string | null>(null);
   const cancelledRef = useRef(false);
+  const stopArchiveRef = useRef(false);
+  const archiveTransferRef = useRef<AbortController | null>(null);
   const [quality, setQuality] = useState<'1080p' | '2160p'>('1080p');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [rightsConfirmed, setRightsConfirmed] = useState(false);
@@ -133,30 +135,58 @@ export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
   }
 
   async function archiveFile(file: File, videoId: string) {
-    const start = await fetch('/api/site-videos/archive', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'start', videoId, mimeType: file.type || 'video/mp4' }),
-    });
-    const started = await start.json() as { error?: string };
-    if (!start.ok) throw new Error(started.error || 'Could not start archive.');
-    const partSize = 8 * 1024 * 1024;
-    const parts: Array<{ partNumber: number; etag: string }> = [];
-    for (let offset = 0, partNumber = 1; offset < file.size; offset += partSize, partNumber++) {
-      const response = await fetch(
-        `/api/site-videos/archive?videoId=${encodeURIComponent(videoId)}&part=${partNumber}`,
-        { method: 'PUT', body: file.slice(offset, offset + partSize), headers: { 'Content-Type': 'application/octet-stream' } },
-      );
-      const result = await response.json() as { etag?: string; error?: string };
-      if (!response.ok || !result.etag) throw new Error(result.error || 'Archiving a video chunk failed.');
-      parts.push({ partNumber, etag: result.etag });
-      setMessage(`Mux upload complete. Archiving original: ${Math.min(100, Math.round(((offset + partSize) / file.size) * 100))}%`);
+    let started = false;
+    try {
+      const start = await fetch('/api/site-videos/archive', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'start', videoId, mimeType: file.type || 'video/mp4' }),
+      });
+      const startedResponse = await start.json() as { error?: string };
+      if (!start.ok) throw new Error(startedResponse.error || 'Could not start archive.');
+      started = true;
+      const partSize = 8 * 1024 * 1024;
+      const parts: Array<{ partNumber: number; etag: string }> = [];
+      for (let offset = 0, partNumber = 1; offset < file.size; offset += partSize, partNumber++) {
+        if (stopArchiveRef.current) throw new Error('Archive stop requested.');
+        const controller = new AbortController();
+        archiveTransferRef.current = controller;
+        let response: Response;
+        try {
+          response = await fetch(
+            `/api/site-videos/archive?videoId=${encodeURIComponent(videoId)}&part=${partNumber}`,
+            { method: 'PUT', body: file.slice(offset, offset + partSize),
+              headers: { 'Content-Type': 'application/octet-stream' }, signal: controller.signal },
+          );
+        } finally {
+          archiveTransferRef.current = null;
+        }
+        const result = await response.json() as { etag?: string; error?: string };
+        if (!response.ok || !result.etag) throw new Error(result.error || 'Archiving a video chunk failed.');
+        parts.push({ partNumber, etag: result.etag });
+        setMessage(`Mux upload complete. Archiving original: ${Math.min(100, Math.round(((offset + partSize) / file.size) * 100))}%`);
+      }
+      if (stopArchiveRef.current) throw new Error('Archive stop requested.');
+      const complete = await fetch('/api/site-videos/archive', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'complete', videoId, parts }),
+      });
+      const completed = await complete.json() as { error?: string };
+      if (!complete.ok) throw new Error(completed.error || 'Could not finish video archive.');
+    } catch (error) {
+      if (stopArchiveRef.current && started) {
+        // Only cancel the OPTIONAL original archive. Never delete the Mux
+        // upload that already completed successfully.
+        const abort = await fetch('/api/site-videos/archive', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'abort', videoId }),
+        });
+        if (!abort.ok) throw new Error('Could not confirm R2 archive cleanup. Discard the incomplete original in your library.');
+        throw new Error('Original-file archive stopped safely.');
+      }
+      throw error;
+    } finally {
+      archiveTransferRef.current = null;
     }
-    const complete = await fetch('/api/site-videos/archive', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'complete', videoId, parts }),
-    });
-    const completed = await complete.json() as { error?: string };
-    if (!complete.ok) throw new Error(completed.error || 'Could not finish video archive.');
   }
 
   async function uploadVideo() {
@@ -165,6 +195,7 @@ export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
     if (!selectedFile.type.startsWith('video/')) { setError('Choose a video file.'); return; }
     setError(''); setMessage('Preparing secure direct upload…'); setProgress(0);
     cancelledRef.current = false;
+    stopArchiveRef.current = false;
     activeUploadIdRef.current = null;
     setUploading(true); setUploadPhase('preparing');
     try {
@@ -172,6 +203,7 @@ export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
       if (duration !== null && duration > 15 * 60) {
         throw new Error('Pilot videos must be 15 minutes or shorter. Trim this clip before uploading.');
       }
+      if (cancelledRef.current) throw new Error('Upload canceled.');
       const create = await fetch('/api/site-videos', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -214,7 +246,9 @@ export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
         }
       }
       setMessage(archiveWarning
-        ? `Video received by Mux. Original-file archive incomplete: ${archiveWarning}. Use the library below to discard the unfinished archive.`
+        ? archiveWarning === 'Original-file archive stopped safely.'
+          ? 'Video received by Mux. Optional original-file archiving stopped; your video is intact.'
+          : `Video received by Mux. Original-file archive incomplete: ${archiveWarning}. Use the library below to discard the unfinished archive.`
         : 'Upload received. Video processing can take several minutes. Refresh status below to publish it.');
       setSelectedFile(null); setRightsConfirmed(false);
       if (fileRef.current) fileRef.current.value = '';
@@ -243,14 +277,23 @@ export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
       xhrRef.current = null;
       activeUploadIdRef.current = null;
       cancelledRef.current = false;
+      stopArchiveRef.current = false;
       setUploading(false); setUploadPhase('idle');
     }
   }
 
   function cancelVideoTransfer() {
-    if (uploadPhase !== 'transferring' || !xhrRef.current) return;
+    if (uploadPhase !== 'preparing' && uploadPhase !== 'transferring') return;
     cancelledRef.current = true;
-    xhrRef.current.abort();
+    xhrRef.current?.abort();
+    setMessage('Canceling upload and cleaning up any reserved Mux upload…');
+  }
+
+  function cancelOriginalArchive() {
+    if (uploadPhase !== 'archiving') return;
+    stopArchiveRef.current = true;
+    archiveTransferRef.current?.abort();
+    setMessage('Stopping optional R2 archival; the completed Mux video stays safe.');
   }
 
   async function discardArchive(video: OwnerVideo) {
@@ -416,9 +459,14 @@ export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
                 onClick={uploadVideo}>{uploading
                   ? uploadPhase === 'archiving' ? 'Archiving original…' : `Uploading… ${progress}%`
                   : 'Upload video'}</button>
-              {uploadPhase === 'transferring' && (
-                <button type="button" onClick={cancelVideoTransfer}>
+              {(uploadPhase === 'preparing' || uploadPhase === 'transferring') && (
+                <button type="button" onClick={cancelVideoTransfer} disabled={cancelledRef.current}>
                   {t('siteBuilder.cancelVideoUpload', 'Cancel upload')}
+                </button>
+              )}
+              {uploadPhase === 'archiving' && (
+                <button type="button" onClick={cancelOriginalArchive} disabled={stopArchiveRef.current}>
+                  {t('siteBuilder.stopSavingOriginal', 'Stop saving original')}
                 </button>
               )}
             </div>
