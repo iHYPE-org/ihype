@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { readRuntimeEnv } from '@/lib/runtime-env';
-import { verifyMuxWebhookSignature } from '@/lib/mux-video';
+import { isWithinPilotVideoDuration, MAX_VIDEO_DURATION_SECS, MuxApiError, muxRequest, verifyMuxWebhookSignature } from '@/lib/mux-video';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,13 +45,42 @@ export async function POST(request: Request) {
     const where = data.meta?.external_id
       ? { id: data.meta.external_id }
       : data.upload_id ? { muxUploadId: data.upload_id } : { muxAssetId: data.id };
-    await db.profileVideo.updateMany({
+    const video = await db.profileVideo.findFirst({
       where,
-      data: {
-        muxAssetId: data.id, status: 'READY',
-        ...(typeof data.duration === 'number' && Number.isFinite(data.duration)
-          ? { durationSecs: data.duration } : {}),
+      select: { id: true, status: true, muxAssetId: true },
+    });
+    // A signed event may belong to another asset in the same Mux account.
+    if (!video) return NextResponse.json({ received: true });
+
+    if (!isWithinPilotVideoDuration(data.duration)) {
+      if (typeof data.duration === 'number' && Number.isFinite(data.duration)
+          && data.duration > MAX_VIDEO_DURATION_SECS) {
+        // Mux bills by minutes, not file bytes. An overlong asset cannot be
+        // made public and is removed from Mux before more storage fees accrue.
+        await db.profileVideo.updateMany({
+          where: { id: video.id, status: { not: 'DELETED' } },
+          data: {
+            muxAssetId: data.id, durationSecs: data.duration,
+            status: 'TOO_LONG', isPublished: false, muxPlaybackId: null,
+          },
+        });
+        try { await muxRequest(`/assets/${data.id}`, 'DELETE'); }
+        catch (error) {
+          if (!(error instanceof MuxApiError && error.status === 404)) throw error;
+        }
+      }
+      // If Mux doesn't supply a trustworthy duration, keep it processing.
+      // No route permits publishing an asset before it passes this guard.
+      return NextResponse.json({ received: true });
+    }
+
+    await db.profileVideo.updateMany({
+      where: {
+        id: video.id,
+        status: { in: ['WAITING', 'PROCESSING'] },
+        OR: [{ muxAssetId: null }, { muxAssetId: data.id }],
       },
+      data: { muxAssetId: data.id, status: 'READY', durationSecs: data.duration },
     });
   } else if (event.type === 'video.asset.errored' && data.id) {
     await db.profileVideo.updateMany({
@@ -65,7 +94,7 @@ export async function POST(request: Request) {
     });
   } else if (event.type === 'video.asset.deleted' && data.id) {
     await db.profileVideo.updateMany({
-      where: { muxAssetId: data.id },
+      where: { muxAssetId: data.id, status: { not: 'TOO_LONG' } },
       data: { status: 'DELETED', isPublished: false, muxPlaybackId: null },
     });
   }
