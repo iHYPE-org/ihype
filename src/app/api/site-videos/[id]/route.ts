@@ -25,10 +25,12 @@ export async function PATCH(
 ) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: 'Login required.' }, { status: 401 });
-  if (!isVideoUploadEnabled()) return NextResponse.json({ error: 'Video host not configured.' }, { status: 503 });
   let action: 'publish' | 'unpublish';
   try { action = z.object({ action: z.enum(['publish', 'unpublish']) }).strict().parse(await request.json()).action; }
   catch { return NextResponse.json({ error: 'Invalid video action.' }, { status: 400 }); }
+  if (action === 'publish' && !isVideoUploadEnabled()) {
+    return NextResponse.json({ error: 'New video publishing is paused.' }, { status: 503 });
+  }
   const { id } = await params;
   const video = await ownedVideo(session, id);
   if (!video) return NextResponse.json({ error: 'Video unavailable.' }, { status: 404 });
