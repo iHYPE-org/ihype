@@ -40,7 +40,7 @@ export async function GET(request: Request) {
     orderBy: { createdAt: 'desc' },
     select: {
       id: true, title: true, quality: true, status: true, isPublished: true,
-      durationSecs: true, muxPlaybackId: true, createdAt: true, archiveKey: true,
+      durationSecs: true, muxPlaybackId: true, createdAt: true, archiveKey: true, archiveUploadId: true,
     },
   }));
   return NextResponse.json({ videos, enabled: isVideoUploadEnabled(), archiveEnabled: isR2VideoArchiveEnabled() }, { headers: { 'Cache-Control': 'private, no-store' } });
