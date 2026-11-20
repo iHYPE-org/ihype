@@ -428,7 +428,7 @@ export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
 
         {enabled && !site.published && (
           <p className="ih-builder-note" role="status">
-            Publish your website before making any video publicly playable. Uploading and reviewing private videos is still available.
+            {t('siteBuilder.publishWebsiteBeforeVideos', 'Publish your website before making any video publicly playable. Uploading and reviewing private videos is still available.')}
           </p>
         )}
         <div className="ih-builder-step"><span>LIBRARY</span><h3>{t("siteBuilder.yourVideos", "Your videos")}</h3></div>
@@ -446,12 +446,12 @@ export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
                     // Keep the emergency revoke control visible even after a
                     // Mux processing error or when new uploads are disabled.
                     <button type="button" disabled={busy || uploading}
-                      onClick={() => videoAction(video, 'unpublish')}>Unpublish</button>
+                      onClick={() => videoAction(video, 'unpublish')}>{t('siteBuilder.unpublishVideo', 'Unpublish')}</button>
                   ) : video.status === 'READY' && (
                     <button type="button"
                       disabled={busy || uploading || !enabled || !site.published
                         || profile.verificationStatus !== 'VERIFIED' || !profile.discoverable}
-                      onClick={() => videoAction(video, 'publish')}>Publish</button>
+                      onClick={() => videoAction(video, 'publish')}>{t('siteBuilder.publishVideo', 'Publish')}</button>
                   )}
                   {video.archiveKey && !video.archiveUploadId && <a href={`/api/site-videos/archive?videoId=${video.id}`}>{t("siteBuilder.getOriginal", "Get original")}</a>}
                   {video.archiveUploadId && <button type="button" disabled={busy} onClick={() => discardArchive(video)}>{t("siteBuilder.discardUnfinishedArchive", "Discard unfinished archive")}</button>}
