@@ -265,7 +265,7 @@ export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
         <aside className="ih-builder-preview" aria-label={t("siteBuilder.liveDesignPreview", "Live design preview")}>
           <div className="ih-builder-step"><span>PREVIEW</span><h2>{t("siteBuilder.yourOnepageWebsite", "Your one-page website")}</h2></div>
           <div className="ih-builder-preview-page" style={{ background: theme.background, color: theme.ink }}>
-            <div className="ih-builder-preview-hero" style={profile.heroImage ? { backgroundImage: `linear-gradient(0deg,rgba(0,0,0,.75),rgba(0,0,0,.45)),url("${profile.heroImage}")` } : {}}>
+            <div className="ih-builder-preview-hero" style={profile.heroImage ? { backgroundImage: `${theme.previewShade},url("${profile.heroImage}")` } : {}}>
               <strong className="ih-builder-preview-brand">iHYPE / {profile.type === 'ARTIST' ? 'Artist' : 'Venue'}</strong>
               <h3>{profile.name}</h3>
               <p>{site.tagline || profile.headline || 'Your music. Your story. Your stage.'}</p>
