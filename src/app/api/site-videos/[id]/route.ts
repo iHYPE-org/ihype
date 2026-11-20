@@ -79,7 +79,6 @@ export async function DELETE(
 ) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: 'Login required.' }, { status: 401 });
-  if (!isVideoUploadEnabled()) return NextResponse.json({ error: 'Video host not configured.' }, { status: 503 });
   const { id } = await params;
   const video = await ownedVideo(session, id);
   if (!video) return NextResponse.json({ error: 'Video unavailable.' }, { status: 404 });
