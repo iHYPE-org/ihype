@@ -26,33 +26,6 @@ const sections: Array<{ id: SectionId; label: string; help: string }> = [
   { id: 'contact', label: 'Contact details', help: 'Publicly show the contact info from your profile' },
 ];
 
-/**
- * Browser metadata is an early cost-saving check, not a trust boundary.
- * Mux's signed asset.ready webhook independently enforces the 15-minute cap.
- */
-async function localVideoDuration(file: File): Promise<number | null> {
-  return new Promise(resolve => {
-    const objectUrl = URL.createObjectURL(file);
-    const video = document.createElement('video');
-    let finished = false;
-    const complete = (duration: number | null) => {
-      if (finished) return;
-      finished = true;
-      clearTimeout(timeout);
-      video.onloadedmetadata = null;
-      video.onerror = null;
-      video.removeAttribute('src');
-      URL.revokeObjectURL(objectUrl);
-      resolve(duration);
-    };
-    video.preload = 'metadata';
-    video.onloadedmetadata = () => complete(Number.isFinite(video.duration) ? video.duration : null);
-    video.onerror = () => complete(null);
-    const timeout = setTimeout(() => complete(null), 5000);
-    video.src = objectUrl;
-  });
-}
-
 export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
   const { t } = useI18n();
   const [site, setSite] = useState<SiteConfig>({ ...DEFAULT_SITE_CONFIG, sections: { ...DEFAULT_SITE_CONFIG.sections } });
@@ -199,10 +172,6 @@ export function ProfileSiteBuilder({ profileId }: { profileId: string }) {
     activeUploadIdRef.current = null;
     setUploading(true); setUploadPhase('preparing');
     try {
-      const duration = await localVideoDuration(selectedFile);
-      if (duration !== null && duration > 15 * 60) {
-        throw new Error('Pilot videos must be 15 minutes or shorter. Trim this clip before uploading.');
-      }
       if (cancelledRef.current) throw new Error('Upload canceled.');
       const create = await fetch('/api/site-videos', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
