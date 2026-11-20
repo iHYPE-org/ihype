@@ -18,7 +18,7 @@ export async function muxRequest<T>(path: string, method: 'GET' | 'POST' | 'PUT'
   const id = readRuntimeEnv('MUX_TOKEN_ID');
   const secret = readRuntimeEnv('MUX_TOKEN_SECRET');
   if (!id || !secret) throw new MuxApiError(503);
-  if (!/^\/(uploads|assets)(\/[-_a-zA-Z0-9]+(\/playback-ids(\/[-_a-zA-Z0-9]+)?)?)?$/.test(path)) {
+  if (!/^\/(uploads(\/[-_a-zA-Z0-9]+(\/cancel)?)?|assets(\/[-_a-zA-Z0-9]+(\/playback-ids(\/[-_a-zA-Z0-9]+)?)?)?)$/.test(path)) {
     throw new Error('Invalid Mux API path.');
   }
   const response = await fetch(`https://api.mux.com/video/v1${path}`, {
