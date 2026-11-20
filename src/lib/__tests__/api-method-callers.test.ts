@@ -46,6 +46,7 @@ const METHODS: Method[] = ['GET', 'POST', 'PATCH', 'PUT', 'DELETE'];
  *  specific route wins and the catch-all's coverage is whatever is left.) */
 export const EXTERNAL_CALLERS: Record<string, string> = {
   'POST /api/webhooks/resend': 'Resend delivers bounce and complaint events; the smoke script probes it',
+  'POST /api/webhooks/mux': 'Mux Video sends signed processing-state events from its hosted webhook service',
 };
 
 function walk(dir: string, out: string[] = []): string[] {
