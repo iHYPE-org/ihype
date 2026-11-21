@@ -7,6 +7,8 @@ on:
       - .github/workflows/deploy-staging.yml
       - wrangler.staging.toml
       - scripts/worker-size-budget.mjs
+      - prisma/migrations/**
+      - prisma.config.ts
   workflow_dispatch:
 
 permissions:
@@ -42,9 +44,41 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
+  migration-rehearsal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: ihype
+          POSTGRES_PASSWORD: ihype
+          POSTGRES_DB: ihype
+        ports:
+          - 55432:5432
+        options: >-
+          --health-cmd "pg_isready -U ihype -d ihype"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://ihype:ihype@localhost:55432/ihype
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - run: npm ci
+      - name: Rehearse migrations on an empty database
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c 'CREATE EXTENSION IF NOT EXISTS pg_trgm; CREATE EXTENSION IF NOT EXISTS citext;'
+          npx --no-install prisma migrate deploy
+          npx --no-install prisma migrate status
+
   deploy:
     if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
-    needs: package
+    needs: [package, migration-rehearsal]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment: Staging – ihype
@@ -55,18 +89,49 @@ jobs:
         with:
           node-version: '24'
           package-manager-cache: false
-      - run: npm ci --ignore-scripts
+      - run: npm ci
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: ihype-staging-bundle
           path: .open-next/
+      - name: Check deployment prerequisites
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.STAGING_CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.STAGING_CLOUDFLARE_ACCOUNT_ID }}
+          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+        run: |
+          node --input-type=module <<'JS'
+          const { CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, DATABASE_URL } = process.env;
+          if (!CLOUDFLARE_API_TOKEN || !/^[\da-f]{32}$/i.test(CLOUDFLARE_ACCOUNT_ID ?? '')) {
+            throw new Error('Configure the staging Cloudflare deployment secrets.');
+          }
+          let url;
+          try {
+            url = new URL(DATABASE_URL);
+          } catch {
+            throw new Error('Configure STAGING_DATABASE_URL with the staging Postgres connection.');
+          }
+          const ref = 'rayldncrvaqvzygsdnjr';
+          const direct = url.hostname === `db.${ref}.supabase.co` && url.username === 'postgres';
+          const session = /^aws-\d+-us-east-1\.pooler\.supabase\.com$/.test(url.hostname)
+            && url.username === `postgres.${ref}`;
+          const allowedQuery = [...url.searchParams].every(([key, value]) =>
+            (key === 'sslmode' && value === 'require') || (key === 'schema' && value === 'public'));
+          if (!['postgres:', 'postgresql:'].includes(url.protocol) || (!direct && !session)
+            || (url.port && url.port !== '5432') || url.pathname !== '/postgres'
+            || !url.password || url.searchParams.get('sslmode') !== 'require'
+            || !allowedQuery || url.hash) {
+            throw new Error('STAGING_DATABASE_URL must target iHYPE Staging over TLS on port 5432.');
+          }
+          JS
+      - name: Apply Prisma migrations to iHYPE Staging
+        env:
+          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+        run: |
+          npx --no-install prisma migrate deploy
+          npx --no-install prisma migrate status
       - name: Deploy the staging Worker
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.STAGING_CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.STAGING_CLOUDFLARE_ACCOUNT_ID }}
-        run: |
-          if [[ -z "$CLOUDFLARE_API_TOKEN" || -z "$CLOUDFLARE_ACCOUNT_ID" ]]; then
-            echo "::error::Configure the staging Cloudflare deployment secrets in Staging – ihype."
-            exit 1
-          fi
-          npx --no-install wrangler deploy --config wrangler.staging.toml --autoconfig=false
+        run: npx --no-install wrangler deploy --config wrangler.staging.toml --autoconfig=false
