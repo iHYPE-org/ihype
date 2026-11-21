@@ -46,12 +46,14 @@ const BUDGET_BYTES = 9 * MIB;
 const WRANGLER_CLI = join(process.cwd(), 'node_modules', 'wrangler', 'bin', 'wrangler.js');
 
 function main() {
+  const config = process.env.WORKER_SIZE_WRANGLER_CONFIG;
+  const configArgs = config ? ['--config', config] : [];
   const outdir = mkdtempSync(join(tmpdir(), 'worker-size-budget-'));
   let stdout;
   try {
     stdout = execFileSync(
       process.execPath,
-      [WRANGLER_CLI, 'deploy', 'worker.js', '--autoconfig=false', '--dry-run', `--outdir=${outdir}`],
+      [WRANGLER_CLI, 'deploy', 'worker.js', '--autoconfig=false', '--dry-run', `--outdir=${outdir}`, ...configArgs],
       {
         encoding: 'utf8',
         env: {

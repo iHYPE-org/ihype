@@ -1,0 +1,43 @@
+# Deploy explicitly with --config wrangler.staging.toml.
+name = "ihype-staging"
+main = "worker.js"
+compatibility_date = "2026-05-29"
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public", "no_handle_cross_request_promise_resolution"]
+find_additional_modules = true
+rules = [
+  { type = "CompiledWasm", globs = ["**/*.wasm"], fallthrough = true }
+]
+base_dir = ".open-next/server-functions/default"
+
+# Attach the custom domain only after its Cloudflare Access policy is in place.
+workers_dev = false
+preview_urls = false
+
+[limits]
+cpu_ms = 1500
+
+[assets]
+directory = ".open-next/assets"
+binding = "ASSETS"
+
+[vars]
+AUTH_TRUST_HOST = "true"
+AUTH_URL = "https://staging.ihype.org"
+NEXT_PUBLIC_APP_URL = "https://staging.ihype.org"
+NEXT_PUBLIC_BASE_URL = "https://staging.ihype.org"
+R2_PUBLIC_BASE_URL = "https://staging.ihype.org"
+FEATURE_ENABLE_TICKET_PAYMENTS = "false"
+FEATURE_ENABLE_VIDEO_UPLOADS = "false"
+FEATURE_ENABLE_R2_VIDEO_ARCHIVE = "false"
+
+[[durable_objects.bindings]]
+name = "RATE_LIMITER_DO"
+class_name = "RateLimiterDO"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["RateLimiterDO"]
+
+[[services]]
+binding = "WORKER_SELF_REFERENCE"
+service = "ihype-staging"
