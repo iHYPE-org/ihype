@@ -4,7 +4,7 @@ The staging Worker is `ihype-staging`. The intended hostname is
 `staging.ihype.org`. The GitHub Actions workflow **Build and deploy iHYPE
 staging** validates the bundle on pull requests that change its config. Only
 a manual run on `main` deploys it, using the GitHub environment
-`Staging – ihype` and its `STAGING_CLOUDFLARE_API_TOKEN`,
+`Staging` and its `STAGING_CLOUDFLARE_API_TOKEN`,
 `STAGING_CLOUDFLARE_ACCOUNT_ID`, and `STAGING_DATABASE_URL` secrets.
 
 ## First deployment
