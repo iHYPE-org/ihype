@@ -90,6 +90,7 @@ exclude:
   - workers/
   - wrangler.cron.toml
   - wrangler.toml
+  - wrangler.staging.toml
 
 # The plugin that makes front-matter-less markdown renderable in the first
 # place. Off, so a file that slips past `exclude` is still not a page.
