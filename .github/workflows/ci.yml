@@ -535,4 +535,9 @@ jobs:
             lighthouse-budget-report.json
             lighthouse-failed-run.json
             playwright-first-paint-report.json
+            lighthouse-paint-evidence.json
+            lighthouse-control-evidence.json
+            lighthouse-browser-evidence.json
+            lighthouse-public-page.png
+            lighthouse-public-trace.jpg
           if-no-files-found: ignore
