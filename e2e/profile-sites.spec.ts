@@ -167,6 +167,77 @@ test.describe('One-page site navigation and privacy', () => {
     }
   });
 
+  test('verified artist and venue publish a shared show and the artist plays public-domain audio', async ({ page, context, browser }) => {
+    test.setTimeout(90_000);
+    const venueContext = await browser.newContext();
+    const guest = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true });
+    try {
+      const artist = await signedIn(context, 'open-media-artist', 'ARTIST', true);
+      const venue = await signedIn(venueContext, 'open-media-venue', 'VENUE', true);
+      const trackTitle = 'Waveform by Wyatt915 (public domain)';
+      const showTitle = 'QA Soundcheck';
+      const showSlug = `e2e-open-media-${RUN}`;
+      // Source and public-domain dedication: https://commons.wikimedia.org/wiki/File:Waveform.ogg
+      const media = await fetch('https://upload.wikimedia.org/wikipedia/commons/2/2d/Waveform.ogg', {
+        headers: { 'User-Agent': 'iHYPE-creator-QA/1.0 (https://ihype.org/)' },
+        signal: AbortSignal.timeout(20_000),
+      });
+      expect(media.ok, `Public-domain fixture request returned ${media.status}`).toBe(true);
+      const bytes = Buffer.from(await media.arrayBuffer());
+      expect(bytes.subarray(0, 4).toString('ascii')).toBe('OggS');
+
+      const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: databaseUrl() }) });
+      try {
+        const { ownerId } = await prisma.profile.findUniqueOrThrow({
+          where: { id: venue.id }, select: { ownerId: true },
+        });
+        await prisma.show.create({ data: {
+          slug: showSlug, title: showTitle, startsAt: new Date(Date.now() + 86_400_000),
+          timeZone: 'America/New_York', creatorId: ownerId, venueProfileId: venue.id,
+          headlinerProfileId: artist.id, status: 'SCHEDULED', moderationStatus: 'APPROVED',
+        } });
+        await prisma.artistMediaAsset.create({ data: {
+          hexId: `0x${Buffer.from(RUN).toString('hex')}`, profileId: artist.id, title: trackTitle,
+          originalFileName: 'Waveform.ogg', mimeType: 'audio/ogg', fileSizeBytes: bytes.length,
+          fileDataBase64: bytes.toString('base64'), isPublished: true,
+        } });
+      } finally {
+        await prisma.$disconnect();
+      }
+
+      const venuePage = await venueContext.newPage();
+      const visitor = await guest.newPage();
+      for (const { ownerPage, profile } of [{ ownerPage: page, profile: artist }, { ownerPage: venuePage, profile: venue }]) {
+        await ownerPage.goto(`/app/me/sites/${profile.id}`);
+        await ownerPage.getByRole('button', { name: /Publish website/i }).click();
+        await expect(ownerPage.locator('.ih-builder-success')).toContainText(/website published/i);
+        await visitor.goto(`/site/${profile.slug}`);
+        await expect(visitor.locator('.ih-site h1')).toHaveText(profile.name);
+        await expect(visitor.locator('#shows').getByRole('link', { name: new RegExp(showTitle) }))
+          .toHaveAttribute('href', `/shows/${showSlug}`);
+        await expect(visitor.locator('#contact')).toHaveCount(0);
+
+        if (profile.type === 'ARTIST') {
+          const audio = visitor.locator('#music audio');
+          await expect(audio).toHaveAccessibleName(`Play ${trackTitle}`);
+          await audio.evaluate(async element => { await (element as HTMLAudioElement).play(); });
+          await expect.poll(() => audio.evaluate(element => (element as HTMLAudioElement).currentTime))
+            .toBeGreaterThan(0);
+        } else {
+          await expect(visitor.locator('#music')).toHaveCount(0);
+        }
+
+        await ownerPage.getByRole('button', { name: /Save draft \/ Unpublish/i }).click();
+        await expect(ownerPage.locator('.ih-builder-success')).toContainText(/draft saved/i);
+        await visitor.reload();
+        await expect(visitor.locator('.ih-site')).toHaveCount(0);
+      }
+    } finally {
+      await guest.close();
+      await venueContext.close();
+    }
+  });
+
   test('hiding a previously published profile immediately hides its site', async ({ context, page }) => {
     const artist = await signedIn(context, 'private-artist', 'ARTIST', true);
     await page.goto(`/app/me/sites/${artist.id}`);
