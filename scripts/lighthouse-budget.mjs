@@ -42,7 +42,7 @@
  * (default http://localhost:3100), backed by a real (if empty) Postgres so
  * data-backed pages don't hang retrying an unreachable DB.
  */
-import { launch } from 'chrome-launcher';
+import { launch, Launcher } from 'chrome-launcher';
 import lighthouse from 'lighthouse';
 import { appendFileSync, writeFileSync } from 'node:fs';
 import {
@@ -283,7 +283,22 @@ const CHROME_FLAGS = [
 ];
 
 function launchAuditChrome(chromePath) {
-  return launch({ chromePath, chromeFlags: CHROME_FLAGS });
+  // chrome-launcher 1.2.2 disables RenderDocument, which can delay first
+  // paint in headless mobile audits. 1.2.3 removes it from the defaults.
+  const defaultFlags = Launcher.defaultFlags().flatMap(flag => {
+    const prefix = '--disable-features=';
+    if (!flag.startsWith(prefix)) return [flag];
+
+    const features = flag.slice(prefix.length).split(',')
+      .filter(feature => feature !== 'RenderDocument');
+    return features.length ? [prefix + features.join(',')] : [];
+  });
+
+  return launch({
+    chromePath,
+    ignoreDefaultFlags: true,
+    chromeFlags: [...defaultFlags, ...CHROME_FLAGS],
+  });
 }
 
 async function auditPageOnce(baseUrl, chromePort, page, authenticatedHeaders) {
