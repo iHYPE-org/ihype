@@ -4,18 +4,20 @@ The staging Worker is `ihype-staging`. The intended hostname is
 `staging.ihype.org`. The GitHub Actions workflow **Build and deploy iHYPE
 staging** validates the bundle on pull requests that change its config. Only
 a manual run on `main` deploys it, using the GitHub environment
-`Staging – ihype` and its `STAGING_CLOUDFLARE_API_TOKEN` and
-`STAGING_CLOUDFLARE_ACCOUNT_ID` secrets.
+`Staging – ihype` and its `STAGING_CLOUDFLARE_API_TOKEN`,
+`STAGING_CLOUDFLARE_ACCOUNT_ID`, and `STAGING_DATABASE_URL` secrets.
 
 ## First deployment
 
-1. Prepare a separate Postgres instance with synthetic data. Enable
-   `pg_trgm` and `citext` and run `npx prisma migrate deploy` against its
-   direct connection. Verify the database is the staging instance before
-   running migrations. Supply its runtime connection as the staging Worker's
-   `DATABASE_URL` secret along with a unique `AUTH_SECRET`.
-2. Run the manual GitHub workflow to create the Worker. Install Worker secrets
-   using `wrangler secret put <NAME> --config wrangler.staging.toml`.
+1. Use the separate **iHYPE Staging** Supabase project
+   (`rayldncrvaqvzygsdnjr`). Its `pg_trgm` and `citext` extensions are
+   installed. Add its direct or session-pooler Postgres URL with TLS
+   (`sslmode=require`) as `STAGING_DATABASE_URL` in the staging GitHub
+   environment. The workflow rehearses the migrations on empty Postgres
+   before applying them to the staging project.
+2. Run the manual GitHub workflow to migrate and create the Worker. Install Worker secrets
+   using `wrangler secret put <NAME> --config wrangler.staging.toml`,
+   including a staging runtime `DATABASE_URL` and a unique `AUTH_SECRET`.
    Configure a staging sign-in method and disposable verified artist and
    venue accounts before browser QA. Attach a separate staging media bucket
    when testing audio uploads.
@@ -37,5 +39,5 @@ a manual run on `main` deploys it, using the GitHub environment
    [profile sites and Mux](profile-sites-mux-4k.md) for the test cases.
    Mux staging and production share billing.
 
-The staging workflow has no database migration step or production credentials.
+The staging workflow accepts database URLs only for the staging project and uses staging credentials.
 Ticket payments and R2 video archival are disabled in staging.
