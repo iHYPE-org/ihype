@@ -42,7 +42,7 @@ import { readList, readValue } from '@/lib/read-list';
 
 
 export const metadata: Metadata = {
-  title: 'Admin Beta Console | iHYPE.org',
+  title: 'Admin Beta Console',
   robots: { index: false, follow: false }
 };
 

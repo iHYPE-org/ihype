@@ -534,6 +534,7 @@ jobs:
           path: |
             lighthouse-budget-report.json
             lighthouse-failed-run.json
+            playwright-first-paint-report.json
             lighthouse-paint-evidence.json
             lighthouse-control-evidence.json
             lighthouse-browser-evidence.json

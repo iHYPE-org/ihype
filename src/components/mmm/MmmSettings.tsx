@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { clearPrivateCaches } from '@/lib/private-cache';
+import { QuizNotificationSetting } from '@/components/mmm/QuizNotificationSetting';
 import { unregisterNativePushDevice } from '@/lib/native-push-device';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -326,15 +327,25 @@ export function MmmSettings() {
     const prev = discoverable;
     setDiscoverable(next);
     setSavingDiscoverable(true);
+    setError(null);
     try {
       const res = await fetch('/api/me', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ discoverable: next }),
       });
-      if (!res.ok) setDiscoverable(prev);
+      const result = await res.json() as { error?: string; warning?: string };
+      if (!res.ok) {
+        setDiscoverable(prev);
+        setError(result.error || t('settingsPage.saveFailed', 'Failed to save'));
+      } else if (result.warning) {
+        // Profile visibility was saved; retain the hidden toggle, but report
+        // any Mux playback IDs that still need external cleanup.
+        setError(result.warning);
+      }
     } catch {
       setDiscoverable(prev);
+      setError(t('settingsPage.networkError', 'Network error'));
     } finally {
       setSavingDiscoverable(false);
     }
@@ -497,6 +508,7 @@ export function MmmSettings() {
     <div className="settings-page settings-col">
       <Link className="mmm-charter-back" href="/app/me?panel=settings">‹ Me</Link>
       <h1>{t('settingsPage.title', 'Settings')}</h1>
+      <p><Link href="/app/me/settings/experience">{t('myExperience.title', 'Appearance & Experience')} →</Link></p>
 
       {loading ? (
         <p style={{ color: 'var(--ink-a65)', fontFamily: 'var(--font-mono)', fontSize: '0.9375rem' }}>{t('settingsPage.loading', 'Loading…')}</p>
@@ -692,6 +704,7 @@ export function MmmSettings() {
               the member at the top of a long page to hunt for it. */}
           <div className="settings-section" id="notifications">
             <div className="settings-section-title">{t('settingsPage.notifications', 'Notifications')}</div>
+            <QuizNotificationSetting />
             <div className="settings-group">
               <Row action={<Toggle checked={prefs.newShows} label={t('settingsPage.ticketDrops', 'Ticket drops')} onChange={(v) => setPrefs((p) => ({ ...p, newShows: v }))} />} detail={t('settingsPage.ticketDropsDetail', 'When artists you follow announce shows')} label={t('settingsPage.ticketDrops', 'Ticket drops')} />
               <Row action={<Toggle checked={prefs.milestones} label={t('settingsPage.hypeMilestones', 'Hype milestones')} onChange={(v) => setPrefs((p) => ({ ...p, milestones: v }))} />} detail={t('settingsPage.hypeMilestonesDetail', 'When your tracks hit hype thresholds')} label={t('settingsPage.hypeMilestones', 'Hype milestones')} />

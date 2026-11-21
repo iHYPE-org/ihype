@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const profile = await db.profile.findUnique({ where: { slug }, select: { name: true } });
   const t = await getServerT();
   return {
-    title: profile ? `${t('venuesSlugOnboardingPage.metaTitlePrefix', 'Set up')} ${profile.name} · iHYPE` : t('venuesSlugOnboardingPage.metaTitleFallback', 'Venue Setup · iHYPE'),
+    title: profile ? `${t('venuesSlugOnboardingPage.metaTitlePrefix', 'Set up')} ${profile.name}` : t('venuesSlugOnboardingPage.metaTitleFallback', 'Venue Setup'),
     robots: { index: false, follow: false },
   };
 }

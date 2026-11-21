@@ -15,11 +15,11 @@ const base: GuideSummary = {
 };
 
 describe('buildGuide', () => {
-  it('gives a fan four tips with no ticks, and no wizard', () => {
+  it('gives a fan six tips with no ticks, and no wizard', () => {
     const guide = buildGuide({ ...base, role: 'FAN', profile: null });
     expect(guide.role).toBe('FAN');
     expect(guide.wizardHref).toBeNull();
-    expect(guide.steps.map((s) => s.id)).toEqual(['fan-listen', 'fan-map', 'fan-hype', 'fan-tickets']);
+    expect(guide.steps.map((s) => s.id)).toEqual(['fan-listen', 'fan-map', 'fan-hype', 'fan-tickets', 'fan-quiz', 'fan-experience']);
     expect(guide.steps.every((s) => s.done === null)).toBe(true);
     expect(guideProgress(guide)).toEqual({ done: 0, total: 0 });
   });

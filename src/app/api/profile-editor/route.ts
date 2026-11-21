@@ -7,6 +7,7 @@ import { EDITOR_SELECT_FIELDS, editorSchema } from '@/lib/profile-editor-schema'
 import { statOptionsForRole } from '@/lib/profile-stats-catalog';
 import { sanitizeStoredProfileLocation } from '@/lib/public-location';
 import { isStoredMediaUrl } from '@/lib/object-storage';
+import { revokeProfileVideoPlayback, VIDEO_REVOKE_WARNING } from '@/lib/revoke-profile-videos';
 
 export const dynamic = 'force-dynamic';
 
@@ -135,6 +136,7 @@ export async function PATCH(request: Request) {
     themePreset: body.themePreset || undefined,
     themeAccentTone: emptyToNull(body.themeAccentTone),
     themeBackdropTone: emptyToNull(body.themeBackdropTone),
+    themeFontPreset: emptyToNull(body.themeFontPreset),
     fanShareEnabled: body.fanShareEnabled,
     discoverable: body.discoverable,
     capacity: body.capacity,
@@ -182,5 +184,20 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: 'Database unavailable — your changes could not be saved. Please try again.' }, { status: 503 });
   }
 
-  return NextResponse.json({ ok: true, profile: updated });
+  let videoWarning: string | null = null;
+  // The profile page and public microsite are hidden by the DB update above.
+  // Revoke existing Mux public IDs next, but preserve cleanup IDs on provider
+  // failure so the member can still retry unpublishing/deleting videos.
+  if (body.discoverable === false && (profile.type === 'ARTIST' || profile.type === 'VENUE')) {
+    try {
+      const revoke = await revokeProfileVideoPlayback(profile.id);
+      if (revoke.failed) videoWarning = VIDEO_REVOKE_WARNING;
+    } catch {
+      videoWarning = VIDEO_REVOKE_WARNING;
+    }
+  }
+  return NextResponse.json({
+    ok: true, profile: updated,
+    ...(videoWarning ? { warning: videoWarning } : {}),
+  });
 }

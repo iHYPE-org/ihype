@@ -8,6 +8,7 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { HypeButton } from '@/components/HypeButton';
+import { MusicRecommendAction } from '@/components/MusicRecommendAction';
 import { MmmLikeButton } from '@/components/mmm/MmmLikeButton';
 import { FollowButton } from '@/components/FollowButton';
 import { ReportButton } from '@/components/ReportButton';
@@ -413,6 +414,7 @@ export default async function MmmArtistPage({
                   : <span aria-hidden="true" className="profile-release-art" />}
                 <span className="profile-release-body">
                   <span className="profile-release-title">{album.title}</span>
+                  <MusicRecommendAction kind="album" id={album.id} title={album.title} sharePath={`/app/artists/${profile.slug}?tab=albums`} />
                   <span className="profile-release-meta">
                     {[
                       album.releasedOn ? album.releasedOn.getUTCFullYear() : null,
@@ -441,6 +443,7 @@ export default async function MmmArtistPage({
                       </span>
                     </Link>
                     <ReleasePlayButton label={release.title} rows={playableRows} track={playableById.get(release.hexId)!} />
+                    <MusicRecommendAction kind="track" id={release.id} title={release.title} sharePath={`/app/tracks/${release.hexId}`} />
                   </li>
                 ))}
               </ul>
@@ -475,6 +478,7 @@ export default async function MmmArtistPage({
                       </span>
                     </Link>
                     <ReleasePlayButton label={release.title} rows={playableRows} track={playableById.get(release.hexId)!} />
+                    <MusicRecommendAction kind="track" id={release.id} title={release.title} sharePath={`/app/tracks/${release.hexId}`} />
                   </li>
                 ))}
               </ul>

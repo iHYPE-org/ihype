@@ -4,7 +4,7 @@ import { getCityHeatForRole } from '@/lib/recruiting-kit';
 import { getServerT } from '@/lib/i18n/server';
 
 export const metadata: Metadata = {
-  title: 'For Fans · iHYPE',
+  title: 'For Fans',
   description: 'Hype the artists you love, buy tickets at face value with zero platform fee, and see every ticket your HYPE link helps sell.',
 };
 

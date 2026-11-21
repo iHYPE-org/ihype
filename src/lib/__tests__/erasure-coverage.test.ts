@@ -26,7 +26,7 @@ const ERASED = new Set([
   'PushSubscription', 'NativeDeviceToken', 'Notification', 'NotificationPreference', 'Seed',
   'FanFavoriteMedia', 'FanPlaylist', 'ShowRsvp', 'ShowAttendee', 'SetlistVote',
   'ShowComment', 'MediaListen', 'ShowListen', 'Badge', 'BookingRequest',
-  'AdvertiserAccount',
+  'AdvertiserAccount', 'MusicQuizResponse',
 ]);
 
 /** Rows kept, with the person's identity removed or the link to them cut. */
@@ -85,6 +85,14 @@ describe('every model tied to a person is classified for erasure', () => {
     const called = new Set([...source.matchAll(/db\.([a-zA-Z]+)\./g)].map((m) => m[1]));
     const claimed = [...ERASED].filter((model) => !called.has(model[0].toLowerCase() + model.slice(1)));
     expect(claimed, 'ERASED names these, and privacy-actions.ts does not touch them').toEqual([]);
+  });
+
+  it('exports owned video metadata without exposing provider identifiers', () => {
+    const route = readFileSync('src/app/api/privacy/export/route.ts', 'utf8');
+    expect(route).toContain('videos: {');
+    expect(route).toContain('durationSecs: true');
+    expect(route).not.toContain('muxUploadId: true');
+    expect(route).not.toContain('muxPlaybackId: true');
   });
 
   it('the export carries the advertiser identity record, not only the campaigns', () => {

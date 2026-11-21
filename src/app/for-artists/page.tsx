@@ -5,7 +5,7 @@ import { getServerT } from '@/lib/i18n/server';
 import { SETTLEMENT_DAYS_AFTER_SHOW } from '@/lib/split-agreement';
 
 export const metadata: Metadata = {
-  title: 'For Artists · iHYPE',
+  title: 'For Artists',
   description: 'A signed split with every venue, paid to you directly after the show, your fans’ contact info, and tools to run your own shows.',
 };
 

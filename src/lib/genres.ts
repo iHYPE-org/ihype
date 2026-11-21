@@ -2,8 +2,7 @@
 // creator's dropdown, the artist/DJ genre picker, and anything else that offers
 // genre choices stay consistent and comprehensive. Genres users type freely
 // (e.g. the profile genre field) are still allowed — this is the suggested set,
-// not a hard allow-list. Ordered loosely by family so the dropdown reads well;
-// electronic leads since the platform skews DJ/electronic, but it's cross-genre.
+// not a hard allow-list. Sort the suggestions alphabetically for pickers.
 export const MUSIC_GENRES: string[] = [
   // Electronic / dance
   'House',
@@ -77,4 +76,4 @@ export const MUSIC_GENRES: string[] = [
   'Soundtrack',
   'Experimental',
   'Spoken Word',
-];
+].sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' }));

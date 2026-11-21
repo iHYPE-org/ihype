@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const profile = await db.profile.findUnique({ where: { slug }, select: { name: true } });
   if (!profile) return {};
-  return { title: `${profile.name} Calendar · iHYPE` };
+  return { title: `${profile.name} Calendar` };
 }
 
 export const dynamic = 'force-dynamic';

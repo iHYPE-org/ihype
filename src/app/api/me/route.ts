@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { isSupportedLocale } from '@/lib/i18n/locales';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { revokeProfileVideoPlayback, VIDEO_REVOKE_WARNING } from '@/lib/revoke-profile-videos';
 
 export const dynamic = 'force-dynamic';
 
@@ -96,6 +97,7 @@ export async function PATCH(req: Request) {
 
   await db.user.update({ where: { id: session.user.id }, data: updates });
 
+  let videoWarning: string | null = null;
   if (typeof body.discoverable === 'boolean') {
     const creatorProfile = await db.profile.findFirst({
       where: { ownerId: session.user.id, type: { in: ['ARTIST', 'VENUE'] } },
@@ -106,6 +108,14 @@ export async function PATCH(req: Request) {
     });
     if (creatorProfile) {
       await db.profile.update({ where: { id: creatorProfile.id }, data: { discoverable: body.discoverable } });
+      if (!body.discoverable) {
+        try {
+          const revoke = await revokeProfileVideoPlayback(creatorProfile.id);
+          if (revoke.failed) videoWarning = VIDEO_REVOKE_WARNING;
+        } catch {
+          videoWarning = VIDEO_REVOKE_WARNING;
+        }
+      }
     }
   }
 
@@ -128,5 +138,5 @@ export async function PATCH(req: Request) {
     });
   }
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, ...(videoWarning ? { warning: videoWarning } : {}) });
 }

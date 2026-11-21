@@ -6,7 +6,7 @@ import { getServerT } from '@/lib/i18n/server';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Community · iHYPE',
+  title: 'Community',
   robots: { index: false, follow: false },
 };
 

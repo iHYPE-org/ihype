@@ -68,6 +68,14 @@ function stepCopy(t: T, id: GuideStepId): { title: string; body: string } {
       title: t('gettingStarted.fanHypeTitle', 'HYPE the artists you back'),
       body: t('gettingStarted.fanHypeBody', 'A HYPE tells venues who their city wants to see. You can also ask a venue to book an act.'),
     };
+    case 'fan-quiz': return {
+      title: t('gettingStarted.fanQuizTitle', 'Try music trivia'),
+      body: t('gettingStarted.fanQuizBody', 'Play a quiz and share your score if you choose. Quiz alerts are optional in Me → Settings → Notifications.'),
+    };
+    case 'fan-experience': return {
+      title: t('gettingStarted.fanExperienceTitle', 'Make iHYPE yours'),
+      body: t('gettingStarted.fanExperienceBody', 'Explore appearance presets and simplify navigation in Me → Settings. You can always restore the original layout.'),
+    };
     case 'fan-tickets': return {
       title: t('gettingStarted.fanTicketsTitle', 'Keep your tickets here'),
       body: t('gettingStarted.fanTicketsBody', 'Tickets show a QR code at the door and still open with no signal.'),

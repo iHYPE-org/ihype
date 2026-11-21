@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { AdminSetupClient } from '@/components/AdminSetupClient';
 
 export const metadata: Metadata = {
-  title: 'Admin setup | iHYPE.org',
+  title: 'Admin setup',
   robots: { index: false, follow: false }
 };
 

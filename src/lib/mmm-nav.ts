@@ -140,6 +140,7 @@ const MMM_DETAIL_PREFIXES = [
   `${MMM_BASE}/venues/`,
   `${MMM_BASE}/tracks/`,
   `${MMM_BASE}/playlists/`,
+  `${MMM_BASE}/music-quiz/`,
 ] as const;
 
 export function isMmmDetailPath(pathname: string | null | undefined): boolean {

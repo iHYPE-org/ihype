@@ -11,7 +11,7 @@ import { getServerI18n } from '@/lib/i18n/server';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'My Tickets · Support · iHYPE',
+  title: 'My Tickets · Support',
   robots: { index: false, follow: false },
 };
 

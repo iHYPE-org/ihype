@@ -14,7 +14,7 @@ import { readRuntimeEnv } from '@/lib/runtime-env';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'System Status · iHYPE',
+  title: 'System Status',
   robots: { index: false, follow: false },
 };
 

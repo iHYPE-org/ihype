@@ -10,7 +10,7 @@ import { readList, readValue } from '@/lib/read-list';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Notifications · iHYPE',
+  title: 'Notifications',
   robots: { index: false, follow: false },
 };
 

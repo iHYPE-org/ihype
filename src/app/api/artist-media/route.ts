@@ -230,7 +230,7 @@ export async function POST(request: Request) {
     );
 
     if (!profile || !['ARTIST'].includes(profile.type)) {
-      return NextResponse.json({ error: 'Artist or DJ profile not found.' }, { status: 404 });
+      return NextResponse.json({ error: 'Artist profile not found.' }, { status: 404 });
     }
     if (!canManageOwnedResource(session, profile.ownerId)) {
       return NextResponse.json({ error: 'Only the profile owner can upload media.' }, { status: 403 });

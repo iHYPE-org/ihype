@@ -6,7 +6,7 @@ import { TransparencyPanel } from '@/components/info/TransparencyPanel';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Info | iHYPE.org',
+  title: 'Info',
   description: 'Trust & safety, transparency, privacy, terms, the charter and DMCA — the public record of how iHYPE operates.',
 };
 

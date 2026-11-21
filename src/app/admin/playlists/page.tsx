@@ -7,7 +7,7 @@ import { PlaylistCreateForm } from '@/components/admin/PlaylistCreateForm';
 import { PlaylistActions } from '@/components/admin/PlaylistActions';
 import { getServerT } from '@/lib/i18n/server';
 
-export const metadata: Metadata = { title: 'Curated Playlists · Admin · iHYPE' };
+export const metadata: Metadata = { title: 'Curated Playlists · Admin' };
 export const dynamic = 'force-dynamic';
 
 export default async function AdminPlaylistsPage() {

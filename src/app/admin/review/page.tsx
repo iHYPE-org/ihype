@@ -13,7 +13,7 @@ import React from 'react';
 import { getServerT } from '@/lib/i18n/server';
 
 export const metadata: Metadata = {
-  title: 'Review Queue | Admin | iHYPE.org',
+  title: 'Review Queue | Admin',
   robots: { index: false, follow: false }
 };
 

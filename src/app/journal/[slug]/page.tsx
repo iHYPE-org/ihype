@@ -31,7 +31,7 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const { slug } = await params;
   const found = await findEditorialPost(slug);
-  if (!found) return { title: 'Journal · iHYPE' };
+  if (!found) return { title: 'Journal' };
 
   const meta        = (found.metadata ?? {}) as EditorialMeta;
   const title       = `${meta.title ?? 'Journal'} · iHYPE`;

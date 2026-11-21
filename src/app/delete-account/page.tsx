@@ -28,7 +28,7 @@ import { getServerT } from '@/lib/i18n/server';
  * false in the direction that matters to a regulator.
  */
 export const metadata = {
-  title: 'Delete your account | iHYPE.org',
+  title: 'Delete your account',
   description: 'How to delete your iHYPE account and what happens to your data.',
 };
 

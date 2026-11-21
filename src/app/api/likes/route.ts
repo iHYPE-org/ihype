@@ -38,8 +38,8 @@ async function targetExists(targetType: z.infer<typeof likeSchema>['targetType']
       return profile?.type === 'VENUE';
     }
     case 'ALBUM': {
-      const media = await db.artistMediaAsset.findUnique({ where: { id: targetId }, select: { id: true } });
-      return Boolean(media);
+      const album = await db.album.findUnique({ where: { id: targetId }, select: { id: true, profile: { select: { discoverable: true } } } });
+      return Boolean(album?.profile.discoverable);
     }
     case 'ADVERTISEMENT': {
       const ad = await db.ad.findUnique({ where: { id: targetId }, select: { id: true } });
@@ -98,7 +98,7 @@ export async function GET(request: Request) {
         ? db.profile.findMany({ where: { id: { in: profileIds } }, select: { id: true, name: true, slug: true, city: true } })
         : Promise.resolve([]),
       albumIds.length
-        ? db.artistMediaAsset.findMany({ where: { id: { in: albumIds } }, select: { id: true, title: true, profile: { select: { name: true, slug: true } } } })
+        ? db.album.findMany({ where: { id: { in: albumIds } }, select: { id: true, title: true, profile: { select: { name: true, slug: true } } } })
         : Promise.resolve([]),
     ]);
     const profileById = new Map(profiles.map((p) => [p.id, p]));

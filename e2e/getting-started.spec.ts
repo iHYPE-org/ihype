@@ -75,5 +75,5 @@ test('a fan gets the tour, and ME → Info reopens it', async ({ context, page }
   await row.click();
   const dialog = page.getByRole('dialog', { name: 'How iHYPE works' });
   await expect(dialog).toBeVisible();
-  await expect(dialog.locator('.mmm-guide-step')).toHaveCount(4);
+  await expect(dialog.locator('.mmm-guide-step')).toHaveCount(6);
 });

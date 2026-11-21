@@ -35,6 +35,8 @@ export type LegalClause = { heading: string; body: string };
 /** ISO date of the last change to either part. Rendered in the reader's locale. */
 export const LEGAL_LAST_UPDATED = '2026-09-27';
 
+export const TICKET_REFUND_TERMS = 'Ticket prices are final. Refunds are issued only if a show is cancelled by the organizer; refund requests for cancelled shows must be made within 14 days. There are no refunds for personal reasons.';
+
 export const TERMS: readonly LegalClause[] = [
   {
     heading: 'Who can use iHYPE',
@@ -66,7 +68,7 @@ export const TERMS: readonly LegalClause[] = [
   },
   {
     heading: 'Refunds',
-    body: 'Ticket prices are final. Refunds are issued only if a show is cancelled by the organizer; refund requests for cancelled shows must be made within 14 days. There are no refunds for personal reasons.',
+    body: TICKET_REFUND_TERMS,
   },
   {
     heading: 'Limitation of liability',

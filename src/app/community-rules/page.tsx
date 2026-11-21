@@ -1,7 +1,7 @@
 import { TrustPolicyPage } from '@/components/TrustPolicyPage';
 import { getServerT } from '@/lib/i18n/server';
 
-export const metadata = { title: 'Community Rules | iHYPE.org' };
+export const metadata = { title: 'Community Rules' };
 
 export default async function CommunityRulesPage() {
   const t = await getServerT();

@@ -8,7 +8,10 @@ const urlText = z.string().trim().max(2048).nullable().optional();
 // profile hasn't set — so every optional field here must accept null,
 // not just undefined.
 export const editorSchema = z.object({
-  profileId: z.string().cuid(),
+  // Existing/seeded profiles can have opaque IDs outside Prisma's default
+  // cuid format (including the admin preview venue). Match Connect onboarding;
+  // the route still looks up the record and checks ownership before saving.
+  profileId: z.string().min(1).max(64).regex(/^[A-Za-z0-9_-]+$/),
   name: text(120),
   headline: text(180),
   bio: text(1000),

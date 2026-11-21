@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: 'Ticket · Support · iHYPE',
+    title: 'Ticket · Support',
     robots: { index: false, follow: false },
   };
 }

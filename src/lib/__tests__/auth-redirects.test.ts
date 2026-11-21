@@ -170,6 +170,15 @@ describe('isProtectedPath', () => {
     }
   });
 
+  it('serves standalone artist and venue websites without login, not their private tooling', () => {
+    expect(isProtectedPath('/site/test-artist')).toBe(false);
+    expect(isProtectedPath('/site/test-venue')).toBe(false);
+    expect(isProtectedPath('/site')).toBe(true);
+    expect(isProtectedPath('/site/test-artist/edit')).toBe(true);
+    expect(isProtectedPath('/site/test-artist/owner')).toBe(true);
+    expect(isProtectedPath('/app/me/sites/test-artist')).toBe(true);
+  });
+
   it('depth-limits the other single-segment public entry points', () => {
     expect(isProtectedPath('/h/abc')).toBe(false);
     expect(isProtectedPath('/h/abc/anything')).toBe(true);

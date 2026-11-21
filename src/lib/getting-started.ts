@@ -54,7 +54,9 @@ export type GuideStepId =
   | 'fan-listen'
   | 'fan-map'
   | 'fan-hype'
-  | 'fan-tickets';
+  | 'fan-tickets'
+  | 'fan-quiz'
+  | 'fan-experience';
 
 export type GuideStep = { id: GuideStepId; href: string; done: boolean | null };
 
@@ -82,6 +84,8 @@ export function buildGuide(summary: GuideSummary): Guide {
         { id: 'fan-map', href: '/app/map?layer=events', done: null },
         { id: 'fan-hype', href: '/app/music/charts', done: null },
         { id: 'fan-tickets', href: '/app/tickets', done: null },
+        { id: 'fan-quiz', href: '/app/music-quiz', done: null },
+        { id: 'fan-experience', href: '/app/me/settings/experience', done: null },
       ],
     };
   }
