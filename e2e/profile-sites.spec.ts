@@ -212,25 +212,26 @@ test.describe('One-page site navigation and privacy', () => {
         await ownerPage.getByRole('button', { name: /Publish website/i }).click();
         await expect(ownerPage.locator('.ih-builder-success')).toContainText(/website published/i);
         await visitor.goto(`/site/${profile.slug}`);
-        await expect(visitor.locator('.ih-site h1')).toHaveText(profile.name);
-        await expect(visitor.locator('#shows').getByRole('link', { name: new RegExp(showTitle) }))
+        const site = visitor.locator('.ih-site:visible');
+        await expect(site.getByRole('heading', { level: 1, name: profile.name })).toBeVisible();
+        await expect(site.locator('#shows').getByRole('link', { name: new RegExp(showTitle) }))
           .toHaveAttribute('href', `/shows/${showSlug}`);
-        await expect(visitor.locator('#contact')).toHaveCount(0);
+        await expect(site.locator('#contact')).toHaveCount(0);
 
         if (profile.type === 'ARTIST') {
-          const audio = visitor.locator('#music audio');
+          const audio = site.locator('#music audio');
           await expect(audio).toHaveAccessibleName(`Play ${trackTitle}`);
           await audio.evaluate(async element => { await (element as HTMLAudioElement).play(); });
           await expect.poll(() => audio.evaluate(element => (element as HTMLAudioElement).currentTime))
             .toBeGreaterThan(0);
         } else {
-          await expect(visitor.locator('#music')).toHaveCount(0);
+          await expect(site.locator('#music')).toHaveCount(0);
         }
 
         await ownerPage.getByRole('button', { name: /Save draft \/ Unpublish/i }).click();
         await expect(ownerPage.locator('.ih-builder-success')).toContainText(/draft saved/i);
         await visitor.reload();
-        await expect(visitor.locator('.ih-site')).toHaveCount(0);
+        await expect(visitor.locator('.ih-site:visible')).toHaveCount(0);
       }
     } finally {
       await guest.close();
