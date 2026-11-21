@@ -53,7 +53,7 @@ export type MmmShelfTile = {
   onSelect?: () => void;
   /** Currently playing: lights the tile's edge. */
   active?: boolean;
-  /** Overrides the derived one. Say what a tap does, not what the tile is. */
+  /** Describes what activating the tile does. */
   label?: string;
 };
 
@@ -124,16 +124,15 @@ export function MmmShelf({
               {tile.sub && <span className="mmm-shelf-sub">{tile.sub}</span>}
             </>
           );
-          const label = tile.label && tile.sub ? `${tile.label} ${tile.sub}` : tile.label;
           const shared = {
             className: 'mmm-shelf-tile',
             'data-active': tile.active ? 'true' : undefined,
             key: tile.id,
           };
           return tile.href
-            ? <Link {...shared} aria-label={label} href={tile.href}>{art}</Link>
+            ? <Link {...shared} aria-description={tile.label} href={tile.href}>{art}</Link>
             : (
-              <button {...shared} aria-label={label} onClick={tile.onSelect} type="button">
+              <button {...shared} aria-description={tile.label} onClick={tile.onSelect} type="button">
                 {art}
               </button>
             );
