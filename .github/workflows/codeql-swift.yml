@@ -23,7 +23,7 @@ jobs:
         language: [actions, javascript-typescript, java-kotlin]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      - uses: github/codeql-action/init@793b778da9c9275a0f276522b27cb5fc14bba279
+      - uses: github/codeql-action/init@38112626f97ac1fd7acf3df7ebca51f4677c1b38
         with:
           languages: ${{ matrix.language }}
           build-mode: none
@@ -55,7 +55,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx cap sync ios
-      - uses: github/codeql-action/init@793b778da9c9275a0f276522b27cb5fc14bba279
+      - uses: github/codeql-action/init@38112626f97ac1fd7acf3df7ebca51f4677c1b38
         with:
           languages: swift
           build-mode: manual
