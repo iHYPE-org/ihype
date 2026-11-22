@@ -53,8 +53,8 @@ export type MmmShelfTile = {
   onSelect?: () => void;
   /** Currently playing: lights the tile's edge. */
   active?: boolean;
-  /** Overrides the derived one. Say what a tap does, not what the tile is. */
-  label?: string;
+  /** Screen-reader action prefix, such as “Play”. */
+  actionLabel?: string;
 };
 
 /** Which of the six walnut treatments this item gets, stable across sessions. */
@@ -114,6 +114,7 @@ export function MmmShelf({
         {tiles.map((tile) => {
           const art = (
             <>
+              {tile.actionLabel && <span className="sr-only">{tile.actionLabel}{' '}</span>}
               <span aria-hidden="true" className="mmm-shelf-art" data-tone={toneFor(tile.id)}>
                 {tile.artworkUrl
                   // eslint-disable-next-line @next/next/no-img-element -- uploader-sized remote artwork, same as the full player
@@ -130,9 +131,9 @@ export function MmmShelf({
             key: tile.id,
           };
           return tile.href
-            ? <Link {...shared} aria-label={tile.label} href={tile.href}>{art}</Link>
+            ? <Link {...shared} href={tile.href}>{art}</Link>
             : (
-              <button {...shared} aria-label={tile.label} onClick={tile.onSelect} type="button">
+              <button {...shared} onClick={tile.onSelect} type="button">
                 {art}
               </button>
             );

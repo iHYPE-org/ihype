@@ -132,7 +132,7 @@ export function MmmAccessibilitySettings() {
           ) : null}
           <div className="mmm-settings-card-controls">
             <button
-              aria-label={t('appShell.a11y.textSmaller', 'Smaller text')}
+              aria-label={`A − ${t('appShell.a11y.textSmaller', 'Smaller text')}`}
               className="mmm-settings-pill"
               disabled={settings.textScale <= TEXT_SCALE_MIN}
               onClick={() => stepScale(-TEXT_SCALE_STEP)}
@@ -141,7 +141,7 @@ export function MmmAccessibilitySettings() {
               A −
             </button>
             <button
-              aria-label={t('appShell.a11y.textBigger', 'Larger text')}
+              aria-label={`A + ${t('appShell.a11y.textBigger', 'Larger text')}`}
               className="mmm-settings-pill"
               disabled={settings.textScale >= TEXT_SCALE_MAX}
               onClick={() => stepScale(TEXT_SCALE_STEP)}
