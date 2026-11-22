@@ -344,6 +344,7 @@ export async function executeAccountErasure(
       where: { id: profile.id },
       data: {
         name: 'Deleted account',
+        discoverable: false,
         slug: `deleted-${profile.hexId.toLowerCase()}`,
         headline: null,
         bio: null,

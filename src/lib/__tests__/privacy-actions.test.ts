@@ -198,6 +198,7 @@ describe('executeAccountErasure', () => {
     )?.[0];
     expect(profileUpdate.data.name).toBe('Deleted account');
     expect(profileUpdate.data.slug).toBe('deleted-abc123');
+    expect(profileUpdate.data.discoverable).toBe(false);
     expect(profileUpdate.data.pressKitContent).toBeNull();
     expect(profileUpdate.data).toHaveProperty('siteConfig'); // The public website must be unpublished.
     // Never a profile.delete — shows and payout records must survive.
