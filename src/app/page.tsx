@@ -16,7 +16,7 @@ import { getServerT } from '@/lib/i18n/server';
 // nothing to match on. Access is by request while the product is pre-beta —
 // the description must not imply an open signup the invite gate then refuses.
 const TITLE = 'iHYPE — the free app for local music';
-const DESCRIPTION = 'Stream music from artists in your own city, free. Find the shows they are playing this week, and HYPE the ones you want more people to hear. Private alpha — request access.';
+const DESCRIPTION = 'Hear local artists, find nearby shows, and HYPE the music you love. Free and nonprofit. Private alpha — request access.';
 
 export const metadata: Metadata = {
   title: TITLE,

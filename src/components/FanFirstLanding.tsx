@@ -11,9 +11,9 @@ export async function FanFirstLanding({ stats, discovery }: { stats: ReactNode; 
   const t = await getServerT();
   const sections = [
     ['mission', t('fanFirstLanding.mission', 'Mission')],
-    ['story', t('fanFirstLanding.story', 'Our story')],
     ['discover', t('fanFirstLanding.discover', 'Discover')],
     ['grow-your-scene', t('fanFirstLanding.growYourScene', 'Grow your scene')],
+    ['story', t('fanFirstLanding.story', 'Our story')],
     ['transparency', t('fanFirstLanding.transparency', 'Transparency')],
   ] as const;
 
@@ -39,23 +39,13 @@ export async function FanFirstLanding({ stats, discovery }: { stats: ReactNode; 
         <section id="mission" className="fan-entry-hero">
           <div className="fan-entry-copy">
             <p className="fan-entry-kicker">{t('fanFirstLanding.kicker', 'Private alpha')} · Portland, ME</p>
-            <h1>{t('fanFirstLanding.missionHeadline', 'Help your local music scene thrive.')}</h1>
+            <h1>{t('fanFirstLanding.missionHeadline', 'Your music scene starts with you.')}</h1>
             <p className="fan-entry-lead">
-              {t('fanFirstLanding.missionBody', 'iHYPE is a free nonprofit platform that helps people discover local music, find live shows, and give independent artists and venues more ways to reach their community.')}
+              {t('fanFirstLanding.missionBody', 'Find local artists. Catch their next show. HYPE the music you want more people to hear. iHYPE is free and nonprofit.')}
             </p>
             <div className="fan-entry-nav fan-entry-mission-actions">
               <a className="fan-entry-join" href="#discover">{t('fanFirstLanding.discoverLocalMusic', 'Discover local music')}</a>
-              <a className="fan-entry-secondary" href="#grow-your-scene">{t('fanFirstLanding.growYourScene', 'Grow your scene')}</a>
             </div>
-          </div>
-        </section>
-
-        <section id="story" className="fan-entry-section">
-          <h2>{t('fanFirstLanding.story', 'Our story')}</h2>
-          <p>{t('fanFirstLanding.storyBody', 'iHYPE starts in Portland, Maine, with a simple idea: the people who live in a place can help its music scene grow. We’re building one place to hear a local artist, find their next show, and bring a friend. What starts here can grow city by city, led by the people who know each scene best.')}</p>
-          <div className="fan-entry-nav">
-            <Link className="fan-entry-secondary" href="/for-artists">{t('fanFirstLanding.forArtists', 'For artists')}</Link>
-            <Link className="fan-entry-secondary" href="/for-venues">{t('fanFirstLanding.forVenues', 'For venues')}</Link>
           </div>
         </section>
 
@@ -67,20 +57,28 @@ export async function FanFirstLanding({ stats, discovery }: { stats: ReactNode; 
 
         <section id="grow-your-scene" className="fan-entry-section">
           <h2>{t('fanFirstLanding.growYourScene', 'Grow your scene')}</h2>
-          <p>{t('fanFirstLanding.growYourSceneBody', 'You can help whether you’re a listener, an artist, or a venue. HYPE the artists and shows you genuinely want more people to find. Do it often: every HYPE helps show what your community is excited about. Share iHYPE with friends, local bands, and the venues you love. Send someone a link, then make a plan to catch a show together.')}</p>
+          <p>{t('fanFirstLanding.growYourSceneBody', 'Every HYPE helps people find the artists and shows you love. Share iHYPE with a friend, a local band, or your favorite venue. Then pick a show and go together.')}</p>
           <div className="fan-entry-nav">
             <ShareButton path="/" title="iHYPE" includeReferral={false} label={t('fanFirstLanding.shareApp', 'Share iHYPE')} />
-            <a className="fan-entry-secondary" href="#request-access">{t('fanFirstLanding.requestAccess', 'Request access')}</a>
+          </div>
+        </section>
+
+        <section id="story" className="fan-entry-section">
+          <h2>{t('fanFirstLanding.story', 'Our story')}</h2>
+          <p>{t('fanFirstLanding.storyBody', 'We started in Portland, Maine, to make it easier to find the music being made down the street. Now we’re building iHYPE city by city with the fans, artists, and venues who know their scenes best.')}</p>
+          <div className="fan-entry-nav">
+            <Link className="fan-entry-secondary" href="/for-artists">{t('fanFirstLanding.forArtists', 'For artists')}</Link>
+            <Link className="fan-entry-secondary" href="/for-venues">{t('fanFirstLanding.forVenues', 'For venues')}</Link>
           </div>
         </section>
 
         <section id="transparency" className="fan-entry-section">
           <h2>{t('fanFirstLanding.transparency', 'Transparency')}</h2>
-          <p>{t('fanFirstLanding.transparencyBody', 'Listening, publishing, and using iHYPE are free. Music-related, radio-style advertising is our only paid service. iHYPE takes no platform cut of ticket sales and never sells your data.')}</p>
+          <p>{t('fanFirstLanding.transparencyBody', 'iHYPE is free to use, including listening and publishing. Our only paid service is radio-style ads for music. We take no cut of ticket sales and never sell your data.')}</p>
           <div aria-label={t('fanFirstLanding.statsLabel', 'Live iHYPE platform statistics')} className="fan-entry-stats">
             {stats}
           </div>
-          <Link className="fan-entry-secondary" href="/info?tab=transparency">{t('fanFirstLanding.readPublicRecord', 'See our nonprofit details and public record')}</Link>
+          <Link className="fan-entry-secondary" href="/info?tab=transparency">{t('fanFirstLanding.readPublicRecord', 'See our public record')}</Link>
         </section>
 
         <section id="request-access" className="fan-entry-section">
