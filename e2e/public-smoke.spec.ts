@@ -24,24 +24,24 @@ test.describe('Public application smoke', () => {
     await expect(page).toHaveURL(/\/login(?:\?|$)/, { timeout: 20_000 });
   });
 
-  test('anonymous landing does not expose playback controls', async ({ page }) => {
+  test('anonymous landing has three sections and no playback controls', async ({ page }) => {
     await page.goto('/');
     await expect(page.locator('.site-dock')).toHaveCount(0);
     await expect(page.getByRole('button', { name: /play now|pause/i })).toHaveCount(0);
-    // The positive control: the landing rendered its own primary call to
-    // action, so "no playback controls" means "this is the marketing page"
-    // rather than "the page failed to render".
-    //
-    // It used to look for a /register link. There has not been one on this
-    // page since 2026-08-09, when access became request-only — and
-    // `src/app/page.tsx` is explicit that the copy does NOT self-correct off
-    // the invite flag, because which doors are open is an operator decision
-    // and a page must not silently rewrite one. So the assertion had been
-    // wrong for two days about a deliberate product change. It went unnoticed
-    // because this whole step is gated behind the `full-ci` label and nothing
-    // had carried that label since the labelling mechanism itself was fixed.
-    await expect(page.locator('main a[href="#request-access"]').first()).toBeVisible();
-    await expect(page.locator('main .beta-access-row button[type="submit"]')).toBeVisible();
+    const landing = page.locator('.fan-entry');
+    const sections = landing.locator('section');
+    await expect(sections).toHaveCount(3);
+    expect(await sections.evaluateAll((elements) => elements.map(({ id }) => id))).toEqual([
+      'mission', 'story', 'transparency',
+    ]);
+    const sectionNav = landing.getByRole('navigation', { name: 'On this page' });
+    const links = sectionNav.getByRole('link');
+    await expect(links).toHaveText(['Mission', 'Our story', 'Transparency']);
+    expect(await links.evaluateAll((elements) => elements.map((link) => link.getAttribute('href')))).toEqual([
+      '#mission', '#story', '#transparency',
+    ]);
+    await expect(landing.getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/login');
+    await expect(landing.locator('audio, form')).toHaveCount(0);
     await expect(page.locator('.search-bar-desktop')).toHaveCount(0);
   });
 

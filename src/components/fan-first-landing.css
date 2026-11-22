@@ -39,11 +39,6 @@
   line-height: 1;
 }
 
-.fan-entry .fan-entry-mission-actions {
-  margin-top: 24px;
-  flex-wrap: wrap;
-}
-
 .fan-entry .fan-entry-section {
   padding-block: clamp(24px, 5vw, 56px);
   border-top: 1px solid var(--hair-100);
@@ -59,15 +54,4 @@
   max-width: 64ch;
   color: var(--ink-a72);
   line-height: 1.6;
-}
-
-.fan-entry .fan-entry-section .fan-entry-stats,
-.fan-entry .fan-entry-section .fan-entry-steps,
-.fan-entry .fan-entry-section .nearby-shows {
-  padding-inline: 0;
-  margin-inline: 0;
-}
-
-.fan-entry .fan-entry-section .fan-entry-nav {
-  flex-wrap: wrap;
 }
