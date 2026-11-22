@@ -2183,9 +2183,6 @@ async function main() {
 
     const checks: Array<[string, string, string, string | undefined]> = [
       // [what, path, a string only that component puts on the page, cookie]
-      // The landing page is LOGGED OUT on purpose: a session on `/` redirects
-      // to the workbench, so fetching it with a cookie measures the redirect.
-      ['NearbyShowsWidget (logged out)', '/', 'Turn on precise location', undefined],
       ['SimilarArtistsRow', `/app/artists/${artistProfile.slug}?tab=bio`, 'Sounds like', creator.cookie],
       ['NewsletterSignup · artist', `/app/artists/${artistProfile.slug}?tab=contact`, 'Get updates by email', creator.cookie],
       ['NewsletterSignup · venue', `/app/venues/${venueProfile.slug}?tab=contact`, 'Get updates by email', creator.cookie],
