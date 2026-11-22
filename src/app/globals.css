@@ -5223,17 +5223,6 @@ html.native-ios { --safe-top: 0px; }
 }
 .fan-entry-actions { margin-top: clamp(24px,2.5vw,34px); display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
 
-/* Request access is the hero's primary action while the product is pre-beta,
-   so it gets the width of the copy column rather than sitting inline with a
-   secondary link. RequestBetaAccessForm brings its own field styling — this
-   only sizes and introduces it. */
-.fan-entry-request { width: min(100%, 480px); }
-.fan-entry-request-lead {
-  margin: 0 0 12px;
-  color: var(--ink-a72);
-  font-size: clamp(.88rem,1.05vw,.98rem);
-  line-height: 1.55;
-}
 .fan-entry-secondary-line {
   margin: 14px 0 0;
   color: var(--ink-a65);
@@ -5252,60 +5241,6 @@ html.native-ios { --safe-top: 0px; }
   letter-spacing: .06em;
 }
 .fan-entry-assurance i { padding: 0 .4em; color: var(--fan-entry-orange-text); font-style: normal; }
-/* Shows near you, on the logged-out front door — see NearbyShowsWidget. Its
-   own classes, because the `.weekend-*` set it used to borrow went with the
-   `/this-weekend` page and it was rendering unstyled. */
-.nearby-shows { max-width: 900px; margin: 0 auto 28px; padding: 0 clamp(18px,3vw,42px); }
-.nearby-shows-prompt { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
-.nearby-shows-eyebrow { font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-3); }
-.nearby-shows-note { font-size: 0.9375rem; color: var(--ink-2); max-width: 900px; margin: 0 auto 28px; padding: 0 clamp(18px,3vw,42px); }
-.nearby-shows-cta {
-  min-height: 44px; display: inline-flex; align-items: center; padding: 0 18px;
-  border: 1px solid var(--line); border-radius: var(--radius-pill); background: var(--bg-surface);
-  color: var(--ink); font-size: 0.9375rem; font-weight: 500; cursor: pointer;
-}
-.nearby-shows-list { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
-.nearby-shows-item { border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--bg-surface); }
-.nearby-shows-link { display: flex; align-items: center; gap: 14px; min-height: 44px; padding: 12px 16px; text-decoration: none; color: inherit; }
-.nearby-shows-when { font-family: var(--font-mono); font-size: 0.9375rem; color: var(--ink-3); white-space: nowrap; }
-.nearby-shows-body { flex: 1; min-width: 0; }
-.nearby-shows-title { font-family: var(--font-display); font-size: 1rem; font-weight: 500; color: var(--ink); }
-.nearby-shows-meta { font-size: 0.9375rem; color: var(--ink-2); }
-.nearby-shows-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
-/* Tracked to .14em, not .1em: at 12px the mono-eyebrow exemption needs the
-   tracking, and a metadata chip is exactly what that exemption is for. */
-.nearby-shows-tag { font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3); border: 1px solid var(--line); border-radius: var(--radius-pill); padding: 2px 8px; }
-.nearby-shows-cta-text { font-size: 0.9375rem; color: var(--accent-text); white-space: nowrap; }
-
-.fan-entry-steps {
-  width: min(1420px,calc(100% - clamp(36px,8vw,140px)));
-  margin: 0 auto;
-  padding: 24px 0;
-  display: grid;
-  grid-template-columns: repeat(3,minmax(0,1fr));
-  border-top: 1px solid var(--hair-150);
-  border-bottom: 1px solid var(--hair-100);
-}
-.fan-entry-steps article { min-width: 0; padding: 4px clamp(18px,3vw,42px); display: flex; align-items: flex-start; gap: 16px; }
-.fan-entry-steps article:first-child { padding-left: 0; }
-.fan-entry-steps article + article { border-left: 1px solid var(--hair-100); }
-.fan-entry-steps strong { display: block; color: var(--fan-entry-paper); font: 800 clamp(1.05rem,1.4vw,1.35rem)/1.15 var(--f-d); }
-.fan-entry-steps p { max-width: 30ch; margin: 8px 0 0; color: var(--ink-a65); font-size: 0.9375rem; line-height: 1.45; }
-.fan-entry-stats {
-  width: min(1420px,calc(100% - clamp(36px,8vw,140px)));
-  min-height: 108px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: repeat(4,minmax(0,1fr));
-}
-.fan-entry-stats > div { min-width: 0; display: grid; place-content: center; text-align: center; }
-.fan-entry-stats > div + div { border-left: 1px solid var(--hair-100); }
-/* Empty when LandingStats suppressed an all-zero snapshot — see that file.
-   Without this the section keeps its min-height and leaves a labelled blank
-   band where four counters should be. */
-.fan-entry-stats:empty { display: none; }
-.fan-entry-stats strong { color: var(--fan-entry-paper); font: 800 clamp(1.45rem,2.4vw,2.45rem)/1 var(--f-d); letter-spacing: -.035em; }
-.fan-entry-stats span { margin-top: 8px; color: var(--fan-entry-teal); font: 700 clamp(0.9375rem,.58vw,.78rem)/1.3 var(--f-m); letter-spacing: .12em; text-transform: uppercase; }
 body:has(.fan-entry) { background: var(--bg); }
 body:has(.fan-entry) .adaptive-site-header,
 body:has(.fan-entry) .site-background,
@@ -5333,8 +5268,6 @@ body:has(.fan-entry) #main-content { width: 100%; }
   .fan-entry-hero { min-height: 0; padding: 48px 24px 38px; }
   .fan-entry-copy { width: min(100%,680px); }
   .fan-entry-copy h1 { max-width: 12ch; font-size: clamp(3.4rem,10.8vw,5.8rem); }
-  .fan-entry-steps { width: calc(100% - 48px); }
-  .fan-entry-stats { width: calc(100% - 48px); }
 }
 @media (max-width: 680px) {
   .fan-entry::before { top: 64px; }
@@ -5352,14 +5285,6 @@ body:has(.fan-entry) #main-content { width: 100%; }
   /* .75rem = 12px. Was .48rem (7.68px) — the smallest text in the app, on
      the page every visitor sees first. */
   .fan-entry-assurance { font-size: 0.9375rem; line-height: 1.6; text-align: center; }
-  .fan-entry-steps { width: calc(100% - 36px); padding: 6px 0; grid-template-columns: 1fr; }
-  .fan-entry-steps article { padding: 17px 0; }
-  .fan-entry-steps article + article { border-top: 1px solid var(--hair-100); border-left: 0; }
-  .fan-entry-steps p { max-width: none; }
-  .fan-entry-stats { width: calc(100% - 36px); min-height: 176px; grid-template-columns: repeat(2,minmax(0,1fr)); }
-  .fan-entry-stats > div + div { border-left: 0; }
-  .fan-entry-stats > div:nth-child(even) { border-left: 1px solid var(--hair-100); }
-  .fan-entry-stats > div:nth-child(n+3) { border-top: 1px solid var(--hair-100); }
   /* The light-theme border restatement that used to sit here is gone with the
      rest of the parallel palette — --hair-100 is already black-on-light. */
 }
