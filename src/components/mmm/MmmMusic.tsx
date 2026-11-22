@@ -1525,7 +1525,7 @@ function PlaylistsTab() {
           id: station.slug,
           title: station.title,
           sub: station.subtitle,
-          label: `${t('mmmMusic.play', 'Play')} ${station.title}`,
+          actionLabel: t('mmmMusic.play', 'Play'),
           onSelect: () => void playStation(station.slug),
         }))}
       />
