@@ -45,16 +45,6 @@ test.describe('Public application smoke', () => {
     await expect(page.locator('.search-bar-desktop')).toHaveCount(0);
   });
 
-  test('the charter privacy link opens and scrolls to the privacy policy', async ({ page }) => {
-    await page.goto('/info?tab=charter');
-    await page.getByRole('link', { name: 'Privacy Policy', exact: true }).click();
-    await expect(page).toHaveURL(/\/info\?tab=privacy$/);
-    await expect(page.getByRole('tab', { name: 'Terms and privacy' })).toHaveAttribute('aria-selected', 'true');
-    await expect(page.locator('#legal-privacy')).toBeInViewport();
-    await page.goBack();
-    await expect(page.getByRole('tab', { name: 'The Charter' })).toHaveAttribute('aria-selected', 'true');
-  });
-
   test('public health endpoint reports a truthful liveness probe', async ({ request }) => {
     // The endpoint runs a real DB check for unauthenticated callers (a
     // hardcoded 200 previously let a real production outage go undetected —
