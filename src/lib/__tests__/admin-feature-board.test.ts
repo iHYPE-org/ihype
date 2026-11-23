@@ -17,6 +17,7 @@ const ALL_ON: FeatureBoardInput = {
   flags: {
     registrations_enabled: true,
     uploads_enabled: true,
+    FEATURE_ENABLE_VIDEO_UPLOADS: true,
     radio_enabled: true,
     maps_enabled: true,
     tickets_enabled: true,
@@ -30,6 +31,7 @@ const ALL_ON: FeatureBoardInput = {
     objectStorage: true,
     email: true,
     acrcloud: true,
+    muxVideo: true,
     ai: true,
   },
   /* Every job the catalogue names, having run. A test that leaves one out is
@@ -101,6 +103,13 @@ describe('BLOCKED — offered and cannot work', () => {
    * product was unbuyable and every other admin surface read healthy, because
    * nothing was queued and traffic was normal.
    */
+  it('reports video as off by flag and blocked when enabled without Mux', () => {
+    const configured = { ...ALL_ON.configured, muxVideo: false };
+    const flags = { ...ALL_ON.flags, FEATURE_ENABLE_VIDEO_UPLOADS: false };
+    expect(rowFor('site-video', withInput({ flags, configured })).state).toBe('OFF');
+    expect(rowFor('site-video', withInput({ configured })).state).toBe('BLOCKED');
+  });
+
   it('a flag on with its dependency missing is BLOCKED', () => {
     const row = rowFor('ticketing', withInput({ configured: { ...ALL_ON.configured, payments: false } }));
     expect(row.state).toBe('BLOCKED');

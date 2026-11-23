@@ -122,6 +122,8 @@ test.describe('admin console', () => {
     await page.goto('/admin?tab=overview', { waitUntil: 'domcontentloaded' });
     const { FEATURE_CATALOGUE } = await import('../src/lib/admin-feature-board');
     await expect(page.locator('.admin-feature-card')).toHaveCount(FEATURE_CATALOGUE.length);
+    await expect(page.getByRole('link', { name: 'Nightly QA results' })).toHaveAttribute('href', /actions\/workflows\/nightly\.yml$/);
+    await expect(page.locator('.admin-feature-card').filter({ hasText: 'Website video uploads' })).toHaveCount(1);
     /* The fold: rows that need a decision are open, the rest are one summary
        line under a closed <details>. Every card is still in the document — a
        fold hides, it does not remove — so the count above holds whether the

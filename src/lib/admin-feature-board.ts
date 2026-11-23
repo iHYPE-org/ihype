@@ -65,6 +65,7 @@ export type FeatureDependency =
   | 'stripe'
   | 'objectStorage'
   | 'email'
+  | 'muxVideo'
   | 'acrcloud'
   | 'ai';
 
@@ -176,6 +177,16 @@ export const FEATURE_CATALOGUE: readonly FeatureDefinition[] = [
     metric: 'uploads',
     journey: 'publish',
     href: '/admin/moderation?type=track',
+  },
+  {
+    id: 'site-video',
+    label: 'Website video uploads',
+    member: 'Upload on-demand videos to an artist or venue website',
+    tier: 'supporting',
+    flags: ['FEATURE_ENABLE_VIDEO_UPLOADS'],
+    needs: ['muxVideo'],
+    queues: [],
+    href: '/admin?tab=system',
   },
   {
     id: 'copyright-scan',
@@ -394,6 +405,7 @@ const DEPENDENCY_LABEL: Record<FeatureDependency, string> = {
   objectStorage: 'media storage',
   email: 'email delivery',
   acrcloud: 'ACRCloud',
+  muxVideo: 'Mux API and webhook credentials',
   ai: 'the AI binding',
 };
 

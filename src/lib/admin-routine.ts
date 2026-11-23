@@ -89,7 +89,7 @@ export const OPERATOR_DUTIES: readonly RoutineDuty[] = [
     cadence: 'daily',
     label: 'Read last night’s board',
     detail:
-      'The nightly ran the audits, the acceptance walk and the feature-health board at 07:00 UTC. Only a BROKEN journey fails it; PARTIAL and UNPROVEN print loudly and are yours to read.',
+      'The nightly starts at 07:00 UTC and runs audits, browser QA and the acceptance walk. Review any failed checks and journeys marked partial or unproven.',
     href: 'https://github.com/iHYPE-org/ihype/actions/workflows/nightly.yml',
     when: 'after 07:00 UTC',
   },
@@ -240,7 +240,7 @@ export const SCHEDULED_WORKFLOWS: readonly ScheduledWorkflow[] = [
     file: 'nightly.yml',
     schedule: '0 7 * * *',
     label: 'Nightly',
-    what: 'Every audit gate, typecheck, lint and unit tests, the basemap and store-link checks, then the full alpha acceptance walk against a built worker and the feature-health board',
+    what: 'Every audit gate, typecheck, lint and unit tests, the basemap and store-link checks, plus browser QA, the alpha acceptance walk against a built worker, and the feature-health board',
     href: 'https://github.com/iHYPE-org/ihype/actions/workflows/nightly.yml',
     aliveKey: 'nightly-walk',
   },

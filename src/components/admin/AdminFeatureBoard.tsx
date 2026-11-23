@@ -56,7 +56,7 @@ function FeatureCard({ row, range }: { row: FeatureRow; range: string }) {
         {row.feature.journey && (
           <span
             className="admin-feature-journey"
-            title="The nightly acceptance walk proves this capability under this journey"
+            title="Coverage area in the nightly acceptance walk"
           >
             nightly: {row.feature.journey}
           </span>
@@ -86,7 +86,8 @@ export async function AdminFeatureBoard() {
     );
   }
 
-  const { rows, range } = board;
+  const { rows, range, nightlyQa } = board;
+  const lastPass = nightlyQa.kind === 'ran' ? new Date(nightlyQa.at).toJSON() : null;
   const summary = summarizeBoard(rows);
   const needsDecision = (state: FeatureState) => state === 'BLOCKED' || state === 'ATTENTION' || state === 'UNKNOWN';
   const open = rows.filter((row) => needsDecision(row.state));
@@ -99,6 +100,13 @@ export async function AdminFeatureBoard() {
           <h2 style={{ margin: 0 }}>Features</h2>
           <p className="meta" style={{ margin: '4px 0 0' }}>
             {headlineFor(rows)} · activity over the last {range}
+          </p>
+          <p className="meta" style={{ margin: '4px 0 0' }}>
+            <Link href="https://github.com/iHYPE-org/ihype/actions/workflows/nightly.yml">Nightly QA results</Link>
+            {' · '}
+            {lastPass
+              ? <>Last passed <time dateTime={lastPass}>{lastPass.slice(0, 16).replace('T', ' ')} UTC</time></>
+              : nightlyQa.kind === 'stale' ? 'No verified pass in the last 48 hours' : 'Run status unavailable'}
           </p>
         </div>
         <div className="admin-feature-summary">
@@ -128,7 +136,7 @@ export async function AdminFeatureBoard() {
       {rest.length > 0 && (
         <details className="admin-feature-rest">
           <summary className="admin-feature-rest-summary">
-            <span>{rest.length} more {rest.length === 1 ? 'feature is' : 'features are'} on and clear</span>
+            <span>{rest.length} more {rest.length === 1 ? 'feature' : 'features'}</span>
             <span className="admin-feature-rest-counts">
               {(['OFF', 'IDLE', 'OK'] as const)
                 .filter((state) => summary[state] > 0)
