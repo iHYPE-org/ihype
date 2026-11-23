@@ -1,9 +1,9 @@
 .fan-entry .fan-entry-subnav ul,
 .fan-entry .fan-entry-section {
-  max-width: 1600px;
+  max-width: 1184px;
   box-sizing: border-box;
   margin: 0 auto;
-  padding-inline: clamp(16px, 6vw, 100px);
+  padding-inline: clamp(18px, 3vw, 32px);
 }
 
 .fan-entry .fan-entry-subnav {
@@ -21,7 +21,7 @@
   display: inline-flex;
   align-items: center;
   min-height: 44px;
-  color: var(--ink);
+  color: var(--ink-2);
   text-underline-offset: 4px;
 }
 
@@ -32,15 +32,18 @@
 
 .fan-entry #mission {
   min-height: 0;
+  max-width: 1184px;
+  padding-inline: clamp(18px, 3vw, 32px);
 }
 
 .fan-entry #mission h1 {
   max-width: 17ch;
-  line-height: 1;
+  line-height: 1.02;
+  letter-spacing: -.055em;
 }
 
 .fan-entry .fan-entry-section {
-  padding-block: clamp(24px, 5vw, 56px);
+  padding-block: clamp(24px, 4vw, 48px);
   border-top: 1px solid var(--hair-100);
   scroll-margin-top: 16px;
 }
@@ -53,5 +56,41 @@
 .fan-entry .fan-entry-section > p {
   max-width: 64ch;
   color: var(--ink-a72);
-  line-height: 1.6;
+  line-height: 1.65;
+  margin: 0;
+}
+
+.fan-entry .fan-entry-section > a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  width: auto;
+}
+
+@media (min-width: 761px) {
+  .fan-entry .fan-entry-copy {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    column-gap: clamp(32px, 5vw, 76px);
+    align-items: end;
+    width: auto;
+  }
+
+  .fan-entry .fan-entry-kicker { grid-column: 1 / -1; }
+  .fan-entry .fan-entry-lead {
+    margin: 0;
+    padding-block-end: 4px;
+    padding-inline-start: 22px;
+    border-inline-start: 2px solid var(--accent);
+  }
+
+  .fan-entry .fan-entry-section {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+    gap: 8px 32px;
+    align-items: start;
+  }
+
+  .fan-entry .fan-entry-section h2 { grid-row: span 2; }
+  .fan-entry .fan-entry-section > a { justify-self: start; }
 }

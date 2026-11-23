@@ -12,9 +12,8 @@ function buildConfig(t: Awaited<ReturnType<typeof getServerT>>): RecruitingKitCo
   return {
   role: 'FAN',
   tint: 'var(--role-fan)',
-  glow: 'var(--role-fan)',
   eyebrow: t('forFansPage.eyebrow', 'For Fans'),
-  headline: <>{t('forFansPage.headlineLine1', 'Your taste.')}<br />{t('forFansPage.headlineLine2', 'Your voice.')}<br /><span style={{ color: 'var(--role-fan)' }}>{t('forFansPage.headlineLine3Scene', 'Your scene.')}</span></>,
+  headline: <>{t('forFansPage.headlineLine1', 'Your taste.')}{' '}{t('forFansPage.headlineLine2', 'Your voice.')}{' '}<span style={{ color: 'var(--role-fan)' }}>{t('forFansPage.headlineLine3Scene', 'Your scene.')}</span></>,
   heroBody: (
     <>{t('forFansPage.heroBodyLead', 'Hype the artists you love before anyone else catches on, buy tickets')} <strong>{t('forFansPage.heroBodyStrong', 'at face value with zero platform fee')}</strong>{t('forFansPage.heroBodyRestReferrals', ', and see every ticket your HYPE link helps sell.')}</>
   ),

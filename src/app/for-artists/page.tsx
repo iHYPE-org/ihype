@@ -13,9 +13,8 @@ function buildConfig(t: Awaited<ReturnType<typeof getServerT>>): RecruitingKitCo
   return {
   role: 'ARTIST',
   tint: 'var(--accent)',
-  glow: 'var(--accent)',
   eyebrow: t('forArtistsPage.eyebrow', 'For Artists'),
-  headline: <>{t('forArtistsPage.headlineLine1', 'Your music.')}<br />{t('forArtistsPage.headlineLine2', 'Your gate.')}<br /><span style={{ color: 'var(--accent-text)' }}>{t('forArtistsPage.headlineLine3', 'Your fans.')}</span></>,
+  headline: <>{t('forArtistsPage.headlineLine1', 'Your music.')}{' '}{t('forArtistsPage.headlineLine2', 'Your gate.')}{' '}<span style={{ color: 'var(--accent-text)' }}>{t('forArtistsPage.headlineLine3', 'Your fans.')}</span></>,
   heroBody: (
     <>{t('forArtistsPage.heroBodyLead', 'iHYPE gives you')} <strong>{t('forArtistsPage.heroBodyStrongAgreement', 'a signed split agreement with every venue, paid to you directly')}</strong>{t('forArtistsPage.heroBodyRest', ', your fans’ contact info, and tools to run your own shows — no agent, no Ticketmaster, no platform that owns the relationship.')}</>
   ),

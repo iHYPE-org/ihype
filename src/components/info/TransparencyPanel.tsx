@@ -66,7 +66,7 @@ export async function TransparencyPanel() {
       <OrganizationFacts />
 
       {/* Stats grid */}
-      <section className="lp-stats" style={{ gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '20px', marginBottom: '40px' }}>
+      <section className="lp-stats" style={{ '--report-columns': 3 } as React.CSSProperties}>
         {STATS.map((s) => (
           <div key={s.label} className="lp-stat">
             <span className="lp-stat-val" style={{ color: s.c }}>{s.val}</span>
@@ -83,19 +83,16 @@ export async function TransparencyPanel() {
           {[
             {
               icon: '◇',
-              c: 'var(--accent)',
               head: t('transparencyPage.reasonTicketsHead', 'Tickets'),
               body: t('transparencyPage.reasonTicketsBodyAgreement', 'Tickets are sold at face value, and the venue is the seller: every sale lands in the venue’s own Stripe account. iHYPE charges 0% and never holds ticket money. The venue pays each act directly, after the show, under a split agreement that act signed before sales opened. The buyer pays the ticket price plus tax.'),
             },
             {
               icon: '◐',
-              c: 'var(--accent-2)',
               head: t('transparencyPage.reasonHypeHead', 'Hype'),
               body: t('transparencyPage.reasonHypeBody', 'Listening to a track all the way through, or manually hyping an artist, registers a Hype. It is a demand signal — no money changes hands and iHYPE earns nothing from it.'),
             },
             {
               icon: '◉',
-              c: 'var(--role-venue)',
               head: t('transparencyPage.reasonRadioHead', 'Radio'),
               /* This promised free hosting for "all hosts … every DJ and
                  promoter", on the page whose whole subject is telling the
@@ -108,13 +105,11 @@ export async function TransparencyPanel() {
             },
             {
               icon: '♡',
-              c: 'var(--role-fan)',
               head: t('transparencyPage.reasonDataHead', 'Data'),
               body: t('transparencyPage.reasonDataBody', 'iHYPE does not sell, license, or monetise listener data. Analytics are visible only to the artist or venue they belong to.'),
             },
           ].map((r) => (
             <div key={r.icon} className="lp-reason-card">
-              <div className="lp-reason-icon" style={{ color: r.c }}>{r.icon}</div>
               <h3 className="lp-reason-head">{r.head}</h3>
               <p className="lp-reason-body">{r.body}</p>
             </div>

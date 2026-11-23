@@ -227,7 +227,7 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
 
       <style>{`
         .legal-wrap { max-width: 760px; margin: 0 auto; padding: 3rem 2rem 6rem; }
-        .legal-label { font-family: var(--f-m, 'JetBrains Mono', monospace); font-size: 0.6875rem; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 10px; }
+        .legal-label { font-size: 0.9375rem; font-weight: 650; color: var(--ink-2); margin-bottom: 10px; }
         .legal-h1 { font-family: var(--f-d, 'Bricolage Grotesque', sans-serif); font-weight: 800; font-size: clamp(1.75rem, 6vw, 2.4rem); letter-spacing: -.04em; line-height: .95; margin-bottom: .75rem; color: var(--ink); }
         @media (max-width: 480px) {
           .legal-wrap { padding: 2rem 1.1rem 4rem; }
@@ -243,8 +243,8 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
         .legal-trans-notice { border: 1px solid var(--line); border-radius: var(--radius-card, 18px); background: rgba(var(--surface-tint-rgb),.04); padding: 14px 16px; margin-bottom: 2rem; }
         .legal-trans-notice p { font-size: 0.9375rem; color: var(--ink-2); line-height: 1.6; margin: 0; }
         .legal-updated-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: .85rem; }
-        .legal-print-btn { flex-shrink: 0; font-family: var(--f-m, 'JetBrains Mono', monospace); font-size: 0.9375rem; letter-spacing: .08em; text-transform: uppercase; background: transparent; border: 1px solid var(--line); color: var(--ink-2); padding: 8px 14px; border-radius: 999px; cursor: pointer; }
-        .legal-print-btn:hover { color: var(--ink); border-color: var(--ink-2); }
+        .legal-print-btn { flex-shrink: 0; font: inherit; font-size: 0.9375rem; text-decoration: underline; text-underline-offset: 4px; background: transparent; border: 0; color: var(--ink-2); padding: 8px 0; cursor: pointer; }
+        .legal-print-btn:hover { color: var(--ink); }
         /* Wraps rather than scrolls. This was overflow-x:auto with
            width:fit-content, written when there were four tabs; at six it
            overflows inside the shell's content column and the browser draws a
