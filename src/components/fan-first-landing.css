@@ -3,7 +3,7 @@
   max-width: 1184px;
   box-sizing: border-box;
   margin: 0 auto;
-  padding-inline: clamp(18px, 3vw, 32px);
+  padding-inline: clamp(16px, 3vw, 32px);
 }
 
 .fan-entry .fan-entry-subnav {
@@ -33,7 +33,7 @@
 .fan-entry #mission {
   min-height: 0;
   max-width: 1184px;
-  padding-inline: clamp(18px, 3vw, 32px);
+  padding-inline: clamp(16px, 3vw, 32px);
 }
 
 .fan-entry #mission h1 {
@@ -80,7 +80,7 @@
   .fan-entry .fan-entry-lead {
     margin: 0;
     padding-block-end: 4px;
-    padding-inline-start: 22px;
+    padding-inline-start: 24px;
     border-inline-start: 2px solid var(--accent);
   }
 
