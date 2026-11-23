@@ -38,8 +38,8 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
   const rawTab = searchParams.get('tab');
   const wantsPrivacy = rawTab === 'privacy';
   const paramTab = wantsPrivacy ? 'terms' : rawTab;
-  const initialTab = TABS.some((tb) => tb.id === paramTab) ? (paramTab as TabId) : 'trust';
-  const [tab, setTab] = useState<TabId>(initialTab);
+  const urlTab = TABS.find((tab) => tab.id === paramTab)?.id ?? 'trust';
+  const [tab, setTab] = useState<TabId>(urlTab);
   const { t, locale } = useI18n();
 
   // Arriving at /info?tab=privacy from somewhere else on /info is a soft nav:
@@ -48,15 +48,15 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
   // stays where it was — which is what the charter tab's own "Privacy Policy"
   // link did.
   useEffect(() => {
-    if (TABS.some((tb) => tb.id === paramTab)) setTab(paramTab as TabId);
-  }, [paramTab]);
+    setTab(urlTab);
+  }, [paramTab, urlTab]);
 
-  // `?tab=privacy` lands on the privacy part of the one legal document. The
-  // panel is in the DOM from the first render (hidden tabs are only styled
-  // away), so the heading exists by the time this effect runs.
+  // Wait until the terms panel is visible on same-page navigation.
   useEffect(() => {
-    if (wantsPrivacy) document.getElementById('legal-privacy')?.scrollIntoView({ block: 'start' });
-  }, [wantsPrivacy]);
+    if (wantsPrivacy && tab === 'terms') {
+      document.getElementById('legal-privacy')?.scrollIntoView({ block: 'start' });
+    }
+  }, [wantsPrivacy, tab]);
 
   const activeIndex = TABS.findIndex((tb) => tb.id === tab);
   const tabLabel = (i: number) => infoTabLabel(t, TABS[i].label);

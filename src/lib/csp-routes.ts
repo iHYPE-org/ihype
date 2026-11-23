@@ -83,13 +83,11 @@ export function isMapRoute(pathname: string): boolean {
  * member who opened `/app/map` and walked to the scanner keeps the map's
  * policy. The grant is `(self)` only; the browser still asks the member.
  *
- * Location is granted to the shell (the map starts where you are) and to the
- * landing page, whose nearby-shows widget asks for it on a press. It was
- * `geolocation=()` there, so the widget failed at once and vanished.
+ * The signed-in shell uses location to center the map.
  */
 export function permissionsPolicyFor(pathname: string): string {
   const shell = isMapRoute(pathname);
   const camera = shell ? '(self)' : '()';
-  const geolocation = shell || pathname === '/' ? '(self)' : '()';
+  const geolocation = shell ? '(self)' : '()';
   return `camera=${camera}, microphone=(), geolocation=${geolocation}`;
 }
