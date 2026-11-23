@@ -44,7 +44,7 @@
   token table, the cron dispatcher's schedules). A scanner that hardcodes what
   it checks is the same defect wearing a lab coat.
 */
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { maskComments } from './lib/mask-comments.mjs';
 
@@ -148,7 +148,8 @@ function routeMatches(pattern, path) {
   const pp = pattern.split('/').filter(Boolean);
   const ap = path.split('/').filter(Boolean);
   for (let i = 0; i < pp.length; i++) {
-    if (/^\[\.\.\./.test(pp[i])) return ap.length >= i;
+    if (/^\[\[\.\.\./.test(pp[i])) return ap.length >= i;
+    if (/^\[\.\.\./.test(pp[i])) return ap.length > i;
     if (ap[i] === undefined) return false;
     if (/^\[.+\]$/.test(pp[i])) continue;
     if (pp[i] !== ap[i]) return false;
@@ -186,22 +187,29 @@ const isBlocked = (path, disallow) =>
    bracket heuristic. Found by sampling the output, not by reading the code. */
 const BASE = /\$\{(?:getBaseUrl\(\)|baseUrl|BASE_URL|BASE|appUrl|base)\}((?:\/[^`'"\s)<>]*)?)/g;
 
+// Check route-shaped hrefs and navigation calls in addition to interpolated
+// base URLs. A computed route namespace cannot be verified from its shape.
+const NAVIGATION = /(?:\bhref\s*(?:=|:)\s*(?:\{\s*)?|\b(?:redirect|permanentRedirect|router\.push|router\.replace)\(\s*)(["'`])(?:https?:\/\/(?:www\.)?ihype\.org)?(\/(?!\/|\$\{)[^"'`\n]*)\1/g;
+
 function publishedUrls() {
   const found = [];
   for (const file of walk(join(ROOT, 'src'))) {
     if (!/\.(t|j)sx?$/.test(file) || /__tests__|\.test\./.test(file)) continue;
     const rel = relative(ROOT, file);
     const src = maskComments(readFileSync(file, 'utf8'));
-    for (const m of src.matchAll(BASE)) {
-      let path = (m[1] || '/').split('?')[0].split('#')[0];
-      path = path.replace(/\$\{[^}]*\}/g, 'x');   // one value, one segment
-      if (path !== '/' ) path = path.replace(/\/$/, '');
-      if (!path.startsWith('/')) continue;
+    const references = [
+      ...Array.from(src.matchAll(BASE), (match) => [match[1], match.index]),
+      ...Array.from(src.matchAll(NAVIGATION), (match) => [match[2], match.index]),
+    ];
+    for (const [reference, index] of references) {
+      const path = (reference || '/').replace(/\$\{[^}]*\}/g, 'x')
+        .split(/[?#]/, 1)[0].replace(/\/$/, '') || '/';
+      if (!path.startsWith('/') || reference?.startsWith('/app/${')) continue;
+      if (path !== '/' && existsSync(join(ROOT, 'public', path))) continue;
       found.push({
         file: rel,
-        line: src.slice(0, m.index).split('\n').length,
+        line: src.slice(0, index).split('\n').length,
         path,
-        // Only what the SITEMAP submits is judged against robots.
         sitemap: rel === 'src/app/sitemap.ts',
       });
     }

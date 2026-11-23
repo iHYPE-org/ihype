@@ -508,9 +508,11 @@ export default async function ShowDetailPage({
           )}
 
           <div style={{ marginBottom: 4 }}>
-            <a className="button small secondary" download href={`/shows/${slug}/poster?download=1`} style={{ marginBottom: 8, display: 'inline-block' }}>
-              {t('showsSlugPage.downloadPoster', 'Download poster')}
-            </a>{' '}
+            {session?.user?.id && (
+              <a className="button small secondary" download href={`/shows/${slug}/poster?download=1`} style={{ marginBottom: 8, display: 'inline-block' }}>
+                {t('showsSlugPage.downloadPoster', 'Download poster')}
+              </a>
+            )}{' '}
             <ShareButton className="button small secondary" path={`/shows/${slug}`} title={show.title} />
             {session?.user?.id ? (
               <ReportButton entityLabel="show" targetId={show.id} targetType="show" />

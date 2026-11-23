@@ -6,24 +6,16 @@ import { useI18n } from '@/components/I18nProvider';
 
 interface Props {
   role?: string;
-  /**
-   * Render the field immediately instead of behind the "Don't have a code?"
-   * disclosure. On `/register` the toggle is right — the form is a fallback for
-   * someone who arrived without a code. On the landing page it is the PRIMARY
-   * action, and a primary action hidden behind a disclosure is not one.
-   */
-  defaultOpen?: boolean;
 }
 
 /**
  * Captures an email for the private-alpha waitlist and forwards it to
  * admin@ihype.org (POST /api/beta-access-request) — used wherever
- * registration is gated behind an invite code, and on `/` for as long as
- * access is by request rather than open signup.
+ * registration is gated behind an invite code.
  */
-export function RequestBetaAccessForm({ role, defaultOpen = false }: Props) {
+export function RequestBetaAccessForm({ role }: Props) {
   const { t } = useI18n();
-  const [open, setOpen] = useState(defaultOpen);
+  const [open, setOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [error, setError] = useState('');

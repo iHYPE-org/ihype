@@ -21,8 +21,8 @@ describe('permissionsPolicyFor', () => {
     }
   });
 
-  it('lets the landing page and the shell ask for location, and nothing else', () => {
-    expect(permissionsPolicyFor('/')).toContain('geolocation=(self)');
+  it('lets only the signed-in shell ask for location', () => {
+    expect(permissionsPolicyFor('/')).toContain('geolocation=()');
     expect(permissionsPolicyFor('/app/map')).toContain('geolocation=(self)');
     expect(permissionsPolicyFor('/shows/night-one')).toContain('geolocation=()');
   });
