@@ -15,7 +15,10 @@ a manual run on `main` deploys it, using the GitHub environment
    (`sslmode=require`) as `STAGING_DATABASE_URL` in the staging GitHub
    environment. The workflow rehearses the migrations on empty Postgres
    before applying them to the staging project.
-2. Run the manual GitHub workflow to migrate and create the Worker. Install Worker secrets
+2. Have a Cloudflare account admin create `ihype-staging` if it does not
+   exist. Confirm that the GitHub token can edit that Worker, then run the
+   manual GitHub workflow to migrate the staging database and deploy the Worker.
+   Install Worker secrets
    using `wrangler secret put <NAME> --config wrangler.staging.toml`,
    including a staging runtime `DATABASE_URL` and a unique `AUTH_SECRET`.
    Configure a staging sign-in method and disposable verified artist and
@@ -41,3 +44,19 @@ a manual run on `main` deploys it, using the GitHub environment
 
 The staging workflow accepts database URLs only for the staging project and uses staging credentials.
 Ticket payments and R2 video archival are disabled in staging.
+
+## Recover a denied Worker deployment
+
+If Wrangler gets `No access to the specified resource` at
+`assets-upload-session`, check that `ihype-staging` exists in the account
+identified by `STAGING_CLOUDFLARE_ACCOUNT_ID` and that
+`STAGING_CLOUDFLARE_API_TOKEN` has deploy access to that Worker. Cloudflare
+documents [Worker Editor access for existing Workers](https://developers.cloudflare.com/workers/authorization/)
+and [Workers Scripts Write for the asset-upload endpoint](https://developers.cloudflare.com/api/resources/workers/subresources/scripts/subresources/assets/subresources/upload/methods/create/).
+If a Worker-scoped Editor token still gets denied, verify that the permission
+policy covers this endpoint with the Cloudflare account admin.
+
+A run can apply staging migrations successfully before Cloudflare rejects the
+upload. Check the migration step in the failed run. After fixing the Worker
+access, re-run the failed job while the bundle artifact is still available.
+Start a new manual run from `main` if the artifact has expired.

@@ -78,6 +78,16 @@
 - [ ] Run the native workflow with `publish=false`; install and exercise both retained signed artifacts.
 - [ ] Only after signed-device testing passes, explicitly approve a `publish=true` internal-store upload.
 
+### TestFlight upload check
+
+If the signed iOS archive succeeds but `altool` cannot resolve
+`com.ihype.app`, confirm that the iOS app record uses exactly that bundle ID
+in the App Store Connect team that owns the CI upload key. Verify that the
+key can upload builds for that app. If the app record is missing, have an
+authorized team member [create the app record](https://developer.apple.com/help/app-store-connect/create-an-app-record/add-a-new-app/)
+before retrying the upload. A signed archive alone does not confirm TestFlight
+delivery. Confirm the retried build appears in App Store Connect.
+
 ## Expansion rule
 
 Start with a small invited cohort. Expand only after several consecutive days
