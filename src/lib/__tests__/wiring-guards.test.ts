@@ -1150,38 +1150,15 @@ describe('every push reaches native devices too', () => {
 });
 
 describe('every playback volume carries the track gain', () => {
-  /**
-   * Loudness levelling is applied by MULTIPLYING the member's own volume at
-   * each place `GlobalMediaPlayer` writes `audio.volume` — four of them, in
-   * three different code paths (the volume/mute effect, the src-change
-   * effect, and two `toggleMute` callbacks). Nothing about that is visible
-   * from any one site, so the way this breaks is a fifth site added later, or
-   * one of the four edited back to a bare `volume`. The failure is silent: a
-   * mastered single is simply loud again, and no test that does not look at
-   * the assignments can see it.
-   *
-   * The rule is also what protects the member's control — assigning the gain
-   * INSTEAD of multiplying would make the volume slider do nothing on a
-   * levelled track — so this asserts the shape, not merely the presence.
-   */
+  // The member's volume and the track's loudness correction must both apply.
   const PLAYER = 'src/components/GlobalMediaPlayer.tsx';
 
-  it('multiplies rather than replaces, at every assignment', () => {
+  it('multiplies the member volume by the track gain and mutes the media element', () => {
     const source = code(PLAYER);
     const assignments = [...source.matchAll(/\.volume\s*=\s*([^;]+);/g)].map((m) => m[1].trim());
 
-    expect(assignments.length, 'no volume assignments found — did the player move?').toBeGreaterThan(0);
-
-    const bare = assignments.filter((expression) => !expression.includes('trackGainRef.current'));
-    expect(bare, `these set volume without the track gain: ${bare.join(' | ')}`).toEqual([]);
-
-    const replacing = assignments.filter((expression) => /^\s*trackGainRef\.current\s*$/.test(expression));
-    expect(replacing, 'volume is being set TO the gain rather than multiplied by it').toEqual([]);
-  });
-
-  it('and the gain is kept in a ref, because three of the four sites cannot read state', () => {
-    const source = code(PLAYER);
-    expect(source).toContain('trackGainRef.current = gain.elementMultiplier;');
+    expect(assignments).toEqual(['volume * gain.elementMultiplier']);
+    expect(source).toContain('audio.muted = isMuted;');
     expect(source).toContain('resolvePlaybackGain(');
     expect(source).toContain("from '@/lib/track-gain'");
   });

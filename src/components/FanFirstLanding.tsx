@@ -51,12 +51,12 @@ export async function FanFirstLanding() {
         </section>
 
         <footer aria-label={t('fanFirstLanding.footerLabel', 'Site information')} className="fan-entry-legal">
-          <Link href="/support">{t('fanFirstLanding.support', 'Support')}</Link>
-          <Link href="/advertise">{t('fanFirstLanding.advertise', 'Advertise')}</Link>
-          <span>
+          <div className="fan-entry-legal-links">
+            <Link href="/support">{t('fanFirstLanding.support', 'Support')}</Link>
+            <Link href="/advertise">{t('fanFirstLanding.advertise', 'Advertise')}</Link>
             <Link href="/info?tab=transparency">{t('fanFirstLanding.nonprofit', 'A 501(c)(3) nonprofit')}</Link>
-            {' · © 2026 ihype.org'}
-          </span>
+          </div>
+          <p>{'© 2026 ihype.org'}</p>
         </footer>
       </div>
     </div>
