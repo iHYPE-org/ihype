@@ -47,8 +47,8 @@ describe('serveMediaAsset', () => {
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(res.status).toBe(206);
     expect(res.headers.get('Content-Range')).toBe('bytes 0-99/400');
-    expect(res.headers.get('Cache-Control')).toBe('private, no-store');
-    expect((await res.arrayBuffer()).byteLength).toBe(100);
+    expect(res.headers.get('Cache-Control')).toBe('private, no-store, no-transform');
+    expect(new Uint8Array(await res.arrayBuffer())).toEqual(BYTES.slice(0, 100));
   });
 
   it('still fetches a legacy r2.dev URL', async () => {

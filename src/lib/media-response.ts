@@ -106,10 +106,14 @@ function parseRange(rangeHeader: string, totalBytes: number) {
 export async function serveMediaAsset(
   request: Request,
   asset: MediaAssetPayload,
-  { cacheControl }: MediaResponseOptions,
+  { cacheControl: callerCacheControl }: MediaResponseOptions,
 ) {
   const fileName = safeFileName(asset.originalFileName);
   const rangeHeader = request.headers.get('range');
+  // Keep intermediaries from re-encoding the original audio or its seek ranges.
+  const cacheControl = asset.mimeType.startsWith('audio/')
+    ? `${callerCacheControl}, no-transform`
+    : callerCacheControl;
 
   if (asset.fileDataBase64) {
     const bytes = Buffer.from(asset.fileDataBase64, 'base64');

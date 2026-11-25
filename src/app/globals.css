@@ -2367,7 +2367,7 @@ body:has(.site-dock) .site-shell {
 }
 .authcard-title {
   font-family: var(--font-display);
-  font-size: clamp(28px, 6vw, 40px);
+  font-size: clamp(1.75rem, calc(1.25rem + 2vw), 2.5rem);
   font-weight: 800;
   letter-spacing: -.03em;
   line-height: 1;
@@ -5188,7 +5188,7 @@ html.native-ios { --safe-top: 0px; }
   max-width: 12ch;
   margin: 0;
   color: var(--fan-entry-paper);
-  font: 800 clamp(3.4rem,5.05vw,5.75rem)/.88 var(--f-d);
+  font: 800 clamp(2.65rem,calc(1.85rem + 3.25vw),5.75rem)/.88 var(--f-d);
   letter-spacing: -.065em;
   text-wrap: balance;
 }
@@ -5233,7 +5233,7 @@ body:has(.fan-entry) #main-content { width: 100%; }
   .fan-entry { overflow: visible; }
   .fan-entry-hero { min-height: 0; padding: 48px 24px 38px; }
   .fan-entry-copy { width: min(100%,680px); }
-  .fan-entry-copy h1 { max-width: 12ch; font-size: clamp(3.4rem,10.8vw,5.8rem); }
+  .fan-entry-copy h1 { max-width: 12ch; }
 }
 @media (max-width: 680px) {
   .fan-entry::before { top: 64px; }
@@ -5243,7 +5243,7 @@ body:has(.fan-entry) #main-content { width: 100%; }
   .fan-entry-signin { padding-inline: 4px; }
   .fan-entry-hero { padding: 38px 18px 28px; }
   .fan-entry-kicker { margin-bottom: 16px; font-size: 0.9375rem; line-height: 1.5; }
-  .fan-entry-copy h1 { max-width: 12ch; font-size: clamp(2.65rem,10.8vw,3.7rem); line-height: .92; }
+  .fan-entry-copy h1 { line-height: .92; }
   .fan-entry-lead { max-width: 40ch; margin-top: 20px; font-size: .94rem; }
   .fan-entry-secondary { width: 100%; text-align: center; }
   /* The light-theme border restatement that used to sit here is gone with the

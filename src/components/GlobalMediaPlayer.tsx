@@ -51,7 +51,7 @@ export type MediaTrack = {
   shareUrl?: string | null;
   /* Programme loudness in LUFS, measured in the uploader's browser at upload.
      Null on anything older or unmeasured, which plays at unity. See
-     src/lib/track-gain.ts — playback only ever attenuates. */
+     src/lib/track-gain.ts for the playback gain calculation. */
   loudnessLufs?: number | null;
   /** True peak in dBTP. Absent means the track is never boosted — see
    *  resolvePlaybackGain: guessing at headroom is how a boost clips. */
@@ -139,6 +139,10 @@ type PersistedPlayerState = {
 
 const STORAGE_KEY = 'ihype-global-media-player';
 
+function persistableTrack({ id, title, artistName, url, artistProfileSlug, loudnessLufs, truePeakDbtp }: MediaTrack): MediaTrack {
+  return { id, title, artistName, url, artistProfileSlug, loudnessLufs, truePeakDbtp };
+}
+
 /** The absolute URL a media element reports back from `.src` for `url`. */
 function resolveMediaUrl(url: string): string {
   try {
@@ -174,14 +178,6 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
   // skipping forever. Reset by any track that actually starts playing.
   const consecutiveErrorsRef = useRef(0);
   const originalQueueRef = useRef<MediaTrack[]>([]);
-  const preMuteVolumeRef = useRef(0.85);
-  /* The current track's loudness correction, in a ref rather than in state
-     because three of the four places that set `audio.volume` are `useCallback`
-     with an empty dependency list — reading it from state there would pin the
-     gain of whatever was playing when the callback was created. Always a
-     MULTIPLIER of the member's own volume, never a replacement for it, or the
-     volume slider stops working on levelled tracks. */
-  const trackGainRef = useRef(1);
   /* Boost — the half a media element cannot do. `HTMLMediaElement.volume` is
      capped at 1, so lifting a quiet track needs a Web Audio GainNode, and
      this graph is built LAZILY: only when a track actually asks for boost, so
@@ -223,25 +219,21 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
   const [sleepRemainingSeconds, setSleepRemainingSeconds] = useState<number | null>(null);
   const sleepEndTimeRef = useRef<number | null>(null);
 
+  const toggleMute = useCallback(() => setIsMuted(muted => !muted), []);
+  const togglePlayback = useCallback(() => {
+    if (currentTrack) setIsPlaying(playing => !playing);
+  }, [currentTrack]);
+
   // ── Keyboard shortcuts ─────────────────────────────────────────────────────
   usePlayerKeyboard(audioRef, {
-    togglePlayPause: useCallback(() => {
-      setCurrentTrack(t => { if (t) setIsPlaying(v => !v); return t; });
-    }, []),
+    togglePlayPause: togglePlayback,
     skipNext: useCallback(() => {
       setQueue(prev => { setCurrentIndex(ci => { const n = ci >= 0 && ci < prev.length - 1 ? ci + 1 : ci; if (n !== ci) { setCurrentTrack(prev[n] ?? null); setIsPlaying(true); } return n; }); return prev; });
     }, []),
     skipPrevious: useCallback(() => {
       setQueue(prev => { setCurrentIndex(ci => { const p = ci > 0 ? ci - 1 : ci; if (p !== ci) { setCurrentTrack(prev[p] ?? null); setIsPlaying(true); } return p; }); return prev; });
     }, []),
-    toggleMute: useCallback(() => {
-      setIsMuted(m => {
-        const next = !m;
-        const a = audioRef.current;
-        if (a) a.volume = next ? 0 : preMuteVolumeRef.current * trackGainRef.current;
-        return next;
-      });
-    }, []),
+    toggleMute,
     setCurrentTime,
   });
 
@@ -257,7 +249,6 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
       setCurrentTrack(p.currentTrack ?? null);
       const vol = p.volume ?? 0.85;
       setVolumeState(vol);
-      preMuteVolumeRef.current = vol;
       if (p.repeatMode) setRepeatModeState(p.repeatMode);
       if (typeof p.isShuffle === 'boolean') setIsShuffle(p.isShuffle);
       if (p.playbackRate) setPlaybackRateState(p.playbackRate);
@@ -275,9 +266,9 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
     if (persistTimerRef.current) clearTimeout(persistTimerRef.current);
     persistTimerRef.current = setTimeout(() => {
       const payload: PersistedPlayerState = {
-        queue: queue.map(({ id, title, artistName, url, artistProfileSlug, loudnessLufs }) => ({ id, title, artistName, url, artistProfileSlug, loudnessLufs })) as MediaTrack[],
+        queue: queue.map(persistableTrack),
         currentIndex,
-        currentTrack: currentTrack ? { id: currentTrack.id, title: currentTrack.title, artistName: currentTrack.artistName, url: currentTrack.url, artistProfileSlug: currentTrack.artistProfileSlug, loudnessLufs: currentTrack.loudnessLufs } as MediaTrack : null,
+        currentTrack: currentTrack ? persistableTrack(currentTrack) : null,
         volume, repeatMode, isShuffle, playbackRate, isAutoplay, isMuted
       };
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
@@ -314,26 +305,16 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
   // ── Volume / mute / loudness sync ──────────────────────────────────────────
   useEffect(() => {
     const gain = resolvePlaybackGain(currentTrack ?? {});
-    trackGainRef.current = gain.elementMultiplier;
-    const a = audioRef.current;
-    if (a) a.volume = isMuted ? 0 : volume * trackGainRef.current;
-
-    /* A boost of 1 must not build the graph — that would route every member's
-       audio through Web Audio for a correction of nothing. An existing graph
-       is set back to unity instead. */
-    if (gain.boost > 1) {
-      const node = ensureAudioGraph();
-      if (node) {
-        node.gain.value = gain.boost;
-        /* A context created before the member has touched anything starts
-           suspended, and a suspended graph is silence. Resuming is a no-op
-           once it is running. */
-        void audioGraphRef.current?.context.resume().catch(() => undefined);
-      }
-    } else if (audioGraphRef.current) {
-      audioGraphRef.current.gain.gain.value = 1;
+    const audio = audioRef.current;
+    if (audio) {
+      audio.volume = volume * gain.elementMultiplier;
+      audio.muted = isMuted;
     }
-  }, [volume, isMuted, currentTrack, ensureAudioGraph]);
+
+    // Only create the graph once playback starts and the track needs a boost.
+    const node = gain.boost > 1 && isPlaying ? ensureAudioGraph() : audioGraphRef.current?.gain;
+    if (node) node.gain.value = gain.boost;
+  }, [volume, isMuted, currentTrack, isPlaying, ensureAudioGraph]);
 
   // ── Playback rate sync ─────────────────────────────────────────────────────
   useEffect(() => {
@@ -619,10 +600,13 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
       }
       audio.load();
       audio.playbackRate = playbackRate;
-      audio.volume = isMuted ? 0 : volume * trackGainRef.current;
       setCurrentTime(0);
     }
     if (isPlaying) {
+      const context = audioGraphRef.current?.context;
+      if (context && context.state !== 'running') {
+        void context.resume().catch(() => undefined);
+      }
       void audio.play().catch(() => setIsPlaying(false));
     } else {
       audio.pause();
@@ -679,10 +663,6 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const togglePlayback = useCallback(() => {
-    setCurrentTrack(t => { if (t) setIsPlaying(v => !v); return t; });
-  }, []);
-
   const playNext = useCallback(() => {
     setQueue(prev => {
       setCurrentIndex(ci => {
@@ -715,7 +695,6 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setVolume = useCallback((v: number) => {
-    preMuteVolumeRef.current = v;
     setVolumeState(v);
     if (isMuted) setIsMuted(false); // unmute on volume change
   }, [isMuted]);
@@ -764,15 +743,6 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
       const next = SPEEDS[(idx + 1) % SPEEDS.length] ?? 1;
       const a = audioRef.current;
       if (a) a.playbackRate = next;
-      return next;
-    });
-  }, []);
-
-  const toggleMute = useCallback(() => {
-    setIsMuted(m => {
-      const next = !m;
-      const a = audioRef.current;
-      if (a) a.volume = next ? 0 : preMuteVolumeRef.current * trackGainRef.current;
       return next;
     });
   }, []);
