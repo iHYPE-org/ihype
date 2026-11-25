@@ -13,9 +13,8 @@ function buildConfig(t: Awaited<ReturnType<typeof getServerT>>): RecruitingKitCo
   return {
   role: 'VENUE',
   tint: 'var(--role-venue)',
-  glow: 'var(--role-venue)',
   eyebrow: t('forVenuesPage.eyebrow', 'For Venues'),
-  headline: <>{t('forVenuesPage.headlineLine1', 'Your room.')}<br />{t('forVenuesPage.headlineLine2', 'Your booking.')}<br /><span style={{ color: 'var(--role-venue)' }}>{t('forVenuesPage.headlineLine3', 'Your data.')}</span></>,
+  headline: <>{t('forVenuesPage.headlineLine1', 'Your room.')}{' '}{t('forVenuesPage.headlineLine2', 'Your booking.')}{' '}<span style={{ color: 'var(--role-venue)' }}>{t('forVenuesPage.headlineLine3', 'Your data.')}</span></>,
   heroBody: (
     <>{t('forVenuesPage.heroBodyLeadKeep', 'With iHYPE you keep')} <strong>{t('forVenuesPage.heroBodyStrongKeepAll', 'every ticket sale, in your own Stripe account')}</strong>{t('forVenuesPage.heroBodyRest', ', real demand data on who your city wants to see, and a booking inbox that keeps every offer in one place.')}</>
   ),

@@ -101,7 +101,7 @@ export async function TrustSafetyPanel() {
         </p>
       </section>
 
-      <section className="lp-stats" style={{ gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '20px', marginBottom: '32px' }}>
+      <section className="lp-stats">
         {ENFORCEMENT_STATS.map((s) => (
           <div key={s.label} className="lp-stat">
             <span className="lp-stat-val" style={{ color: s.c }}>{s.val}</span>
@@ -114,7 +114,7 @@ export async function TrustSafetyPanel() {
         <section className="lp-hype-explainer">
           <p className="lp-hype-eyebrow" style={{ color: 'var(--accent-text)' }}>{t('auditPage.eyebrowByCategory', 'BY CATEGORY')}</p>
           <h2 className="lp-section-head">{t('auditPage.byCategoryTitle', 'What gets reported')}</h2>
-          <div className="lp-reason-grid" style={{ marginTop: '20px', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' }}>
+          <div className="lp-reason-grid" style={{ marginTop: '20px' }}>
             {categoryRows.map((r) => (
               <div key={r.label} className="lp-reason-card">
                 <h3 className="lp-reason-head">{formatNumber(locale, r.count)}</h3>
@@ -140,7 +140,7 @@ export async function TrustSafetyPanel() {
         <p className="lp-hero-sub" style={{ margin: '8px 0 20px' }}>
           {t('auditPage.adVettingBody', 'iHYPE only ever runs radio-style audio ad spots — no banners, no visual placements. Every campaign is screened by AI before it can run.')}
         </p>
-        <section className="lp-stats" style={{ gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '20px' }}>
+        <section className="lp-stats">
           {AD_STATS.map((s) => (
             <div key={s.label} className="lp-stat">
               <span className="lp-stat-val" style={{ color: s.c }}>{s.val}</span>
@@ -173,31 +173,26 @@ export async function TrustSafetyPanel() {
           {[
             {
               icon: '◈',
-              c: 'var(--accent)',
               head: t('auditPage.howAiScreeningHead', 'AI screening on upload'),
               body: t('auditPage.howAiScreeningBody', 'Every track, avatar, hero, and gallery image is screened automatically the moment it\'s uploaded, and every radio ad campaign\'s copy and audio (transcribed, then screened) are AI-vetted against our music-industry-only policy — before any of it can go live.'),
             },
             {
               icon: '⬟',
-              c: 'var(--role-fan)',
               head: t('auditPage.howHumanReviewHead', 'Human review queue'),
               body: t('auditPage.howHumanReviewBody', 'Anything the AI flags, or that a user reports, lands in a queue an admin reviews by hand. Nothing is auto-removed without a report existing.'),
             },
             {
               icon: '◎',
-              c: 'var(--role-venue)',
               head: t('auditPage.howNoPiiHead', 'No content, no PII'),
               body: t('auditPage.howNoPiiBody', 'This page shows counts only. Categories with fewer than five reports are folded into "Other" so a small number can never identify a specific user or piece of content.'),
             },
             {
               icon: '⚙',
-              c: 'var(--accent-2)',
               head: t('auditPage.howFailOpenHead', 'Fail-open by design'),
               body: t('auditPage.howFailOpenBody', 'If the AI screening service is ever unavailable, uploads still go through — they just skip the automated check. Nothing on iHYPE is blocked by an AI outage.'),
             },
           ].map((r) => (
             <div key={r.icon} className="lp-reason-card">
-              <div className="lp-reason-icon" style={{ color: r.c }}>{r.icon}</div>
               <h3 className="lp-reason-head">{r.head}</h3>
               <p className="lp-reason-body">{r.body}</p>
             </div>

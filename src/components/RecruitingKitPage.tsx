@@ -11,7 +11,6 @@ type CityHeat = { label: string; score: number };
 export type RecruitingKitConfig = {
   role: 'ARTIST' | 'VENUE' | 'FAN';
   tint: string;
-  glow: string;
   eyebrow: string;
   headline: React.ReactNode;
   heroBody: React.ReactNode;
@@ -47,7 +46,7 @@ export async function RecruitingKitPage({ config, cityHeat }: { config: Recruiti
   const maxScore = Math.max(...cityHeat.map((c) => c.score), 1);
 
   return (
-    <div className="rk-page" style={{ ['--rk-tint' as string]: config.tint, ['--rk-glow' as string]: config.glow }}>
+    <div className="rk-page" style={{ ['--rk-tint' as string]: config.tint }}>
       {/* THERE IS NO PAGE-LOCAL NAV HERE, AND ITS ABSENCE IS THE FIX
           (2026-09-18). This component used to open with a sticky `.rk-nav`
           carrying its own `iHYPE` wordmark and its own role CTA — under the
@@ -179,22 +178,21 @@ export async function RecruitingKitPage({ config, cityHeat }: { config: Recruiti
         /* minmax(0, …), not 1fr: a bare 1fr floors at MIN-CONTENT, so one long
            unbreakable token — a venue name, a URL — pushes this column past its
            share and scrolls the page sideways above the breakpoint below. */
-        .rk-hero-inner { max-width: 1080px; margin: 0 auto; padding: 0 32px; display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 60px; align-items: center; position: relative; }
-        .rk-eyebrow { font-family: var(--font-mono); font-size: .7rem; letter-spacing: .2em; text-transform: uppercase; color: var(--rk-tint); margin-bottom: 22px; }
-        .rk-h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(2.8rem, 5.5vw, 4.6rem); letter-spacing: -.04em; line-height: .98; }
+        .rk-hero-inner { max-width: 1080px; margin: 0 auto; padding: 0 32px; display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: clamp(24px, 6vw, 84px); align-items: end; position: relative; }
+        .rk-eyebrow { font-family: var(--font-body); font-weight: 700; font-size: 0.9375rem; color: var(--ink-2); margin-bottom: 16px; }
+        .rk-h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(2.8rem, 5.5vw, 4.6rem); letter-spacing: -.045em; line-height: 1.04; text-wrap: balance; margin: 0; }
         .rk-hero-body { font-size: 1.15rem; line-height: 1.6; color: var(--ink-a70); margin-top: 22px; max-width: 48ch; }
         .rk-hero-body strong { color: var(--ink); }
-        .rk-apply-card { background: var(--bg2); border: 1px solid color-mix(in srgb, var(--rk-glow) 20%, transparent); border-radius: 22px; padding: 36px 32px; }
+        .rk-apply-card { border-top: 2px solid var(--rk-tint); padding: 18px 0 0; }
         .rk-apply-heading { font-family: var(--font-display); font-weight: 800; font-size: 1.4rem; letter-spacing: -.02em; margin-bottom: 10px; }
         .rk-apply-sub { font-size: 0.9375rem; color: var(--ink-a70); line-height: 1.6; margin-bottom: 22px; }
-        .rk-apply-btn { display: block; width: 100%; box-sizing: border-box; text-align: center; padding: 14px; border-radius: 12px; background: var(--rk-tint); color: var(--bg); font-family: var(--font-display); font-weight: 800; font-size: 1rem; text-decoration: none; }
-        .rk-fineprint { font-family: var(--font-mono); font-size: 0.9375rem; color: var(--ink-a65); margin-top: 12px; text-align: center; letter-spacing: .04em; }
+        .rk-apply-btn { display: inline-flex; align-items: center; min-height: 44px; box-sizing: border-box; padding: 10px 16px; border-radius: var(--radius-card); background: var(--rk-tint); color: var(--bg); font-family: var(--font-display); font-weight: 800; font-size: 1rem; text-decoration: none; }
+        .rk-fineprint { font-size: 0.9375rem; color: var(--ink-2); margin-top: 12px; }
         .rk-stats-wrap { max-width: 1080px; margin: 64px auto 0; padding: 0 32px; }
-        .rk-stats { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); display: flex; flex-wrap: wrap; }
-        .rk-stat { flex: 1; min-width: 90px; padding: 24px 0; text-align: center; border-right: 1px solid var(--line); }
-        .rk-stat:last-child { border-right: none; }
+        .rk-stats { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); column-gap: 24px; }
+        .rk-stat { padding: 18px 0; overflow-wrap: anywhere; }
         .rk-stat-val { font-family: var(--font-display); font-weight: 800; font-size: 2.2rem; letter-spacing: -.03em; color: var(--rk-tint); }
-        .rk-stat-label { font-family: var(--font-mono); font-size: 0.9375rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-a65); margin-top: 6px; }
+        .rk-stat-label { font-size: 0.9375rem; color: var(--ink-2); margin-top: 4px; }
         .rk-heat { padding: 28px 0; border-bottom: 1px solid var(--line); }
         .rk-heat-label { font-family: var(--font-mono); font-size: 0.6875rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-a65); margin-bottom: 14px; }
         .rk-heat-rows { display: flex; flex-direction: column; gap: 9px; max-width: 420px; }
@@ -202,7 +200,7 @@ export async function RecruitingKitPage({ config, cityHeat }: { config: Recruiti
         .rk-heat-city { width: 96px; flex-shrink: 0; font-size: 0.9375rem; color: var(--ink-a70); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .rk-heat-track { flex: 1; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
         .rk-heat-bar { height: 100%; border-radius: 3px; }
-        .rk-charter { background: color-mix(in srgb, var(--rk-glow) 3%, transparent); border-top: 1px solid color-mix(in srgb, var(--rk-glow) 8%, transparent); border-bottom: 1px solid color-mix(in srgb, var(--rk-glow) 8%, transparent); padding: 80px 0; }
+        .rk-charter { border-block: 1px solid var(--line); padding: clamp(32px, 6vw, 72px) 0; }
         .rk-money { max-width: 760px; margin: 0 auto; padding: 64px 32px 0; }
         .rk-charter-inner { max-width: 1080px; margin: 0 auto; padding: 0 32px; display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
         .rk-quote { font-family: var(--font-serif, 'Instrument Serif', serif); font-style: italic; font-size: clamp(1.8rem, 4vw, 3.2rem); line-height: 1.12; }
@@ -210,14 +208,14 @@ export async function RecruitingKitPage({ config, cityHeat }: { config: Recruiti
         .rk-checklist { list-style: none; display: flex; flex-direction: column; gap: 14px; padding: 0; margin: 0; }
         .rk-checklist li { display: flex; align-items: flex-start; gap: 12px; font-size: .96rem; line-height: 1.5; }
         .rk-check { color: var(--rk-tint); font-family: var(--font-display); font-weight: 800; flex-shrink: 0; margin-top: 1px; }
-        .rk-fanfit { max-width: 1080px; margin: 40px auto 0; padding: 0 32px; text-align: center; font-size: 1rem; color: var(--ink-a70); line-height: 1.6; }
+        .rk-fanfit { max-width: 1080px; margin: 40px auto 0; padding: 0 32px; font-size: 1rem; color: var(--ink-a70); line-height: 1.6; }
         .rk-fanfit a { align-items: center; color: var(--rk-tint); display: inline-flex; min-height: 44px; text-decoration: underline; }
-        .rk-features { padding: 88px 0; }
+        .rk-features { padding: clamp(40px, 7vw, 80px) 0; }
         .rk-features-inner { max-width: 1080px; margin: 0 auto; padding: 0 32px; }
-        .rk-features-eyebrow { font-family: var(--font-mono); font-size: .72rem; letter-spacing: .2em; text-transform: uppercase; color: var(--rk-tint); }
+        .rk-features-eyebrow { font-size: 0.9375rem; font-weight: 700; color: var(--ink-2); }
         .rk-features-h2 { font-family: var(--font-display); font-weight: 800; font-size: clamp(2rem, 4vw, 3rem); letter-spacing: -.03em; line-height: 1.06; margin: 14px 0 0; }
-        .rk-feature-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-top: 44px; }
-        .rk-feature { background: var(--bg2); border: 1px solid var(--line); border-radius: 16px; padding: 26px 22px; }
+        .rk-feature-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: clamp(24px, 6vw, 64px); margin-top: 28px; }
+        .rk-feature { border-top: 1px solid var(--line); padding: 18px 0; }
         .rk-feature-title { font-family: var(--font-display); font-weight: 800; font-size: 1.15rem; letter-spacing: -.01em; margin-bottom: 8px; }
         .rk-feature-body { font-size: 0.9375rem; line-height: 1.55; color: var(--ink-a70); margin: 0; }
         .rk-footer { border-top: 1px solid var(--line); padding: 44px 0 56px; }
@@ -227,10 +225,10 @@ export async function RecruitingKitPage({ config, cityHeat }: { config: Recruiti
         @media (max-width: 860px) {
           .rk-hero-inner { grid-template-columns: 1fr; }
           .rk-charter-inner { grid-template-columns: 1fr; }
-          .rk-feature-grid { grid-template-columns: 1fr 1fr; }
         }
         @media (max-width: 520px) {
           .rk-feature-grid { grid-template-columns: 1fr; }
+          .rk-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
           .rk-stat-val { font-size: 1.6rem; }
         }
       `}</style>

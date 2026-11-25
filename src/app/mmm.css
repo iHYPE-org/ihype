@@ -3931,21 +3931,21 @@ input.mmm-row-title { min-height: 44px; }
 
 .mmm-ad-landing { width: min(100% - 32px, 1040px); margin: 0 auto; padding: 72px 0 96px; color: var(--ink); }
 .mmm-ad-hero { max-width: 760px; padding: 36px 0 72px; }
-.mmm-ad-hero h1 { margin: 12px 0 0; font-family: var(--font-display); font-size: clamp(3rem, 9vw, 6.5rem); line-height: 0.88; letter-spacing: -0.055em; }
+.mmm-ad-hero h1 { margin: 12px 0 0; font-family: var(--font-display); font-size: clamp(2.55rem, 7vw, 5.25rem); line-height: 1.02; letter-spacing: -0.045em; text-wrap: balance; }
 .mmm-ad-lead { max-width: 58ch; margin: 24px 0 0; color: var(--ink-2); font-size: 1.05rem; line-height: 1.65; }
 .mmm-ad-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px; }
 .mmm-ad-actions a, .mmm-ad-final a { text-decoration: none; }
 .mmm-ad-section { padding: 64px 0; border-top: 1px solid var(--hair-100); }
 .mmm-ad-section h2, .mmm-ad-final h2 { margin: 10px 0 0; font-family: var(--font-display); font-size: clamp(2rem, 5vw, 3.6rem); line-height: 0.98; letter-spacing: -0.04em; }
-.mmm-ad-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 28px; }
-.mmm-ad-steps article { padding: 20px; border: 1px solid var(--hair-100); border-radius: var(--radius-lg); background: var(--bg-2); }
-.mmm-ad-steps span { color: var(--accent-text); font-family: var(--font-mono); font-size: 0.9375rem; }
-.mmm-ad-steps h3 { margin: 18px 0 0; font-family: var(--font-display); font-size: 1.1rem; }
+.mmm-ad-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px 42px; margin: 24px 0 0; padding-inline-start: 1.5rem; }
+.mmm-ad-steps li { padding-block: 12px; border-top: 1px solid var(--line); }
+.mmm-ad-steps li::marker { color: var(--accent-text); font-weight: 700; }
+.mmm-ad-steps h3 { margin: 0; font-family: var(--font-display); font-size: 1.1rem; }
 .mmm-ad-steps p, .mmm-ad-eligibility p, .mmm-ad-final p { margin: 8px 0 0; color: var(--ink-2); font-size: 0.9375rem; line-height: 1.6; }
 .mmm-ad-eligibility { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; }
 .mmm-ad-eligibility ul { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
-.mmm-ad-eligibility li { padding: 13px 15px; border: 1px solid var(--hair-100); border-radius: var(--radius-md); background: var(--bg-2); font-size: 0.9375rem; }
-.mmm-ad-final { margin-top: 36px; padding: 32px; border: 1px solid rgba(var(--accent-rgb), 0.35); border-radius: var(--radius-xl); background: rgba(var(--accent-rgb), 0.06); }
+.mmm-ad-eligibility li { padding: 12px 0; border-top: 1px solid var(--line); font-size: 0.9375rem; }
+.mmm-ad-final { margin-top: 36px; padding: 24px 0; border-top: 2px solid var(--accent); }
 .mmm-ad-final p { max-width: 60ch; margin-bottom: 20px; }
 /* The sponsorship price list (row 514): the landing page, the dashboard's
    empty state and the in-app "build it on the web" page all draw it, so it
@@ -4022,12 +4022,7 @@ input.mmm-row-title { min-height: 44px; }
 /* Each imported public panel carried its own full-page masthead. The MMM page
    owns that hierarchy once; the live data sections remain intact below it. */
 .mmm-info-report .lp-hero { display: none; }
-.mmm-info-report .lp-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 10px !important; margin: 0 0 12px !important; }
-.mmm-info-report .lp-stat, .mmm-info-report .lp-reason-card { padding: 18px; border: 1px solid var(--line-2); border-radius: var(--radius-card); background: var(--bg-2); }
-.mmm-info-report .lp-stat-val { display: block; font: 800 1.75rem var(--font-display); }
-.mmm-info-report .lp-stat-label { display: block; margin-top: 6px; color: var(--ink-3); font: 0.9375rem var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; }
-.mmm-info-report .lp-hype-explainer { margin-top: 12px; padding: 22px; border: 1px solid var(--line-2); border-radius: var(--radius-card); background: var(--bg-2); }
-.mmm-info-report .lp-reason-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 10px; }
+.mmm-info-report .lp-hype-explainer { margin-top: 12px; }
 .mmm-info-report .lp-section-head, .mmm-info-report .lp-reason-head { color: var(--ink); font-family: var(--font-display); }
 .mmm-info-report .lp-reason-body, .mmm-info-report .lp-hero-sub { color: var(--ink-2); line-height: 1.6; }
 .mmm-info-report .lp-footer-cta { display: none; }
@@ -4060,7 +4055,6 @@ input.mmm-row-title { min-height: 44px; }
 .mmm-document-section p { margin: 0; color: var(--ink-2); font-size: 0.9375rem; line-height: 1.7; }
 .mmm-document-section a { color: var(--accent-text); }
 @media (max-width: 620px) {
-  .mmm-info-report .lp-stats, .mmm-info-report .lp-reason-grid { grid-template-columns: 1fr !important; }
   .mmm-info-report .lp-hype-explainer { padding: 18px; }
 }
 

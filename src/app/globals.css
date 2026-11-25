@@ -494,7 +494,6 @@
      returned both gradients live under `--site-orb-opacity: 0`. */
   --site-orb-opacity: 0;
   --site-grid-opacity: 0;
-  --auth-wash: none;
   --site-wash: none;
   /* A selected chip is FILLED, the way Apple Music's filter pills are —
      black on white, white on black — not a tint the eye has to compare. */
@@ -1072,7 +1071,6 @@
   --back-pad: 14px;
   --site-orb-opacity: .2;
   --site-grid-opacity: .08;
-  --auth-wash: radial-gradient(circle at 50% 0%, rgba(var(--accent-rgb), .1), transparent 62%);
   --site-wash:
     radial-gradient(circle at 8% 16%, rgba(var(--accent-rgb), .1), transparent 24rem),
     radial-gradient(circle at 92% 35%, rgba(var(--role-venue-rgb), .08), transparent 30rem);
@@ -1258,7 +1256,6 @@
   --back-pad: 14px;
   --site-orb-opacity: .2;
   --site-grid-opacity: .08;
-  --auth-wash: radial-gradient(circle at 50% 0%, rgba(var(--accent-rgb), .1), transparent 62%);
   --site-wash:
     radial-gradient(circle at 8% 16%, rgba(var(--accent-rgb), .1), transparent 24rem),
     radial-gradient(circle at 92% 35%, rgba(var(--role-venue-rgb), .08), transparent 30rem);
@@ -1444,7 +1441,6 @@
   --back-pad: 14px;
   --site-orb-opacity: .2;
   --site-grid-opacity: .08;
-  --auth-wash: radial-gradient(circle at 50% 0%, rgba(var(--accent-rgb), .1), transparent 62%);
   --site-wash:
     radial-gradient(circle at 8% 16%, rgba(var(--accent-rgb), .1), transparent 24rem),
     radial-gradient(circle at 92% 35%, rgba(var(--role-venue-rgb), .08), transparent 30rem);
@@ -1625,7 +1621,6 @@
   --back-pad: 14px;
   --site-orb-opacity: .2;
   --site-grid-opacity: .08;
-  --auth-wash: radial-gradient(circle at 50% 0%, rgba(var(--accent-rgb), .1), transparent 62%);
   --site-wash:
     radial-gradient(circle at 8% 16%, rgba(var(--accent-rgb), .1), transparent 24rem),
     radial-gradient(circle at 92% 35%, rgba(var(--role-venue-rgb), .08), transparent 30rem);
@@ -2312,9 +2307,7 @@ body:has(.site-dock) .site-shell {
 }
 
 /* ─── Auth card (Sign in / Create account) ─────────────────────────
-   Single centered 400px card on a radial wash, per Auth.dc.html — which
-   both design bundles specify identically, so there is no authority
-   conflict to resolve here.
+   Single centered auth form with a solid theme surface.
 
    This block is THE definition. The page carries its own logo and charter
    footer and hides the sitewide chrome (see the auth-page-chrome layer
@@ -2326,10 +2319,7 @@ body:has(.site-dock) .site-shell {
   align-items: center;
   justify-content: center;
   padding: 40px 24px;
-  /* Opaque on purpose. The .dc.html's wash ends at var(--bg-base); leaving it
-     transparent lets the sitewide body gradient show through and the page
-     picks up a stray teal cast on the right in dark mode. */
-  background: var(--auth-wash), var(--bg);
+  background: var(--bg);
 }
 .authcard-wrap {
   width: min(400px, 100%);
@@ -2357,13 +2347,11 @@ body:has(.site-dock) .site-shell {
   color: var(--ink-3);
 }
 .authcard-eyebrow {
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  color: var(--accent-text);
+  font-size: 0.9375rem;
+  font-weight: 650;
+  color: var(--ink-2);
   margin-bottom: 10px;
-  text-align: center;
+  text-align: start;
 }
 .authcard-title {
   font-family: var(--font-display);
@@ -2371,15 +2359,15 @@ body:has(.site-dock) .site-shell {
   font-weight: 800;
   letter-spacing: -.03em;
   line-height: 1;
-  text-align: center;
+  text-align: start;
   margin-bottom: 8px;
   color: var(--ink);
 }
 .authcard-sub {
   font-size: 0.9375rem;
   color: var(--ink-3);
-  text-align: center;
-  margin-bottom: 32px;
+  text-align: start;
+  margin-bottom: 24px;
 }
 
 .authcard-alpha-banner {
@@ -5130,12 +5118,11 @@ html.native-ios { --safe-top: 0px; }
   position: relative;
   z-index: 5;
   box-sizing: border-box;
-  padding: 8px clamp(18px,3.5vw,52px);
+  padding: 8px max(18px, calc((100% - 1120px) / 2));
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: rgba(var(--bg-base-rgb),.84);
-  backdrop-filter: blur(18px);
+  background: var(--bg);
 }
 .fan-entry-logo {
   min-height: 44px;

@@ -26,10 +26,10 @@ export async function MmmAdvertiseLanding() {
   const t = await getServerT();
   const nativeApp = await isNativeAppRequest();
   return (
-    <main className="mmm-ad-landing">
+    <div className="mmm-ad-landing">
       <section className="mmm-ad-hero">
         <p className="mmm-eyebrow mmm-eyebrow-accent">{t('mmmAdvertiseLanding.eyebrow', 'Advertise on iHYPE')}</p>
-        <h1>{t('mmmAdvertiseLanding.headlineOne', 'Reach music people.')}<br />{t('mmmAdvertiseLanding.headlineTwo', 'Skip the noise.')}</h1>
+        <h1>{t('mmmAdvertiseLanding.headlineOne', 'Reach music people.')}{' '}{t('mmmAdvertiseLanding.headlineTwo', 'Skip the noise.')}</h1>
         {/* This lede read "schedule your spots" and step 01 read "set spots
             per day" — the RETIRED pricing model. Advertising moved to a flat
             monthly sponsorship on 2026-09-10 (DESIGN_SYNC row 384) and the
@@ -47,11 +47,11 @@ export async function MmmAdvertiseLanding() {
       <section aria-labelledby="ad-how" className="mmm-ad-section">
         <p className="mmm-eyebrow">{t('mmmAdvertiseLanding.howEyebrow', 'How it works')}</p>
         <h2 id="ad-how">{t('mmmAdvertiseLanding.howTitle', 'Build, screen, run.')}</h2>
-        <div className="mmm-ad-steps">
-          <article><span>01</span><h3>{t('mmmAdvertiseLanding.step1Title', 'Choose the audience')}</h3><p>{t('mmmAdvertiseLanding.step1Body', 'Target local, regional, national or worldwide listeners, and pick a term of one to twelve months.')}</p></article>
-          <article><span>02</span><h3>{t('mmmAdvertiseLanding.step2Title', 'Upload the audio')}</h3><p>{t('mmmAdvertiseLanding.step2Body', 'Add a radio-style audio spot and destination link. iHYPE does not host video.')}</p></article>
-          <article><span>03</span><h3>{t('mmmAdvertiseLanding.step3Title', 'Clear screening')}</h3><p>{t('mmmAdvertiseLanding.step3Body', 'Eligibility, relevance, safety, copyright and claims are checked before payment.')}</p></article>
-        </div>
+        <ol className="mmm-ad-steps">
+          <li><h3>{t('mmmAdvertiseLanding.step1Title', 'Choose the audience')}</h3><p>{t('mmmAdvertiseLanding.step1Body', 'Target local, regional, national or worldwide listeners, and pick a term of one to twelve months.')}</p></li>
+          <li><h3>{t('mmmAdvertiseLanding.step2Title', 'Upload the audio')}</h3><p>{t('mmmAdvertiseLanding.step2Body', 'Add a radio-style audio spot and destination link. iHYPE does not host video.')}</p></li>
+          <li><h3>{t('mmmAdvertiseLanding.step3Title', 'Clear screening')}</h3><p>{t('mmmAdvertiseLanding.step3Body', 'Eligibility, relevance, safety, copyright and claims are checked before payment.')}</p></li>
+        </ol>
       </section>
 
       {/* The price list (row 514). The page described the model and never showed
@@ -79,6 +79,6 @@ export async function MmmAdvertiseLanding() {
         <AdvertiseInAppNote initialNative={nativeApp} />
         <Link className="mmm-btn-primary" href="/advertise/register">{t('mmmAdvertiseLanding.getStarted', 'Get started')}</Link>
       </section>
-    </main>
+    </div>
   );
 }
