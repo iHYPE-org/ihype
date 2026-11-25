@@ -66,7 +66,7 @@ concurrency:
 
 jobs:
   nightly:
-    name: Full audit set and the alpha acceptance walk
+    name: Audit, browser QA and alpha acceptance walk
     # Fresh hosted VM: never reuse the former public-PR runner for secrets.
     runs-on: ubuntu-latest
     services:
@@ -305,6 +305,25 @@ jobs:
 
       - name: Build the Cloudflare worker
         run: npm run cf:build
+        env:
+          NEXT_PUBLIC_BASE_URL: http://localhost:8787
+          NEXT_PUBLIC_APP_URL: http://localhost:8787
+
+      - name: Install Chromium for nightly browser QA
+        run: npx playwright install chromium --with-deps
+
+      - name: Nightly browser QA
+        id: browser-qa
+        continue-on-error: true
+        timeout-minutes: 10
+        run: node scripts/e2e-workerd.mjs e2e/admin-console.spec.ts e2e/info-links.spec.ts e2e/public-smoke.spec.ts e2e/profile-sites.spec.ts
+        env:
+          E2E_WORKERD_DATABASE_URL: postgresql://ihype:ihype@localhost:55432/ihype
+          AUTH_SECRET: ci-only-e2e-workerd-secret-0123456789
+          NEXTAUTH_SECRET: ci-only-e2e-workerd-secret-0123456789
+          ADMIN_DEVICE_SECRET: ci-only-admin-device-secret-0123456789
+          NEXT_PUBLIC_BASE_URL: http://localhost:8787
+          NEXT_PUBLIC_APP_URL: http://localhost:8787
 
       - name: Alpha acceptance walk
         # Every member journey against the real Workers build: signup, uploads
@@ -387,6 +406,30 @@ jobs:
           # scoped to the one step that needs it, never to the job.
           STRIPE_ALLOW_TEST_MODE_REHEARSAL: 'true'
 
+      - name: Blocking findings from earlier steps
+        # The other half of the backup-cadence step near the top. That check
+        # runs early because it is cheap and because its output belongs beside
+        # the other gates in the log — but a gap past DOUBLE the promised RPO
+        # is real data-loss exposure on the only copy of the database outside
+        # the live cluster, so the night must still go red for it. Failing
+        # here, after every instrument has spoken, is how both are true.
+        #
+        # `always()` so this runs even when an earlier step failed; it can only
+        # ADD a failure, never mask one, because GitHub fails a job on any
+        # failed step.
+        if: always()
+        run: |
+          if [ "${{ steps.browser-qa.outcome }}" = "failure" ]; then
+            echo "::error title=Nightly browser QA failed::See the browser QA step and Playwright traces."
+            exit 1
+          fi
+          code='${{ steps.backup-cadence.outputs.code }}'
+          if [ "$code" = "1" ]; then
+            echo "::error title=Backup RPO breached::A gap between database dumps exceeded the 12 h ceiling. Read the 'Backup cadence' step above, then docs/runbooks/backup-restore-drill.md."
+            exit 1
+          fi
+          echo "No blocking findings held over from earlier steps."
+
       - name: Record that the night ran
         # `cron-alive:nightly-walk`, the same shape every cron job writes with
         # pingCronAlive(). The health-check cron alerts when it is absent for
@@ -408,26 +451,6 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
-      - name: Blocking findings from earlier steps
-        # The other half of the backup-cadence step near the top. That check
-        # runs early because it is cheap and because its output belongs beside
-        # the other gates in the log — but a gap past DOUBLE the promised RPO
-        # is real data-loss exposure on the only copy of the database outside
-        # the live cluster, so the night must still go red for it. Failing
-        # here, after every instrument has spoken, is how both are true.
-        #
-        # `always()` so this runs even when an earlier step failed; it can only
-        # ADD a failure, never mask one, because GitHub fails a job on any
-        # failed step.
-        if: always()
-        run: |
-          code='${{ steps.backup-cadence.outputs.code }}'
-          if [ "$code" = "1" ]; then
-            echo "::error title=Backup RPO breached::A gap between database dumps exceeded the 12 h ceiling. Read the 'Backup cadence' step above, then docs/runbooks/backup-restore-drill.md."
-            exit 1
-          fi
-          echo "No blocking findings held over from earlier steps."
-
       - name: Keep the logs of a failed night
         if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
@@ -437,5 +460,6 @@ jobs:
             nightly-walk.log
             nightly-walk-server.log
             nightly-walk-report.json
+            test-results/
           if-no-files-found: ignore
           retention-days: 14

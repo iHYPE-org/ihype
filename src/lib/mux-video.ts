@@ -10,9 +10,12 @@ export function isWithinPilotVideoDuration(seconds: unknown): seconds is number 
     && seconds <= MAX_VIDEO_DURATION_SECS;
 }
 
+export function isMuxVideoConfigured(): boolean {
+  return Boolean(readRuntimeEnv('MUX_TOKEN_ID') && readRuntimeEnv('MUX_TOKEN_SECRET') && readRuntimeEnv('MUX_WEBHOOK_SECRET'));
+}
+
 export function isVideoUploadEnabled(): boolean {
-  return readRuntimeEnv('FEATURE_ENABLE_VIDEO_UPLOADS') === 'true'
-    && Boolean(readRuntimeEnv('MUX_TOKEN_ID') && readRuntimeEnv('MUX_TOKEN_SECRET') && readRuntimeEnv('MUX_WEBHOOK_SECRET'));
+  return readRuntimeEnv('FEATURE_ENABLE_VIDEO_UPLOADS') === 'true' && isMuxVideoConfigured();
 }
 
 export class MuxApiError extends Error {

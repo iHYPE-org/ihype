@@ -15,7 +15,8 @@ import { isObjectStorageConfigured } from '@/lib/object-storage';
 import { isPaymentProcessingConfigured } from '@/lib/payments';
 import { isStripeConfigured } from '@/lib/stripe';
 import { readLiveness } from '@/lib/admin-routine-data';
-import { readRuntimeBinding } from '@/lib/runtime-env';
+import { isMuxVideoConfigured } from '@/lib/mux-video';
+import { readRuntimeBinding, readRuntimeEnv } from '@/lib/runtime-env';
 import {
   areMapsEnabledRuntime,
   arePaymentsEnabledRuntime,
@@ -62,6 +63,7 @@ export type FeatureBoard = {
   rows: FeatureRow[];
   /** The window the activity figures were measured over. */
   range: AnalyticsRange;
+  nightlyQa: LivenessRead;
 };
 
 export async function getFeatureBoard(range: AnalyticsRange = '7d'): Promise<FeatureBoard> {
@@ -76,6 +78,7 @@ export async function getFeatureBoard(range: AnalyticsRange = '7d'): Promise<Fea
     email,
     queues,
     analytics,
+    nightlyQa,
     jobs,
   ] = await Promise.all([
     flag(areRegistrationsEnabledRuntime),
@@ -91,6 +94,7 @@ export async function getFeatureBoard(range: AnalyticsRange = '7d'): Promise<Fea
        reports as UNKNOWN rather than as clear. */
     getWorkbenchQueues().catch(() => []),
     getAnalytics('platform', { kind: 'platform' }, range).catch(() => null),
+    readLiveness('nightly-walk'),
     /* One read per DISTINCT job the catalogue names, not one per row — two
        capabilities may share a slot, and asking twice is two chances for the
        same board to print two answers. `readLiveness` never throws; it returns
@@ -111,6 +115,7 @@ export async function getFeatureBoard(range: AnalyticsRange = '7d'): Promise<Fea
     objectStorage: configured(isObjectStorageConfigured),
     email: configured(isEmailDeliveryConfigured),
     acrcloud: configured(isAcrCloudConfigured),
+    muxVideo: configured(isMuxVideoConfigured),
     /* There is no `isAiConfigured()`: the binding is only observable by
        reaching for it, and every AI call site already degrades on its absence.
        Presence of the binding is the honest question to ask here. */
@@ -121,6 +126,7 @@ export async function getFeatureBoard(range: AnalyticsRange = '7d'): Promise<Fea
     flags: {
       registrations_enabled: registrations,
       uploads_enabled: uploads,
+      FEATURE_ENABLE_VIDEO_UPLOADS: configured(() => readRuntimeEnv('FEATURE_ENABLE_VIDEO_UPLOADS') === 'true'),
       radio_enabled: radio,
       maps_enabled: maps,
       tickets_enabled: tickets,
@@ -139,5 +145,5 @@ export async function getFeatureBoard(range: AnalyticsRange = '7d'): Promise<Fea
     activity,
   };
 
-  return { rows: buildFeatureBoard(input), range };
+  return { rows: buildFeatureBoard(input), range, nightlyQa };
 }
